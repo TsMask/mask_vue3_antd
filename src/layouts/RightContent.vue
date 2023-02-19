@@ -1,3 +1,24 @@
+/**顶部右侧功能 */
+<script setup lang="ts">
+import {
+  UserOutlined,
+  SettingOutlined,
+  LogoutOutlined,
+  BgColorsOutlined,
+} from '@ant-design/icons-vue';
+import { apply, randomTheme } from '@/hooks/useTheme';
+export type CurrentUser = {
+  nickname: string;
+  avatar?: string;
+};
+defineProps<{
+  currentUser: CurrentUser;
+}>();
+const handleClick = () => {
+  apply(randomTheme());
+};
+</script>
+
 <template>
   <div style="margin-right: 12px">
     <a-space>
@@ -33,23 +54,3 @@
     </a-space>
   </div>
 </template>
-
-<script setup lang="ts">
-import {
-  UserOutlined,
-  SettingOutlined,
-  LogoutOutlined,
-  BgColorsOutlined,
-} from '@ant-design/icons-vue';
-import { apply, randomTheme } from '@/hooks/useTheme';
-export type CurrentUser = {
-  nickname: string;
-  avatar?: string;
-};
-defineProps<{
-  currentUser: CurrentUser;
-}>();
-const handleClick = () => {
-  apply(randomTheme());
-};
-</script>

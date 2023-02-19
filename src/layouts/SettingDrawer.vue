@@ -1,3 +1,41 @@
+/**右侧设置菜单 */
+<script setup lang="ts">
+import { SettingOutlined, CloseOutlined } from '@ant-design/icons-vue';
+import { apply, randomTheme } from '@/hooks/useTheme';
+import { ref, toRaw } from 'vue';
+
+type ConfType = 'layout' | 'fixedHeader' | 'fixSiderbar' | string;
+
+const props = defineProps<{
+  modelValue: Record<string, string | boolean | undefined>;
+}>();
+const emit = defineEmits(['update:modelValue']);
+
+const visible = ref<boolean>(false);
+const handleShowDrawer = () => {
+  visible.value = !visible.value;
+};
+
+const handleChangeTheme = () => {
+  apply(randomTheme());
+};
+
+const updateConf = (
+  val: boolean | string | number | undefined,
+  type: ConfType
+) => {
+  const newVal = {
+    ...toRaw(props.modelValue),
+    [`${type}`]: val,
+  };
+  if (newVal.layout === 'mix' && newVal.headerTheme != newVal.navTheme) {
+    newVal.headerTheme = newVal.navTheme;
+  }
+  console.log('newConf', newVal);
+  emit('update:modelValue', newVal);
+};
+</script>
+
 <template>
   <a-drawer
     v-model:visible="visible"
@@ -32,7 +70,7 @@
           <a-switch
             checked-children="开"
             un-checked-children="关"
-            :checked="modelValue.navTheme == 'dark'"
+            :checked="modelValue.navTheme === 'dark'"
             @change="
               checked => updateConf(checked ? 'dark' : 'light', 'navTheme')
             "
@@ -135,40 +173,6 @@
     </div>
   </a-drawer>
 </template>
-
-<script setup lang="ts">
-import { SettingOutlined, CloseOutlined } from '@ant-design/icons-vue';
-import { apply, randomTheme } from '@/hooks/useTheme';
-import { ref, toRaw } from 'vue';
-
-type ConfType = 'layout' | 'fixedHeader' | 'fixSiderbar' | string;
-
-const props = defineProps<{
-  modelValue: Record<string, string | boolean | undefined>;
-}>();
-const emit = defineEmits(['update:modelValue']);
-
-const visible = ref<boolean>(false);
-const handleShowDrawer = () => {
-  visible.value = !visible.value;
-};
-
-const handleChangeTheme = () => {
-  apply(randomTheme());
-};
-
-const updateConf = (
-  val: boolean | string | number | undefined,
-  type: ConfType
-) => {
-  const newVal = {
-    ...toRaw(props.modelValue),
-    [`${type}`]: val,
-  };
-  console.log('newConf', newVal);
-  emit('update:modelValue', newVal);
-};
-</script>
 
 <style lang="less">
 .ant-pro-setting-drawer-handle {
