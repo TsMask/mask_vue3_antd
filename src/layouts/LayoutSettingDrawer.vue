@@ -1,39 +1,11 @@
-/**右侧设置菜单 */
+/**菜单布局配置 */
 <script setup lang="ts">
-import { SettingOutlined, CloseOutlined } from '@ant-design/icons-vue';
-import { apply, randomTheme } from '@/hooks/useTheme';
-import { ref, toRaw } from 'vue';
-
-type ConfType = 'layout' | 'fixedHeader' | 'fixSiderbar' | string;
-
-const props = defineProps<{
-  modelValue: Record<string, string | boolean | undefined>;
-}>();
-const emit = defineEmits(['update:modelValue']);
-
-const visible = ref<boolean>(false);
-const handleShowDrawer = () => {
-  visible.value = !visible.value;
-};
-
-const handleChangeTheme = () => {
-  apply(randomTheme());
-};
-
-const updateConf = (
-  val: boolean | string | number | undefined,
-  type: ConfType
-) => {
-  const newVal = {
-    ...toRaw(props.modelValue),
-    [`${type}`]: val,
-  };
-  if (newVal.layout === 'mix' && newVal.headerTheme != newVal.navTheme) {
-    newVal.headerTheme = newVal.navTheme;
-  }
-  console.log('newConf', newVal);
-  emit('update:modelValue', newVal);
-};
+import { BgColorsOutlined } from '@ant-design/icons-vue';
+import { changePrimaryColor } from '@/hooks/useTheme';
+import useLayoutStore from '@/store/modules/layout';
+import { storeToRefs } from 'pinia';
+const { visible } = storeToRefs(useLayoutStore());
+const { proConfig, changeConf } = useLayoutStore();
 </script>
 
 <template>
@@ -43,49 +15,52 @@ const updateConf = (
     placement="right"
     :closable="false"
   >
-    <template #handle>
-      <div class="ant-pro-setting-drawer-handle" @click="handleShowDrawer">
-        <SettingOutlined v-if="!visible" />
-        <CloseOutlined v-else />
-      </div>
-    </template>
     <div class="margin-bottom: 24px">
       <h3>导航模式</h3>
       <a-radio-group
         style="margin-bottom: 12px"
-        :value="modelValue.layout"
-        @change="(e:any) => updateConf(e.target.value, 'layout')"
+        :value="proConfig.layout"
+        @change="e => changeConf('layout', e.target.value)"
       >
         <a-radio value="side">左侧菜单布局</a-radio>
         <a-radio value="top">顶部菜单布局</a-radio>
         <a-radio value="mix">混合菜单布局</a-radio>
       </a-radio-group>
-      <a-button class="ant-pro-theme-button" @click="handleChangeTheme"
-        >改变主题色</a-button
-      >
+
       <a-divider />
       <a-row style="margin-bottom: 12px">
-        <a-col :span="12">菜单深色</a-col>
+        <a-col :span="12">改变主题色</a-col>
+        <a-col :span="12" style="text-align: right">
+          <a-button
+            class="ant-pro-theme-button"
+            size="small"
+            @click="() => changePrimaryColor()"
+            ><BgColorsOutlined />随机</a-button
+          >
+        </a-col>
+      </a-row>
+      <a-divider />
+      <a-row style="margin-bottom: 12px">
+        <a-col :span="12">深色菜单</a-col>
         <a-col :span="12" style="text-align: right">
           <a-switch
             checked-children="开"
             un-checked-children="关"
-            :checked="modelValue.navTheme === 'dark'"
+            :checked="proConfig.navTheme === 'dark'"
             @change="
-              checked => updateConf(checked ? 'dark' : 'light', 'navTheme')
+              checked => changeConf('navTheme', checked ? 'dark' : 'light')
             "
           />
         </a-col>
       </a-row>
-      <a-divider />
       <a-row style="margin-bottom: 12px">
         <a-col :span="12">固定 Header</a-col>
         <a-col :span="12" style="text-align: right">
           <a-switch
             checked-children="开"
             un-checked-children="关"
-            :checked="modelValue.fixedHeader"
-            @change="(checked:any) => updateConf(checked, 'fixedHeader')"
+            :checked="proConfig.fixedHeader"
+            @change="checked => changeConf('fixedHeader', checked)"
           />
         </a-col>
       </a-row>
@@ -95,8 +70,8 @@ const updateConf = (
           <a-switch
             checked-children="开"
             un-checked-children="关"
-            :checked="modelValue.fixSiderbar"
-            @change="(checked:any) => updateConf(checked, 'fixSiderbar')"
+            :checked="proConfig.fixSiderbar"
+            @change="checked => changeConf('fixSiderbar', checked)"
           />
         </a-col>
       </a-row>
@@ -106,8 +81,8 @@ const updateConf = (
           <a-switch
             checked-children="开"
             un-checked-children="关"
-            :checked="modelValue.splitMenus"
-            @change="checked => updateConf(checked, 'splitMenus')"
+            :checked="proConfig.splitMenus"
+            @change="checked => changeConf('splitMenus', checked)"
           />
         </a-col>
       </a-row>
@@ -120,10 +95,10 @@ const updateConf = (
           <a-switch
             checked-children="开"
             un-checked-children="关"
-            :checked="modelValue.headerRender === undefined"
+            :checked="proConfig.headerRender === undefined"
             @change="
               checked =>
-                updateConf(checked === true && undefined, 'headerRender')
+                changeConf('headerRender', checked === true && undefined)
             "
           />
         </a-col>
@@ -134,10 +109,10 @@ const updateConf = (
           <a-switch
             checked-children="开"
             un-checked-children="关"
-            :checked="modelValue.footerRender === undefined"
+            :checked="proConfig.footerRender === undefined"
             @change="
               checked =>
-                updateConf(checked === true && undefined, 'footerRender')
+                changeConf('footerRender', checked === true && undefined)
             "
           />
         </a-col>
@@ -149,9 +124,9 @@ const updateConf = (
             disabled
             checked-children="开"
             un-checked-children="关"
-            :checked="modelValue.menu === undefined"
+            :checked="proConfig.menu === undefined"
             @change="
-              checked => updateConf(checked === true && undefined, 'menu')
+              checked => changeConf('menu', checked === true && undefined)
             "
           />
         </a-col>
@@ -162,10 +137,10 @@ const updateConf = (
           <a-switch
             checked-children="开"
             un-checked-children="关"
-            :checked="modelValue.menuHeaderRender === undefined"
+            :checked="proConfig.menuHeaderRender === undefined"
             @change="
               checked =>
-                updateConf(checked === true && undefined, 'menuHeaderRender')
+                changeConf('menuHeaderRender', checked === true && undefined)
             "
           />
         </a-col>
@@ -175,27 +150,6 @@ const updateConf = (
 </template>
 
 <style lang="less">
-.ant-pro-setting-drawer-handle {
-  position: absolute;
-  top: 240px;
-  right: 300px;
-  z-index: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  font-size: 16px;
-  text-align: center;
-  background: var(--ant-primary-color);
-  border-radius: 4px 0 0 4px;
-  cursor: pointer;
-  pointer-events: auto;
-  > span {
-    color: rgb(255, 255, 255);
-    font-size: 20px;
-  }
-}
 .ant-pro-theme-button {
   background: var(--ant-primary-color) !important;
   border: var(--ant-primary-color) !important;

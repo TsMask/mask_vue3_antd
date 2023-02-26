@@ -51,7 +51,7 @@ export default class RouterGuard {
         }
         // 防止重复登录
         if (to.path === '/login') {
-          next({ path: '/' });
+          next({ name: 'Index' });
         } else {
           const user = useUserStore();
           // 判断当前用户是否有角色信息
@@ -71,9 +71,9 @@ export default class RouterGuard {
               }
               next({ ...to, replace: true }); // hack方法 确保addRoutes已完成
             } catch (e) {
-              console.error('判断当前用户是否有角色信息 ', e);
+              console.error('路由添加异常 ', e);
               await user.logOut();
-              next({ path: '/' });
+              next({ name: 'Index' });
             }
           } else {
             next();

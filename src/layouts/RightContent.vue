@@ -1,35 +1,35 @@
 /**顶部右侧功能 */
 <script setup lang="ts">
+import useLayoutStore from '@/store/modules/layout';
 import {
   UserOutlined,
   SettingOutlined,
   LogoutOutlined,
-  BgColorsOutlined,
 } from '@ant-design/icons-vue';
-import { apply, randomTheme } from '@/hooks/useTheme';
+
 export type CurrentUser = {
   nickname: string;
   avatar?: string;
 };
-defineProps<{
+const props = defineProps<{
   currentUser: CurrentUser;
 }>();
-const handleClick = () => {
-  apply(randomTheme());
-};
+
+const { changeVisibleLayoutSetting } = useLayoutStore();
 </script>
 
 <template>
   <div style="margin-right: 12px">
     <a-space>
-      <a
-        style="padding: 0 12px; display: inline-block; user-select: none"
-        @click="handleClick"
-        ><BgColorsOutlined
-      /></a>
       <a-dropdown>
         <template #overlay>
           <a-menu>
+            <a-menu-item @click="changeVisibleLayoutSetting">
+              <template #icon>
+                <SettingOutlined />
+              </template>
+              <span>布局设置</span>
+            </a-menu-item>
             <a-menu-item>
               <template #icon>
                 <SettingOutlined />

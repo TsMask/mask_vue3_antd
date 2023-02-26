@@ -52,7 +52,7 @@ export const constantRoutes: RouteRecordRaw[] = [
   },
   {
     path: '/',
-    name: 'root',
+    name: 'Root',
     meta: { title: '根节点' },
     component: BasicLayout,
     redirect: '/index',

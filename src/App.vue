@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ConfigProvider } from 'ant-design-vue';
-import { useUserTheme } from '@/hooks/useTheme';
+import { usePrimaryColor } from '@/hooks/useTheme';
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 dayjs.locale('zh-cn'); // 默认中文
-useUserTheme(); // 载入用户自定义主题色
+usePrimaryColor(); // 载入用户自定义主题色
 </script>
 
 <template>

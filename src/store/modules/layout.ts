@@ -1,50 +1,89 @@
-import { CACHE_LOCAL_LAYOUT } from '@/constants/CacheKeysConstants';
-import { localGetJSON } from '@/plugins/CacheLocal';
+import { CACHE_LOCAL_PROCONFIG } from '@/constants/CacheKeysConstants';
+import { localGetJSON, localSetJSON } from '@/plugins/CacheLocal';
 import { defineStore } from 'pinia';
 
-/**本地缓存-布局设置 */
-const localLayout = localGetJSON(CACHE_LOCAL_LAYOUT) || {};
+/**本地缓存-布局配置设置 */
+const proConfigLocal = localGetJSON(CACHE_LOCAL_PROCONFIG) || {};
+
+/**布局参数类型 */
+type LayoutStore = {
+  /**布局设置抽屉显示 */
+  visible: boolean;
+  /**布局配置 */
+  proConfig: {
+    /**导航布局 */
+    layout: 'side' | 'top' | 'mix';
+    /**导航菜单主题色 */
+    navTheme: 'dark' | 'light';
+    /**顶部导航主题，仅导航布局为mix时生效 */
+    headerTheme: 'dark' | 'light';
+    /**固定顶部栏 */
+    fixedHeader: boolean;
+    /**固定菜单栏 */
+    fixSiderbar: boolean;
+    /**自动分割菜单 */
+    splitMenus: boolean;
+    /**内容区域-顶栏 */
+    headerRender: boolean | undefined;
+    /**内容区域-页脚 */
+    footerRender: boolean | undefined;
+    /**内容区域-菜单头 */
+    menuHeaderRender: boolean | undefined;
+    /**内容区域-菜单 */
+    menu: undefined;
+  };
+  /**水印内容 */
+  waterMarkContent: string;
+};
 
 const useLayoutStore = defineStore('layout', {
-  state: (): LayoutConfig => ({
-    layout: localLayout.layout || 'side',
-    navTheme: localLayout.navTheme || 'light',
-    headerTheme: localLayout.headerTheme || 'light',
-    fixedHeader: localLayout.fixedHeader || true,
-    fixSiderbar: localLayout.fixSiderbar || true,
-    splitMenus: localLayout.splitMenus || true,
-    waterMarkContent: localLayout.waterMarkContent || 'Mask',
+  state: (): LayoutStore => ({
+    visible: false,
+    proConfig: {
+      layout: proConfigLocal.layout || 'side',
+      navTheme: proConfigLocal.navTheme || 'light',
+      headerTheme: proConfigLocal.headerTheme || 'light',
+      fixedHeader:
+        proConfigLocal.fixedHeader === undefined
+          ? true
+          : Boolean(proConfigLocal.fixedHeader),
+      fixSiderbar:
+        proConfigLocal.fixSiderbar === undefined
+          ? true
+          : Boolean(proConfigLocal.fixSiderbar),
+      splitMenus:
+        proConfigLocal.splitMenus === undefined
+          ? true
+          : Boolean(proConfigLocal.splitMenus),
+      headerRender: proConfigLocal.headerRender === false ? false : undefined,
+      footerRender: proConfigLocal.footerRender === false ? false : undefined,
+      menuHeaderRender:
+        proConfigLocal.menuHeaderRender === false ? false : undefined,
+      menu: undefined,
+    },
+    waterMarkContent: import.meta.env.VITE_APP_SYSTEM_NAME,
   }),
   actions: {
+    /**改变显示状态 */
+    changeVisibleLayoutSetting() {
+      this.visible = !this.visible;
+    },
+    /**修改水印文字 */
+    changeWaterMark(text: string) {
+      this.waterMarkContent = text;
+    },
     /**修改布局设置 */
-    change(data: Record<string, any>) {
-      const { key, value } = data;
-      if (this.hasOwnProperty(key)) {
-        if (this.layout === 'mix' && this.headerTheme !== this.navTheme) {
-          this.headerTheme = this.navTheme;
+    changeConf(key: string, value: boolean | string | number | undefined) {
+      if (Reflect.has(this.proConfig, key)) {
+        // 同时修改mix混合菜单的导航主题
+        if (key === 'navTheme') {
+          Reflect.set(this.proConfig, 'headerTheme', value);
         }
-        Reflect.set(this, key, value);
+        Reflect.set(this.proConfig, key, value);
+        localSetJSON(CACHE_LOCAL_PROCONFIG, this.proConfig);
       }
     },
   },
 });
 
 export default useLayoutStore;
-
-/**布局配置参数类型 */
-type LayoutConfig = {
-  /**导航布局 */
-  layout: 'side' | 'top' | 'mix';
-  /**导航菜单主题色 */
-  navTheme: 'dark' | 'light';
-  /**顶部导航主题，仅导航布局为mix时生效 */
-  headerTheme: 'dark' | 'light';
-  /**固定顶部栏 */
-  fixedHeader: boolean;
-  /**固定菜单栏 */
-  fixSiderbar: boolean;
-  /**自动分割菜单 */
-  splitMenus: boolean;
-  /**水印内容 */
-  waterMarkContent: string;
-};
