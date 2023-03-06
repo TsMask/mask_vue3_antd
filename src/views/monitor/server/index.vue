@@ -45,7 +45,7 @@ const route = useRoute();
 
 const network = ref('');
 const server = ref([]);
-
+console.log(route.query)
 function getList() {
   getServer().then(response => {
     server.value = response.data;

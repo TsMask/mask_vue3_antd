@@ -1,7 +1,6 @@
-/**基础布局 */
 <script setup lang="ts">
-import RightContent from './RightContent.vue';
-import LayoutSettingDrawer from './LayoutSettingDrawer.vue';
+import RightContent from './components/RightContent.vue';
+import LayoutSetting from './components/LayoutSetting.vue';
 import {
   WaterMark,
   getMenuData,
@@ -100,7 +99,7 @@ const currentUser = reactive({
           {{ route.breadcrumbName }}
         </router-link>
       </template>
-      <LayoutSettingDrawer />
+      <LayoutSetting />
       <!--页面视图-->
       <RouterView v-slot="{ Component, route }">
         <transition name="slide-left" mode="out-in">

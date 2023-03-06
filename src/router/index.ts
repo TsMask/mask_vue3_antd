@@ -7,7 +7,7 @@ import {
 import BasicLayout from '../layouts/BasicLayout.vue';
 import BlankLayout from '../layouts/BlankLayout.vue';
 import WelcomePage from '../views/Page1.vue';
-import RouterGuard from './RouterGuard';
+import Guard from './Guard';
 
 // import { MetaRecord, MenuDataItem } from '@ant-design-vue/pro-layout';
 // mate数据类型 MetaRecord
@@ -157,4 +157,4 @@ const router = createRouter({
   },
 });
 
-export default new RouterGuard(router).getRouter();
+export default new Guard(router).getRouter();

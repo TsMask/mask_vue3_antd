@@ -39,6 +39,7 @@ type RecordRaws = {
   path: string;
   name: string;
   meta: RouteMeta;
+  redirect: RouteLocationRaw;
   component: string;
   children: RecordRaws[];
 };
@@ -54,23 +55,6 @@ type RecordRaws = {
 function buildRouters(recordRaws: RecordRaws[]): RouteRecordRaw[] {
   const routers: RouteRecordRaw[] = [];
   for (const item of recordRaws) {
-    // TODO 需要重整结构
-    if (item.meta.link) continue;
-    item.meta.icon = 'icon-pcduan';
-
-    // 有子菜单进行递归并设置重定向到首个子菜单
-    let children: RouteRecordRaw[] = [];
-    let redirect: RouteLocationRaw = '';
-    if (item.children && item.children.length > 0) {
-      children = buildRouters(item.children);
-      // 嵌套路由重定向需要子菜单拼接父级路径
-      const firstChildPath = children[0].path;
-      if (firstChildPath.startsWith('/')) {
-        redirect = firstChildPath;
-      } else {
-        redirect = `${item.path}/${firstChildPath}`;
-      }
-    }
     // 路由页面组件
     let component: RouteComponent = {};
     if (item.component) {
@@ -86,19 +70,29 @@ function buildRouters(recordRaws: RecordRaws[]): RouteRecordRaw[] {
         component = findView(comp);
       }
     }
+
+    // 有子菜单进行递归
+    let children: RouteRecordRaw[] = [];
+    if (item.children && item.children.length > 0) {
+      children = buildRouters(item.children);
+    }
+
     // 构建路由
     const router: RouteRecordRaw = {
       path: item.path,
       name: item.name,
       meta: item.meta,
+      redirect: item.redirect,
       component: component,
-      redirect: redirect,
       children: children,
     };
     routers.push(router);
   }
   return routers;
 }
+
+/**匹配views里面所有的.vue文件 */
+const views = import.meta.glob('./../../views/**/*.vue');
 
 /**
  * 查找页面模块
@@ -121,8 +115,5 @@ function findView(dirName: string) {
   }
   return view;
 }
-
-// 匹配views里面所有的.vue文件
-const views = import.meta.glob('./../../views/**/*.vue');
 
 export default useRouterStore;

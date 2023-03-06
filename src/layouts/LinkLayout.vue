@@ -1,4 +1,3 @@
-/**内部打开链接布局 */
 <script setup lang="ts">
 import { ref } from 'vue';
 

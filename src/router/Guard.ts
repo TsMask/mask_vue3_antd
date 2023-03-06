@@ -15,7 +15,7 @@ NProgress.configure({ showSpinner: false });
  *
  * @author TsMask
  */
-export default class RouterGuard {
+export default class Guard {
   private router: Router;
 
   /**无Token可访问页面地址白名单 */

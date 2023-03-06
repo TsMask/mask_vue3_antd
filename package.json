@@ -4,14 +4,14 @@
   "private": true,
   "version": "0.0.1",
   "description": "🎉 基于 ant-design-vue + vue3 的管理系统",
+  "author": "TsMask",
   "repository": {
     "type": "git",
     "url": "https://gitee.com/TsMask/mask_antd_vue3"
   },
-  "author": "TsMask",
   "license": "MIT",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "scripts": {
     "dev": "vite",

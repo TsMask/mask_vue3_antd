@@ -1,8 +1,8 @@
-import fatch from '@/plugins/Fatch';
+import { request } from '@/plugins/Fetch';
 
 // 获取服务信息
 export function getServer() {
-  return fatch({
+  return request({
     url: '/monitor/server',
     method: 'get',
   });

@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import {request} from '@/plugins/fatch';
 
 // 查询公告列表
 export function listNotice(query) {

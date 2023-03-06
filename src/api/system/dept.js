@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import {request} from '@/plugins/fatch';
 
 // 查询部门列表
 export function listDept(query) {

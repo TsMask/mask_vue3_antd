@@ -2,9 +2,6 @@ import { CACHE_LOCAL_PROCONFIG } from '@/constants/CacheKeysConstants';
 import { localGetJSON, localSetJSON } from '@/plugins/CacheLocal';
 import { defineStore } from 'pinia';
 
-/**本地缓存-布局配置设置 */
-const proConfigLocal = localGetJSON(CACHE_LOCAL_PROCONFIG) || {};
-
 /**布局参数类型 */
 type LayoutStore = {
   /**布局设置抽屉显示 */
@@ -36,25 +33,28 @@ type LayoutStore = {
   waterMarkContent: string;
 };
 
+/**本地缓存-布局配置设置 */
+const proConfigLocal: LayoutStore['proConfig'] = localGetJSON(
+  CACHE_LOCAL_PROCONFIG
+) || {
+  layout: 'side',
+  headerTheme: 'light',
+  navTheme: 'light',
+  fixSiderbar: true,
+  fixedHeader: true,
+  splitMenus: true,
+};
+
 const useLayoutStore = defineStore('layout', {
   state: (): LayoutStore => ({
     visible: false,
     proConfig: {
-      layout: proConfigLocal.layout || 'side',
-      navTheme: proConfigLocal.navTheme || 'light',
-      headerTheme: proConfigLocal.headerTheme || 'light',
-      fixedHeader:
-        proConfigLocal.fixedHeader === undefined
-          ? true
-          : Boolean(proConfigLocal.fixedHeader),
-      fixSiderbar:
-        proConfigLocal.fixSiderbar === undefined
-          ? true
-          : Boolean(proConfigLocal.fixSiderbar),
-      splitMenus:
-        proConfigLocal.splitMenus === undefined
-          ? true
-          : Boolean(proConfigLocal.splitMenus),
+      layout: proConfigLocal.layout,
+      navTheme: proConfigLocal.navTheme,
+      headerTheme: proConfigLocal.headerTheme,
+      fixedHeader: Boolean(proConfigLocal.fixedHeader),
+      fixSiderbar: Boolean(proConfigLocal.fixSiderbar),
+      splitMenus: Boolean(proConfigLocal.splitMenus),
       headerRender: proConfigLocal.headerRender === false ? false : undefined,
       footerRender: proConfigLocal.footerRender === false ? false : undefined,
       menuHeaderRender:

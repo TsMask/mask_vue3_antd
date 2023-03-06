@@ -1,4 +1,3 @@
-/**顶部右侧功能 */
 <script setup lang="ts">
 import useLayoutStore from '@/store/modules/layout';
 import {

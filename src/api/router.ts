@@ -1,8 +1,8 @@
-import request from '@/plugins/Fatch';
+import { request, ResultType } from '@/plugins/Fetch';
 
 // 获取路由
 export const getRouters = () => {
-  return request({
+  return request<ResultType>({
     url: '/getRouters',
     method: 'get',
   });

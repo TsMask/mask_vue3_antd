@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import {request} from '@/plugins/fatch';
 
 // 查询在线用户列表
 export function list(query) {

@@ -1,4 +1,3 @@
-/**菜单布局配置 */
 <script setup lang="ts">
 import { BgColorsOutlined } from '@ant-design/icons-vue';
 import { changePrimaryColor } from '@/hooks/useTheme';
