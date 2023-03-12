@@ -2,6 +2,7 @@
 import RightContent from './components/RightContent.vue';
 import LayoutSetting from './components/LayoutSetting.vue';
 import {
+  GlobalFooter,
   WaterMark,
   getMenuData,
   clearMenuItem,
@@ -58,11 +59,6 @@ const breadcrumb = computed(() =>
     };
   })
 );
-// 用户
-const currentUser = reactive({
-  nickname: 'Admin',
-  avatar: 'A',
-});
 </script>
 
 <template>
@@ -77,17 +73,23 @@ const currentUser = reactive({
       v-bind="proConfig"
       iconfont-url="/icon-font.js"
     >
-      <!--页面路由导航面包屑-->
+      <!--插槽-菜单头-->
       <template #menuHeaderRender>
         <router-link :to="{ name: 'Index' }">
-          <img src="../assets/vue.svg" />
+          <img class="logo" src="@/assets/logo.png" />
           <h1>{{ systemName }}</h1>
         </router-link>
       </template>
-      <!--页面路由导航面包屑-->
+
+      <!--插槽-顶部左侧-->
+      <template #headerContentRender></template>
+
+      <!--插槽-顶部右侧-->
       <template #rightContentRender>
-        <RightContent :current-user="currentUser" />
+        <RightContent />
+        <LayoutSetting />
       </template>
+
       <!--页面路由导航面包屑-->
       <template #breadcrumbRender="{ route, params, routes }">
         <span v-if="routes.indexOf(route) === routes.length - 1">
@@ -99,7 +101,7 @@ const currentUser = reactive({
           {{ route.breadcrumbName }}
         </router-link>
       </template>
-      <LayoutSetting />
+
       <!--页面视图-->
       <RouterView v-slot="{ Component, route }">
         <transition name="slide-left" mode="out-in">
@@ -108,6 +110,28 @@ const currentUser = reactive({
           </div>
         </transition>
       </RouterView>
+
+      <!--插槽-底部-->
+      <template #footerRender>
+        <GlobalFooter
+          :links="[
+            { blankTarget: true, title: '帮助', href: '/' },
+            { blankTarget: true, title: '隐私', href: '/' },
+            { blankTarget: false, title: '条款', href: '/' },
+          ]"
+          copyright="Copyright © 2023 Gitee For TsMask"
+        >
+        </GlobalFooter>
+      </template>
     </pro-layout>
   </WaterMark>
 </template>
+
+<style lang="less" scoped>
+.logo {
+  height: 32px;
+  vertical-align: top;
+  border-style: none;
+  border-radius: 6.66px;
+}
+</style>

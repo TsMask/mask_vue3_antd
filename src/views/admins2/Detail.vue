@@ -24,5 +24,5 @@
 </template>
 
 <script lang="ts" setup>
-import { dependencies } from '../../package.json';
+import { dependencies } from '../../../package.json';
 </script>

@@ -1,7 +1,8 @@
 import { login, logout, getInfo } from '@/api/login';
 import { getToken, setToken, removeToken } from '@/plugins/AuthToken';
-import defaultAvatar from '@/assets/images/profile.png';
+import defaultAvatar from '@/assets/images_default/avatar.png';
 import { defineStore } from 'pinia';
+import { TOKEN_RESPONSE_FIELD } from '@/constants/TokenConstants';
 
 /**用户信息类型 */
 type UserInfo = {
@@ -27,34 +28,42 @@ const useUserStore = defineStore('user', {
   }),
   actions: {
     // 登录
-    async toLogin(loginBody: Record<string, object>) {
+    async fnLogin(loginBody: Record<string, string>) {
       const res = await login(loginBody);
-      setToken(res.token);
-      this.token = res.token;
+      if (res[TOKEN_RESPONSE_FIELD]) {
+        setToken(res.token);
+        this.token = res.token;
+      }
+      return res;
     },
     // 获取用户信息
-    async toGetInfo() {
+    async fnGetInfo() {
       const res = await getInfo();
       const user = res.user;
-      const avatar =
-        user.avatar == '' || user.avatar == null
-          ? defaultAvatar
-          : import.meta.env.VITE_APP_BASE_API + user.avatar;
 
+      this.name = user.userName;
+
+      // 头像初始化
+      if (user.avatar) {
+        const baseApi = import.meta.env.VITE_APP_BASE_API;
+        this.avatar = `${baseApi}/${user.avatar}`;
+      } else {
+        this.avatar = defaultAvatar;
+      }
+
+      console.error(this.avatar)
+      // 验证返回的roles是否是一个非空数组
       if (res.roles && res.roles.length > 0) {
-        // 验证返回的roles是否是一个非空数组
         this.roles = res.roles;
         this.permissions = res.permissions;
       } else {
         this.roles = ['ROLE_DEFAULT'];
       }
-      this.name = user.userName;
-      this.avatar = avatar;
 
       return res;
     },
     // 退出系统
-    async toLogOut() {
+    async fnLogOut() {
       await logout();
       this.token = '';
       this.roles = [];

@@ -6,7 +6,6 @@ import {
 } from 'vue-router';
 import BasicLayout from '../layouts/BasicLayout.vue';
 import BlankLayout from '../layouts/BlankLayout.vue';
-import WelcomePage from '../views/Page1.vue';
 import Guard from './Guard';
 
 // import { MetaRecord, MenuDataItem } from '@ant-design-vue/pro-layout';
@@ -19,6 +18,8 @@ import Guard from './Guard';
 export const constantRoutes: RouteRecordRaw[] = [
   {
     path: '/redirect',
+    name: 'Redirect',
+    meta: { title: '重定向' },
     component: BasicLayout,
     children: [
       {
@@ -45,10 +46,10 @@ export const constantRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/error/404.vue'),
   },
   {
-    path: '/401',
+    path: '/403',
     name: 'NotPermission',
-    meta: { title: '没有权限访问' },
-    component: () => import('@/views/error/401.vue'),
+    meta: { title: '没有访问权限' },
+    component: () => import('@/views/error/403.vue'),
   },
   {
     path: '/',
@@ -67,7 +68,19 @@ export const constantRoutes: RouteRecordRaw[] = [
         path: '/welcome',
         name: 'welcome',
         meta: { title: '欢迎', icon: 'icon-pcduan' },
-        component: WelcomePage,
+        component: ()=> import("@/views/admins2/Page1.vue"),
+      },
+      {
+        path: '/welcome2',
+        name: 'welcome2',
+        meta: { title: '欢迎2', icon: 'icon-pcduan' },
+        component: ()=> import("@/views/admins2/Page2.vue"),
+      },
+      {
+        path: '/detail',
+        name: 'Detail',
+        meta: { title: 'Detail', icon: 'icon-pcduan' },
+        component: ()=> import("@/views/admins2/Detail.vue"),
       },
       {
         path: '/admins',

@@ -1,12 +1,13 @@
 import { request, ResultType } from '@/plugins/Fetch';
 
 // 登录方法
-export function login(data: Record<string, object>) {
+export function login(data: Record<string, string>) {
   return request<ResultType>({
     url: '/login',
     method: 'post',
     data: data,
     whithToken: false,
+    repeatSubmit: false,
   });
 }
 

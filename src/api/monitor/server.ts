@@ -1,8 +1,8 @@
-import { request } from '@/plugins/Fetch';
+import { request, ResultType } from '@/plugins/Fetch';
 
-// 获取服务信息
+/**获取服务信息 */
 export function getServer() {
-  return request({
+  return request<ResultType>({
     url: '/monitor/server',
     method: 'get',
   });

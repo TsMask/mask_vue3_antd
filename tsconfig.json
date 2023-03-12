@@ -15,8 +15,8 @@
     "typeRoots": ["src/typings", "./node_modules/@types"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-    },
+      "@/*": ["src/*"]
+    }
   },
   "exclude": ["dist", "node_modules", "test", "script"],
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],

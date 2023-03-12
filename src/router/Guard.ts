@@ -58,7 +58,7 @@ export default class Guard {
           if (user.roles && user.roles.length === 0) {
             try {
               // 获取用户信息
-              await user.getInfo();
+              await user.fnGetInfo();
               // 根据后台配置生成可访问的路由表
               const accessRoutes = await useRouterStore().generateRoutes();
               if (accessRoutes && accessRoutes.length !== 0) {
@@ -72,7 +72,7 @@ export default class Guard {
               next({ ...to, replace: true }); // hack方法 确保addRoutes已完成
             } catch (e) {
               console.error('路由添加异常 ', e);
-              await user.logOut();
+              await user.fnLogOut();
               next({ name: 'Index' });
             }
           } else {

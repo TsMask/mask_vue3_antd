@@ -15,6 +15,7 @@ import {
   MENU_COMPONENT_LINK_LAYOUT,
 } from '@/constants/MenuConstants';
 
+/**路由构建参数类型 */
 type RouterStore = {
   /**动态路由数据 */
   buildRouterData: RouteRecordRaw[];
@@ -27,9 +28,12 @@ const useRouterStore = defineStore('router', {
   actions: {
     async generateRoutes() {
       const res = await getRouters();
-      const buildRoutes = buildRouters(res.data.concat());
-      this.buildRouterData = buildRoutes;
-      return buildRoutes;
+      if (res.code === 200 && Array.isArray(res.data)) {
+        const buildRoutes = buildRouters(res.data.concat());
+        this.buildRouterData = buildRoutes;
+        return buildRoutes;
+      }
+      return [];
     },
   },
 });

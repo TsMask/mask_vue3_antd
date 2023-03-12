@@ -10,8 +10,8 @@ export type ResultType = {
   /**信息 */
   msg: string;
   /**数据 */
-  data?: object | string;
-  /**未定义 */
+  data?: object | object[] | string;
+  /**未知属性 */
   [key: string]: any;
 };
 
@@ -34,7 +34,7 @@ type OptionsType = {
   /**请求头 */
   headers?: HeadersInit;
   /**地址栏参数 */
-  params?: Record<string, string | number | boolean>;
+  params?: Record<string, string | number | boolean | undefined>;
   /**发送数据 */
   data?: Record<string, object> | FormData | object;
   /**请求数据类型 */
@@ -132,11 +132,13 @@ function beforeRequest(options: OptionsType): OptionsType | undefined {
     let paramStr = '';
     const params = options.params;
     for (const key in params) {
-      paramStr += `&${encodeURIComponent(key)}=${encodeURIComponent(
-        params[key]
-      )}`;
+      const value = params[key];
+      if (value == '' || value == undefined) continue;
+      paramStr += `&${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
     }
-    options.url = `${options.url}?${paramStr.substring(1)}`;
+    if (paramStr && paramStr.startsWith('&')) {
+      options.url = `${options.url}?${paramStr.substring(1)}`;
+    }
   }
 
   options.body = JSON.stringify(options.data);
@@ -176,7 +178,13 @@ export function request<T>(options: OptionsType): Promise<T> {
     fetch(options.url, options)
       .then(res => {
         console.log('请求结果：', res);
-        if (!res.ok) return reject(res);
+        if (!res.ok) {
+          return reject({
+            code: res.status,
+            msg: res.statusText,
+          });
+        }
+
         // 根据响应数据类型返回
         switch (options.responseType) {
           case 'json': // json格式数据
