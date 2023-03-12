@@ -8,7 +8,7 @@
 
 ## 简介
 
-该前端项目选择 [RuoYi-Vue3](https://github.com/yangzongzhuan/RuoYi-Vue3) 进行改造调整。
+还在逐步完善，把大致的布局和数据调通，后面优化。ts实在有些繁琐。
 
 `Element-Vue3` 前端代码仓库地址 [mask_api_midwayjs](https://gitee.com/TsMask/mask_element_vue3)
 
