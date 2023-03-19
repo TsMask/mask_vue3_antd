@@ -292,13 +292,14 @@ function fnResetQuery() {
 }
 
 /** 查询在线用户列表 */
-async function getList() {
+function getList() {
   tableState.loading = true;
-  const res = await listOnline(queryParams);
-  if (res.code === 200) {
-    tableState.data = res.rows;
-    tableState.loading = false;
-  }
+  listOnline(queryParams).then(res => {
+    if (res.code === 200) {
+      tableState.data = res.rows;
+      tableState.loading = false;
+    }
+  });
 }
 
 /** 强退按钮操作 */

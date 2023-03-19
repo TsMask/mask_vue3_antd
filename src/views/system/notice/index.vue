@@ -156,7 +156,7 @@
 </template>
 
 <script setup lang="ts">
-import { forceLogout, list } from '@/api/monitor/online';
+import { forceLogout, listOnline } from '@/api/monitor/online';
 
 import { message, TablePaginationConfig } from 'ant-design-vue';
 import {
@@ -284,15 +284,16 @@ function handleForceLogout(row: Record<string, string>) {
 }
 
 /** 查询登录日志列表 */
-async function getList() {
+function getList() {
   tableState.loading = true;
-  const res = await list(queryParams);
-  tableState.data = res.rows;
-  // tableState.data = res.rows.slice(
-  //   (queryParams.pageNum - 1) * queryParams.pageSize,
-  //   queryParams.pageNum * queryParams.pageSize
-  // );
-  tableState.loading = false;
+  listOnline(queryParams).then(res => {
+    tableState.data = res.rows;
+    // tableState.data = res.rows.slice(
+    //   (queryParams.pageNum - 1) * queryParams.pageSize,
+    //   queryParams.pageNum * queryParams.pageSize
+    // );
+    tableState.loading = false;
+  });
 }
 
 getList();

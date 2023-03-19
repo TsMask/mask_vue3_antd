@@ -33,7 +33,7 @@
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="状态">
+            <a-form-item label="状态" name="status">
               <a-select
                 v-model:value="queryParams.status"
                 allow-clear
@@ -48,11 +48,11 @@
               <a-space :size="8">
                 <a-button type="primary" @click.prevent="getList">
                   <template #icon><SearchOutlined /></template>
-                  搜 索</a-button
+                  搜索</a-button
                 >
                 <a-button type="default" @click.prevent="fnResetQuery">
                   <template #icon><ClearOutlined /></template>
-                  重 置</a-button
+                  重置</a-button
                 >
               </a-space>
             </a-form-item>
@@ -66,7 +66,7 @@
       <template #title>
         <a-button type="primary">
           <template #icon><PlusOutlined /></template>
-          新 增
+          新增
         </a-button>
       </template>
 
@@ -138,7 +138,7 @@
           <template v-if="column.key === 'menuId'">
             <a-button type="link" @click.prevent="fnForceLogout(record)">
               <template #icon><LogoutOutlined /></template>
-              强 退</a-button
+              强退</a-button
             >
           </template>
         </template>
@@ -307,14 +307,15 @@ function fnResetQuery() {
 }
 
 /** 查询菜单列表 */
-async function getList() {
+function getList() {
   tableState.loading = true;
-  const res = await listMenu(queryParams);
-  if (res.code === 200 && Array.isArray(res.data)) {
-    expandedRowKeys = res.data.map(item => item.menuId);
-    tableState.data = parseDataToTree(res.data, '0', 'menuId');
-    tableState.loading = false;
-  }
+  listMenu(queryParams).then(res => {
+    if (res.code === 200 && Array.isArray(res.data)) {
+      expandedRowKeys = res.data.map(item => item.menuId);
+      tableState.data = parseDataToTree(res.data, '0', 'menuId');
+      tableState.loading = false;
+    }
+  });
 }
 
 /** 强退按钮操作 */

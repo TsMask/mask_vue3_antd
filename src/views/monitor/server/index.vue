@@ -1,60 +1,315 @@
+<script setup lang="ts">
+import { useRoute } from 'vue-router';
+import { reactive, ref, onMounted } from 'vue';
+import { ColumnsType } from 'ant-design-vue/es/table';
+import { getServer } from '@/api/monitor/server';
+const route = useRoute();
+
+/**路由标题 */
+let title = ref<string>(route.meta.title ?? '标题');
+
+/**加载状态 */
+let loading = ref<boolean>(true);
+
+/**磁盘信息表格字段列 */
+let diskTableColumns: ColumnsType = [
+  {
+    title: '路径盘符',
+    dataIndex: 'target',
+    align: 'center',
+  },
+  {
+    title: '总大小',
+    dataIndex: 'size',
+    align: 'center',
+  },
+
+  {
+    title: '剩余大小',
+    dataIndex: 'avail',
+    align: 'center',
+  },
+  {
+    title: '已使用大小',
+    dataIndex: 'used',
+    align: 'center',
+  },
+  {
+    title: '空间使用率(%)',
+    dataIndex: 'pcent',
+    align: 'center',
+  },
+];
+
+/**数据参数类型 */
+type ServerType = {
+  /**CPU */
+  cpu: Record<string, string | number>;
+  /**磁盘 */
+  disk: Record<string, string>[];
+  /**内存 */
+  memory: Record<string, string | number>;
+  /**网络 */
+  network: Record<string, string>;
+  /**项目 */
+  project: Record<string, string>;
+  /**系统 */
+  system: Record<string, string | number>;
+  /**时间 */
+  time: Record<string, string | number>;
+};
+
+let server: ServerType = reactive({
+  cpu: {},
+  disk: [],
+  memory: {},
+  network: {},
+  project: {},
+  system: {},
+  time: {},
+});
+
+onMounted(() => {
+  getServer().then(res => {
+    if (res.code === 200 && res.data) {
+      // CPU信息
+      let cpu = res.data.cpu;
+      cpu.coreUsed = cpu.coreUsed.map((item: string) => item).join(' / ');
+      server.cpu = cpu;
+      // 磁盘信息
+      server.disk = res.data.disk;
+      // 内存信息
+      server.memory = res.data.memory;
+      // 网络信息
+      server.network = res.data.network;
+      // 项目信息
+      server.project = res.data.project;
+      // 系统信息
+      server.system = res.data.system;
+      // 时间信息
+      server.time = res.data.time;
+      // 加载状态
+      loading.value = false;
+    }
+  });
+});
+</script>
+
 <template>
-  <page-container :title="route.meta.title">
+  <page-container :title="title" :loading="loading">
     <template #content>
-      <a-descriptions size="small" :column="2">
-        <a-descriptions-item label="创建人">张三</a-descriptions-item>
-        <a-descriptions-item label="联系方式">
-          <a>421421</a>
-        </a-descriptions-item>
-        <a-descriptions-item label="创建时间">2017-01-10</a-descriptions-item>
-        <a-descriptions-item label="更新时间">2017-10-10</a-descriptions-item>
-        <a-descriptions-item label="备注"
-          >中国浙江省杭州市西湖区古翠路</a-descriptions-item
-        >
-      </a-descriptions>
-    </template>
-    <template #extra>
-      <a-button key="3">操作</a-button>
-      <a-button key="2">操作</a-button>
-      <a-button key="1" type="primary">主操作</a-button>
-    </template>
-    <template #extraContent>
-      <a-space>
-        <a-statistic title="Feedback" :value="1128">
-          <template #prefix>
-            <LikeOutlined />
-          </template>
-        </a-statistic>
-        <a-statistic title="Unmerged" :value="93" suffix="/ 100" />
-      </a-space>
+      <a-typography-paragraph> 服务器与应用程序的信息 </a-typography-paragraph>
     </template>
 
-    <!-- 主内容区 -->
-    <a-card title="Project Version" style="height: 120vh">
-      {{ network }}
+    <a-card
+      title="项目信息"
+      :bordered="false"
+      :body-style="{ marginBottom: '24px', padding: 0 }"
+    >
+      <a-descriptions
+        size="middle"
+        layout="horizontal"
+        :label-style="{ width: '140px' }"
+        :bordered="true"
+        :column="{ lg: 2, md: 2, xs: 1 }"
+      >
+        <a-descriptions-item label="项目名称">
+          {{ server.project.name }}
+        </a-descriptions-item>
+        <a-descriptions-item label="项目版本">
+          {{ server.project.version }}
+        </a-descriptions-item>
+
+        <a-descriptions-item label="项目环境">
+          {{ server.project.env }}
+        </a-descriptions-item>
+        <a-descriptions-item label="项目路径">
+          {{ server.project.appDir }}
+        </a-descriptions-item>
+        <a-descriptions-item label="项目依赖">
+          <a-tag
+            v-for="(value, name) in server.project.dependencies"
+            :key="name"
+          >
+            {{ name }}:{{ value }}
+          </a-tag>
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-card>
+
+    <a-card
+      title="系统信息"
+      :bordered="false"
+      :body-style="{ marginBottom: '24px', padding: 0 }"
+    >
+      <a-descriptions
+        size="middle"
+        layout="horizontal"
+        :label-style="{ width: '140px' }"
+        :column="{ lg: 2, md: 2, xs: 1 }"
+        :bordered="true"
+      >
+        <a-descriptions-item label="进程PID号">
+          {{ server.system.processId }}
+        </a-descriptions-item>
+        <a-descriptions-item label="运行平台">
+          {{ server.system.platform }}
+        </a-descriptions-item>
+        <a-descriptions-item label="Node版本">
+          {{ server.system.node }}
+        </a-descriptions-item>
+        <a-descriptions-item label="V8版本">
+          {{ server.system.v8 }}
+        </a-descriptions-item>
+        <a-descriptions-item label="系统架构">
+          {{ server.system.arch }}
+        </a-descriptions-item>
+        <a-descriptions-item label="系统平台">
+          {{ server.system.uname }}
+        </a-descriptions-item>
+        <a-descriptions-item label="系统发行版本">
+          {{ server.system.release }}
+        </a-descriptions-item>
+        <a-descriptions-item label="主机名称">
+          {{ server.system.hostname }}
+        </a-descriptions-item>
+        <a-descriptions-item label="主机用户目录">
+          {{ server.system.homeDir }}
+        </a-descriptions-item>
+        <a-descriptions-item label="项目路径">
+          {{ server.system.cmd }}
+        </a-descriptions-item>
+        <a-descriptions-item label="执行命令">
+          {{ server.system.execCommand }}
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-card>
+
+    <a-card
+      title="CPU信息"
+      :bordered="false"
+      :body-style="{ marginBottom: '24px', padding: 0 }"
+    >
+      <a-descriptions
+        size="middle"
+        layout="horizontal"
+        :label-style="{ width: '140px' }"
+        :column="1"
+        :bordered="true"
+      >
+        <a-descriptions-item label="型号">
+          {{ server.cpu.model }}
+        </a-descriptions-item>
+        <a-descriptions-item label="速率Hz">
+          {{ server.cpu.speed }}
+        </a-descriptions-item>
+        <a-descriptions-item label="核心数">
+          {{ server.cpu.core }}
+        </a-descriptions-item>
+        <a-descriptions-item label="使用率(%)">
+          {{ server.cpu.coreUsed }}
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-card>
+
+    <a-card
+      title="内存信息"
+      :bordered="false"
+      :body-style="{ marginBottom: '24px', padding: 0 }"
+    >
+      <a-descriptions
+        size="middle"
+        layout="horizontal"
+        :label-style="{ width: '140px' }"
+        :column="{ lg: 2, md: 2, xs: 1 }"
+        :bordered="true"
+      >
+        <a-descriptions-item label="总内存">
+          {{ server.memory.totalmem }}
+        </a-descriptions-item>
+        <a-descriptions-item label="剩余内存">
+          {{ server.memory.freemem }}
+        </a-descriptions-item>
+        <a-descriptions-item label="使用率(%)">
+          {{ server.memory.usage }}
+        </a-descriptions-item>
+        <a-descriptions-item label="进程总内存">
+          {{ server.memory.rss }}
+        </a-descriptions-item>
+        <a-descriptions-item label="堆的总大小">
+          {{ server.memory.heapTotal }}
+        </a-descriptions-item>
+        <a-descriptions-item label="堆已分配">
+          {{ server.memory.heapUsed }}
+        </a-descriptions-item>
+        <a-descriptions-item label="链接库占用">
+          {{ server.memory.external }}
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-card>
+
+    <a-card
+      title="时间信息"
+      :bordered="false"
+      :body-style="{ marginBottom: '24px', padding: 0 }"
+    >
+      <a-descriptions
+        size="middle"
+        layout="horizontal"
+        :label-style="{ width: '140px' }"
+        :column="{ lg: 2, md: 2, xs: 1 }"
+        :bordered="true"
+      >
+        <a-descriptions-item label="时区">
+          {{ server.time.timezone }}
+        </a-descriptions-item>
+        <a-descriptions-item label="时间">
+          {{ server.time.current }}
+        </a-descriptions-item>
+        <a-descriptions-item label="时区名称">
+          {{ server.time.timezoneName }}
+        </a-descriptions-item>
+        <a-descriptions-item label="主机启动时间">
+          {{ server.time.uptime }}
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-card>
+
+    <a-card
+      title="网络信息"
+      :bordered="false"
+      :body-style="{ marginBottom: '24px', padding: 0 }"
+    >
+      <a-descriptions
+        size="middle"
+        layout="horizontal"
+        :label-style="{ width: '140px' }"
+        :column="1"
+        :bordered="true"
+      >
+        <a-descriptions-item
+          :label="name"
+          v-for="(value, name) in server.network"
+          :key="name"
+        >
+          {{ value }}
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-card>
+
+    <a-card title="磁盘信息" :bordered="false" :body-style="{ padding: 0 }">
+      <a-table
+        class="disk"
+        row-key="target"
+        size="middle"
+        :columns="diskTableColumns"
+        :data-source="server.disk"
+        :pagination="false"
+        :scroll="{ x: true }"
+      >
+      </a-table>
     </a-card>
   </page-container>
 </template>
 
-<script setup lang="ts">
-import { getServer } from '@/api/monitor/server';
-import { LikeOutlined } from '@ant-design/icons-vue';
-import { useRoute } from 'vue-router';
-import { ref } from 'vue';
-const route = useRoute();
-
-const network = ref('');
-const server = ref([]);
-console.log(route.query)
-function getList() {
-  getServer().then(response => {
-    server.value = response.data;
-    // 服务IP
-    const networkKeys = Object.keys(response.data.network).sort();
-    const networkKey = networkKeys.length > 1 ? networkKeys[1] : networkKeys[0];
-    network.value = response.data.network[networkKey];
-  });
-}
-
-getList();
-</script>
+<style lang="less" scoped></style>

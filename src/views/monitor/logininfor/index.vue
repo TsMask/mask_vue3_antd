@@ -1,142 +1,3 @@
-<template>
-  <page-container :title="title">
-    <template #content>
-      <a-descriptions size="small" :column="2">
-        <a-descriptions-item label="创建人">张三</a-descriptions-item>
-        <a-descriptions-item label="联系方式">
-          <a>421421</a>
-        </a-descriptions-item>
-        <a-descriptions-item label="创建时间">2017-01-10</a-descriptions-item>
-        <a-descriptions-item label="更新时间">2017-10-10</a-descriptions-item>
-        <a-descriptions-item label="备注"
-          >中国浙江省杭州市西湖区古翠路</a-descriptions-item
-        >
-      </a-descriptions>
-    </template>
-    <template #extra>
-      <a-button key="3">操作</a-button>
-      <a-button key="2">操作</a-button>
-      <a-button key="1" type="primary">主操作</a-button>
-    </template>
-    <template #extraContent>
-      <a-space>
-        <a-statistic title="Feedback" :value="1128">
-          <template #prefix>
-            <LikeOutlined />
-          </template>
-        </a-statistic>
-        <a-statistic title="Unmerged" :value="93" suffix="/ 100" />
-      </a-space>
-    </template>
-
-    <!-- 表格搜索栏 -->
-    <div class="table-search">
-      <a-form
-        :model="queryParams"
-        name="table-search"
-        layout="horizontal"
-        autocomplete="off"
-      >
-        <a-row :gutter="16">
-          <a-col :span="6">
-            <a-form-item label="用户名称" name="userName">
-              <a-input
-                v-model:value="queryParams.userName"
-                allow-clear
-                placeholder="请输入用户名称"
-              ></a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :span="6">
-            <a-form-item label="登录主机" name="ipaddr">
-              <a-input
-                v-model:value="queryParams.ipaddr"
-                allow-clear
-                placeholder="请输入登录主机"
-              ></a-input> </a-form-item
-          ></a-col>
-          <a-col :span="12">
-            <a-form-item>
-              <a-space :size="8">
-                <a-button type="primary" @click.prevent="getList">
-                  <template #icon><SearchOutlined /></template>
-                  搜 索</a-button
-                >
-                <a-button type="default" @click.prevent="fnResetQuery">
-                  <template #icon><ClearOutlined /></template>
-                  重 置</a-button
-                >
-              </a-space>
-            </a-form-item>
-          </a-col>
-        </a-row>
-      </a-form>
-    </div>
-
-    <a-card :body-style="{ padding: '0px' }">
-      <!-- 表格功能栏 -->
-      <div class="table-toolbar">
-        <div class="table-toolbar-left">
-          <h2>{{ title }}</h2>
-        </div>
-        <div class="table-toolbar-right">
-          <a-space :size="8" align="center">
-            <a-tooltip>
-              <template #title>表格斑马纹</template>
-              <a-switch
-                v-model:checked="tableState.striped"
-                checked-children="开"
-                un-checked-children="关"
-                size="small"
-              />
-            </a-tooltip>
-            <a-tooltip>
-              <template #title>刷新</template>
-              <a-button type="text" @click.prevent="getList">
-                <template #icon><ReloadOutlined /></template>
-              </a-button>
-            </a-tooltip>
-            <a-tooltip>
-              <template #title>密度</template>
-              <a-dropdown :trigger="['click']">
-                <a-button type="text">
-                  <template #icon><ColumnHeightOutlined /></template>
-                </a-button>
-                <template #overlay>
-                  <a-menu @click="fnTableSize">
-                    <a-menu-item key="default">默认</a-menu-item>
-                    <a-menu-item key="middle">中等</a-menu-item>
-                    <a-menu-item key="small">紧凑</a-menu-item>
-                  </a-menu>
-                </template>
-              </a-dropdown>
-            </a-tooltip>
-          </a-space>
-        </div>
-      </div>
-      <!-- 表格列表 -->
-      <a-table
-        class="table"
-        :columns="tableColumns"
-        :loading="tableState.loading"
-        :data-source="tableState.data"
-        :size="tableState.size"
-        :row-class-name="fnTableStriped"
-        :pagination="tablePagination"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'tokenId'">
-            <a-button type="link" @click.prevent="fnForceLogout(record)">
-              <template #icon><LogoutOutlined /></template>
-              强 退</a-button
-            >
-          </template>
-        </template>
-      </a-table>
-    </a-card>
-  </page-container>
-</template>
-
 <script setup lang="ts">
 import {
   LogoutOutlined,
@@ -144,15 +5,14 @@ import {
   ColumnHeightOutlined,
   SearchOutlined,
   ReloadOutlined,
-  LikeOutlined,
 } from '@ant-design/icons-vue';
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted } from 'vue';
-import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
-import { SizeType } from 'ant-design-vue/lib/config-provider';
-import { forceLogout, list } from '@/api/monitor/online';
 import { message, Modal } from 'ant-design-vue';
-import { ColumnsType } from 'ant-design-vue/lib/table';
+import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
+import { SizeType } from 'ant-design-vue/es/config-provider';
+import { ColumnsType } from 'ant-design-vue/es/table';
+import { forceLogout, listOnline } from '@/api/monitor/online';
 import { parseDateToStr, YYYY_MM_DD_HH_MM_SS } from '@/utils/DateUtils';
 const route = useRoute();
 
@@ -175,6 +35,8 @@ type TabeStateType = {
   size: SizeType;
   /**斑马纹 */
   striped: boolean;
+  /**搜索栏 */
+  seached: boolean;
   /**记录数据 */
   data: object[];
 };
@@ -184,11 +46,12 @@ let tableState: TabeStateType = reactive({
   loading: false,
   size: 'middle',
   striped: false,
+  seached: false,
   data: [],
 });
 
 /**表格字段列 */
-const tableColumns: ColumnsType = [
+let tableColumns: ColumnsType = [
   {
     title: '序号',
     dataIndex: 'num',
@@ -294,18 +157,18 @@ function fnResetQuery() {
 }
 
 /** 查询在线用户列表 */
-async function getList() {
+function getList() {
   tableState.loading = true;
-  const res = await list(queryParams);
-  if (res.code === 200) {
-    tableState.data = res.rows;
-    tableState.loading = false;
-  }
+  listOnline(queryParams).then(res => {
+    if (res.code === 200) {
+      tableState.data = res.rows;
+      tableState.loading = false;
+    }
+  });
 }
 
 /** 强退按钮操作 */
 function fnForceLogout(row: Record<string, string>) {
-  // forceLogout(row.tokenId);
   Modal.confirm({
     title: '提示',
     content: `是否确认强退用户名称为 ${row.userName} 的用户?`,
@@ -315,7 +178,6 @@ function fnForceLogout(row: Record<string, string>) {
       await getList();
     },
     onCancel() {},
-    class: 'test',
   });
 }
 
@@ -324,20 +186,146 @@ onMounted(() => {
 });
 </script>
 
-<style lang="less" scoped>
-.table-search {
-  margin-bottom: 16px;
-  padding: 24px 24px 0;
-  background: #fff;
-}
-.table-toolbar {
-  display: flex;
-  justify-content: space-between;
-  height: 64px;
-  padding: 0 24px;
-  line-height: 64px;
-}
+<template>
+  <page-container :title="title">
+    <template #content>
+      <a-typography-paragraph>
+        登录用户
+        <a-typography-text code>Token</a-typography-text>
+        授权标识记录，存储在
+        <a-typography-text code>Redis</a-typography-text>
+        中，可撤销对用户的授权，拒绝用户请求并强制退出。
+      </a-typography-paragraph>
+    </template>
 
+    <a-card
+      v-show="tableState.seached"
+      :bordered="false"
+      :body-style="{ marginBottom: '24px', paddingBottom: 0 }"
+    >
+      <!-- 表格搜索栏 -->
+      <a-form
+        :model="queryParams"
+        name="table-search"
+        layout="horizontal"
+        autocomplete="off"
+      >
+        <a-row :gutter="16">
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="用户名称" name="userName">
+              <a-input
+                v-model:value="queryParams.userName"
+                allow-clear
+                placeholder="请输入用户名称"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="登录主机" name="ipaddr">
+              <a-input
+                v-model:value="queryParams.ipaddr"
+                allow-clear
+                placeholder="请输入登录主机"
+              ></a-input> </a-form-item
+          ></a-col>
+          <a-col :lg="12" :md="24" :xs="24">
+            <a-form-item>
+              <a-space :size="8">
+                <a-button type="primary" @click.prevent="getList">
+                  <template #icon><SearchOutlined /></template>
+                  搜 索</a-button
+                >
+                <a-button type="default" @click.prevent="fnResetQuery">
+                  <template #icon><ClearOutlined /></template>
+                  重 置</a-button
+                >
+              </a-space>
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+    </a-card>
+
+    <a-card :bordered="false" :body-style="{ padding: '0px' }">
+      <!-- 插槽-卡片左侧侧 -->
+      <template #title>
+        {{ title }}
+      </template>
+
+      <!-- 插槽-卡片右侧 -->
+      <template #extra>
+        <a-space :size="8" align="center">
+          <a-tooltip>
+            <template #title>搜索栏</template>
+            <a-switch
+              v-model:checked="tableState.seached"
+              checked-children="显"
+              un-checked-children="隐"
+              size="small"
+            />
+          </a-tooltip>
+          <a-tooltip>
+            <template #title>表格斑马纹</template>
+            <a-switch
+              v-model:checked="tableState.striped"
+              checked-children="开"
+              un-checked-children="关"
+              size="small"
+            />
+          </a-tooltip>
+          <a-tooltip>
+            <template #title>刷新</template>
+            <a-button type="text" @click.prevent="getList">
+              <template #icon><ReloadOutlined /></template>
+            </a-button>
+          </a-tooltip>
+          <a-tooltip>
+            <template #title>密度</template>
+            <a-dropdown trigger="click">
+              <a-button type="text">
+                <template #icon><ColumnHeightOutlined /></template>
+              </a-button>
+              <template #overlay>
+                <a-menu
+                  :selected-keys="[tableState.size as string]"
+                  @click="fnTableSize"
+                >
+                  <a-menu-item key="default">默认</a-menu-item>
+                  <a-menu-item key="middle">中等</a-menu-item>
+                  <a-menu-item key="small">紧凑</a-menu-item>
+                </a-menu>
+              </template>
+            </a-dropdown>
+          </a-tooltip>
+        </a-space>
+      </template>
+
+      <!-- 表格列表 -->
+      <a-table
+        class="table"
+        row-key="tokenId"
+        :columns="tableColumns"
+        :loading="tableState.loading"
+        :data-source="tableState.data"
+        :size="tableState.size"
+        :row-class-name="fnTableStriped"
+        :pagination="tablePagination"
+        :scroll="{ x: true }"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'tokenId'">
+            <a-button type="link" @click.prevent="fnForceLogout(record)">
+              <template #icon><LogoutOutlined /></template>
+              强 退</a-button
+            >
+          </template>
+        </template>
+      </a-table>
+    </a-card>
+  </page-container>
+</template>
+
+<style lang="less" scoped>
 .table :deep(.table-striped) td {
   background-color: #fafafa;
 }

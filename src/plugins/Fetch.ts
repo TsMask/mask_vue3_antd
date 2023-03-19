@@ -10,7 +10,7 @@ export type ResultType = {
   /**信息 */
   msg: string;
   /**数据 */
-  data?: object | object[] | string;
+  data?: any;
   /**未知属性 */
   [key: string]: any;
 };

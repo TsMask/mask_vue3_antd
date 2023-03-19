@@ -8,11 +8,11 @@ import {
 } from '@ant-design/icons-vue';
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted } from 'vue';
-import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
-import { SizeType } from 'ant-design-vue/lib/config-provider';
-import { forceLogout, listOnline } from '@/api/monitor/online';
 import { message, Modal } from 'ant-design-vue';
-import { ColumnsType } from 'ant-design-vue/lib/table';
+import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
+import { SizeType } from 'ant-design-vue/es/config-provider';
+import { ColumnsType } from 'ant-design-vue/es/table';
+import { forceLogout, listOnline } from '@/api/monitor/online';
 import { parseDateToStr, YYYY_MM_DD_HH_MM_SS } from '@/utils/DateUtils';
 const route = useRoute();
 
@@ -153,11 +153,11 @@ function fnResetQuery() {
   queryParams.userName = '';
   tablePagination.current = 1;
   tablePagination.pageSize = 20;
-  getList();
+  fnGetList();
 }
 
 /** 查询在线用户列表 */
-async function getList() {
+async function fnGetList() {
   tableState.loading = true;
   const res = await listOnline(queryParams);
   if (res.code === 200) {
@@ -174,7 +174,7 @@ function fnForceLogout(row: Record<string, string>) {
     async onOk() {
       await forceLogout(row.tokenId);
       message.success(`已强退用户 ${row.userName}`, 1.5);
-      await getList();
+      await fnGetList();
     },
     onCancel() {},
   });
@@ -230,13 +230,13 @@ onMounted(() => {
           <a-col :lg="12" :md="24" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="getList">
+                <a-button type="primary" @click.prevent="fnGetList">
                   <template #icon><SearchOutlined /></template>
-                  搜 索</a-button
+                  搜索</a-button
                 >
                 <a-button type="default" @click.prevent="fnResetQuery">
                   <template #icon><ClearOutlined /></template>
-                  重 置</a-button
+                  重置</a-button
                 >
               </a-space>
             </a-form-item>
@@ -274,7 +274,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip>
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="getList">
+            <a-button type="text" @click.prevent="fnGetList">
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
@@ -285,7 +285,10 @@ onMounted(() => {
                 <template #icon><ColumnHeightOutlined /></template>
               </a-button>
               <template #overlay>
-                <a-menu @click="fnTableSize">
+                <a-menu
+                  :selected-keys="[tableState.size as string]"
+                  @click="fnTableSize"
+                >
                   <a-menu-item key="default">默认</a-menu-item>
                   <a-menu-item key="middle">中等</a-menu-item>
                   <a-menu-item key="small">紧凑</a-menu-item>
@@ -312,7 +315,7 @@ onMounted(() => {
           <template v-if="column.key === 'tokenId'">
             <a-button type="link" @click.prevent="fnForceLogout(record)">
               <template #icon><LogoutOutlined /></template>
-              强 退</a-button
+              强退</a-button
             >
           </template>
         </template>
