@@ -1,224 +1,33 @@
-<template>
-  <page-container :title="route.meta.title">
-    <template #content>
-      <a-descriptions size="small" :column="2">
-        <a-descriptions-item label="创建人">张三</a-descriptions-item>
-        <a-descriptions-item label="联系方式">
-          <a>421421</a>
-        </a-descriptions-item>
-        <a-descriptions-item label="创建时间">2017-01-10</a-descriptions-item>
-        <a-descriptions-item label="更新时间">2017-10-10</a-descriptions-item>
-        <a-descriptions-item label="备注"
-          >中国浙江省杭州市西湖区古翠路</a-descriptions-item
-        >
-      </a-descriptions>
-    </template>
-    <template #extra>
-      <a-button key="3">操作</a-button>
-      <a-button key="2">操作</a-button>
-      <a-button key="1" type="primary">主操作</a-button>
-    </template>
-    <template #extraContent>
-      <a-space>
-        <a-statistic title="Feedback" :value="1128">
-          <template #prefix>
-            <LikeOutlined />
-          </template>
-        </a-statistic>
-        <a-statistic title="Unmerged" :value="93" suffix="/ 100" />
-      </a-space>
-    </template>
-
-    <div>
-      <!-- 表格搜索栏 -->
-      <div class="table-search">
-        <a-form
-          :model="queryParams"
-          name="table-search"
-          layout="horizontal"
-          autocomplete="off"
-        >
-          <a-row :gutter="16">
-            <a-col :span="6">
-              <a-form-item label="用户名称" name="userName">
-                <a-input
-                  v-model:value="queryParams.userName"
-                  allow-clear
-                  placeholder="请输入用户名称"
-                ></a-input>
-              </a-form-item>
-            </a-col>
-            <a-col :span="6">
-              <a-form-item label="登录地点" name="ipaddr">
-                <a-input
-                  v-model:value="queryParams.ipaddr"
-                  allow-clear
-                  placeholder="请输入登录地点"
-                ></a-input> </a-form-item
-            ></a-col>
-            <a-col :span="12">
-              <a-form-item>
-                <a-space :size="8">
-                  <a-button type="primary">
-                    <template #icon><SearchOutlined /></template>
-                    搜 索</a-button
-                  >
-                  <a-button type="default">
-                    <template #icon><ClearOutlined /></template>
-                    重 置</a-button
-                  >
-                </a-space>
-              </a-form-item>
-            </a-col>
-          </a-row>
-        </a-form>
-      </div>
-
-      <a-card :body-style="{ padding: '0px' }">
-        <!-- 表格功能栏 -->
-        <div class="table-toolbar">
-          <div class="table-toolbar-left">
-            <a-space :size="8">
-              <a-button type="primary">
-                <template #icon><SearchOutlined /></template>
-                新 建</a-button
-              >
-              <a-button type="default">
-                <template #icon><ReloadOutlined /></template>
-                重 置</a-button
-              >
-            </a-space>
-          </div>
-          <div class="table-toolbar-right">
-            <a-space :size="8" align="center">
-              <a-tooltip>
-                <template #title>表格斑马纹</template>
-                <a-switch
-                  v-model:checked="tableState.striped"
-                  checked-children="开"
-                  un-checked-children="关"
-                  size="small"
-                />
-              </a-tooltip>
-              <a-tooltip>
-                <template #title>刷新</template>
-                <a-button type="text">
-                  <template #icon><ReloadOutlined /></template>
-                </a-button>
-              </a-tooltip>
-              <a-tooltip>
-                <template #title>密度</template>
-                <a-dropdown :trigger="['click']">
-                  <a-button type="text">
-                    <template #icon><ColumnHeightOutlined /></template>
-                  </a-button>
-                  <template #overlay>
-                    <a-menu @click="fnTableSize">
-                      <a-menu-item key="default">默认</a-menu-item>
-                      <a-menu-item key="middle">中等</a-menu-item>
-                      <a-menu-item key="small">紧凑</a-menu-item>
-                    </a-menu>
-                  </template>
-                </a-dropdown>
-              </a-tooltip>
-            </a-space>
-          </div>
-        </div>
-        <!-- 表格列表 -->
-        <a-table
-          class="table"
-          :columns="tableColumns"
-          :loading="tableState.loading"
-          :data-source="tableState.data"
-          :size="tableState.size"
-          :row-class-name="
-            (_record, index) =>
-              tableState.striped && index % 2 === 1
-                ? 'table-striped'
-                : undefined
-          "
-          :pagination="{
-            pageSizeOptions: ['10', '20', '30', '40'],
-            defaultPageSize: queryParams.pageSize,
-            current: queryParams.pageNum,
-            pageSize: queryParams.pageSize,
-            hideOnSinglePage: true,
-            showQuickJumper: true,
-            showSizeChanger: true,
-            total: tableState.total,
-            showTotal: total => `总共 ${total} 条`,
-            onChange: fnPage,
-          }"
-        />
-      </a-card>
-    </div>
-  </page-container>
-</template>
-
 <script setup lang="ts">
-import { forceLogout, listOnline } from '@/api/monitor/online';
-
-import { message, TablePaginationConfig } from 'ant-design-vue';
 import {
+  LogoutOutlined,
   ClearOutlined,
   ColumnHeightOutlined,
   SearchOutlined,
   ReloadOutlined,
-  LikeOutlined,
 } from '@ant-design/icons-vue';
 import { useRoute } from 'vue-router';
-import { reactive, ref } from 'vue';
-import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
-import { SizeType } from 'ant-design-vue/lib/config-provider';
+import { reactive, ref, onMounted } from 'vue';
+import { message, Modal } from 'ant-design-vue';
+import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
+import { SizeType } from 'ant-design-vue/es/config-provider';
+import { ColumnsType } from 'ant-design-vue/es/table';
+import { forceLogout, listOnline } from '@/api/monitor/online';
+import { parseDateToStr } from '@/utils/DateUtils';
 const route = useRoute();
 
-function fnTableSize({ key }: MenuInfo) {
-  tableState.size = key as SizeType;
-}
+/**路由标题 */
+let title = ref<string>(route.meta.title ?? '标题');
 
-const tableColumns = [
-  {
-    title: '序号',
-    dataIndex: 'name',
-  },
-  {
-    title: '会话编号',
-    dataIndex: 'tokenId',
-  },
-  {
-    title: '用户名称',
-    dataIndex: 'userName',
-  },
-  {
-    title: '所属部门',
-    dataIndex: 'deptName',
-  },
-  {
-    title: '主机',
-    dataIndex: 'ipaddr',
-  },
-  {
-    title: '登录地点',
-    dataIndex: 'loginLocation',
-  },
-  {
-    title: '操作系统',
-    dataIndex: 'os',
-  },
-  {
-    title: '浏览器',
-    dataIndex: 'browser',
-  },
-  {
-    title: '登录时间',
-    dataIndex: 'loginTime',
-  },
-  {
-    title: '操作',
-    dataIndex: 'loginTime',
-  },
-];
+/**查询参数 */
+let queryParams = reactive({
+  /**登录主机 */
+  ipaddr: '',
+  /**用户名称 */
+  userName: '',
+});
 
+/**表格状态类型 */
 type TabeStateType = {
   /**加载等待 */
   loading: boolean;
@@ -226,10 +35,10 @@ type TabeStateType = {
   size: SizeType;
   /**斑马纹 */
   striped: boolean;
+  /**搜索栏 */
+  seached: boolean;
   /**记录数据 */
   data: object[];
-  /**总记录数 */
-  total: number;
 };
 
 /**表格状态 */
@@ -237,86 +46,282 @@ let tableState: TabeStateType = reactive({
   loading: false,
   size: 'middle',
   striped: false,
+  seached: false,
   data: [],
+});
+
+/**表格字段列 */
+let tableColumns: ColumnsType = [
+  {
+    title: '序号',
+    dataIndex: 'num',
+    width: '50px',
+    align: 'center',
+    customRender(opt) {
+      const idxNum = (tablePagination.current - 1) * tablePagination.pageSize;
+      return idxNum + opt.index + 1;
+    },
+  },
+  {
+    title: '会话编号',
+    dataIndex: 'tokenId',
+    align: 'center',
+  },
+  {
+    title: '用户名称',
+    dataIndex: 'userName',
+    align: 'center',
+  },
+  {
+    title: '所属部门',
+    dataIndex: 'deptName',
+    align: 'center',
+  },
+  {
+    title: '登录主机',
+    dataIndex: 'ipaddr',
+    align: 'center',
+  },
+  {
+    title: '登录地点',
+    dataIndex: 'loginLocation',
+    align: 'center',
+  },
+  {
+    title: '操作系统',
+    dataIndex: 'os',
+    align: 'center',
+  },
+  {
+    title: '浏览器',
+    dataIndex: 'browser',
+    align: 'center',
+  },
+  {
+    title: '登录时间',
+    dataIndex: 'loginTime',
+    align: 'center',
+    customRender(opt) {
+      return parseDateToStr(+opt.value);
+    },
+  },
+  {
+    title: '操作',
+    key: 'tokenId',
+    align: 'center',
+  },
+];
+
+/**表格分页器参数 */
+let tablePagination = {
+  /**当前页数 */
+  current: 1,
+  /**每页条数 */
+  pageSize: 20,
+  /**默认的每页条数 */
+  defaultPageSize: 20,
+  /**指定每页可以显示多少条 */
+  pageSizeOptions: ['10', '20', '50', '100'],
+  /**只有一页时是否隐藏分页器 */
+  hideOnSinglePage: true,
+  /**是否可以快速跳转至某页 */
+  showQuickJumper: true,
+  /**是否可以改变 pageSize */
+  showSizeChanger: true,
+  /**数据总数 */
   total: 0,
-  rows: [],
-});
+  showTotal: (total: number) => `总共 ${total} 条`,
+  onChange: (page: number, pageSize: number) => {
+    tablePagination.current = page;
+    tablePagination.pageSize = pageSize;
+  },
+};
 
-/**查询参数 */
-let queryParams = reactive({
-  /**登录地点 */
-  ipaddr: '',
-  /**用户名称 */
-  userName: '',
-  /**页数 */
-  pageNum: 1,
-  /**单页记录数 */
-  pageSize: 1,
-});
-
-/** 搜索按钮操作 */
-function fnPage(page: number, pageSize: number) {
-  queryParams.pageNum = page;
-  queryParams.pageSize = pageSize;
-  getList();
+/**表格紧凑型变更操作 */
+function fnTableSize({ key }: MenuInfo) {
+  tableState.size = key as SizeType;
 }
 
-/** 搜索按钮操作 */
-function handleQuery() {
-  queryParams.pageNum = 1;
-  getList();
+/**表格斑马纹 */
+function fnTableStriped(_record: unknown, index: number) {
+  return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
-/** 重置按钮操作 */
-function resetQuery() {
-  queryParams = reactive({
-    ipaddr: '',
-    userName: '',
-    pageNum: 1,
-    pageSize: 20,
+/**查询参数重置 */
+function fnQueryReset() {
+  queryParams.ipaddr = '';
+  queryParams.userName = '';
+  tablePagination.current = 1;
+  tablePagination.pageSize = 20;
+  fnGetList();
+}
+
+/** 查询在线用户列表 */
+function fnGetList() {
+  tableState.loading = true;
+  listOnline(queryParams).then(res => {
+    if (res.code === 200) {
+      tableState.data = res.rows;
+      tableState.loading = false;
+    }
   });
-  handleQuery();
 }
 
 /** 强退按钮操作 */
-function handleForceLogout(row: Record<string, string>) {
-  forceLogout(row.tokenId);
-}
-
-/** 查询登录日志列表 */
-function getList() {
-  tableState.loading = true;
-  listOnline(queryParams).then(res => {
-    tableState.data = res.rows;
-    // tableState.data = res.rows.slice(
-    //   (queryParams.pageNum - 1) * queryParams.pageSize,
-    //   queryParams.pageNum * queryParams.pageSize
-    // );
-    tableState.loading = false;
+function fnForceLogout(row: Record<string, string>) {
+  Modal.confirm({
+    title: '提示',
+    content: `确认强退用户名称为 ${row.userName} 的用户?`,
+    onOk() {
+      forceLogout(row.tokenId).finally(() => {
+        message.success(`已强退用户 ${row.userName}`, 1.5);
+      });
+      fnGetList();
+    },
+    onCancel() {},
   });
 }
 
-getList();
+onMounted(() => {
+  fnGetList();
+});
 </script>
 
-<style lang="less" scoped>
-.table-search {
-  margin-bottom: 16px;
-  padding: 24px 24px 0;
-  background: #fff;
-}
-.table-toolbar {
-  display: flex;
-  justify-content: space-between;
-  height: 64px;
-  padding: 0 24px;
-  line-height: 64px;
-  // &-left{
-  //   display: flex;
-  // justify-content: flex-start;
-  // }
-}
+<template>
+  <page-container :title="title">
+    <template #content>
+      <a-typography-paragraph>
+        登录用户
+        <a-typography-text code>Token</a-typography-text>
+        授权标识记录，存储在
+        <a-typography-text code>Redis</a-typography-text>
+        中，可撤销对用户的授权，拒绝用户请求并强制退出。
+      </a-typography-paragraph>
+    </template>
 
+    <a-card
+      v-show="tableState.seached"
+      :bordered="false"
+      :body-style="{ marginBottom: '24px', paddingBottom: 0 }"
+    >
+      <!-- 表格搜索栏 -->
+      <a-form :model="queryParams" name="queryParams" layout="horizontal">
+        <a-row :gutter="16">
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="用户名称" name="userName">
+              <a-input
+                v-model:value="queryParams.userName"
+                allow-clear
+                placeholder="请输入用户名称"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="登录主机" name="ipaddr">
+              <a-input
+                v-model:value="queryParams.ipaddr"
+                allow-clear
+                placeholder="请输入登录主机"
+              ></a-input> </a-form-item
+          ></a-col>
+          <a-col :lg="12" :md="24" :xs="24">
+            <a-form-item>
+              <a-space :size="8">
+                <a-button type="primary" @click.prevent="fnGetList">
+                  <template #icon><SearchOutlined /></template>
+                  搜索
+                </a-button>
+                <a-button type="default" @click.prevent="fnQueryReset">
+                  <template #icon><ClearOutlined /></template>
+                  重置
+                </a-button>
+              </a-space>
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+    </a-card>
+
+    <a-card :bordered="false" :body-style="{ padding: '0px' }">
+      <!-- 插槽-卡片左侧侧 -->
+      <template #title>
+        {{ title }}
+      </template>
+
+      <!-- 插槽-卡片右侧 -->
+      <template #extra>
+        <a-space :size="8" align="center">
+          <a-tooltip>
+            <template #title>搜索栏</template>
+            <a-switch
+              v-model:checked="tableState.seached"
+              checked-children="显"
+              un-checked-children="隐"
+              size="small"
+            />
+          </a-tooltip>
+          <a-tooltip>
+            <template #title>表格斑马纹</template>
+            <a-switch
+              v-model:checked="tableState.striped"
+              checked-children="开"
+              un-checked-children="关"
+              size="small"
+            />
+          </a-tooltip>
+          <a-tooltip>
+            <template #title>刷新</template>
+            <a-button type="text" @click.prevent="fnGetList">
+              <template #icon><ReloadOutlined /></template>
+            </a-button>
+          </a-tooltip>
+          <a-tooltip>
+            <template #title>密度</template>
+            <a-dropdown trigger="click">
+              <a-button type="text">
+                <template #icon><ColumnHeightOutlined /></template>
+              </a-button>
+              <template #overlay>
+                <a-menu
+                  :selected-keys="[tableState.size as string]"
+                  @click="fnTableSize"
+                >
+                  <a-menu-item key="default">默认</a-menu-item>
+                  <a-menu-item key="middle">中等</a-menu-item>
+                  <a-menu-item key="small">紧凑</a-menu-item>
+                </a-menu>
+              </template>
+            </a-dropdown>
+          </a-tooltip>
+        </a-space>
+      </template>
+
+      <!-- 表格列表 -->
+      <a-table
+        class="table"
+        row-key="tokenId"
+        :columns="tableColumns"
+        :loading="tableState.loading"
+        :data-source="tableState.data"
+        :size="tableState.size"
+        :row-class-name="fnTableStriped"
+        :pagination="tablePagination"
+        :scroll="{ x: true }"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'tokenId'">
+            <a-button type="link" @click.prevent="fnForceLogout(record)">
+              <template #icon><LogoutOutlined /></template>
+              强退
+            </a-button>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
+  </page-container>
+</template>
+
+<style lang="less" scoped>
 .table :deep(.table-striped) td {
   background-color: #fafafa;
 }

@@ -8,17 +8,17 @@ import {
   QqOutlined,
 } from '@ant-design/icons-vue';
 import { GlobalFooter } from '@ant-design-vue/pro-layout';
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import useUserStore from '@/store/modules/user';
 import { getCaptchaImage } from '@/api/login';
 import { useRouter } from 'vue-router';
 const router = useRouter();
 
 /**Tab默认激活 */
-const tabActiveKey = ref<'username' | 'phonenumber'>('username');
+let tabActiveKey = ref<'username' | 'phonenumber'>('username');
 
 /**Tab表单属性 */
-const tabForm = reactive({
+let tabForm = reactive({
   /**账号 */
   username: 'admin',
   /**密码 */
@@ -32,7 +32,7 @@ const tabForm = reactive({
 });
 
 /**验证码状态 */
-const captchaState = reactive({
+let captchaState = reactive({
   /**验证码开关 */
   enabled: true,
   /**验证码uuid */
@@ -48,7 +48,7 @@ const captchaState = reactive({
 });
 
 /**表单验证通过 */
-async function onFinish() {
+function fnFinish() {
   tabForm.click = true;
   let form = {};
   // 账号密码登录
@@ -69,31 +69,37 @@ async function onFinish() {
     };
   }
   // 发送请求
-  const res = await useUserStore().fnLogin(form);
-  if (res.code !== 500) {
-    router.push({ name: 'Index' });
-  } else {
-    tabForm.click = false;
-    // 刷新验证码
-    if (captchaState.enabled) {
-      await getCaptcha();
-    }
-  }
+  useUserStore()
+    .fnLogin(form)
+    .then(res => {
+      if (res.code !== 500) {
+        router.push({ name: 'Index' });
+      } else {
+        tabForm.click = false;
+        // 刷新验证码
+        if (captchaState.enabled) {
+          fnGetCaptcha();
+        }
+      }
+    });
 }
 
 /**
  * 获取验证码
  */
-async function getCaptcha() {
-  const res = await getCaptchaImage();
-  captchaState.enabled = Boolean(res.captchaEnabled);
-  if (captchaState.enabled) {
-    captchaState.codeImg = res.img;
-    captchaState.uuid = res.uuid;
-  }
+function fnGetCaptcha() {
+  getCaptchaImage().then(res => {
+    captchaState.enabled = Boolean(res.captchaEnabled);
+    if (captchaState.enabled) {
+      captchaState.codeImg = res.img;
+      captchaState.uuid = res.uuid;
+    }
+  });
 }
 
-getCaptcha();
+onMounted(() => {
+  fnGetCaptcha();
+});
 </script>
 
 <template>
@@ -109,18 +115,13 @@ getCaptcha();
     </div>
 
     <div class="main">
-      <a-form
-        :model="tabForm"
-        name="normal_login"
-        class="login-form"
-        @finish="onFinish"
-      >
+      <a-form :model="tabForm" name="tabForm" @finish="fnFinish">
         <a-tabs
           v-model:activeKey="tabActiveKey"
           tabPosition="top"
           type="line"
-          centered
-          destroy-inactive-tab-pane
+          :centered="true"
+          :destroy-inactive-tab-pane="true"
         >
           <a-tab-pane key="username" tab="账号密码登录">
             <a-form-item
@@ -184,7 +185,7 @@ getCaptcha();
                   :preview="false"
                   :src="captchaState.codeImg"
                   :fallback="captchaState.codeImgFall"
-                  @click="getCaptcha"
+                  @click="fnGetCaptcha"
                 />
               </a-col>
             </a-row>
@@ -256,10 +257,11 @@ getCaptcha();
             <span>其他登录方式：</span>
             <a-tooltip title="微信扫一扫登录">
               <a-button shape="circle" size="middle" type="link">
-                <template #icon
-                  ><WechatOutlined
+                <template #icon>
+                  <WechatOutlined
                     :style="{ color: '#52c41a', fontSize: '18px' }"
-                /></template>
+                  />
+                </template>
               </a-button>
             </a-tooltip>
             <a-tooltip title="QQ扫码登录">

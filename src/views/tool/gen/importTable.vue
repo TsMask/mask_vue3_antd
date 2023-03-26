@@ -20,7 +20,7 @@
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        <el-button icon="Refresh" @click="fnQueryReset">重置</el-button>
       </el-form-item>
     </el-form>
     <el-row>
@@ -91,8 +91,8 @@ function handleQuery() {
   queryParams.pageNum = 1;
   getList();
 }
-/** 重置按钮操作 */
-function resetQuery() {
+/**查询参数重置 */
+function fnQueryReset() {
   proxy.resetForm("queryRef");
   handleQuery();
 }

@@ -36,7 +36,7 @@ const props = defineProps({
 });
 
 const item = computed(() => {
-  if (props.options && Array.isArray(props.options)) {
+  if (Array.isArray(props.options) && props.options.length > 0) {
     const option = props.options.find(
       item => Reflect.get(item as object[], props.valueField) === props.value
     );

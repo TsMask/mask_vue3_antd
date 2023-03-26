@@ -81,7 +81,7 @@ const FATCH_OPTIONS: OptionsType = {
 };
 
 /**请求前的拦截 */
-function beforeRequest(options: OptionsType): OptionsType | undefined {
+function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
   options.headers = Object.assign({}, options.headers);
   console.log('请求前的拦截', options);
 
@@ -118,7 +118,7 @@ function beforeRequest(options: OptionsType): OptionsType | undefined {
       ) {
         const message = '数据正在处理，请勿重复提交';
         console.warn(`[${url}]: ` + message);
-        return undefined;
+        return Promise.reject(message);
       } else {
         sessionSetJSON(CACHE_SESSION_FATCH, requestObj);
       }
@@ -133,6 +133,7 @@ function beforeRequest(options: OptionsType): OptionsType | undefined {
     const params = options.params;
     for (const key in params) {
       const value = params[key];
+      // 空字符或未定义的值不作为参数发送
       if (value == '' || value == undefined) continue;
       paramStr += `&${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
     }
@@ -146,7 +147,7 @@ function beforeRequest(options: OptionsType): OptionsType | undefined {
 }
 
 /**请求后的拦截 */
-function interceptorResponse(res: ResultType): ResultType {
+function interceptorResponse(res: ResultType): ResultType | Promise<any> {
   console.log('请求后的拦截', res);
   return res;
 }
@@ -162,9 +163,8 @@ export function request<T>(options: OptionsType): Promise<T> {
   options = Object.assign({}, FATCH_OPTIONS, options);
   // 检查请求拦截
   const beforeReq = beforeRequest(options);
-  if (beforeReq === undefined) {
-    // 返回一个处于pending状态中的Promise，来取消原promise，避免进入then()回调
-    return new Promise(() => {});
+  if (beforeReq instanceof Promise) {
+    return beforeReq;
   }
   options = beforeReq;
 
@@ -190,11 +190,11 @@ export function request<T>(options: OptionsType): Promise<T> {
           case 'json': // json格式数据
             res.json().then((data: ResultType) => {
               // 请求后的拦截
-              const beforeResponse = interceptorResponse(data);
-              if (beforeResponse === undefined) {
-                return reject(data);
+              const beforeRes = interceptorResponse(data);
+              if (beforeRes instanceof Promise) {
+                return beforeRes;
               } else {
-                return resolve(beforeResponse as T);
+                return resolve(beforeRes as T);
               }
             });
             break;

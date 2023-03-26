@@ -13,7 +13,7 @@ import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import { SizeType } from 'ant-design-vue/es/config-provider';
 import { ColumnsType } from 'ant-design-vue/es/table';
 import { forceLogout, listOnline } from '@/api/monitor/online';
-import { parseDateToStr, YYYY_MM_DD_HH_MM_SS } from '@/utils/DateUtils';
+import { parseDateToStr } from '@/utils/DateUtils';
 const route = useRoute();
 
 /**路由标题 */
@@ -102,7 +102,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'loginTime',
     align: 'center',
     customRender(opt) {
-      return parseDateToStr(opt.value, YYYY_MM_DD_HH_MM_SS);
+      return parseDateToStr(+opt.value);
     },
   },
   {
@@ -147,8 +147,8 @@ function fnTableStriped(_record: unknown, index: number) {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
-/** 重置按钮操作 */
-function fnResetQuery() {
+/**查询参数重置 */
+function fnQueryReset() {
   queryParams.ipaddr = '';
   queryParams.userName = '';
   tablePagination.current = 1;
@@ -157,31 +157,33 @@ function fnResetQuery() {
 }
 
 /** 查询在线用户列表 */
-async function fnGetList() {
+function fnGetList() {
   tableState.loading = true;
-  const res = await listOnline(queryParams);
-  if (res.code === 200) {
-    tableState.data = res.rows;
-    tableState.loading = false;
-  }
+  listOnline(queryParams).then(res => {
+    if (res.code === 200) {
+      tableState.data = res.rows;
+      tableState.loading = false;
+    }
+  });
 }
 
 /** 强退按钮操作 */
 function fnForceLogout(row: Record<string, string>) {
   Modal.confirm({
     title: '提示',
-    content: `是否确认强退用户名称为 ${row.userName} 的用户?`,
-    async onOk() {
-      await forceLogout(row.tokenId);
-      message.success(`已强退用户 ${row.userName}`, 1.5);
-      await fnGetList();
+    content: `确认强退用户名称为 ${row.userName} 的用户?`,
+    onOk() {
+      forceLogout(row.tokenId).finally(() => {
+        message.success(`已强退用户 ${row.userName}`, 1.5);
+      });
+      fnGetList();
     },
     onCancel() {},
   });
 }
 
 onMounted(() => {
-  fnResetQuery();
+  fnGetList();
 });
 </script>
 
@@ -203,12 +205,7 @@ onMounted(() => {
       :body-style="{ marginBottom: '24px', paddingBottom: 0 }"
     >
       <!-- 表格搜索栏 -->
-      <a-form
-        :model="queryParams"
-        name="table-search"
-        layout="horizontal"
-        autocomplete="off"
-      >
+      <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="用户名称" name="userName">
@@ -232,12 +229,12 @@ onMounted(() => {
               <a-space :size="8">
                 <a-button type="primary" @click.prevent="fnGetList">
                   <template #icon><SearchOutlined /></template>
-                  搜索</a-button
-                >
-                <a-button type="default" @click.prevent="fnResetQuery">
+                  搜索
+                </a-button>
+                <a-button type="default" @click.prevent="fnQueryReset">
                   <template #icon><ClearOutlined /></template>
-                  重置</a-button
-                >
+                  重置
+                </a-button>
               </a-space>
             </a-form-item>
           </a-col>
@@ -315,8 +312,8 @@ onMounted(() => {
           <template v-if="column.key === 'tokenId'">
             <a-button type="link" @click.prevent="fnForceLogout(record)">
               <template #icon><LogoutOutlined /></template>
-              强退</a-button
-            >
+              强退
+            </a-button>
           </template>
         </template>
       </a-table>

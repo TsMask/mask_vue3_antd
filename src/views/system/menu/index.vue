@@ -16,12 +16,7 @@
       :body-style="{ marginBottom: '24px', paddingBottom: 0 }"
     >
       <!-- 表格搜索栏 -->
-      <a-form
-        :model="queryParams"
-        name="table-search"
-        layout="horizontal"
-        autocomplete="off"
-      >
+      <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="菜单名称" name="menuName">

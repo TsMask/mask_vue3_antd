@@ -51,13 +51,13 @@ const useUserStore = defineStore('user', {
         this.avatar = defaultAvatar;
       }
 
-      console.error(this.avatar)
       // 验证返回的roles是否是一个非空数组
       if (res.roles && res.roles.length > 0) {
         this.roles = res.roles;
         this.permissions = res.permissions;
       } else {
         this.roles = ['ROLE_DEFAULT'];
+        this.permissions = [];
       }
 
       return res;

@@ -40,53 +40,62 @@ export default class Guard {
 
   /**全局前置守卫 */
   private beforeEach() {
-    this.router.beforeEach(async (to, from, next) => {
+    this.router.beforeEach((to, from, next) => {
       NProgress.start();
 
-      // 有Token
-      if (getToken()) {
-        // 设置标题
-        if (to.meta.title) {
-          useAppStore().setTitle(to.meta.title);
-        }
-        // 防止重复登录
-        if (to.path === '/login') {
-          next({ name: 'Index' });
-        } else {
-          const user = useUserStore();
-          // 判断当前用户是否有角色信息
-          if (user.roles && user.roles.length === 0) {
-            try {
-              // 获取用户信息
-              await user.fnGetInfo();
-              // 根据后台配置生成可访问的路由表
-              const accessRoutes = await useRouterStore().generateRoutes();
-              if (accessRoutes && accessRoutes.length !== 0) {
-                for (const route of accessRoutes) {
-                  // 动态添加可访问路由表，http开头会异常
-                  if (!validHttp(route.path)) {
-                    this.router.addRoute(route);
-                  }
-                }
-              }
-              next({ ...to, replace: true }); // hack方法 确保addRoutes已完成
-            } catch (e) {
-              console.error('路由添加异常 ', e);
-              await user.fnLogOut();
-              next({ name: 'Index' });
-            }
-          } else {
-            next();
-          }
-        }
-      } else {
-        // 没有token
+      const token = getToken();
+      // 没有token
+      if (!token) {
         if (this.whiteList.includes(to.path)) {
           // 在免登录白名单，直接进入
           next();
         } else {
           // 否则全部重定向到登录页
           next(`/login?redirect=${to.fullPath}`);
+        }
+      }
+
+      // 有Token
+      if (token) {
+        // 设置标题
+        if (to.meta?.title) {
+          useAppStore().setTitle(to.meta.title);
+        }
+        // 防止重复访问登录页面
+        if (to.path === '/login') {
+          next({ name: 'Index' });
+        } else {
+          // 判断当前用户是否有角色信息
+          const user = useUserStore();
+          if (user.roles && user.roles.length === 0) {
+            // 获取用户信息
+            user
+              .fnGetInfo()
+              .then(() => {
+                return useRouterStore().generateRoutes();
+              })
+              .then(accessRoutes => {
+                // 根据后台配置生成可访问的路由表
+                if (accessRoutes && accessRoutes.length !== 0) {
+                  for (const route of accessRoutes) {
+                    // 动态添加可访问路由表，http开头会异常
+                    if (!validHttp(route.path)) {
+                      this.router.addRoute(route);
+                    }
+                  }
+                }
+                // 刷新替换原先路由，确保addRoutes已完成
+                next({ ...to, replace: true });
+              })
+              .catch(e => {
+                console.error('路由守卫异常 ', e);
+                user.fnLogOut().finally(() => {
+                  next({ name: 'Index' });
+                });
+              });
+          } else {
+            next();
+          }
         }
       }
     });

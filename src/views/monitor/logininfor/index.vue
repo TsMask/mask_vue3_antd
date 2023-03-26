@@ -1,31 +1,80 @@
 <script setup lang="ts">
 import {
-  LogoutOutlined,
+  ExportOutlined,
+  UnlockOutlined,
   ClearOutlined,
   ColumnHeightOutlined,
   SearchOutlined,
   ReloadOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons-vue';
 import { useRoute } from 'vue-router';
-import { reactive, ref, onMounted } from 'vue';
+import { reactive, ref, onMounted, toRaw } from 'vue';
 import { message, Modal } from 'ant-design-vue';
 import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import { SizeType } from 'ant-design-vue/es/config-provider';
 import { ColumnsType } from 'ant-design-vue/es/table';
-import { forceLogout, listOnline } from '@/api/monitor/online';
-import { parseDateToStr, YYYY_MM_DD_HH_MM_SS } from '@/utils/DateUtils';
+import {
+  exportLogininfor,
+  listLogininfor,
+  delLogininfor,
+  cleanLogininfor,
+  unlockLogininfor,
+} from '@/api/monitor/logininfor';
+import { saveAs } from 'file-saver';
+import { parseDateToStr } from '@/utils/DateUtils';
+import useDictStore from '@/store/modules/dict';
+const { getDict } = useDictStore();
 const route = useRoute();
 
 /**路由标题 */
 let title = ref<string>(route.meta.title ?? '标题');
 
+/**字典数据 */
+let dict: {
+  /**登录状态 */
+  sysCommonStatus: DictType[];
+} = reactive({
+  sysCommonStatus: [],
+});
+
+/**登录开始结束时间 */
+let queryRangePicker = ref<[string, string]>(['', '']);
+
 /**查询参数 */
 let queryParams = reactive({
-  /**登录主机 */
+  /**登录地址 */
   ipaddr: '',
   /**用户名称 */
   userName: '',
+  /**登录状态 */
+  status: undefined,
+  /**开始时间 */
+  beginTime: '',
+  /**结束时间 */
+  endTime: '',
+  /**当前页数 */
+  pageNum: 1,
+  /**每页条数 */
+  pageSize: 20,
 });
+
+/**查询参数重置 */
+function fnQueryReset() {
+  queryParams = Object.assign(queryParams, {
+    ipaddr: '',
+    userName: '',
+    status: undefined,
+    beginTime: '',
+    endTime: '',
+    pageNum: 1,
+    pageSize: 20,
+  });
+  queryRangePicker.value = ['', ''];
+  tablePagination.current = 1;
+  tablePagination.pageSize = 20;
+  fnGetList();
+}
 
 /**表格状态类型 */
 type TabeStateType = {
@@ -39,6 +88,10 @@ type TabeStateType = {
   seached: boolean;
   /**记录数据 */
   data: object[];
+  /**勾选记录 */
+  selectedRowKeys: (string | number)[];
+  /**勾选单个的用户名称 */
+  selectedUserName: string;
 };
 
 /**表格状态 */
@@ -48,23 +101,15 @@ let tableState: TabeStateType = reactive({
   striped: false,
   seached: false,
   data: [],
+  selectedRowKeys: [],
+  selectedUserName: '',
 });
 
 /**表格字段列 */
 let tableColumns: ColumnsType = [
   {
-    title: '序号',
-    dataIndex: 'num',
-    width: '50px',
-    align: 'center',
-    customRender(opt) {
-      const idxNum = (tablePagination.current - 1) * tablePagination.pageSize;
-      return idxNum + opt.index + 1;
-    },
-  },
-  {
-    title: '会话编号',
-    dataIndex: 'tokenId',
+    title: '日志编号',
+    dataIndex: 'infoId',
     align: 'center',
   },
   {
@@ -73,12 +118,7 @@ let tableColumns: ColumnsType = [
     align: 'center',
   },
   {
-    title: '所属部门',
-    dataIndex: 'deptName',
-    align: 'center',
-  },
-  {
-    title: '登录主机',
+    title: '登录地址',
     dataIndex: 'ipaddr',
     align: 'center',
   },
@@ -98,22 +138,28 @@ let tableColumns: ColumnsType = [
     align: 'center',
   },
   {
+    title: '登录状态',
+    dataIndex: 'status',
+    key: 'status',
+    align: 'center',
+  },
+  {
+    title: '登录信息',
+    dataIndex: 'msg',
+    align: 'center',
+  },
+  {
     title: '登录时间',
     dataIndex: 'loginTime',
     align: 'center',
     customRender(opt) {
-      return parseDateToStr(opt.value, YYYY_MM_DD_HH_MM_SS);
+      return parseDateToStr(+opt.value);
     },
-  },
-  {
-    title: '操作',
-    key: 'tokenId',
-    align: 'center',
   },
 ];
 
 /**表格分页器参数 */
-let tablePagination = {
+let tablePagination = reactive({
   /**当前页数 */
   current: 1,
   /**每页条数 */
@@ -123,7 +169,7 @@ let tablePagination = {
   /**指定每页可以显示多少条 */
   pageSizeOptions: ['10', '20', '50', '100'],
   /**只有一页时是否隐藏分页器 */
-  hideOnSinglePage: true,
+  hideOnSinglePage: false,
   /**是否可以快速跳转至某页 */
   showQuickJumper: true,
   /**是否可以改变 pageSize */
@@ -134,8 +180,11 @@ let tablePagination = {
   onChange: (page: number, pageSize: number) => {
     tablePagination.current = page;
     tablePagination.pageSize = pageSize;
+    queryParams.pageNum = page;
+    queryParams.pageSize = pageSize;
+    fnGetList();
   },
-};
+});
 
 /**表格紧凑型变更操作 */
 function fnTableSize({ key }: MenuInfo) {
@@ -147,42 +196,123 @@ function fnTableStriped(_record: unknown, index: number) {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
-/** 重置按钮操作 */
-function fnResetQuery() {
-  queryParams.ipaddr = '';
-  queryParams.userName = '';
-  tablePagination.current = 1;
-  tablePagination.pageSize = 20;
-  getList();
+/**表格多选 */
+function fnTableSelectedRows(rows: Record<string, string>[]) {
+  tableState.selectedRowKeys = rows.map(item => item.infoId);
+  // 针对单个用户名称解锁
+  if (rows.length === 1) {
+    tableState.selectedUserName = rows[0].userName;
+  } else {
+    tableState.selectedUserName = '';
+  }
 }
 
-/** 查询在线用户列表 */
-function getList() {
+/**记录删除 */
+function fnRecordDelete() {
+  const ids = tableState.selectedRowKeys.join(',');
+  Modal.confirm({
+    title: '提示',
+    content: `确认删除访问编号为 【${ids}】 的数据项吗?`,
+    onOk() {
+      delLogininfor(ids).then(res => {
+        if (res.code === 200) {
+          message.success(`删除成功`, 1.5);
+          fnGetList();
+        } else {
+          message.error(`${res.msg}`, 1.5);
+        }
+      });
+    },
+  });
+}
+
+/**列表清空 */
+function fnCleanList() {
+  Modal.confirm({
+    title: '提示',
+    content: `确认清空所有登录日志数据项?`,
+    onOk() {
+      cleanLogininfor().then(res => {
+        if (res.code === 200) {
+          message.error(`清空成功`, 1.5);
+        } else {
+          message.error(`${res.msg}`, 1.5);
+        }
+      });
+    },
+  });
+}
+
+/**用户名称账号解锁 */
+function fnUnlock() {
+  const username = tableState.selectedUserName;
+  Modal.confirm({
+    title: '提示',
+    content: `确认解锁用户 【${username}】 数据项?`,
+    onOk() {
+      unlockLogininfor(username).then(res => {
+        if (res.code === 200) {
+          message.error(`用户 ${username} 解锁成功`, 1.5);
+        } else {
+          message.error(`${res.msg}`, 1.5);
+        }
+      });
+    },
+  });
+}
+
+/**列表导出 */
+function fnExportList() {
+  Modal.confirm({
+    title: '提示',
+    content: `确认根据搜索条件导出xlsx表格文件吗?`,
+    onOk() {
+      exportLogininfor(toRaw(queryParams)).then(resBlob => {
+        if (resBlob.type === 'application/json') {
+          resBlob
+            .text()
+            .then(txt => {
+              const txtRes = JSON.parse(txt);
+              message.error(`${txtRes.msg}`, 1.5);
+            })
+            .catch(_ => {
+              message.error(`导出数据异常`, 1.5);
+            });
+        } else {
+          saveAs(resBlob, `logininfor_${Date.now()}.xlsx`);
+        }
+      });
+    },
+  });
+}
+
+/**查询登录日志列表 */
+function fnGetList() {
   tableState.loading = true;
-  listOnline(queryParams).then(res => {
+  queryParams.beginTime = queryRangePicker.value[0];
+  queryParams.endTime = queryRangePicker.value[1];
+  listLogininfor(toRaw(queryParams)).then(res => {
     if (res.code === 200) {
+      // 取消勾选
+      if (tableState.selectedRowKeys.length > 0) {
+        tableState.selectedRowKeys = [];
+      }
+      tablePagination.total = res.total;
       tableState.data = res.rows;
       tableState.loading = false;
     }
   });
 }
 
-/** 强退按钮操作 */
-function fnForceLogout(row: Record<string, string>) {
-  Modal.confirm({
-    title: '提示',
-    content: `是否确认强退用户名称为 ${row.userName} 的用户?`,
-    async onOk() {
-      await forceLogout(row.tokenId);
-      message.success(`已强退用户 ${row.userName}`, 1.5);
-      await getList();
-    },
-    onCancel() {},
-  });
-}
-
 onMounted(() => {
-  fnResetQuery();
+  // 初始字典数据
+  Promise.allSettled([getDict('sys_common_status')]).then(resArr => {
+    if (resArr[0].status === 'fulfilled') {
+      dict.sysCommonStatus = resArr[0].value;
+    }
+  });
+  // 获取列表数据
+  fnGetList();
 });
 </script>
 
@@ -190,11 +320,9 @@ onMounted(() => {
   <page-container :title="title">
     <template #content>
       <a-typography-paragraph>
-        登录用户
-        <a-typography-text code>Token</a-typography-text>
-        授权标识记录，存储在
+        对登录进行日志收集，锁定信息存入
         <a-typography-text code>Redis</a-typography-text>
-        中，可撤销对用户的授权，拒绝用户请求并强制退出。
+        可对用户名称账号进行解锁。
       </a-typography-paragraph>
     </template>
 
@@ -204,13 +332,17 @@ onMounted(() => {
       :body-style="{ marginBottom: '24px', paddingBottom: 0 }"
     >
       <!-- 表格搜索栏 -->
-      <a-form
-        :model="queryParams"
-        name="table-search"
-        layout="horizontal"
-        autocomplete="off"
-      >
+      <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="登录地址" name="ipaddr">
+              <a-input
+                v-model:value="queryParams.ipaddr"
+                allow-clear
+                placeholder="请输入登录地址"
+              ></a-input>
+            </a-form-item>
+          </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="用户名称" name="userName">
               <a-input
@@ -221,23 +353,38 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录主机" name="ipaddr">
-              <a-input
-                v-model:value="queryParams.ipaddr"
+            <a-form-item label="登录状态" name="status">
+              <a-select
+                v-model:value="queryParams.status"
                 allow-clear
-                placeholder="请输入登录主机"
-              ></a-input> </a-form-item
-          ></a-col>
-          <a-col :lg="12" :md="24" :xs="24">
+                placeholder="请选择登录状态"
+                :options="dict.sysCommonStatus"
+              >
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="登录时间" name="c">
+              <a-range-picker
+                v-model:value="queryRangePicker"
+                allow-clear
+                bordered
+                value-format="YYYY-MM-DD"
+                :placeholder="['登录开始', '登录结束']"
+                style="width: 100%"
+              ></a-range-picker>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="getList">
+                <a-button type="primary" @click.prevent="fnGetList">
                   <template #icon><SearchOutlined /></template>
-                  搜 索</a-button
+                  搜索</a-button
                 >
-                <a-button type="default" @click.prevent="fnResetQuery">
+                <a-button type="default" @click.prevent="fnQueryReset">
                   <template #icon><ClearOutlined /></template>
-                  重 置</a-button
+                  重置</a-button
                 >
               </a-space>
             </a-form-item>
@@ -249,7 +396,33 @@ onMounted(() => {
     <a-card :bordered="false" :body-style="{ padding: '0px' }">
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
-        {{ title }}
+        <a-space :size="8" align="center">
+          <a-button
+            type="primary"
+            :disabled="!tableState.selectedUserName"
+            @click.prevent="fnUnlock()"
+          >
+            <template #icon><UnlockOutlined /></template>
+            解锁
+          </a-button>
+          <a-button
+            type="default"
+            danger
+            :disabled="tableState.selectedRowKeys.length <= 0"
+            @click.prevent="fnRecordDelete()"
+          >
+            <template #icon><DeleteOutlined /></template>
+            删除
+          </a-button>
+          <a-button type="default" danger @click.prevent="fnCleanList()">
+            <template #icon><DeleteOutlined /></template>
+            清空
+          </a-button>
+          <a-button type="default" @click.prevent="fnExportList()">
+            <template #icon><ExportOutlined /></template>
+            导出
+          </a-button>
+        </a-space>
       </template>
 
       <!-- 插槽-卡片右侧 -->
@@ -275,7 +448,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip>
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="getList">
+            <a-button type="text" @click.prevent="fnGetList">
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
@@ -303,21 +476,22 @@ onMounted(() => {
       <!-- 表格列表 -->
       <a-table
         class="table"
-        row-key="tokenId"
+        row-key="infoId"
         :columns="tableColumns"
         :loading="tableState.loading"
         :data-source="tableState.data"
         :size="tableState.size"
         :row-class-name="fnTableStriped"
-        :pagination="tablePagination"
         :scroll="{ x: true }"
+        :pagination="tablePagination"
+        :row-selection="{
+          type: 'checkbox',
+          onChange: (_, rows) => fnTableSelectedRows(rows),
+        }"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'tokenId'">
-            <a-button type="link" @click.prevent="fnForceLogout(record)">
-              <template #icon><LogoutOutlined /></template>
-              强 退</a-button
-            >
+          <template v-if="column.key === 'status'">
+            <DictTag :options="dict.sysCommonStatus" :value="record.status" />
           </template>
         </template>
       </a-table>

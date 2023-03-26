@@ -17,41 +17,6 @@ import Guard from './Guard';
 /**公共路由 */
 export const constantRoutes: RouteRecordRaw[] = [
   {
-    path: '/redirect',
-    name: 'Redirect',
-    meta: { title: '重定向' },
-    component: BasicLayout,
-    children: [
-      {
-        path: '/redirect/:path(.*)',
-        component: () => import('@/views/redirect/index.vue'),
-      },
-    ],
-  },
-  {
-    path: '/login',
-    name: 'Login',
-    meta: { title: '登录' },
-    component: () => import('@/views/login.vue'),
-  },
-  {
-    path: '/register',
-    name: 'Register',
-    meta: { title: '注册' },
-    component: () => import('@/views/register.vue'),
-  },
-  {
-    path: '/:pathMatch(.*)*',
-    meta: { title: '找不到匹配页面' },
-    component: () => import('@/views/error/404.vue'),
-  },
-  {
-    path: '/403',
-    name: 'NotPermission',
-    meta: { title: '没有访问权限' },
-    component: () => import('@/views/error/403.vue'),
-  },
-  {
     path: '/',
     name: 'Root',
     meta: { title: '根节点' },
@@ -68,19 +33,19 @@ export const constantRoutes: RouteRecordRaw[] = [
         path: '/welcome',
         name: 'welcome',
         meta: { title: '欢迎', icon: 'icon-pcduan' },
-        component: ()=> import("@/views/admins2/Page1.vue"),
+        component: () => import('@/views/admins2/Page1.vue'),
       },
       {
         path: '/welcome2',
         name: 'welcome2',
         meta: { title: '欢迎2', icon: 'icon-pcduan' },
-        component: ()=> import("@/views/admins2/Page2.vue"),
+        component: () => import('@/views/admins2/Page2.vue'),
       },
       {
         path: '/detail',
         name: 'Detail',
         meta: { title: 'Detail', icon: 'icon-pcduan' },
-        component: ()=> import("@/views/admins2/Detail.vue"),
+        component: () => import('@/views/admins2/Detail.vue'),
       },
       {
         path: '/admins',
@@ -148,6 +113,41 @@ export const constantRoutes: RouteRecordRaw[] = [
         component: () => import('@/views/system/user/profile/index.vue'),
       },
     ],
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    meta: { title: '登录' },
+    component: () => import('@/views/login.vue'),
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    meta: { title: '注册' },
+    component: () => import('@/views/register.vue'),
+  },
+  {
+    path: '/403',
+    name: 'NotPermission',
+    meta: { title: '没有访问权限' },
+    component: () => import('@/views/error/403.vue'),
+  },
+  {
+    path: '/redirect',
+    name: 'Redirect',
+    meta: { title: '重定向' },
+    component: BasicLayout,
+    children: [
+      {
+        path: '/redirect/:path(.*)',
+        component: () => import('@/views/redirect/index.vue'),
+      },
+    ],
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    meta: { title: '找不到匹配页面' },
+    component: () => import('@/views/error/404.vue'),
   },
 ];
 

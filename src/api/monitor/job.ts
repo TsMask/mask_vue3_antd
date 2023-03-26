@@ -1,6 +1,20 @@
 import { request, ResultType } from '@/plugins/Fetch';
 
 /**
+ * 定时任务调度列表导出
+ * @param query 查询参数
+ * @returns bolb
+ */
+export function exportJob(query: Record<string, string | number | undefined>) {
+  return request<Blob>({
+    url: '/monitor/job/export',
+    method: 'post',
+    data: query,
+    responseType: 'blob',
+  });
+}
+
+/**
  * 查询定时任务调度列表
  * @param query 查询参数
  * @returns object
@@ -18,7 +32,7 @@ export function listJob(query: Record<string, string | number | undefined>) {
  * @param jobId 任务Id
  * @returns object
  */
-export function getJob(jobId: string) {
+export function getJob(jobId: string | number) {
   return request<ResultType>({
     url: `/monitor/job/${jobId}`,
     method: 'get',

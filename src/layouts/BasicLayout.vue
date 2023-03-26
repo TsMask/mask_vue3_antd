@@ -35,6 +35,12 @@ watch(
     state.selectedKeys = matched
       .filter(r => r.name !== 'Root')
       .map(r => r.path);
+    // 路由地址含有"/inline"又是隐藏菜单需要处理打开高亮菜单栏
+    if (v.path.includes('/inline') && v.meta.hideInMenu) {
+      const idx = v.path.lastIndexOf('/inline');
+      state.openKeys.splice(-1);
+      state.selectedKeys[matched.length - 1] = v.path.slice(0, idx);
+    }
   },
   { immediate: true }
 );
