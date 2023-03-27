@@ -1,31 +1,95 @@
 <script setup lang="ts">
 import {
-  LogoutOutlined,
+  SyncOutlined,
+  PlusOutlined,
+  ExportOutlined,
+  RocketOutlined,
+  ContainerOutlined,
+  FormOutlined,
+  InfoCircleOutlined,
+  ProfileOutlined,
   ClearOutlined,
   ColumnHeightOutlined,
   SearchOutlined,
   ReloadOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons-vue';
-import { useRoute } from 'vue-router';
-import { reactive, ref, onMounted } from 'vue';
-import { message, Modal } from 'ant-design-vue';
+import { useRoute, useRouter } from 'vue-router';
+import { reactive, ref, onMounted, toRaw } from 'vue';
+import { message, Modal, Form } from 'ant-design-vue';
 import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import { SizeType } from 'ant-design-vue/es/config-provider';
 import { ColumnsType } from 'ant-design-vue/es/table';
-import { forceLogout, listOnline } from '@/api/monitor/online';
+import {
+  listNotice,
+  getNotice,
+  delNotice,
+  addNotice,
+  updateNotice,
+} from '@/api/system/notice';
+
+import {
+  exportJob,
+  listJob,
+  getJob,
+  delJob,
+  addJob,
+  updateJob,
+  runJob,
+  changeJobStatus,
+  resetQueueJob,
+} from '@/api/monitor/job';
+import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/DateUtils';
+import useDictStore from '@/store/modules/dict';
+const { getDict } = useDictStore();
 const route = useRoute();
+const router = useRouter();
 
 /**路由标题 */
 let title = ref<string>(route.meta.title ?? '标题');
 
+/**字典数据 */
+let dict: {
+  /**公告类型 */
+  sysNoticeType: DictType[];
+  /**公告状态 */
+  sysNoticeStatus: DictType[];
+} = reactive({
+  sysNoticeType: [],
+  sysNoticeStatus: [],
+});
+
 /**查询参数 */
 let queryParams = reactive({
-  /**登录主机 */
-  ipaddr: '',
-  /**用户名称 */
-  userName: '',
+  /**公告标题 */
+  noticeTitle: '',
+  /**创建者 */
+  createBy: undefined,
+  /**公告类型 */
+  noticeType: undefined,
+  /**公告状态 */
+  status: undefined,
+  /**当前页数 */
+  pageNum: 1,
+  /**每页条数 */
+  pageSize: 20,
 });
+
+/**查询参数重置 */
+function fnQueryReset() {
+  queryParams = Object.assign(queryParams, {
+    noticeTitle: '',
+    createBy: '',
+    noticeType: undefined,
+    status: undefined,
+    pageNum: 1,
+    pageSize: 20,
+  });
+  tablePagination.current = 1;
+  tablePagination.pageSize = 20;
+  fnGetList();
+}
 
 /**表格状态类型 */
 type TabeStateType = {
@@ -39,6 +103,8 @@ type TabeStateType = {
   seached: boolean;
   /**记录数据 */
   data: object[];
+  /**勾选记录 */
+  selectedRowKeys: (string | number)[];
 };
 
 /**表格状态 */
@@ -48,58 +114,41 @@ let tableState: TabeStateType = reactive({
   striped: false,
   seached: false,
   data: [],
+  selectedRowKeys: [],
 });
 
 /**表格字段列 */
 let tableColumns: ColumnsType = [
   {
-    title: '序号',
-    dataIndex: 'num',
-    width: '50px',
-    align: 'center',
-    customRender(opt) {
-      const idxNum = (tablePagination.current - 1) * tablePagination.pageSize;
-      return idxNum + opt.index + 1;
-    },
-  },
-  {
-    title: '会话编号',
-    dataIndex: 'tokenId',
+    title: '公告编号',
+    dataIndex: 'noticeId',
     align: 'center',
   },
   {
-    title: '用户名称',
-    dataIndex: 'userName',
+    title: '公告标题',
+    dataIndex: 'noticeTitle',
     align: 'center',
   },
   {
-    title: '所属部门',
-    dataIndex: 'deptName',
+    title: '公告类型',
+    dataIndex: 'noticeType',
+    key: 'noticeType',
     align: 'center',
   },
   {
-    title: '登录主机',
-    dataIndex: 'ipaddr',
+    title: '状态',
+    dataIndex: 'status',
+    key: 'status',
     align: 'center',
   },
   {
-    title: '登录地点',
-    dataIndex: 'loginLocation',
+    title: '创建者',
+    dataIndex: 'createBy',
     align: 'center',
   },
   {
-    title: '操作系统',
-    dataIndex: 'os',
-    align: 'center',
-  },
-  {
-    title: '浏览器',
-    dataIndex: 'browser',
-    align: 'center',
-  },
-  {
-    title: '登录时间',
-    dataIndex: 'loginTime',
+    title: '创建时间',
+    dataIndex: 'createTime',
     align: 'center',
     customRender(opt) {
       return parseDateToStr(+opt.value);
@@ -107,13 +156,13 @@ let tableColumns: ColumnsType = [
   },
   {
     title: '操作',
-    key: 'tokenId',
+    key: 'noticeId',
     align: 'center',
   },
 ];
 
 /**表格分页器参数 */
-let tablePagination = {
+let tablePagination = reactive({
   /**当前页数 */
   current: 1,
   /**每页条数 */
@@ -123,7 +172,7 @@ let tablePagination = {
   /**指定每页可以显示多少条 */
   pageSizeOptions: ['10', '20', '50', '100'],
   /**只有一页时是否隐藏分页器 */
-  hideOnSinglePage: true,
+  hideOnSinglePage: false,
   /**是否可以快速跳转至某页 */
   showQuickJumper: true,
   /**是否可以改变 pageSize */
@@ -134,8 +183,11 @@ let tablePagination = {
   onChange: (page: number, pageSize: number) => {
     tablePagination.current = page;
     tablePagination.pageSize = pageSize;
+    queryParams.pageNum = page;
+    queryParams.pageSize = pageSize;
+    fnGetList();
   },
-};
+});
 
 /**表格紧凑型变更操作 */
 function fnTableSize({ key }: MenuInfo) {
@@ -147,42 +199,202 @@ function fnTableStriped(_record: unknown, index: number) {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
-/**查询参数重置 */
-function fnQueryReset() {
-  queryParams.ipaddr = '';
-  queryParams.userName = '';
-  tablePagination.current = 1;
-  tablePagination.pageSize = 20;
-  fnGetList();
+/**表格多选 */
+function fnTableSelectedRowKeys(keys: (string | number)[]) {
+  tableState.selectedRowKeys = keys;
 }
 
-/** 查询在线用户列表 */
+/**对话框对象信息状态类型 */
+type ModalStateType = {
+  /**详情框是否显示 */
+  visibleByView: boolean;
+  /**新增框或修改框是否显示 */
+  visibleByEdit: boolean;
+  /**标题 */
+  title: string;
+  /**表单数据 */
+  from: Record<string, any>;
+  /**确定按钮 loading */
+  confirmLoading: boolean;
+};
+
+/**对话框对象信息状态 */
+let modalState: ModalStateType = reactive({
+  visibleByView: false,
+  visibleByEdit: false,
+  title: '公告',
+  from: {
+    noticeId: undefined,
+    noticeTitle: '',
+    noticeContent: '',
+    noticeType: '2',
+    status: '1',
+    delFlag: '0',
+    remark: '',
+    createBy: undefined,
+    createTime: undefined,
+    updateBy: undefined,
+    updateTime: undefined,
+  },
+  confirmLoading: false,
+});
+
+/**对话框内表单属性和校验规则 */
+const modalStateFrom = Form.useForm(
+  modalState.from,
+  reactive({
+    noticeTitle: [
+      { required: true, min: 2, max: 50, message: '请正确输入公告标题' },
+    ],
+    noticeType: [{ required: true, message: '请选择公告类型' }],
+    noticeContent: [
+      {
+        required: true,
+        min: 10,
+        max: 3000,
+        message: '请正确输入公告内容，限10-3000个字符',
+      },
+    ],
+  })
+);
+
+/**
+ * 对话框弹出显示为 查看
+ * @param noticeId 公告id
+ */
+function fnModalVisibleByVive(noticeId: string | number) {
+  if (!noticeId) {
+    message.error(`公告记录存在错误`, 1.5);
+    return;
+  }
+  getNotice(noticeId).then(res => {
+    if (res.code === 200) {
+      modalState.from = Object.assign(modalState.from, res.data);
+      modalState.title = '公告信息';
+      modalState.visibleByView = true;
+    } else {
+      message.error(`获取公告信息失败`, 1.5);
+    }
+  });
+}
+
+/**
+ * 对话框弹出显示为 新增或者修改
+ * @param jobId 任务id, 不传为新增
+ */
+function fnModalVisibleByEdit(noticeId?: string | number) {
+  if (!noticeId) {
+    modalStateFrom.resetFields();
+    modalState.title = '添加公告';
+    modalState.visibleByEdit = true;
+  } else {
+    getNotice(noticeId).then(res => {
+      if (res.code === 200) {
+        modalState.from = Object.assign(modalState.from, res.data);
+        modalState.title = '修改公告';
+        modalState.visibleByEdit = true;
+      } else {
+        message.error(`获取公告信息失败`, 1.5);
+      }
+    });
+  }
+}
+
+/**
+ * 对话框弹出确认执行函数
+ * 进行表达规则校验
+ */
+function fnModalOk() {
+  modalStateFrom
+    .validate()
+    .then(() => {
+      modalState.confirmLoading = true;
+      const from = toRaw(modalState.from);
+      const notice = from.noticeId ? updateNotice(from) : addNotice(from);
+      notice
+        .then(res => {
+          if (res.code === 200) {
+            message.success(`${modalState.title}成功`, 1.5);
+            modalState.visibleByEdit = false;
+            modalStateFrom.resetFields();
+            fnGetList();
+          } else {
+            message.error(res.msg, 1.5);
+          }
+        })
+        .finally(() => {
+          modalState.confirmLoading = false;
+        });
+    })
+    .catch(e => {
+      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 1.5);
+    });
+}
+
+/**
+ * 对话框弹出关闭执行函数
+ * 进行表达规则校验
+ */
+function fnModalCancel() {
+  modalState.visibleByEdit = false;
+  modalState.visibleByView = false;
+  modalStateFrom.resetFields();
+}
+
+/**
+ * 公告删除
+ * @param noticeId 公告编号ID
+ */
+function fnRecordDelete(noticeId: string = '0') {
+  if (noticeId === '0') {
+    noticeId = tableState.selectedRowKeys.join(',');
+  }
+  Modal.confirm({
+    title: '提示',
+    content: `确认删除公告编号编号为 【${noticeId}】 的数据项?`,
+    onOk() {
+      delNotice(noticeId).then(res => {
+        if (res.code === 200) {
+          message.success(`删除成功`, 1.5);
+          fnGetList();
+        } else {
+          message.error(`${res.msg}`, 1.5);
+        }
+      });
+    },
+  });
+}
+
+/**查询定时任务列表 */
 function fnGetList() {
   tableState.loading = true;
-  listOnline(queryParams).then(res => {
+  listNotice(toRaw(queryParams)).then(res => {
     if (res.code === 200) {
+      // 取消勾选
+      if (tableState.selectedRowKeys.length > 0) {
+        tableState.selectedRowKeys = [];
+      }
+      tablePagination.total = res.total;
       tableState.data = res.rows;
       tableState.loading = false;
     }
   });
 }
 
-/** 强退按钮操作 */
-function fnForceLogout(row: Record<string, string>) {
-  Modal.confirm({
-    title: '提示',
-    content: `确认强退用户名称为 ${row.userName} 的用户?`,
-    onOk() {
-      forceLogout(row.tokenId).finally(() => {
-        message.success(`已强退用户 ${row.userName}`, 1.5);
-      });
-      fnGetList();
-    },
-    onCancel() {},
-  });
-}
-
 onMounted(() => {
+  // 初始字典数据
+  Promise.allSettled([
+    getDict('sys_notice_type'),
+    getDict('sys_notice_status'),
+  ]).then(resArr => {
+    if (resArr[0].status === 'fulfilled') {
+      dict.sysNoticeType = resArr[0].value;
+    }
+    if (resArr[1].status === 'fulfilled') {
+      dict.sysNoticeStatus = resArr[1].value;
+    }
+  });
+  // 获取列表数据
   fnGetList();
 });
 </script>
@@ -191,11 +403,7 @@ onMounted(() => {
   <page-container :title="title">
     <template #content>
       <a-typography-paragraph>
-        登录用户
-        <a-typography-text code>Token</a-typography-text>
-        授权标识记录，存储在
-        <a-typography-text code>Redis</a-typography-text>
-        中，可撤销对用户的授权，拒绝用户请求并强制退出。
+        发布公告给內部用户的通知。
       </a-typography-paragraph>
     </template>
 
@@ -208,33 +416,56 @@ onMounted(() => {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="用户名称" name="userName">
+            <a-form-item label="公告标题" name="noticeTitle">
               <a-input
-                v-model:value="queryParams.userName"
+                v-model:value="queryParams.noticeTitle"
                 allow-clear
-                placeholder="请输入用户名称"
+                placeholder="请输入公告标题"
               ></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录主机" name="ipaddr">
+            <a-form-item label="创建者" name="createBy">
               <a-input
-                v-model:value="queryParams.ipaddr"
+                v-model:value="queryParams.createBy"
                 allow-clear
-                placeholder="请输入登录主机"
-              ></a-input> </a-form-item
-          ></a-col>
-          <a-col :lg="12" :md="24" :xs="24">
+                placeholder="请输入创建者"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="公告类型" name="noticeType">
+              <a-select
+                v-model:value="queryParams.noticeType"
+                allow-clear
+                placeholder="请选择公告类型"
+                :options="dict.sysNoticeType"
+              >
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="公告状态" name="status">
+              <a-select
+                v-model:value="queryParams.status"
+                allow-clear
+                placeholder="请选择公告状态"
+                :options="dict.sysNoticeStatus"
+              >
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
                 <a-button type="primary" @click.prevent="fnGetList">
                   <template #icon><SearchOutlined /></template>
-                  搜索
-                </a-button>
+                  搜索</a-button
+                >
                 <a-button type="default" @click.prevent="fnQueryReset">
                   <template #icon><ClearOutlined /></template>
-                  重置
-                </a-button>
+                  重置</a-button
+                >
               </a-space>
             </a-form-item>
           </a-col>
@@ -245,7 +476,21 @@ onMounted(() => {
     <a-card :bordered="false" :body-style="{ padding: '0px' }">
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
-        {{ title }}
+        <a-space :size="8" align="center">
+          <a-button type="primary" @click.prevent="fnModalVisibleByEdit()">
+            <template #icon><PlusOutlined /></template>
+            新建
+          </a-button>
+          <a-button
+            type="default"
+            danger
+            :disabled="tableState.selectedRowKeys.length <= 0"
+            @click.prevent="fnRecordDelete()"
+          >
+            <template #icon><DeleteOutlined /></template>
+            删除
+          </a-button>
+        </a-space>
       </template>
 
       <!-- 插槽-卡片右侧 -->
@@ -299,7 +544,7 @@ onMounted(() => {
       <!-- 表格列表 -->
       <a-table
         class="table"
-        row-key="tokenId"
+        row-key="noticeId"
         :columns="tableColumns"
         :loading="tableState.loading"
         :data-source="tableState.data"
@@ -307,17 +552,162 @@ onMounted(() => {
         :row-class-name="fnTableStriped"
         :pagination="tablePagination"
         :scroll="{ x: true }"
+        :row-selection="{
+          type: 'checkbox',
+          onChange: selectedRowKeys => fnTableSelectedRowKeys(selectedRowKeys),
+        }"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'tokenId'">
-            <a-button type="link" @click.prevent="fnForceLogout(record)">
-              <template #icon><LogoutOutlined /></template>
-              强退
-            </a-button>
+          <template v-if="column.key === 'noticeType'">
+            <DictTag :options="dict.sysNoticeType" :value="record.noticeType" />
+          </template>
+          <template v-if="column.key === 'status'">
+            <DictTag :options="dict.sysNoticeStatus" :value="record.status" />
+          </template>
+          <template v-if="column.key === 'noticeId'">
+            <a-space :size="8" align="center">
+              <a-tooltip>
+                <template #title>查看详情</template>
+                <a-button
+                  type="link"
+                  @click.prevent="fnModalVisibleByVive(record.noticeId)"
+                >
+                  <template #icon><ProfileOutlined /></template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip>
+                <template #title>编辑</template>
+                <a-button
+                  type="link"
+                  @click.prevent="fnModalVisibleByEdit(record.noticeId)"
+                >
+                  <template #icon><FormOutlined /></template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip>
+                <template #title>删除</template>
+                <a-button
+                  type="link"
+                  @click.prevent="fnRecordDelete(record.noticeId)"
+                >
+                  <template #icon><DeleteOutlined /></template>
+                </a-button>
+              </a-tooltip>
+            </a-space>
           </template>
         </template>
       </a-table>
     </a-card>
+
+    <!-- 详情框 -->
+    <a-modal
+      width="800px"
+      :visible="modalState.visibleByView"
+      :title="modalState.title"
+      @cancel="fnModalCancel"
+    >
+      <a-form layout="horizontal">
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="公告标题" name="noticeTitle">
+              {{ modalState.from.noticeTitle }}
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="6" :xs="24">
+            <a-form-item label="公告类型" name="noticeType">
+              <DictTag
+                :options="dict.sysNoticeType"
+                :value="modalState.from.noticeType"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="6" :xs="24">
+            <a-form-item label="公告状态" name="status">
+              <DictTag
+                :options="dict.sysNoticeStatus"
+                :value="modalState.from.status"
+              />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-form-item label="公告内容" name="noticeContent">
+          {{ modalState.from.noticeContent }}
+        </a-form-item>
+      </a-form>
+      <template #footer>
+        <a-button key="cancel" @click="fnModalCancel">关闭</a-button>
+      </template>
+    </a-modal>
+
+    <!-- 新增框或修改框 -->
+    <a-modal
+      width="800px"
+      :keyboard="false"
+      :mask-closable="false"
+      :visible="modalState.visibleByEdit"
+      :title="modalState.title"
+      :confirm-loading="modalState.confirmLoading"
+      @ok="fnModalOk"
+      @cancel="fnModalCancel"
+    >
+      <a-form name="modalStateFrom" layout="horizontal">
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item
+              label="公告标题"
+              name="noticeTitle"
+              v-bind="modalStateFrom.validateInfos.noticeTitle"
+            >
+              <a-input
+                v-model:value="modalState.from.noticeTitle"
+                allow-clear
+                placeholder="请输入公告标题"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="6" :xs="24">
+            <a-form-item
+              label="公告类型"
+              name="noticeType"
+              v-bind="modalStateFrom.validateInfos.noticeType"
+            >
+              <a-select
+                v-model:value="modalState.from.noticeType"
+                default-value="1"
+                placeholder="公告类型"
+                :options="dict.sysNoticeType"
+              >
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="6" :xs="24">
+            <a-form-item label="公告状态" name="status">
+              <a-select
+                v-model:value="modalState.from.status"
+                default-value="0"
+                placeholder="任务状态"
+                :options="dict.sysNoticeStatus"
+              >
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+
+        <a-form-item
+          label="公告内容"
+          name="noticeContent"
+          v-bind="modalStateFrom.validateInfos.noticeContent"
+        >
+          <a-textarea
+            v-model:value="modalState.from.noticeContent"
+            :auto-size="{ minRows: 4, maxRows: 14 }"
+            :maxlength="3000"
+            :show-count="true"
+            placeholder="请输入公告内容"
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </page-container>
 </template>
 

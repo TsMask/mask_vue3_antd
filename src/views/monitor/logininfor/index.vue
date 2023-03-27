@@ -320,7 +320,7 @@ onMounted(() => {
   <page-container :title="title">
     <template #content>
       <a-typography-paragraph>
-        对登录进行日志收集，锁定信息存入
+        对登录进行日志收集，登录锁定的信息存入
         <a-typography-text code>Redis</a-typography-text>
         可对用户名称账号进行解锁。
       </a-typography-paragraph>

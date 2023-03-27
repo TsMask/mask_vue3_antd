@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
   ExportOutlined,
-  UnlockOutlined,
   ClearOutlined,
   ColumnHeightOutlined,
   SearchOutlined,
@@ -15,19 +14,11 @@ import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import { SizeType } from 'ant-design-vue/es/config-provider';
 import { ColumnsType } from 'ant-design-vue/es/table';
 import {
-  exportLogininfor,
-  listLogininfor,
-  delLogininfor,
-  cleanLogininfor,
-  unlockLogininfor,
-} from '@/api/monitor/logininfor';
-import {
   exportOperlog,
   listOperlog,
   delOperlog,
   cleanOperlog,
 } from '@/api/monitor/operlog';
-
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/DateUtils';
 import useDictStore from '@/store/modules/dict';
@@ -344,8 +335,8 @@ function fnGetList() {
 onMounted(() => {
   // 初始字典数据
   Promise.allSettled([
-    getDict('sys_common_status'),
     getDict('sys_oper_type'),
+    getDict('sys_common_status'),
   ]).then(resArr => {
     if (resArr[0].status === 'fulfilled') {
       dict.sysBusinessType = resArr[0].value;
@@ -363,9 +354,7 @@ onMounted(() => {
   <page-container :title="title">
     <template #content>
       <a-typography-paragraph>
-        对登录进行日志收集，锁定信息存入
-        <a-typography-text code>Redis</a-typography-text>
-        可对用户名称账号进行解锁。
+        对接口请求进行日志收集，统计高频接口分析优化等操作。
       </a-typography-paragraph>
     </template>
 
@@ -537,13 +526,13 @@ onMounted(() => {
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'businessType'">
-            <!-- <DictTag
+            <DictTag
               :options="dict.sysBusinessType"
               :value="record.businessType"
-            /> -->
+            />
           </template>
           <template v-if="column.key === 'status'">
-            <!-- <DictTag :options="dict.sysCommonStatus" :value="record.status" /> -->
+            <DictTag :options="dict.sysCommonStatus" :value="record.status" />
           </template>
           <template v-if="column.key === 'operId'">
             <a-space :size="8" align="center">

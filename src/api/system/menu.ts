@@ -19,7 +19,7 @@ export function listMenu(query: Record<string, string | number | undefined>) {
  * @returns object
  */
 export function getMenu(menuId: string | number) {
-  return request({
+  return request<ResultType>({
     url: `/system/menu/${menuId}`,
     method: 'get',
   });
@@ -30,7 +30,7 @@ export function getMenu(menuId: string | number) {
  * @returns object
  */
 export function treeselect() {
-  return request({
+  return request<ResultType>({
     url: '/system/menu/treeselect',
     method: 'get',
   });
@@ -54,7 +54,7 @@ export function roleMenuTreeselect(roleId: string) {
  * @returns object
  */
 export function addMenu(data: Record<string, object>) {
-  return request({
+  return request<ResultType>({
     url: '/system/menu',
     method: 'post',
     data: data,
@@ -67,7 +67,7 @@ export function addMenu(data: Record<string, object>) {
  * @returns object
  */
 export function updateMenu(data: Record<string, object>) {
-  return request({
+  return request<ResultType>({
     url: '/system/menu',
     method: 'put',
     data: data,
@@ -80,7 +80,7 @@ export function updateMenu(data: Record<string, object>) {
  * @returns object
  */
 export function delMenu(menuId: string | number) {
-  return request({
+  return request<ResultType>({
     url: `/system/menu/${menuId}`,
     method: 'delete',
   });

@@ -8,8 +8,7 @@
   <a-tag
     v-else
     :class="item.elTagClass"
-    :type="item.elTagType === 'primary' ? '' : item.elTagType"
-    color="purple"
+    :color="item.elTagType === 'primary' ? '' : item.elTagType"
   >
     {{ item.label }}
   </a-tag>
@@ -38,7 +37,7 @@ const props = defineProps({
 const item = computed(() => {
   if (Array.isArray(props.options) && props.options.length > 0) {
     const option = props.options.find(
-      item => Reflect.get(item as object[], props.valueField) === props.value
+      item => `${item[props.valueField]}` === `${props.value}`
     );
     return option as Record<string, string>;
   }
