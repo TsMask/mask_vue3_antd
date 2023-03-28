@@ -348,7 +348,7 @@ onMounted(() => {
   // 获取地址栏参数
   const jobId = route.params && (route.params.jobId as string);
   if (jobId && jobId !== '0') {
-    getJob(route.params.jobId as string).then(res => {
+    getJob(jobId).then(res => {
       if (res.code === 200) {
         queryParams.jobName = res.data.jobName;
         queryParams.jobGroup = res.data.jobGroup;
@@ -404,7 +404,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="记录时间" name="c">
+            <a-form-item label="记录时间" name="queryRangePicker">
               <a-range-picker
                 v-model:value="queryRangePicker"
                 allow-clear

@@ -1,11 +1,25 @@
 import { request, ResultType } from '@/plugins/Fetch';
 
 /**
+ * 字典数据列表导出
+ * @param query 查询参数
+ * @returns bolb
+ */
+export function exportData(query: Record<string, string | number | undefined>) {
+  return request<Blob>({
+    url: '/system/dict/data/export',
+    method: 'post',
+    data: query,
+    responseType: 'blob',
+  });
+}
+
+/**
  * 查询字典数据列表
  * @param query 查询值
  * @returns
  */
-export function listData(query: Record<string, string | undefined>) {
+export function listData(query: Record<string, string | number | undefined>) {
   return request<ResultType>({
     url: '/system/dict/data/list',
     method: 'get',

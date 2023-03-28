@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import {
-  SyncOutlined,
   PlusOutlined,
-  ExportOutlined,
-  RocketOutlined,
-  ContainerOutlined,
   FormOutlined,
-  InfoCircleOutlined,
   ProfileOutlined,
   ClearOutlined,
   ColumnHeightOutlined,
@@ -14,7 +9,7 @@ import {
   ReloadOutlined,
   DeleteOutlined,
 } from '@ant-design/icons-vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { message, Modal, Form } from 'ant-design-vue';
 import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
@@ -27,24 +22,10 @@ import {
   addNotice,
   updateNotice,
 } from '@/api/system/notice';
-
-import {
-  exportJob,
-  listJob,
-  getJob,
-  delJob,
-  addJob,
-  updateJob,
-  runJob,
-  changeJobStatus,
-  resetQueueJob,
-} from '@/api/monitor/job';
-import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/DateUtils';
 import useDictStore from '@/store/modules/dict';
 const { getDict } = useDictStore();
 const route = useRoute();
-const router = useRouter();
 
 /**路由标题 */
 let title = ref<string>(route.meta.title ?? '标题');
@@ -250,7 +231,7 @@ const modalStateFrom = Form.useForm(
     noticeContent: [
       {
         required: true,
-        min: 10,
+        min: 2,
         max: 3000,
         message: '请正确输入公告内容，限10-3000个字符',
       },
@@ -280,7 +261,7 @@ function fnModalVisibleByVive(noticeId: string | number) {
 
 /**
  * 对话框弹出显示为 新增或者修改
- * @param jobId 任务id, 不传为新增
+ * @param noticeId 公告id, 不传为新增
  */
 function fnModalVisibleByEdit(noticeId?: string | number) {
   if (!noticeId) {
@@ -351,7 +332,7 @@ function fnRecordDelete(noticeId: string = '0') {
   }
   Modal.confirm({
     title: '提示',
-    content: `确认删除公告编号编号为 【${noticeId}】 的数据项?`,
+    content: `确认删除公告编号为 【${noticeId}】 的数据项?`,
     onOk() {
       delNotice(noticeId).then(res => {
         if (res.code === 200) {
@@ -365,7 +346,7 @@ function fnRecordDelete(noticeId: string = '0') {
   });
 }
 
-/**查询定时任务列表 */
+/**查询公告列表 */
 function fnGetList() {
   tableState.loading = true;
   listNotice(toRaw(queryParams)).then(res => {
@@ -685,7 +666,7 @@ onMounted(() => {
               <a-select
                 v-model:value="modalState.from.status"
                 default-value="0"
-                placeholder="任务状态"
+                placeholder="公告状态"
                 :options="dict.sysNoticeStatus"
               >
               </a-select>

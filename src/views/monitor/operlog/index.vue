@@ -39,7 +39,7 @@ let dict: {
   sysCommonStatus: [],
 });
 
-/**登录开始结束时间 */
+/**开始结束时间 */
 let queryRangePicker = ref<[string, string]>(['', '']);
 
 /**查询参数 */
@@ -407,7 +407,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录时间" name="c">
+            <a-form-item label="登录时间" name="queryRangePicker">
               <a-range-picker
                 v-model:value="queryRangePicker"
                 allow-clear
