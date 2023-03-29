@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import {
+  PlusOutlined,
+  FormOutlined,
   ExportOutlined,
   CloseOutlined,
   ProfileOutlined,
@@ -11,7 +13,7 @@ import {
 } from '@ant-design/icons-vue';
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
-import { message, Modal } from 'ant-design-vue';
+import { Form, message, Modal } from 'ant-design-vue';
 import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import { SizeType } from 'ant-design-vue/es/config-provider';
 import { ColumnsType } from 'ant-design-vue/es/table';
@@ -38,23 +40,49 @@ const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
 
+// 获取地址栏参数
+const dictId = route.params && (route.params.dictId as string);
+
+/**数据标签回显样式 */
+const listClassOptions = ref([
+  { value: 'default', label: 'default' },
+  { value: 'blue ', label: 'blue' },
+  { value: 'cyan', label: 'cyan' },
+  { value: 'gold', label: 'gold' },
+  { value: 'green', label: 'green' },
+  { value: 'lime', label: 'lime' },
+  { value: 'magenta', label: 'magenta' },
+  { value: 'orange', label: 'orange' },
+  { value: 'pink', label: 'pink' },
+  { value: 'purple', label: 'purple' },
+  { value: 'red', label: 'red' },
+  { value: 'yellow', label: 'yellow' },
+  { value: 'error', label: 'error' },
+  { value: 'success', label: 'success' },
+  { value: 'warning', label: 'warning' },
+  { value: 'processing', label: 'processing' },
+  { value: 'geekblue', label: 'geekblue' },
+  { value: 'volcano', label: 'volcano' },
+]);
+
 /**字典数据 */
 let dict: {
-  /**字典状态 */
+  /**数据状态 */
   sysNormalDisable: DictType[];
+  /**字典名称 */
+  sysDictType: DictType[];
 } = reactive({
   sysNormalDisable: [],
+  sysDictType: [],
 });
 
 /**查询参数 */
 let queryParams = reactive({
   /**字典名称 */
   dictType: '',
-  /**字典代码 */
-  dictCode: '',
-  /**字典标签 */
+  /**数据标签 */
   dictLabel: '',
-  /**状态 */
+  /**数据状态 */
   status: undefined,
   /**当前页数 */
   pageNum: 1,
@@ -64,11 +92,8 @@ let queryParams = reactive({
 
 /**查询参数重置 */
 function fnQueryReset() {
-  // 获取地址栏参数
-  const dictId = route.params && (route.params.dictId as string);
   if (dictId && dictId !== '0') {
     queryParams = Object.assign(queryParams, {
-      dictCode: '',
       dictLabel: '',
       status: undefined,
       pageNum: 1,
@@ -77,7 +102,6 @@ function fnQueryReset() {
   } else {
     queryParams = Object.assign(queryParams, {
       dictType: '',
-      dictCode: '',
       dictLabel: '',
       status: undefined,
       pageNum: 1,
@@ -118,27 +142,27 @@ let tableState: TabeStateType = reactive({
 /**表格字段列 */
 let tableColumns: ColumnsType = [
   {
-    title: '字典代码',
+    title: '数据代码',
     dataIndex: 'dictCode',
     align: 'center',
   },
   {
-    title: '字典标签',
+    title: '数据标签',
     dataIndex: 'dictLabel',
     align: 'center',
   },
   {
-    title: '字典键值',
+    title: '数据键值',
     dataIndex: 'dictValue',
     align: 'center',
   },
   {
-    title: '字典排序',
+    title: '数据排序',
     dataIndex: 'dictSort',
     align: 'center',
   },
   {
-    title: '状态',
+    title: '数据状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
@@ -205,31 +229,50 @@ function fnTableSelectedRowKeys(keys: (string | number)[]) {
 type ModalStateType = {
   /**详情框是否显示 */
   visibleByView: boolean;
+  /**新增框或修改框是否显示 */
+  visibleByEdit: boolean;
   /**标题 */
   title: string;
   /**表单数据 */
   from: Record<string, any>;
+  /**确定按钮 loading */
+  confirmLoading: boolean;
 };
 
 /**对话框对象信息状态 */
 let modalState: ModalStateType = reactive({
   visibleByView: false,
+  visibleByEdit: false,
   title: '字典数据',
   from: {
-    createBy: '',
-    createTime: 0,
-    cssClass: '',
     dictCode: undefined,
     dictLabel: '',
     dictSort: 0,
-    dictType: '',
-    dictValue: '0',
-    isDefault: 'Y',
-    listClass: '',
+    dictType: 'sys_oper_type',
+    dictValue: '',
+    isDefault: 'N',
+    cssClass: '',
+    listClass: 'default',
     remark: '',
-    status: '1',
+    status: '0',
+    createTime: '',
+    createBy: undefined,
   },
+  confirmLoading: false,
 });
+
+/**对话框内表单属性和校验规则 */
+const modalStateFrom = Form.useForm(
+  modalState.from,
+  reactive({
+    dictLabel: [
+      { required: true, min: 1, max: 50, message: '请正确输入数据标签' },
+    ],
+    dictValue: [
+      { required: true, min: 1, max: 50, message: '请正确输入数据键值' },
+    ],
+  })
+);
 
 /**
  * 对话框弹出显示为 查看
@@ -242,42 +285,84 @@ function fnModalVisibleByVive(row: Record<string, string>) {
 }
 
 /**
+ * 对话框弹出显示为 新增或者修改
+ * @param dictCode 数据编号id, 不传为新增
+ */
+function fnModalVisibleByEdit(dictCode?: string | number) {
+  if (!dictCode) {
+    modalStateFrom.resetFields();
+    modalState.title = '添加字典数据';
+    modalState.visibleByEdit = true;
+  } else {
+    getData(dictCode).then(res => {
+      if (res.code === 200) {
+        modalState.from = Object.assign(modalState.from, res.data);
+        modalState.title = '修改字典数据';
+        modalState.visibleByEdit = true;
+      } else {
+        message.error(`获取字典数据信息失败`, 1.5);
+      }
+    });
+  }
+}
+
+/**
+ * 对话框弹出确认执行函数
+ * 进行表达规则校验
+ */
+function fnModalOk() {
+  modalStateFrom
+    .validate()
+    .then(() => {
+      modalState.confirmLoading = true;
+      const from = toRaw(modalState.from);
+      const dictData = from.dictCode ? updateData(from) : addData(from);
+      dictData
+        .then(res => {
+          if (res.code === 200) {
+            message.success(`${modalState.title}成功`, 1.5);
+            modalState.visibleByEdit = false;
+            modalStateFrom.resetFields();
+            fnGetList();
+          } else {
+            message.error(res.msg, 1.5);
+          }
+        })
+        .finally(() => {
+          modalState.confirmLoading = false;
+        });
+    })
+    .catch(e => {
+      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 1.5);
+    });
+}
+
+/**
  * 对话框弹出关闭执行函数
+ * 进行表达规则校验
  */
 function fnModalCancel() {
+  modalState.visibleByEdit = false;
   modalState.visibleByView = false;
+  modalStateFrom.resetFields();
 }
 
 /**
  * 字典删除
+ * @param dictCode 字典代码
  */
-function fnRecordDelete() {
-  const ids = tableState.selectedRowKeys.join(',');
+function fnRecordDelete(dictCode: string = '0') {
+  if (dictCode === '0') {
+    dictCode = tableState.selectedRowKeys.join(',');
+  }
   Modal.confirm({
     title: '提示',
-    content: `确认删除字典数据编号为 【${ids}】 的数据项吗?`,
+    content: `确认删除字典数据代码为 【${dictCode}】 的数据项?`,
     onOk() {
-      delJobLog(ids).then(res => {
+      delData(dictCode).then(res => {
         if (res.code === 200) {
           message.success(`删除成功`, 1.5);
           fnGetList();
-        } else {
-          message.error(`${res.msg}`, 1.5);
-        }
-      });
-    },
-  });
-}
-
-/**列表清空 */
-function fnCleanList() {
-  Modal.confirm({
-    title: '提示',
-    content: `确认清空所有调度日志数据项吗?`,
-    onOk() {
-      cleanJobLog().then(res => {
-        if (res.code === 200) {
-          message.error(`清空成功`, 1.5);
         } else {
           message.error(`${res.msg}`, 1.5);
         }
@@ -304,7 +389,7 @@ function fnExportList() {
               message.error(`导出数据异常`, 1.5);
             });
         } else {
-          saveAs(resBlob, `job_log_${Date.now()}.xlsx`);
+          saveAs(resBlob, `dict_data_${Date.now()}.xlsx`);
         }
       });
     },
@@ -334,17 +419,25 @@ function fnGetList() {
 
 onMounted(() => {
   // 初始字典数据
-  Promise.allSettled([getDict('sys_normal_disable')]).then(resArr => {
+  Promise.allSettled([
+    getDict('sys_normal_disable'),
+    getDictOptionselect(),
+  ]).then(resArr => {
     if (resArr[0].status === 'fulfilled') {
       dict.sysNormalDisable = resArr[0].value;
     }
+    if (resArr[1].status === 'fulfilled') {
+      const dicts = resArr[1].value;
+      if (dicts.code === 200) {
+        dict.sysDictType = dicts.data;
+      }
+    }
   });
-  // 获取地址栏参数
-  const dictId = route.params && (route.params.dictId as string);
+  // 指定字典id列表数据
   if (dictId && dictId !== '0') {
     getType(dictId).then(res => {
       if (res.code === 200) {
-        // queryParams.dictType = res.data.dictType;
+        queryParams.dictType = res.data.dictType;
         fnGetList();
       }
     });
@@ -366,46 +459,35 @@ onMounted(() => {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="任务名称" name="jobName">
+            <a-form-item label="字典名称" name="dictType">
+              <a-select
+                v-model:value="queryParams.dictType"
+                :allow-clear="dictId === '0'"
+                :disabled="dictId !== '0'"
+                placeholder="请选择字典名称"
+                :options="dict.sysDictType"
+              >
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="数据标签" name="dictLabel">
               <a-input
-                v-model:value="queryParams.jobName"
+                v-model:value="queryParams.dictLabel"
                 allow-clear
-                placeholder="请输入任务名称"
+                placeholder="请输入数据标签"
               ></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="任务组名" name="jobGroup">
-              <a-select
-                v-model:value="queryParams.jobGroup"
-                allow-clear
-                placeholder="请选择菜单状态"
-                :options="dict.sysJobGroup"
-              >
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="执行状态" name="status">
+            <a-form-item label="数据状态" name="status">
               <a-select
                 v-model:value="queryParams.status"
                 allow-clear
-                placeholder="请选择执行状态"
-                :options="dict.sysCommonStatus"
+                placeholder="请选择数据状态"
+                :options="dict.sysNormalDisable"
               >
               </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="记录时间" name="queryRangePicker">
-              <a-range-picker
-                v-model:value="queryRangePicker"
-                allow-clear
-                bordered
-                value-format="YYYY-MM-DD"
-                :placeholder="['记录开始', '记录结束']"
-                style="width: 100%"
-              ></a-range-picker>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
@@ -430,9 +512,13 @@ onMounted(() => {
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button type="primary" @click.prevent="fnJobLogClose()">
+          <a-button type="default" @click.prevent="fnJobLogClose()">
             <template #icon><CloseOutlined /></template>
             关闭
+          </a-button>
+          <a-button type="primary" @click.prevent="fnModalVisibleByEdit()">
+            <template #icon><PlusOutlined /></template>
+            新增
           </a-button>
           <a-button
             type="default"
@@ -443,11 +529,7 @@ onMounted(() => {
             <template #icon><DeleteOutlined /></template>
             删除
           </a-button>
-          <a-button type="default" danger @click.prevent="fnCleanList()">
-            <template #icon><DeleteOutlined /></template>
-            清空
-          </a-button>
-          <a-button type="default" @click.prevent="fnExportList()">
+          <a-button type="dashed" @click.prevent="fnExportList()">
             <template #icon><ExportOutlined /></template>
             导出
           </a-button>
@@ -505,7 +587,7 @@ onMounted(() => {
       <!-- 表格列表 -->
       <a-table
         class="table"
-        row-key="jobLogId"
+        row-key="dictCode"
         :columns="tableColumns"
         :loading="tableState.loading"
         :data-source="tableState.data"
@@ -519,15 +601,10 @@ onMounted(() => {
         }"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'jobGroup'">
-            <DictTag :options="dict.sysJobGroup" :value="record.jobGroup" />
-          </template>
           <template v-if="column.key === 'status'">
-            <a-tag :color="+record.status ? 'success' : 'error'">
-              {{ ['失败', '正常'][+record.status] }}
-            </a-tag>
+            <DictTag :options="dict.sysNormalDisable" :value="record.status" />
           </template>
-          <template v-if="column.key === 'jobLogId'">
+          <template v-if="column.key === 'dictCode'">
             <a-space :size="8" align="center">
               <a-tooltip>
                 <template #title>查看详情</template>
@@ -536,7 +613,24 @@ onMounted(() => {
                   @click.prevent="fnModalVisibleByVive(record)"
                 >
                   <template #icon><ProfileOutlined /></template>
-                  详情
+                </a-button>
+              </a-tooltip>
+              <a-tooltip>
+                <template #title>编辑</template>
+                <a-button
+                  type="link"
+                  @click.prevent="fnModalVisibleByEdit(record.dictId)"
+                >
+                  <template #icon><FormOutlined /></template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip>
+                <template #title>删除</template>
+                <a-button
+                  type="link"
+                  @click.prevent="fnRecordDelete(record.dictCode)"
+                >
+                  <template #icon><DeleteOutlined /></template>
                 </a-button>
               </a-tooltip>
             </a-space>
@@ -555,55 +649,183 @@ onMounted(() => {
       <a-form layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="日志编号" name="jobLogId">
-              {{ modalState.from.jobLogId }}
+            <a-form-item label="字典名称" name="dictType">
+              {{
+                dict.sysDictType.find(
+                  item => item.value === modalState.from.dictType
+                )?.label
+              }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="执行状态" name="status">
-              <a-tag :color="+modalState.from.status ? 'success' : 'error'">
-                {{ ['失败', '正常'][+modalState.from.status] }}
-              </a-tag>
+            <a-form-item label="创建时间" name="createTime">
+              {{ parseDateToStr(+modalState.from.createTime) }}
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="任务名称" name="jobName">
-              {{ modalState.from.jobName }}
+            <a-form-item label="数据代码" name="dictCode">
+              {{ modalState.from.dictCode }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="任务组名" name="jobGroup">
+            <a-form-item label="数据状态" name="status">
               <DictTag
-                :options="dict.sysJobGroup"
-                :value="modalState.from.jobGroup"
+                :options="dict.sysNormalDisable"
+                :value="modalState.from.status"
               />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="调用目标" name="invokeTarget">
-              {{ modalState.from.invokeTarget }}
+            <a-form-item label="数据标签" name="dictLabel">
+              {{ modalState.from.dictLabel }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="记录时间" name="createTime">
-              {{ parseDateToStr(+modalState.from.createTime) }}
+            <a-form-item label="数据键值" name="dictValue">
+              {{ modalState.from.dictValue }}
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="传入参数" name="targetParams">
-          {{ modalState.from.targetParams }}
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="回显样式" name="listClass">
+              <a-tag
+                :class="modalState.from.cssClass"
+                color="modalState.from.listClass"
+              >
+                {{
+                  listClassOptions.find(
+                    i => i.value === modalState.from.listClass
+                  )?.label
+                }}
+              </a-tag>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="数据排序" name="dictSort">
+              {{ modalState.from.dictSort }}
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-form-item label="样式属性" name="cssClass">
+          {{ modalState.from.cssClass }}
         </a-form-item>
-        <a-form-item label="日志信息" name="jobMsg">
-          {{ modalState.from.jobMsg }}
+        <a-form-item label="数据说明" name="remark">
+          {{ modalState.from.remark }}
         </a-form-item>
       </a-form>
       <template #footer>
         <a-button key="cancel" @click="fnModalCancel">关闭</a-button>
       </template>
+    </a-modal>
+
+    <!-- 新增框或修改框 -->
+    <a-modal
+      width="800px"
+      :keyboard="false"
+      :mask-closable="false"
+      :visible="modalState.visibleByEdit"
+      :title="modalState.title"
+      :confirm-loading="modalState.confirmLoading"
+      @ok="fnModalOk"
+      @cancel="fnModalCancel"
+    >
+      <a-form name="modalStateFrom" layout="horizontal">
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="字典类型" name="dictType">
+              <a-select
+                v-model:value="modalState.from.dictType"
+                default-value="sys_oper_type"
+                placeholder="字典类型"
+                :options="dict.sysDictType"
+              >
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="字典状态" name="status">
+              <a-select
+                v-model:value="modalState.from.status"
+                default-value="0"
+                placeholder="字典状态"
+                :options="dict.sysNormalDisable"
+              >
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item
+              label="数据标签"
+              name="dictLabel"
+              v-bind="modalStateFrom.validateInfos.dictLabel"
+            >
+              <a-input
+                v-model:value="modalState.from.dictLabel"
+                allow-clear
+                placeholder="请输入数据标签"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item
+              label="数据键值"
+              name="dictValue"
+              v-bind="modalStateFrom.validateInfos.dictValue"
+            >
+              <a-input
+                v-model:value="modalState.from.dictValue"
+                allow-clear
+                placeholder="请输入数据键值"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="回显样式" name="listClass">
+              <a-select
+                v-model:value="modalState.from.listClass"
+                default-value="default"
+                placeholder="回显样式"
+                :options="listClassOptions"
+              >
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="数据排序" name="dictSort">
+              <a-input
+                v-model:value="modalState.from.dictSort"
+                allow-clear
+                placeholder="请输入数据排序"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-form-item label="样式属性" name="cssClass">
+          <a-input
+            v-model:value="modalState.from.cssClass"
+            allow-clear
+            placeholder="请输入样式属性"
+          ></a-input>
+        </a-form-item>
+        <a-form-item label="数据说明" name="remark">
+          <a-textarea
+            v-model:value="modalState.from.remark"
+            :auto-size="{ minRows: 4, maxRows: 6 }"
+            :maxlength="450"
+            :show-count="true"
+            placeholder="请输入数据说明"
+          />
+        </a-form-item>
+      </a-form>
     </a-modal>
   </page-container>
 </template>

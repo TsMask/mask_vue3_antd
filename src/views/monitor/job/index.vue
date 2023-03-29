@@ -575,7 +575,7 @@ onMounted(() => {
             <template #icon><DeleteOutlined /></template>
             删除
           </a-button>
-          <a-button type="default" @click.prevent="fnExportList()">
+          <a-button type="dashed" @click.prevent="fnExportList()">
             <template #icon><ExportOutlined /></template>
             导出
           </a-button>
@@ -583,7 +583,7 @@ onMounted(() => {
             <template #icon><ContainerOutlined /></template>
             日志
           </a-button>
-          <a-button type="dashed" @click.prevent="fnResetQueueJob">
+          <a-button type="dashed" danger @click.prevent="fnResetQueueJob">
             <template #icon><SyncOutlined /></template>
             重置队列
           </a-button>

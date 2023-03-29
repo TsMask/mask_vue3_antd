@@ -29,6 +29,9 @@ const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
 
+// 获取地址栏参数
+const jobId = route.params && (route.params.jobId as string);
+
 /**字典数据 */
 let dict: {
   /**任务组名 */
@@ -63,8 +66,6 @@ let queryParams = reactive({
 
 /**查询参数重置 */
 function fnQueryReset() {
-  // 获取地址栏参数
-  const jobId = route.params && (route.params.jobId as string);
   if (jobId && jobId !== '0') {
     queryParams = Object.assign(queryParams, {
       status: undefined,
@@ -345,8 +346,7 @@ onMounted(() => {
       dict.sysCommonStatus = resArr[1].value;
     }
   });
-  // 获取地址栏参数
-  const jobId = route.params && (route.params.jobId as string);
+  // 指定任务id数据列表
   if (jobId && jobId !== '0') {
     getJob(jobId).then(res => {
       if (res.code === 200) {
@@ -376,7 +376,8 @@ onMounted(() => {
             <a-form-item label="任务名称" name="jobName">
               <a-input
                 v-model:value="queryParams.jobName"
-                allow-clear
+                :allow-clear="jobId === '0'"
+                :disabled="jobId !== '0'"
                 placeholder="请输入任务名称"
               ></a-input>
             </a-form-item>
@@ -437,7 +438,7 @@ onMounted(() => {
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button type="primary" @click.prevent="fnJobLogClose()">
+          <a-button type="default" @click.prevent="fnJobLogClose()">
             <template #icon><CloseOutlined /></template>
             关闭
           </a-button>
@@ -450,11 +451,11 @@ onMounted(() => {
             <template #icon><DeleteOutlined /></template>
             删除
           </a-button>
-          <a-button type="default" danger @click.prevent="fnCleanList()">
+          <a-button type="dashed" danger @click.prevent="fnCleanList()">
             <template #icon><DeleteOutlined /></template>
             清空
           </a-button>
-          <a-button type="default" @click.prevent="fnExportList()">
+          <a-button type="dashed" @click.prevent="fnExportList()">
             <template #icon><ExportOutlined /></template>
             导出
           </a-button>

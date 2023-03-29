@@ -510,13 +510,13 @@ onMounted(() => {
             <template #icon><DeleteOutlined /></template>
             删除
           </a-button>
-          <a-button type="default" @click.prevent="fnExportList()">
-            <template #icon><ExportOutlined /></template>
-            导出
-          </a-button>
-          <a-button type="dashed" @click.prevent="fnRefreshCache">
+          <a-button type="dashed" danger @click.prevent="fnRefreshCache">
             <template #icon><SyncOutlined /></template>
             刷新缓存
+          </a-button>
+          <a-button type="dashed" @click.prevent="fnExportList()">
+            <template #icon><ExportOutlined /></template>
+            导出
           </a-button>
         </a-space>
       </template>

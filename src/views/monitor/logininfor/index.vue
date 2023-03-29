@@ -414,11 +414,11 @@ onMounted(() => {
             <template #icon><DeleteOutlined /></template>
             删除
           </a-button>
-          <a-button type="default" danger @click.prevent="fnCleanList()">
+          <a-button type="dashed" danger @click.prevent="fnCleanList()">
             <template #icon><DeleteOutlined /></template>
             清空
           </a-button>
-          <a-button type="default" @click.prevent="fnExportList()">
+          <a-button type="dashed" @click.prevent="fnExportList()">
             <template #icon><ExportOutlined /></template>
             导出
           </a-button>

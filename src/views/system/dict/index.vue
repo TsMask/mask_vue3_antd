@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  ContainerOutlined,
   PlusOutlined,
   FormOutlined,
   ProfileOutlined,
@@ -507,17 +508,17 @@ onMounted(() => {
             <template #icon><DeleteOutlined /></template>
             删除
           </a-button>
-          <a-button type="default" @click.prevent="fnExportList()">
-            <template #icon><ExportOutlined /></template>
-            导出
-          </a-button>
           <a-button type="default" @click.prevent="fnDataView()">
             <template #icon><ContainerOutlined /></template>
-            日志
+            字典数据
           </a-button>
-          <a-button type="dashed" @click.prevent="fnRefreshCache">
+          <a-button type="dashed" danger @click.prevent="fnRefreshCache">
             <template #icon><SyncOutlined /></template>
             刷新缓存
+          </a-button>
+          <a-button type="dashed" @click.prevent="fnExportList()">
+            <template #icon><ExportOutlined /></template>
+            导出
           </a-button>
         </a-space>
       </template>
@@ -617,6 +618,15 @@ onMounted(() => {
                   @click.prevent="fnRecordDelete(record.dictId)"
                 >
                   <template #icon><DeleteOutlined /></template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip>
+                <template #title>字典数据</template>
+                <a-button
+                  type="link"
+                  @click.prevent="fnDataView(record.dictId)"
+                >
+                  <template #icon><ContainerOutlined /></template>
                 </a-button>
               </a-tooltip>
             </a-space>
