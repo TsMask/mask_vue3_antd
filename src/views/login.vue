@@ -11,8 +11,13 @@ import { GlobalFooter } from '@ant-design-vue/pro-layout';
 import { ref, reactive, onMounted } from 'vue';
 import useUserStore from '@/store/modules/user';
 import { getCaptchaImage } from '@/api/login';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
+
+/**登录后重定向页面 */
+const redirectPath =
+  (route.query && (route.query.redirect as string)) || '/index';
 
 /**Tab默认激活 */
 let tabActiveKey = ref<'username' | 'phonenumber'>('username');
@@ -73,7 +78,7 @@ function fnFinish() {
     .fnLogin(form)
     .then(res => {
       if (res.code !== 500) {
-        router.push({ name: 'Index' });
+        router.push({ path: redirectPath });
       } else {
         tabForm.click = false;
         // 刷新验证码

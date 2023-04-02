@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  FieldTimeOutlined,
   SyncOutlined,
   PlusOutlined,
   ExportOutlined,
@@ -202,6 +203,8 @@ type ModalStateType = {
   from: Record<string, any>;
   /**确定按钮 loading */
   confirmLoading: boolean;
+  /**cron生成框是否显示 */
+  visibleByCron: boolean;
 };
 
 /**对话框对象信息状态 */
@@ -222,6 +225,7 @@ let modalState: ModalStateType = reactive({
     remark: '',
   },
   confirmLoading: false,
+  visibleByCron: false,
 });
 
 /**对话框内表单属性和校验规则 */
@@ -335,6 +339,16 @@ function fnModalCancel() {
   modalState.visibleByEdit = false;
   modalState.visibleByView = false;
   modalStateFrom.resetFields();
+}
+
+/**
+ * 对话框弹出cron生成回调
+ */
+function fnModalCron(opt: boolean, cronStr?: string) {
+  modalState.visibleByCron = opt;
+  if (cronStr) {
+    modalState.from.cronExpression = cronStr;
+  }
 }
 
 /**
@@ -928,8 +942,12 @@ onMounted(() => {
               </a-tooltip>
             </template>
             <template #addonAfter>
-              <a-button type="text" size="small" @click.prevent="">
-                <template #icon><ReloadOutlined /></template>
+              <a-button
+                type="text"
+                size="small"
+                @click.prevent="fnModalCron(true)"
+              >
+                <template #icon><FieldTimeOutlined /></template>
                 生成表达式
               </a-button>
             </template>
@@ -961,7 +979,12 @@ onMounted(() => {
       </a-form>
     </a-modal>
 
-    <!-- <CronModal data="* * * * * ? *" @ok="fnModalOk"></CronModal> -->
+    <!-- 生成cron表达式 -->
+    <CronModal
+      v-model:visible="modalState.visibleByCron"
+      :cron="modalState.from.cronExpression"
+      @ok="fnModalCron(false, $event)"
+    ></CronModal>
   </page-container>
 </template>
 
