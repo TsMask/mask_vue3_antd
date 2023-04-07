@@ -7,11 +7,14 @@ export function login(data: Record<string, string>) {
     method: 'post',
     data: data,
     whithToken: false,
-    repeatSubmit: false,
   });
 }
 
-// 注册方法
+/**
+ * 注册方法
+ * @param data 注册对象
+ * @returns object
+ */
 export function register(data: Record<string, object>) {
   return request({
     url: '/register',
@@ -21,7 +24,10 @@ export function register(data: Record<string, object>) {
   });
 }
 
-// 获取用户详细信息
+/**
+ * 获取用户详细信息
+ * @returns object
+ */
 export function getInfo() {
   return request<ResultType>({
     url: '/getInfo',
@@ -29,7 +35,10 @@ export function getInfo() {
   });
 }
 
-// 退出方法
+/**
+ * 退出方法
+ * @returns object
+ */
 export function logout() {
   return request<ResultType>({
     url: '/logout',
@@ -37,7 +46,10 @@ export function logout() {
   });
 }
 
-// 获取验证码
+/**
+ * 获取验证码
+ * @returns object
+ */
 export function getCaptchaImage() {
   return request<ResultType>({
     url: '/captchaImage',

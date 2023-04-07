@@ -29,7 +29,7 @@ export function listJob(query: Record<string, string | number | undefined>) {
 
 /**
  * 查询定时任务调度详细
- * @param jobId 任务Id
+ * @param jobId 任务ID
  * @returns object
  */
 export function getJob(jobId: string | number) {
@@ -67,18 +67,26 @@ export function updateJob(data: Record<string, object>) {
 
 /**
  * 删除定时任务调度
- * @param jobId 任务Id
+ * @param jobId 任务ID
  * @returns object
  */
-export function delJob(jobId: string) {
+export function delJob(jobId: string | number) {
   return request<ResultType>({
     url: `/monitor/job/${jobId}`,
     method: 'delete',
   });
 }
 
-// 任务状态修改
-export function changeJobStatus(jobId: string, status: string | number) {
+/**
+ * 任务状态修改
+ * @param jobId 任务ID
+ * @param status 变更状态值
+ * @returns
+ */
+export function changeJobStatus(
+  jobId: string | number,
+  status: string | number
+) {
   return request<ResultType>({
     url: '/monitor/job/changeStatus',
     method: 'put',
@@ -91,7 +99,7 @@ export function changeJobStatus(jobId: string, status: string | number) {
 
 /**
  * 定时任务立即执行一次
- * @param jobId 任务Id
+ * @param jobId 任务ID
  * @returns object
  */
 export function runJob(jobId: string) {

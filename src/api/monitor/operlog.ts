@@ -33,7 +33,7 @@ export function listOperlog(
 
 /**
  * 删除操作日志
- * @param operId 操作日志Id
+ * @param operId 操作日志ID
  * @returns object
  */
 export function delOperlog(operId: string) {
