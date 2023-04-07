@@ -1,62 +1,723 @@
+<script setup lang="ts">
+import {
+  ExportOutlined,
+  PlusOutlined,
+  FormOutlined,
+  ProfileOutlined,
+  ClearOutlined,
+  ColumnHeightOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons-vue';
+import { useRoute } from 'vue-router';
+import { reactive, ref, onMounted, toRaw } from 'vue';
+import { message, Modal, Form } from 'ant-design-vue';
+import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
+import { SizeType } from 'ant-design-vue/es/config-provider';
+import { ColumnsType } from 'ant-design-vue/es/table';
+import {
+  exportPost,
+  listPost,
+  addPost,
+  delPost,
+  getPost,
+  updatePost,
+} from '@/api/system/post';
+import { saveAs } from 'file-saver';
+import { parseDateToStr } from '@/utils/DateUtils';
+import useDictStore from '@/store/modules/dict';
+const { getDict } = useDictStore();
+const route = useRoute();
+
+/**路由标题 */
+let title = ref<string>(route.meta.title ?? '标题');
+
+/**字典数据 */
+let dict: {
+  /**状态 */
+  sysNormalDisable: DictType[];
+} = reactive({
+  sysNormalDisable: [],
+});
+
+/**查询参数 */
+let queryParams = reactive({
+  /**岗位编码 */
+  postCode: '',
+  /**岗位名称 */
+  postName: '',
+  /**岗位状态 */
+  status: undefined,
+  /**当前页数 */
+  pageNum: 1,
+  /**每页条数 */
+  pageSize: 20,
+});
+
+/**查询参数重置 */
+function fnQueryReset() {
+  queryParams = Object.assign(queryParams, {
+    postCode: '',
+    postName: '',
+    status: undefined,
+    pageNum: 1,
+    pageSize: 20,
+  });
+  tablePagination.current = 1;
+  tablePagination.pageSize = 20;
+  fnGetList();
+}
+
+/**表格状态类型 */
+type TabeStateType = {
+  /**加载等待 */
+  loading: boolean;
+  /**紧凑型 */
+  size: SizeType;
+  /**斑马纹 */
+  striped: boolean;
+  /**搜索栏 */
+  seached: boolean;
+  /**记录数据 */
+  data: object[];
+  /**勾选记录 */
+  selectedRowKeys: (string | number)[];
+};
+
+/**表格状态 */
+let tableState: TabeStateType = reactive({
+  loading: false,
+  size: 'middle',
+  striped: false,
+  seached: false,
+  data: [],
+  selectedRowKeys: [],
+});
+
+/**表格字段列 */
+let tableColumns: ColumnsType = [
+  {
+    title: '岗位编号',
+    dataIndex: 'postId',
+    align: 'center',
+  },
+  {
+    title: '岗位编码',
+    dataIndex: 'postCode',
+    align: 'center',
+  },
+  {
+    title: '岗位名称',
+    dataIndex: 'postName',
+    align: 'center',
+  },
+  {
+    title: '岗位排序',
+    dataIndex: 'postSort',
+    align: 'center',
+  },
+  {
+    title: '岗位状态',
+    dataIndex: 'status',
+    key: 'status',
+    align: 'center',
+  },
+  {
+    title: '创建时间',
+    dataIndex: 'createTime',
+    align: 'center',
+    customRender(opt) {
+      return parseDateToStr(+opt.value);
+    },
+  },
+  {
+    title: '操作',
+    key: 'postId',
+    align: 'center',
+  },
+];
+
+/**表格分页器参数 */
+let tablePagination = reactive({
+  /**当前页数 */
+  current: 1,
+  /**每页条数 */
+  pageSize: 20,
+  /**默认的每页条数 */
+  defaultPageSize: 20,
+  /**指定每页可以显示多少条 */
+  pageSizeOptions: ['10', '20', '50', '100'],
+  /**只有一页时是否隐藏分页器 */
+  hideOnSinglePage: false,
+  /**是否可以快速跳转至某页 */
+  showQuickJumper: true,
+  /**是否可以改变 pageSize */
+  showSizeChanger: true,
+  /**数据总数 */
+  total: 0,
+  showTotal: (total: number) => `总共 ${total} 条`,
+  onChange: (page: number, pageSize: number) => {
+    tablePagination.current = page;
+    tablePagination.pageSize = pageSize;
+    queryParams.pageNum = page;
+    queryParams.pageSize = pageSize;
+    fnGetList();
+  },
+});
+
+/**表格紧凑型变更操作 */
+function fnTableSize({ key }: MenuInfo) {
+  tableState.size = key as SizeType;
+}
+
+/**表格斑马纹 */
+function fnTableStriped(_record: unknown, index: number) {
+  return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
+}
+
+/**表格多选 */
+function fnTableSelectedRowKeys(keys: (string | number)[]) {
+  tableState.selectedRowKeys = keys;
+}
+
+/**对话框对象信息状态类型 */
+type ModalStateType = {
+  /**详情框是否显示 */
+  visibleByView: boolean;
+  /**新增框或修改框是否显示 */
+  visibleByEdit: boolean;
+  /**标题 */
+  title: string;
+  /**表单数据 */
+  from: Record<string, any>;
+  /**确定按钮 loading */
+  confirmLoading: boolean;
+};
+
+/**对话框对象信息状态 */
+let modalState: ModalStateType = reactive({
+  visibleByView: false,
+  visibleByEdit: false,
+  title: '参数',
+  from: {
+    postId: undefined,
+    postName: '',
+    postCode: '',
+    postSort: 0,
+    status: '0',
+    remark: '',
+    createTime: '0',
+  },
+  confirmLoading: false,
+});
+
+/**对话框内表单属性和校验规则 */
+const modalStateFrom = Form.useForm(
+  modalState.from,
+  reactive({
+    postName: [
+      { required: true, min: 1, max: 50, message: '请正确输入岗位编码' },
+    ],
+    postCode: [
+      { required: true, min: 1, max: 50, message: '请正确输入岗位名称' },
+    ],
+  })
+);
+
+/**
+ * 对话框弹出显示为 查看
+ * @param postId 岗位编号id
+ */
+function fnModalVisibleByVive(postId: string | number) {
+  if (!postId) {
+    message.error(`岗位记录存在错误`, 1.5);
+    return;
+  }
+  getPost(postId).then(res => {
+    if (res.code === 200) {
+      modalState.from = Object.assign(modalState.from, res.data);
+      modalState.title = '岗位信息';
+      modalState.visibleByView = true;
+    } else {
+      message.error(`获取岗位信息失败`, 1.5);
+    }
+  });
+}
+
+/**
+ * 对话框弹出显示为 新增或者修改
+ * @param postId 岗位编号id, 不传为新增
+ */
+function fnModalVisibleByEdit(postId?: string | number) {
+  if (!postId) {
+    modalStateFrom.resetFields();
+    modalState.title = '添加岗位信息';
+    modalState.visibleByEdit = true;
+  } else {
+    getPost(postId).then(res => {
+      if (res.code === 200) {
+        modalState.from = Object.assign(modalState.from, res.data);
+        modalState.title = '修改岗位信息';
+        modalState.visibleByEdit = true;
+      } else {
+        message.error(`获取岗位信息失败`, 1.5);
+      }
+    });
+  }
+}
+
+/**
+ * 对话框弹出确认执行函数
+ * 进行表达规则校验
+ */
+function fnModalOk() {
+  modalStateFrom
+    .validate()
+    .then(() => {
+      modalState.confirmLoading = true;
+      const from = toRaw(modalState.from);
+      const post = from.postId ? updatePost(from) : addPost(from);
+      post
+        .then(res => {
+          if (res.code === 200) {
+            message.success(`${modalState.title}成功`, 1.5);
+            modalState.visibleByEdit = false;
+            modalStateFrom.resetFields();
+            fnGetList();
+          } else {
+            message.error(res.msg, 1.5);
+          }
+        })
+        .finally(() => {
+          modalState.confirmLoading = false;
+        });
+    })
+    .catch(e => {
+      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 1.5);
+    });
+}
+
+/**
+ * 对话框弹出关闭执行函数
+ * 进行表达规则校验
+ */
+function fnModalCancel() {
+  modalState.visibleByEdit = false;
+  modalState.visibleByView = false;
+  modalStateFrom.resetFields();
+}
+
+/**
+ * 岗位删除
+ * @param postId 岗位编号ID
+ */
+function fnRecordDelete(postId: string = '0') {
+  if (postId === '0') {
+    postId = tableState.selectedRowKeys.join(',');
+  }
+  Modal.confirm({
+    title: '提示',
+    content: `确认删除岗位编号为 【${postId}】 的数据项?`,
+    onOk() {
+      delPost(postId).then(res => {
+        if (res.code === 200) {
+          message.success(`删除成功`, 1.5);
+          fnGetList();
+        } else {
+          message.error(`${res.msg}`, 1.5);
+        }
+      });
+    },
+  });
+}
+
+/**列表导出 */
+function fnExportList() {
+  Modal.confirm({
+    title: '提示',
+    content: `确认根据搜索条件导出xlsx表格文件吗?`,
+    onOk() {
+      exportPost(toRaw(queryParams)).then(resBlob => {
+        if (resBlob.type === 'application/json') {
+          resBlob
+            .text()
+            .then(txt => {
+              const txtRes = JSON.parse(txt);
+              message.error(`${txtRes.msg}`, 1.5);
+            })
+            .catch(_ => {
+              message.error(`导出数据异常`, 1.5);
+            });
+        } else {
+          saveAs(resBlob, `post_${Date.now()}.xlsx`);
+        }
+      });
+    },
+  });
+}
+
+/**查询岗位列表 */
+function fnGetList() {
+  tableState.loading = true;
+  listPost(toRaw(queryParams)).then(res => {
+    if (res.code === 200) {
+      // 取消勾选
+      if (tableState.selectedRowKeys.length > 0) {
+        tableState.selectedRowKeys = [];
+      }
+      tablePagination.total = res.total;
+      tableState.data = res.rows;
+      tableState.loading = false;
+    }
+  });
+}
+
+onMounted(() => {
+  // 初始字典数据
+  Promise.allSettled([getDict('sys_normal_disable')]).then(resArr => {
+    if (resArr[0].status === 'fulfilled') {
+      dict.sysNormalDisable = resArr[0].value;
+    }
+  });
+  // 获取列表数据
+  fnGetList();
+});
+</script>
+
 <template>
-   <a-layout class="layout">
-     <a-layout-header>
-       <div class="logo" />
-       <a-menu
-         v-model:selectedKeys="selectedKeys"
-         theme="dark"
-         mode="horizontal"
-         :style="{ lineHeight: '64px' }"
-       >
-         <a-menu-item key="1">nav 1</a-menu-item>
-         <a-menu-item key="2">nav 2</a-menu-item>
-         <a-menu-item key="3">nav 3</a-menu-item>
-       </a-menu>
-     </a-layout-header>
-     <a-layout-content style="padding: 0 50px">
-       <a-breadcrumb style="margin: 16px 0">
-         <a-breadcrumb-item>Home</a-breadcrumb-item>
-         <a-breadcrumb-item>List</a-breadcrumb-item>
-         <a-breadcrumb-item>App</a-breadcrumb-item>
-       </a-breadcrumb>
-       <div :style="{ background: '#fff', padding: '24px', minHeight: '280px' }">
-         Content
-       </div>
-     </a-layout-content>
-     <a-layout-footer style="text-align: center"
-       >Ant Design ©2018 Created by Ant UED</a-layout-footer
-     >
-   </a-layout>
- </template>
- 
- <script lang="ts" setup>
- import { ref } from 'vue';
- 
- const selectedKeys = ref<string[]>(['2']);
- </script>
- 
- <style scoped>
- .site-layout-content {
-   min-height: 280px;
-   padding: 24px;
-   background: #fff;
- }
- 
- #components-layout-demo-top .logo {
-   float: left;
-   width: 120px;
-   height: 31px;
-   margin: 16px 24px 16px 0;
-   background: rgba(255, 255, 255, 0.3);
- }
- 
- .ant-row-rtl #components-layout-demo-top .logo {
-   float: right;
-   margin: 16px 0 16px 24px;
- }
- 
- [data-theme='dark'] .site-layout-content {
-   background: #141414;
- }
- </style>
- 
+  <page-container :title="title">
+    <template #content>
+      <a-typography-paragraph> 给予用户岗位标记 </a-typography-paragraph>
+    </template>
+
+    <a-card
+      v-show="tableState.seached"
+      :bordered="false"
+      :body-style="{ marginBottom: '24px', paddingBottom: 0 }"
+    >
+      <!-- 表格搜索栏 -->
+      <a-form :model="queryParams" name="queryParams" layout="horizontal">
+        <a-row :gutter="16">
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="岗位编码" name="postCode">
+              <a-input
+                v-model:value="queryParams.postCode"
+                allow-clear
+                placeholder="请输入岗位编码"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="岗位名称" name="postName">
+              <a-input
+                v-model:value="queryParams.postName"
+                allow-clear
+                placeholder="请输入岗位名称"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="岗位状态" name="status">
+              <a-select
+                v-model:value="queryParams.status"
+                allow-clear
+                placeholder="请选择"
+                :options="dict.sysNormalDisable"
+              >
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item>
+              <a-space :size="8">
+                <a-button type="primary" @click.prevent="fnGetList">
+                  <template #icon><SearchOutlined /></template>
+                  搜索</a-button
+                >
+                <a-button type="default" @click.prevent="fnQueryReset">
+                  <template #icon><ClearOutlined /></template>
+                  重置</a-button
+                >
+              </a-space>
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+    </a-card>
+
+    <a-card :bordered="false" :body-style="{ padding: '0px' }">
+      <!-- 插槽-卡片左侧侧 -->
+      <template #title>
+        <a-space :size="8" align="center">
+          <a-button type="primary" @click.prevent="fnModalVisibleByEdit()">
+            <template #icon><PlusOutlined /></template>
+            新建
+          </a-button>
+          <a-button
+            type="default"
+            danger
+            :disabled="tableState.selectedRowKeys.length <= 0"
+            @click.prevent="fnRecordDelete()"
+          >
+            <template #icon><DeleteOutlined /></template>
+            删除
+          </a-button>
+          <a-button type="dashed" @click.prevent="fnExportList()">
+            <template #icon><ExportOutlined /></template>
+            导出
+          </a-button>
+        </a-space>
+      </template>
+
+      <!-- 插槽-卡片右侧 -->
+      <template #extra>
+        <a-space :size="8" align="center">
+          <a-tooltip>
+            <template #title>搜索栏</template>
+            <a-switch
+              v-model:checked="tableState.seached"
+              checked-children="显"
+              un-checked-children="隐"
+              size="small"
+            />
+          </a-tooltip>
+          <a-tooltip>
+            <template #title>表格斑马纹</template>
+            <a-switch
+              v-model:checked="tableState.striped"
+              checked-children="开"
+              un-checked-children="关"
+              size="small"
+            />
+          </a-tooltip>
+          <a-tooltip>
+            <template #title>刷新</template>
+            <a-button type="text" @click.prevent="fnGetList">
+              <template #icon><ReloadOutlined /></template>
+            </a-button>
+          </a-tooltip>
+          <a-tooltip>
+            <template #title>密度</template>
+            <a-dropdown trigger="click">
+              <a-button type="text">
+                <template #icon><ColumnHeightOutlined /></template>
+              </a-button>
+              <template #overlay>
+                <a-menu
+                  :selected-keys="[tableState.size as string]"
+                  @click="fnTableSize"
+                >
+                  <a-menu-item key="default">默认</a-menu-item>
+                  <a-menu-item key="middle">中等</a-menu-item>
+                  <a-menu-item key="small">紧凑</a-menu-item>
+                </a-menu>
+              </template>
+            </a-dropdown>
+          </a-tooltip>
+        </a-space>
+      </template>
+
+      <!-- 表格列表 -->
+      <a-table
+        class="table"
+        row-key="postId"
+        :columns="tableColumns"
+        :loading="tableState.loading"
+        :data-source="tableState.data"
+        :size="tableState.size"
+        :row-class-name="fnTableStriped"
+        :pagination="tablePagination"
+        :scroll="{ x: true }"
+        :row-selection="{
+          type: 'checkbox',
+          onChange: selectedRowKeys => fnTableSelectedRowKeys(selectedRowKeys),
+        }"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'status'">
+            <DictTag :options="dict.sysNormalDisable" :value="record.status" />
+          </template>
+          <template v-if="column.key === 'postId'">
+            <a-space :size="8" align="center">
+              <a-tooltip>
+                <template #title>查看详情</template>
+                <a-button
+                  type="link"
+                  @click.prevent="fnModalVisibleByVive(record.postId)"
+                >
+                  <template #icon><ProfileOutlined /></template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip>
+                <template #title>编辑</template>
+                <a-button
+                  type="link"
+                  @click.prevent="fnModalVisibleByEdit(record.postId)"
+                >
+                  <template #icon><FormOutlined /></template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip>
+                <template #title>删除</template>
+                <a-button
+                  type="link"
+                  @click.prevent="fnRecordDelete(record.postId)"
+                >
+                  <template #icon><DeleteOutlined /></template>
+                </a-button>
+              </a-tooltip>
+            </a-space>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
+
+    <!-- 详情框 -->
+    <a-modal
+      width="800px"
+      :visible="modalState.visibleByView"
+      :title="modalState.title"
+      @cancel="fnModalCancel"
+    >
+      <a-form layout="horizontal">
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="岗位编号" name="postId">
+              {{ modalState.from.postId }}
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="创建时间" name="createTime">
+              {{ parseDateToStr(+modalState.from.createTime) }}
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="岗位顺序" name="postSort">
+              {{ modalState.from.postSort }}
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="岗位状态" name="status">
+              <DictTag
+                :options="dict.sysNormalDisable"
+                :value="modalState.from.status"
+              />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="岗位编码" name="postCode">
+              {{ modalState.from.postCode }}
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="岗位名称" name="postName">
+              {{ modalState.from.postName }}
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-form-item label="岗位说明" name="remark">
+          {{ modalState.from.remark }}
+        </a-form-item>
+      </a-form>
+      <template #footer>
+        <a-button key="cancel" @click="fnModalCancel">关闭</a-button>
+      </template>
+    </a-modal>
+
+    <!-- 新增框或修改框 -->
+    <a-modal
+      width="800px"
+      :keyboard="false"
+      :mask-closable="false"
+      :visible="modalState.visibleByEdit"
+      :title="modalState.title"
+      :confirm-loading="modalState.confirmLoading"
+      @ok="fnModalOk"
+      @cancel="fnModalCancel"
+    >
+      <a-form name="modalStateFrom" layout="horizontal">
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item
+              label="岗位编码"
+              name="postCode"
+              v-bind="modalStateFrom.validateInfos.postCode"
+            >
+              <a-input
+                v-model:value="modalState.from.postCode"
+                allow-clear
+                placeholder="请输入岗位编码"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="岗位状态" name="status">
+              <a-select
+                v-model:value="modalState.from.status"
+                default-value="0"
+                placeholder="岗位状态"
+                :options="dict.sysNormalDisable"
+              >
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item
+              label="岗位名称"
+              name="postName"
+              v-bind="modalStateFrom.validateInfos.postName"
+            >
+              <a-input
+                v-model:value="modalState.from.postName"
+                allow-clear
+                placeholder="请输入岗位名称"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item
+              label="岗位顺序"
+              name="postSort"
+            >
+              <a-input-number
+                v-model:value="modalState.from.postSort"
+                :min="0"
+                :max="9999"
+                :step="1"
+                placeholder="请输入岗位顺序"
+              ></a-input-number>
+            </a-form-item>
+          </a-col>
+        </a-row>
+
+        <a-form-item label="岗位说明" name="remark">
+          <a-textarea
+            v-model:value="modalState.from.remark"
+            :auto-size="{ minRows: 4, maxRows: 6 }"
+            :maxlength="450"
+            :show-count="true"
+            placeholder="请输入岗位说明"
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+  </page-container>
+</template>
+
+<style lang="less" scoped>
+.table :deep(.table-striped) td {
+  background-color: #fafafa;
+}
+
+.table :deep(.ant-pagination) {
+  padding: 0 24px;
+}
+</style>
