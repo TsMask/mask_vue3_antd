@@ -1,19 +1,3 @@
-<template>
-  <span
-    v-if="item.elTagType == 'default' || item.elTagType == ''"
-    :class="item.elTagClass"
-  >
-    {{ item.label }}
-  </span>
-  <a-tag
-    v-else
-    :class="item.elTagClass"
-    :color="item.elTagType === 'primary' ? '' : item.elTagType"
-  >
-    {{ item.label }}
-  </a-tag>
-</template>
-
 <script setup lang="ts">
 import { computed } from 'vue';
 // pink red orange green cyan blue purple
@@ -36,13 +20,32 @@ const props = defineProps({
 
 const item = computed(() => {
   if (Array.isArray(props.options) && props.options.length > 0) {
-    const option = props.options.find(
+    const option = (props.options as any[]).find(
       item => `${item[props.valueField]}` === `${props.value}`
     );
-    return option as Record<string, string>;
+    return option;
   }
-  return {};
+  return undefined;
 });
 </script>
+
+<template>
+  <template v-if="item">
+    <span
+      v-if="item.elTagType == 'default' || item.elTagType == ''"
+      :class="item.elTagClass"
+    >
+      {{ item.label }}
+    </span>
+    <a-tag
+      v-else
+      :class="item.elTagClass"
+      :color="item.elTagType === 'primary' ? '' : item.elTagType"
+    >
+      {{ item.label }}
+    </a-tag>
+  </template>
+  <a-tag v-else color="default">未知</a-tag>
+</template>
 
 <style lang="less" scoped></style>

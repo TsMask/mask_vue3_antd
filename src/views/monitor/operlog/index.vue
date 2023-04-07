@@ -385,35 +385,35 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录状态" name="status">
+            <a-form-item label="操作类型" name="businessType">
+              <a-select
+                v-model:value="queryParams.businessType"
+                allow-clear
+                placeholder="请选择操作类型"
+                :options="dict.sysBusinessType"
+              >
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="操作状态" name="status">
               <a-select
                 v-model:value="queryParams.status"
                 allow-clear
-                placeholder="请选择登录状态"
+                placeholder="请选择操作状态"
                 :options="dict.sysCommonStatus"
               >
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录状态" name="status">
-              <a-select
-                v-model:value="queryParams.status"
-                allow-clear
-                placeholder="请选择登录状态"
-                :options="dict.sysCommonStatus"
-              >
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录时间" name="queryRangePicker">
+            <a-form-item label="操作时间" name="queryRangePicker">
               <a-range-picker
                 v-model:value="queryRangePicker"
                 allow-clear
                 bordered
                 value-format="YYYY-MM-DD"
-                :placeholder="['登录开始', '登录结束']"
+                :placeholder="['操作开始', '操作结束']"
                 style="width: 100%"
               ></a-range-picker>
             </a-form-item>
