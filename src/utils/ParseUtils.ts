@@ -2,10 +2,9 @@
  * 解析数据层级转树结构
  *
  * @param data 数组数据
- * @param parentId 父节点值
- * @param fieldId id字段 默认 'id'
- * @param fieldParentId 父节点字段 默认 'parentId'
- * @param fieldChildren 孩子节点字段 默认 'children'
+ * @param fieldId 读取节点字段 默认 'id'
+ * @param fieldParentId 读取节点父节点字段 默认 'parentId'
+ * @param fieldChildren 设置子节点字段 默认 'children'
  * @returns 层级数组
  */
 export function parseDataToTree(
@@ -56,4 +55,66 @@ export function parseDataToTree(
     }
   }
   return tree;
+}
+
+/**
+ * 解析树结构数据转出一维id数组
+ *
+ * @param data 数组数据
+ * @param fieldId 读取节点字段 默认 'id'
+ * @param fieldChildren 读取子节点字段 默认 'children'
+ * @returns 层级数组
+ */
+export function parseTreeKeys(
+  data: Record<string, any>[],
+  fieldId: string = 'id',
+  fieldChildren: string = 'children'
+) {
+  // 节点id
+  let treeIds: string[] | number[] = [];
+  componet(data);
+  /**闭包递归函数 */
+  function componet(data: Record<string, any>[]) {
+    if (data.length <= 0) return;
+    for (const iterator of data) {
+      let id = iterator[fieldId];
+      if (id) {
+        treeIds.push(id as never);
+      }
+      if (Array.isArray(iterator[fieldChildren])) {
+        componet(iterator[fieldChildren]);
+      }
+    }
+  }
+  return treeIds;
+}
+
+/**
+ * 解析树结构数据转出含子节点的一维id数组
+ *
+ * @param data 数组数据
+ * @param fieldId 读取节点字段 默认 'id'
+ * @param fieldChildren 读取子节点字段 默认 'children'
+ * @returns 层级数组
+ */
+export function parseTreeNodeKeys(
+  data: Record<string, any>[],
+  fieldId: string = 'id',
+  fieldChildren: string = 'children'
+) {
+  // 节点id
+  let treeIds: string[] | number[] = [];
+  componet(data);
+  /**闭包递归函数 */
+  function componet(data: Record<string, any>[]) {
+    if (data.length <= 0) return;
+    for (const iterator of data) {
+      let nodes = iterator[fieldChildren];
+      if (Array.isArray(nodes) && nodes.length > 0) {
+        treeIds.push(iterator[fieldId] as never);
+        componet(iterator[fieldChildren]);
+      }
+    }
+  }
+  return treeIds;
 }

@@ -147,6 +147,9 @@ function fnTableExpandedRowsChange(expandedRows: (string | number)[]) {
   tableState.expandedRowKeys = expandedRows;
 }
 
+/**初始上级部门选择树 */
+let deptTreeDataAll: Record<string, any>[] = [];
+
 /**对话框对象信息状态类型 */
 type ModalStateType = {
   /**详情框是否显示 */
@@ -222,6 +225,7 @@ function fnModalVisibleByVive(deptId: string | number) {
     message.error(`部门记录存在错误`, 1.5);
     return;
   }
+  modalState.deptTreeData = deptTreeDataAll;
   getDept(deptId).then(res => {
     if (res.code === 200) {
       modalState.from = Object.assign(modalState.from, res.data);
@@ -247,18 +251,28 @@ function fnModalVisibleByEdit(
     if (parentId) {
       modalState.from.parentId = parentId;
     }
+    modalState.deptTreeData = deptTreeDataAll;
     modalState.title = '添加部门信息';
     modalState.visibleByEdit = true;
   } else {
-    getDept(deptId).then(res => {
-      if (res.code === 200) {
-        modalState.from = Object.assign(modalState.from, res.data);
-        modalState.title = '修改部门信息';
-        modalState.visibleByEdit = true;
-      } else {
-        message.error(`获取部门信息失败`, 1.5);
-      }
-    });
+    // 排除下级部门
+    listDeptExcludeChild(deptId)
+      .then(res => {
+        if (res.code === 200 && Array.isArray(res.data)) {
+          modalState.deptTreeData = parseDataToTree(res.data, 'deptId');
+        }
+        // 获取部门信息
+        return getDept(deptId);
+      })
+      .then(res => {
+        if (res.code === 200) {
+          modalState.from = Object.assign(modalState.from, res.data);
+          modalState.title = '修改部门信息';
+          modalState.visibleByEdit = true;
+        } else {
+          message.error(`获取部门信息失败`, 1.5);
+        }
+      });
   }
 }
 
@@ -329,7 +343,16 @@ function fnGetList() {
   tableState.loading = true;
   listDept(toRaw(queryParams)).then(res => {
     if (res.code === 200 && Array.isArray(res.data)) {
-      tableState.data = parseDataToTree(res.data, 'deptId');
+      const treeData = parseDataToTree(res.data, 'deptId');
+      // // 初始上级部门和展开编号key
+      if (deptTreeDataAll.length <= 0) {
+        // 转换树状数据
+        deptTreeDataAll = treeData;
+        // 展开编号key
+        expandedRowKeys = [...new Set(res.data.map(item => item.parentId))];
+        fnTableExpandedRowsAll(tableState.expandedRowAll);
+      }
+      tableState.data = treeData;
       tableState.loading = false;
     }
   });
@@ -342,16 +365,6 @@ onMounted(() => {
       dict.sysNormalDisable = resArr[0].value;
     }
   });
-  // 初始上级部门和展开编号key
-  listDept({}).then(res => {
-    if (res.code === 200 && Array.isArray(res.data)) {
-      // 转换树状数据
-      modalState.deptTreeData = parseDataToTree(res.data, 'deptId');
-      // 展开编号key
-      expandedRowKeys = [...new Set(res.data.map(item => item.parentId))];
-      fnTableExpandedRowsAll(tableState.expandedRowAll);
-    }
-  });
   // 获取列表数据
   fnGetList();
 });
@@ -360,7 +373,7 @@ onMounted(() => {
 <template>
   <page-container :title="title">
     <template #content>
-      <a-typography-paragraph> 给予用户岗位标记 </a-typography-paragraph>
+      <a-typography-paragraph> 给予用户部门标记 </a-typography-paragraph>
     </template>
 
     <a-card
@@ -570,8 +583,8 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="部门编号" name="deptId">
-              {{ modalState.from.deptId }}
+            <a-form-item label="显示排序" name="orderNum">
+              {{ modalState.from.orderNum }}
             </a-form-item>
           </a-col>
         </a-row>
@@ -585,8 +598,8 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="显示排序" name="orderNum">
-              {{ modalState.from.orderNum }}
+            <a-form-item label="部门编号" name="deptId">
+              {{ modalState.from.deptId }}
             </a-form-item>
           </a-col>
         </a-row>
@@ -632,30 +645,54 @@ onMounted(() => {
       @cancel="fnModalCancel"
     >
       <a-form name="modalStateFrom" layout="horizontal">
+        <a-form-item
+          label="上级部门"
+          name="parentId"
+          v-bind="modalStateFrom.validateInfos.parentId"
+        >
+          <a-tree-select
+            v-model:value="modalState.from.parentId"
+            placeholder="上级部门"
+            show-search
+            tree-default-expand-all
+            :tree-data="modalState.deptTreeData"
+            :field-names="{
+              children: 'children',
+              label: 'deptName',
+              value: 'deptId',
+            }"
+            tree-node-label-prop="deptName"
+            tree-node-filter-prop="deptName"
+            style="width: 100%"
+            :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+          >
+          </a-tree-select>
+        </a-form-item>
+
+        <a-form-item
+          label="部门名称"
+          name="deptName"
+          v-bind="modalStateFrom.validateInfos.deptName"
+        >
+          <a-input
+            v-model:value="modalState.from.deptName"
+            allow-clear
+            placeholder="请输入部门名称"
+          ></a-input>
+        </a-form-item>
+
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
-              label="上级部门"
-              name="parentId"
-              v-bind="modalStateFrom.validateInfos.parentId"
+              label="负责人"
+              name="leader"
+              v-bind="modalStateFrom.validateInfos.leader"
             >
-              <a-tree-select
-                v-model:value="modalState.from.parentId"
-                placeholder="上级部门"
-                show-search
-                tree-default-expand-all
-                :tree-data="modalState.deptTreeData"
-                :field-names="{
-                  children: 'children',
-                  label: 'deptName',
-                  value: 'deptId',
-                }"
-                tree-node-label-prop="deptName"
-                tree-node-filter-prop="deptName"
-                style="width: 100%"
-                :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
-              >
-              </a-tree-select>
+              <a-input
+                v-model:value="modalState.from.leader"
+                allow-clear
+                placeholder="请输入负责人名称"
+              ></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="6" :xs="24">
@@ -678,35 +715,6 @@ onMounted(() => {
                 :step="1"
                 placeholder="请输入显示顺序"
               ></a-input-number>
-            </a-form-item>
-          </a-col>
-        </a-row>
-
-        <a-row :gutter="16">
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="部门名称"
-              name="deptName"
-              v-bind="modalStateFrom.validateInfos.deptName"
-            >
-              <a-input
-                v-model:value="modalState.from.deptName"
-                allow-clear
-                placeholder="请输入部门名称"
-              ></a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="负责人"
-              name="leader"
-              v-bind="modalStateFrom.validateInfos.leader"
-            >
-              <a-input
-                v-model:value="modalState.from.leader"
-                allow-clear
-                placeholder="请输入负责人名称"
-              ></a-input>
             </a-form-item>
           </a-col>
         </a-row>

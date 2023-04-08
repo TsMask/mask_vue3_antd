@@ -199,7 +199,7 @@ type ModalStateType = {
 let modalState: ModalStateType = reactive({
   visibleByView: false,
   visibleByEdit: false,
-  title: '参数',
+  title: '岗位',
   from: {
     postId: undefined,
     postName: '',

@@ -1,6 +1,20 @@
 import { request, ResultType } from '@/plugins/Fetch';
 
 /**
+ * 角色列表导出
+ * @param query 查询参数
+ * @returns bolb
+ */
+export function exportRole(query: Record<string, string | number | undefined>) {
+  return request<Blob>({
+    url: '/system/role/export',
+    method: 'post',
+    data: query,
+    responseType: 'blob',
+  });
+}
+
+/**
  * 查询角色列表
  * @param query 查询参数
  * @returns object
@@ -86,7 +100,7 @@ export function changeRoleStatus(roleId: string, status: string | number) {
  * @param roleId 角色ID
  * @returns object
  */
-export function delPost(roleId: string | number) {
+export function delRole(roleId: string | number) {
   return request<ResultType>({
     url: `/system/role/${roleId}`,
     method: 'delete',

@@ -1,14 +1,11 @@
 import { request, ResultType } from '@/plugins/Fetch';
 
-
 /**
  * 岗位列表导出
  * @param query 查询参数
  * @returns bolb
  */
-export function exportPost(
-  query: Record<string, string | number | undefined>
-) {
+export function exportPost(query: Record<string, string | number | undefined>) {
   return request<Blob>({
     url: '/system/post/export',
     method: 'post',

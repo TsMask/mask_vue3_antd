@@ -58,6 +58,7 @@ declare module '@vue/runtime-core' {
     ATag: typeof import('ant-design-vue/es')['Tag']
     ATextarea: typeof import('ant-design-vue/es')['Textarea']
     ATooltip: typeof import('ant-design-vue/es')['Tooltip']
+    ATree: typeof import('ant-design-vue/es')['Tree']
     ATreeSelect: typeof import('ant-design-vue/es')['TreeSelect']
     ATypography: typeof import('ant-design-vue/es')['Typography']
     ATypographyLink: typeof import('ant-design-vue/es')['TypographyLink']

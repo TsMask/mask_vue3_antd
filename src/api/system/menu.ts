@@ -5,7 +5,7 @@ import { request, ResultType } from '@/plugins/Fetch';
  * @param query 查询参数
  * @returns object
  */
-export function listMenu(query: Record<string, string | number | undefined>) {
+export function listMenu(query?: Record<string, string | number | undefined>) {
   return request<ResultType>({
     url: '/system/menu/list',
     method: 'get',
@@ -29,7 +29,7 @@ export function getMenu(menuId: string | number) {
  * 查询菜单下拉树结构
  * @returns object
  */
-export function treeselect() {
+export function menuTreeselect() {
   return request<ResultType>({
     url: '/system/menu/treeselect',
     method: 'get',
@@ -41,7 +41,7 @@ export function treeselect() {
  * @param roleId 角色ID
  * @returns object
  */
-export function roleMenuTreeselect(roleId: string) {
+export function roleMenuTreeselect(roleId: string | number) {
   return request<ResultType>({
     url: `/system/menu/roleMenuTreeselect/${roleId}`,
     method: 'get',
