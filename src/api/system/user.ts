@@ -5,7 +5,7 @@ import { request, ResultType } from '@/plugins/Fetch';
  * @param query 查询参数
  * @returns object
  */
-export function listRole(query: Record<string, string | number | undefined>) {
+export function listRole(query: Record<string, any>) {
   return request<ResultType>({
     url: '/system/user/list',
     method: 'get',
@@ -33,7 +33,7 @@ export function getUser(userId?: string | number) {
  * @param data 用户对象
  * @returns object
  */
-export function addUser(data: Record<string, object>) {
+export function addUser(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/user',
     method: 'post',
@@ -46,7 +46,7 @@ export function addUser(data: Record<string, object>) {
  * @param data 用户对象
  * @returns object
  */
-export function updateUser(data: Record<string, object>) {
+export function updateUser(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/user',
     method: 'put',
@@ -119,7 +119,7 @@ export function getUserProfile() {
  * @param data 用户对象
  * @returns object
  */
-export function updateUserProfile(data: Record<string, object>) {
+export function updateUserProfile(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/user/profile',
     method: 'put',
@@ -175,7 +175,7 @@ export function getAuthRole(userId: string | number) {
  * @param data 用户对象
  * @returns object
  */
-export function updateAuthRole(data: Record<string, object>) {
+export function updateAuthRole(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/user/authRole',
     method: 'put',

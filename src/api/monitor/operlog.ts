@@ -6,7 +6,7 @@ import { request, ResultType } from '@/plugins/Fetch';
  * @returns bolb
  */
 export function exportOperlog(
-  query: Record<string, string | number | undefined>
+  query: Record<string, any>
 ) {
   return request<Blob>({
     url: '/monitor/operlog/export',
@@ -22,7 +22,7 @@ export function exportOperlog(
  * @returns object
  */
 export function listOperlog(
-  query: Record<string, string | number | undefined>
+  query: Record<string, any>
 ) {
   return request<ResultType>({
     url: '/monitor/operlog/list',

@@ -5,7 +5,7 @@ import { request, ResultType } from '@/plugins/Fetch';
  * @param query 查询参数
  * @returns bolb
  */
-export function exportJob(query: Record<string, string | number | undefined>) {
+export function exportJob(query: Record<string, any>) {
   return request<Blob>({
     url: '/monitor/job/export',
     method: 'post',
@@ -19,7 +19,7 @@ export function exportJob(query: Record<string, string | number | undefined>) {
  * @param query 查询参数
  * @returns object
  */
-export function listJob(query: Record<string, string | number | undefined>) {
+export function listJob(query: Record<string, any>) {
   return request<ResultType>({
     url: '/monitor/job/list',
     method: 'get',
@@ -44,7 +44,7 @@ export function getJob(jobId: string | number) {
  * @param data 任务对象
  * @returns object
  */
-export function addJob(data: Record<string, object>) {
+export function addJob(data: Record<string, any>) {
   return request<ResultType>({
     url: '/monitor/job',
     method: 'post',
@@ -57,7 +57,7 @@ export function addJob(data: Record<string, object>) {
  * @param data 任务对象
  * @returns object
  */
-export function updateJob(data: Record<string, object>) {
+export function updateJob(data: Record<string, any>) {
   return request<ResultType>({
     url: '/monitor/job',
     method: 'put',

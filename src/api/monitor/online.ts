@@ -5,7 +5,7 @@ import { request, ResultType } from '@/plugins/Fetch';
  * @param query 查询参数
  * @returns object
  */
-export function listOnline(query: Record<string, string | number | undefined>) {
+export function listOnline(query: Record<string, any>) {
   return request<ResultType>({
     url: '/monitor/online/list',
     method: 'get',

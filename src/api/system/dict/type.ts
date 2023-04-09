@@ -5,7 +5,7 @@ import { request, ResultType } from '@/plugins/Fetch';
  * @param query 查询参数
  * @returns bolb
  */
-export function exportType(query: Record<string, string | number | undefined>) {
+export function exportType(query: Record<string, any>) {
   return request<Blob>({
     url: '/system/dict/type/export',
     method: 'post',
@@ -19,7 +19,7 @@ export function exportType(query: Record<string, string | number | undefined>) {
  * @param query 查询值
  * @returns
  */
-export function listType(query: Record<string, string | number | undefined>) {
+export function listType(query: Record<string, any>) {
   return request<ResultType>({
     url: '/system/dict/type/list',
     method: 'get',
@@ -44,7 +44,7 @@ export function getType(dictId: string | number) {
  * @param data 字典数据对象
  * @returns object
  */
-export function addType(data: Record<string, object>) {
+export function addType(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/dict/type',
     method: 'post',
@@ -57,7 +57,7 @@ export function addType(data: Record<string, object>) {
  * @param data 字典数据对象
  * @returns object
  */
-export function updateType(data: Record<string, object>) {
+export function updateType(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/dict/type',
     method: 'put',

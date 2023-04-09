@@ -15,7 +15,7 @@ export function login(data: Record<string, string>) {
  * @param data 注册对象
  * @returns object
  */
-export function register(data: Record<string, object>) {
+export function register(data: Record<string, any>) {
   return request({
     url: '/register',
     method: 'post',

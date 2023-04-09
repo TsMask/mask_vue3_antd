@@ -5,7 +5,7 @@ import { request, ResultType } from '@/plugins/Fetch';
  * @param query 查询参数
  * @returns bolb
  */
-export function exportPost(query: Record<string, string | number | undefined>) {
+export function exportPost(query: Record<string, any>) {
   return request<Blob>({
     url: '/system/post/export',
     method: 'post',
@@ -19,7 +19,7 @@ export function exportPost(query: Record<string, string | number | undefined>) {
  * @param query 查询参数
  * @returns object
  */
-export function listPost(query: Record<string, string | number | undefined>) {
+export function listPost(query: Record<string, any>) {
   return request<ResultType>({
     url: '/system/post/list',
     method: 'get',
@@ -44,7 +44,7 @@ export function getPost(postId: string | number) {
  * @param data 岗位对象
  * @returns object
  */
-export function addPost(data: Record<string, object>) {
+export function addPost(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/post',
     method: 'post',
@@ -57,7 +57,7 @@ export function addPost(data: Record<string, object>) {
  * @param data 岗位对象
  * @returns object
  */
-export function updatePost(data: Record<string, object>) {
+export function updatePost(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/post',
     method: 'put',

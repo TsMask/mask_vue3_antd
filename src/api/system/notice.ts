@@ -5,7 +5,7 @@ import { request, ResultType } from '@/plugins/Fetch';
  * @param query 查询参数
  * @returns object
  */
-export function listNotice(query: Record<string, string | number | undefined>) {
+export function listNotice(query: Record<string, any>) {
   return request<ResultType>({
     url: '/system/notice/list',
     method: 'get',
@@ -30,7 +30,7 @@ export function getNotice(noticeId: string | number) {
  * @param data 公告对象
  * @returns object
  */
-export function addNotice(data: Record<string, object>) {
+export function addNotice(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/notice',
     method: 'post',
@@ -43,7 +43,7 @@ export function addNotice(data: Record<string, object>) {
  * @param data 公告对象
  * @returns object
  */
-export function updateNotice(data: Record<string, object>) {
+export function updateNotice(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/notice',
     method: 'put',

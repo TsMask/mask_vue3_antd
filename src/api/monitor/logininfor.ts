@@ -6,7 +6,7 @@ import { request, ResultType } from '@/plugins/Fetch';
  * @returns bolb
  */
 export function exportLogininfor(
-  query: Record<string, string | number | undefined>
+  query: Record<string, any>
 ) {
   return request<Blob>({
     url: '/monitor/logininfor/export',
@@ -22,7 +22,7 @@ export function exportLogininfor(
  * @returns object
  */
 export function listLogininfor(
-  query: Record<string, string | number | undefined>
+  query: Record<string, any>
 ) {
   return request<ResultType>({
     url: '/monitor/logininfor/list',

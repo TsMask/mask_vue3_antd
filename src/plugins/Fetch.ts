@@ -36,7 +36,7 @@ type OptionsType = {
   /**地址栏参数 */
   params?: Record<string, string | number | boolean | undefined>;
   /**发送数据 */
-  data?: Record<string, object> | FormData | object;
+  data?: Record<string, any> | FormData | object;
   /**请求数据类型 */
   dataType?: 'form-data' | 'json';
   /**响应数据类型 */
@@ -134,7 +134,7 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
     for (const key in params) {
       const value = params[key];
       // 空字符或未定义的值不作为参数发送
-      if (value == '' || value == undefined) continue;
+      if (value === '' || value === undefined) continue;
       paramStr += `&${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
     }
     if (paramStr && paramStr.startsWith('&')) {

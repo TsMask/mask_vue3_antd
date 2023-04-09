@@ -5,7 +5,7 @@ import { request, ResultType } from '@/plugins/Fetch';
  * @param query 查询参数
  * @returns object
  */
-export function listDept(query: Record<string, string | number | undefined>) {
+export function listDept(query: Record<string, any>) {
   return request<ResultType>({
     url: '/system/dept/list',
     method: 'get',
@@ -42,7 +42,7 @@ export function getDept(deptId: string | number) {
  * @param data 部门对象
  * @returns object
  */
-export function addDept(data: Record<string, object>) {
+export function addDept(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/dept',
     method: 'post',
@@ -55,7 +55,7 @@ export function addDept(data: Record<string, object>) {
  * @param data 部门对象
  * @returns object
  */
-export function updateDept(data: Record<string, object>) {
+export function updateDept(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/dept',
     method: 'put',

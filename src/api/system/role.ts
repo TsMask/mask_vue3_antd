@@ -5,7 +5,7 @@ import { request, ResultType } from '@/plugins/Fetch';
  * @param query 查询参数
  * @returns bolb
  */
-export function exportRole(query: Record<string, string | number | undefined>) {
+export function exportRole(query: Record<string, any>) {
   return request<Blob>({
     url: '/system/role/export',
     method: 'post',
@@ -19,7 +19,7 @@ export function exportRole(query: Record<string, string | number | undefined>) {
  * @param query 查询参数
  * @returns object
  */
-export function listRole(query: Record<string, string | number | undefined>) {
+export function listRole(query: Record<string, any>) {
   return request<ResultType>({
     url: '/system/role/list',
     method: 'get',
@@ -44,7 +44,7 @@ export function getRole(roleId: string | number) {
  * @param data 角色对象
  * @returns object
  */
-export function addRole(data: Record<string, object>) {
+export function addRole(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/role',
     method: 'post',
@@ -57,7 +57,7 @@ export function addRole(data: Record<string, object>) {
  * @param data 角色对象
  * @returns object
  */
-export function updateRole(data: Record<string, object>) {
+export function updateRole(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/role',
     method: 'put',
@@ -66,15 +66,14 @@ export function updateRole(data: Record<string, object>) {
 }
 
 /**
- * 修改角色数据权限
- * @param data 角色对象
+ * 删除角色
+ * @param roleId 角色ID
  * @returns object
  */
-export function dataScope(data: Record<string, object>) {
+export function delRole(roleId: string | number) {
   return request<ResultType>({
-    url: '/system/role/dataScope',
-    method: 'put',
-    data: data,
+    url: `/system/role/${roleId}`,
+    method: 'delete',
   });
 }
 
@@ -96,81 +95,13 @@ export function changeRoleStatus(roleId: string, status: string | number) {
 }
 
 /**
- * 删除角色
- * @param roleId 角色ID
- * @returns object
- */
-export function delRole(roleId: string | number) {
-  return request<ResultType>({
-    url: `/system/role/${roleId}`,
-    method: 'delete',
-  });
-}
-
-/**
- * 查询角色已授权用户列表
- * @param query 查询参数
- * @returns object
- */
-export function allocatedUserList(
-  query: Record<string, string | number | undefined>
-) {
-  return request<ResultType>({
-    url: '/system/role/authUser/allocatedList',
-    method: 'get',
-    params: query,
-  });
-}
-
-/**
- * 查询角色未授权用户列表
- * @param query 查询参数
- * @returns object
- */
-export function unallocatedUserList(
-  query: Record<string, string | number | undefined>
-) {
-  return request<ResultType>({
-    url: '/system/role/authUser/unallocatedList',
-    method: 'get',
-    params: query,
-  });
-}
-
-/**
- * 取消用户授权角色
+ * 修改角色数据权限
  * @param data 角色对象
  * @returns object
  */
-export function authUserCancel(data: Record<string, object>) {
+export function dataScope(data: Record<string, any>) {
   return request<ResultType>({
-    url: '/system/role/authUser/cancel',
-    method: 'put',
-    data: data,
-  });
-}
-
-/**
- * 批量取消用户授权角色
- * @param data 角色对象
- * @returns object
- */
-export function authUserCancelAll(data: Record<string, object>) {
-  return request<ResultType>({
-    url: '/system/role/authUser/cancelAll',
-    method: 'put',
-    data: data,
-  });
-}
-
-/**
- * 授权用户选择
- * @param data 角色对象
- * @returns object
- */
-export function authUserSelectAll(data: Record<string, object>) {
-  return request<ResultType>({
-    url: '/system/role/authUser/selectAll',
+    url: '/system/role/dataScope',
     method: 'put',
     data: data,
   });
@@ -185,5 +116,44 @@ export function deptTreeSelect(roleId: string | number) {
   return request<ResultType>({
     url: `/system/role/deptTree/${roleId}`,
     method: 'get',
+  });
+}
+
+/**
+ * 查询角色分配用户列表
+ * @param query 查询参数
+ * @returns object
+ */
+export function authUserAllocatedList(query: Record<string, any>) {
+  return request<ResultType>({
+    url: '/system/role/authUser/allocatedList',
+    method: 'get',
+    params: query,
+  });
+}
+
+/**
+ * 角色选择用户添加授权
+ * @param data 角色对象
+ * @returns object
+ */
+export function authUserSelect(data: Record<string, any>) {
+  return request<ResultType>({
+    url: '/system/role/authUser/select',
+    method: 'put',
+    data: data,
+  });
+}
+
+/**
+ * 角色选择用户取消授权
+ * @param data 角色对象
+ * @returns object
+ */
+export function authUserCancel(data: Record<string, any>) {
+  return request<ResultType>({
+    url: '/system/role/authUser/cancel',
+    method: 'put',
+    data: data,
   });
 }

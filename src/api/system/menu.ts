@@ -5,7 +5,7 @@ import { request, ResultType } from '@/plugins/Fetch';
  * @param query 查询参数
  * @returns object
  */
-export function listMenu(query?: Record<string, string | number | undefined>) {
+export function listMenu(query?: Record<string, any>) {
   return request<ResultType>({
     url: '/system/menu/list',
     method: 'get',
@@ -53,7 +53,7 @@ export function roleMenuTreeselect(roleId: string | number) {
  * @param data 菜单对象
  * @returns object
  */
-export function addMenu(data: Record<string, object>) {
+export function addMenu(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/menu',
     method: 'post',
@@ -66,7 +66,7 @@ export function addMenu(data: Record<string, object>) {
  * @param data 菜单对象
  * @returns object
  */
-export function updateMenu(data: Record<string, object>) {
+export function updateMenu(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/menu',
     method: 'put',

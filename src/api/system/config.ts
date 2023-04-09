@@ -6,7 +6,7 @@ import { request, ResultType } from '@/plugins/Fetch';
  * @returns bolb
  */
 export function exportConfig(
-  query: Record<string, string | number | undefined>
+  query: Record<string, any>
 ) {
   return request<Blob>({
     url: '/system/config/export',
@@ -21,7 +21,7 @@ export function exportConfig(
  * @param query 查询参数
  * @returns object
  */
-export function listConfig(query: Record<string, string | number | undefined>) {
+export function listConfig(query: Record<string, any>) {
   return request<ResultType>({
     url: '/system/config/list',
     method: 'get',
@@ -58,7 +58,7 @@ export function getConfigKey(configKey: string) {
  * @param data 参数配置对象
  * @returns object
  */
-export function addConfig(data: Record<string, object>) {
+export function addConfig(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/config',
     method: 'post',
@@ -71,7 +71,7 @@ export function addConfig(data: Record<string, object>) {
  * @param data 参数配置对象
  * @returns object
  */
-export function updateConfig(data: Record<string, object>) {
+export function updateConfig(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/config',
     method: 'put',

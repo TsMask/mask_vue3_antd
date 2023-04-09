@@ -6,7 +6,7 @@ import { request, ResultType } from '@/plugins/Fetch';
  * @returns bolb
  */
 export function exportJobLog(
-  query: Record<string, string | number | undefined>
+  query: Record<string, any>
 ) {
   return request<Blob>({
     url: '/monitor/jobLog/export',
@@ -21,7 +21,7 @@ export function exportJobLog(
  * @param query 查询参数
  * @returns object
  */
-export function listJobLog(query: Record<string, string | number | undefined>) {
+export function listJobLog(query: Record<string, any>) {
   return request<ResultType>({
     url: '/monitor/jobLog/list',
     method: 'get',
