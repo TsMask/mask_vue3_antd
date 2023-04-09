@@ -162,17 +162,18 @@ function fnTableSelectedRowKeys(keys: (string | number)[]) {
 
 /**查询角色未授权用户列表 */
 function fnGetList() {
+  if (tableState.loading) return;
   tableState.loading = true;
   authUserAllocatedList(toRaw(queryParams)).then(res => {
-    if (res.code === 200) {
+    if (res.code === 200 && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
       }
       tablePagination.total = res.total;
       tableState.data = res.rows;
-      tableState.loading = false;
     }
+    tableState.loading = false;
   });
 }
 

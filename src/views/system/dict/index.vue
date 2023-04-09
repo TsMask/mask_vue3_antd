@@ -388,19 +388,20 @@ function fnDataView(dictId: string | number = '0') {
 
 /**查询参数配置列表 */
 function fnGetList() {
+  if (tableState.loading) return;
   tableState.loading = true;
   queryParams.beginTime = queryRangePicker.value[0];
   queryParams.endTime = queryRangePicker.value[1];
   listType(toRaw(queryParams)).then(res => {
-    if (res.code === 200) {
+    if (res.code === 200 && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
       }
       tablePagination.total = res.total;
       tableState.data = res.rows;
-      tableState.loading = false;
     }
+    tableState.loading = false;
   });
 }
 

@@ -217,7 +217,7 @@ type ModalStateType = {
 /**对话框对象信息状态 */
 let modalState: ModalStateType = reactive({
   visibleByView: false,
-  title: '任务',
+  title: '任务日志',
   from: {
     jobLogId: undefined,
     jobName: '',

@@ -881,12 +881,12 @@ onMounted(() => {
                 placeholder="请输入调用目标"
               >
                 <template #prefix>
-                  <a-tooltip>
+                  <a-tooltip placement="topLeft">
                     <template #title>
                       <div>
-                        Processor调用示例：test
-                        <br />定义任务处理器示例：src\modules\monitor\processor
-                        <br />参数说明：支持预设参数后，在处理器中进行格式化处理参数
+                        Processor调用示例：test <br />
+                        定义任务处理器示例：src\modules\monitor\processor <br />
+                        参数说明：支持预设传入参数，在处理器中进行序列化处理参数
                       </div>
                     </template>
                     <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />
@@ -931,11 +931,11 @@ onMounted(() => {
             placeholder="请输入或生成cron执行表达式"
           >
             <template #prefix>
-              <a-tooltip>
+              <a-tooltip placement="topLeft">
                 <template #title>
                   <div>
-                    crom调用示例：0/20 * * * * ?
-                    <br />示例说明：每20秒执行异常任务
+                    表达式示例：0/20 * * * * ? <br />
+                    示例说明：每20秒执行任务
                   </div>
                 </template>
                 <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />

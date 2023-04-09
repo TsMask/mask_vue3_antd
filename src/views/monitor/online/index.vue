@@ -158,12 +158,13 @@ function fnQueryReset() {
 
 /** 查询在线用户列表 */
 function fnGetList() {
+  if (tableState.loading) return;
   tableState.loading = true;
   listOnline(queryParams).then(res => {
-    if (res.code === 200) {
+    if (res.code === 200 && Array.isArray(res.rows)) {
       tableState.data = res.rows;
-      tableState.loading = false;
     }
+    tableState.loading = false;
   });
 }
 

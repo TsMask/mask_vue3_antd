@@ -359,17 +359,18 @@ function fnExportList() {
 
 /**查询岗位列表 */
 function fnGetList() {
+  if (tableState.loading) return;
   tableState.loading = true;
   listPost(toRaw(queryParams)).then(res => {
-    if (res.code === 200) {
+    if (res.code === 200 && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
       }
       tablePagination.total = res.total;
       tableState.data = res.rows;
-      tableState.loading = false;
     }
+    tableState.loading = false;
   });
 }
 
@@ -683,10 +684,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="岗位顺序"
-              name="postSort"
-            >
+            <a-form-item label="岗位顺序" name="postSort">
               <a-input-number
                 v-model:value="modalState.from.postSort"
                 :min="0"

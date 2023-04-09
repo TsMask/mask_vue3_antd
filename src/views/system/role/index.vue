@@ -602,19 +602,20 @@ function fnExportList() {
 
 /**查询角色列表 */
 function fnGetList() {
+  if (tableState.loading) return;
   tableState.loading = true;
   queryParams.beginTime = queryRangePicker.value[0];
   queryParams.endTime = queryRangePicker.value[1];
   listRole(toRaw(queryParams)).then(res => {
-    if (res.code === 200) {
+    if (res.code === 200 && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
       }
       tablePagination.total = res.total;
       tableState.data = res.rows;
-      tableState.loading = false;
     }
+    tableState.loading = false;
   });
 }
 
@@ -988,11 +989,12 @@ onMounted(() => {
                 placeholder="请输入角色键值"
               >
                 <template #prefix>
-                  <a-tooltip>
+                  <a-tooltip placement="topLeft">
                     <template #title>
                       <div>
-                        控制器中定义的权限标识，如：
-                        <br />@PreAuthorize({ hasRoles:['admin'] })
+                        权限标识示例：dba <br />
+                        控制器中使用权限标识，如： <br />
+                        @PreAuthorize({ hasRoles: ['dba'] })
                       </div>
                     </template>
                     <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />

@@ -85,7 +85,7 @@ let tableState: TabeStateType = reactive({
   striped: false,
   seached: false,
   data: [],
-  expandedRowAll: true,
+  expandedRowAll: false,
   expandedRowKeys: [],
 });
 
@@ -148,7 +148,7 @@ function fnTableExpandedRowsChange(expandedRows: (string | number)[]) {
 }
 
 /**初始上级部门选择树 */
-let deptTreeDataAll: Record<string, any>[] = [];
+let treeDataAll: Record<string, any>[] = [];
 
 /**对话框对象信息状态类型 */
 type ModalStateType = {
@@ -163,7 +163,7 @@ type ModalStateType = {
   /**确定按钮 loading */
   confirmLoading: boolean;
   /**上级部门选择树 */
-  deptTreeData: Record<string, any>[];
+  treeData: Record<string, any>[];
 };
 
 /**对话框对象信息状态 */
@@ -184,7 +184,7 @@ let modalState: ModalStateType = reactive({
     status: '0',
   },
   confirmLoading: false,
-  deptTreeData: [],
+  treeData: [],
 });
 
 /**对话框内表单属性和校验规则 */
@@ -225,7 +225,7 @@ function fnModalVisibleByVive(deptId: string | number) {
     message.error(`部门记录存在错误`, 1.5);
     return;
   }
-  modalState.deptTreeData = deptTreeDataAll;
+  modalState.treeData = treeDataAll;
   getDept(deptId).then(res => {
     if (res.code === 200) {
       modalState.from = Object.assign(modalState.from, res.data);
@@ -251,7 +251,7 @@ function fnModalVisibleByEdit(
     if (parentId) {
       modalState.from.parentId = parentId;
     }
-    modalState.deptTreeData = deptTreeDataAll;
+    modalState.treeData = treeDataAll;
     modalState.title = '添加部门信息';
     modalState.visibleByEdit = true;
   } else {
@@ -259,7 +259,7 @@ function fnModalVisibleByEdit(
     listDeptExcludeChild(deptId)
       .then(res => {
         if (res.code === 200 && Array.isArray(res.data)) {
-          modalState.deptTreeData = parseDataToTree(res.data, 'deptId');
+          modalState.treeData = parseDataToTree(res.data, 'deptId');
         }
         // 获取部门信息
         return getDept(deptId);
@@ -340,21 +340,22 @@ function fnRecordDelete(deptId: string | number) {
 
 /**查询部门列表 */
 function fnGetList() {
+  if (tableState.loading) return;
   tableState.loading = true;
   listDept(toRaw(queryParams)).then(res => {
     if (res.code === 200 && Array.isArray(res.data)) {
       const treeData = parseDataToTree(res.data, 'deptId');
-      // // 初始上级部门和展开编号key
-      if (deptTreeDataAll.length <= 0) {
+      // 初始上级部门和展开编号key
+      if (treeDataAll.length <= 0) {
         // 转换树状数据
-        deptTreeDataAll = treeData;
+        treeDataAll = treeData;
         // 展开编号key
         expandedRowKeys = [...new Set(res.data.map(item => item.parentId))];
         fnTableExpandedRowsAll(tableState.expandedRowAll);
       }
       tableState.data = treeData;
-      tableState.loading = false;
     }
+    tableState.loading = false;
   });
 }
 
@@ -570,7 +571,7 @@ onMounted(() => {
                 v-model:value="modalState.from.parentId"
                 placeholder="上级部门"
                 disabled
-                :tree-data="modalState.deptTreeData"
+                :tree-data="modalState.treeData"
                 :field-names="{
                   children: 'children',
                   label: 'deptName',
@@ -655,7 +656,7 @@ onMounted(() => {
             placeholder="上级部门"
             show-search
             tree-default-expand-all
-            :tree-data="modalState.deptTreeData"
+            :tree-data="modalState.treeData"
             :field-names="{
               children: 'children',
               label: 'deptName',
