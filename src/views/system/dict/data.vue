@@ -26,13 +26,6 @@ import {
   updateData,
 } from '@/api/system/dict/data';
 import { getDictOptionselect, getType } from '@/api/system/dict/type';
-import {
-  exportJobLog,
-  listJobLog,
-  delJobLog,
-  cleanJobLog,
-} from '@/api/monitor/jobLog';
-import { getJob } from '@/api/monitor/job';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/DateUtils';
 import useDictStore from '@/store/modules/dict';
@@ -396,8 +389,9 @@ function fnExportList() {
   });
 }
 
-/**关闭跳转字典管理 */
-function fnJobLogClose() {
+/**关闭跳转 */
+function fnClose() {
+  // 字典管理
   router.push('/system/dict');
 }
 
@@ -512,7 +506,7 @@ onMounted(() => {
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button type="default" @click.prevent="fnJobLogClose()">
+          <a-button type="default" @click.prevent="fnClose()">
             <template #icon><CloseOutlined /></template>
             关闭
           </a-button>
@@ -619,7 +613,7 @@ onMounted(() => {
                 <template #title>编辑</template>
                 <a-button
                   type="link"
-                  @click.prevent="fnModalVisibleByEdit(record.dictId)"
+                  @click.prevent="fnModalVisibleByEdit(record.dictCode)"
                 >
                   <template #icon><FormOutlined /></template>
                 </a-button>

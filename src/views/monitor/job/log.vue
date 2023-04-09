@@ -310,8 +310,9 @@ function fnExportList() {
   });
 }
 
-/**关闭跳转任务页面 */
-function fnJobLogClose() {
+/**关闭跳转 */
+function fnClose() {
+  // 任务管理
   router.push('/monitor/job');
 }
 
@@ -438,7 +439,7 @@ onMounted(() => {
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button type="default" @click.prevent="fnJobLogClose()">
+          <a-button type="default" @click.prevent="fnClose()">
             <template #icon><CloseOutlined /></template>
             关闭
           </a-button>

@@ -83,6 +83,7 @@ function fnFinish() {
         tabForm.click = false;
         // 刷新验证码
         if (captchaState.enabled) {
+          tabForm.code = '';
           fnGetCaptcha();
         }
       }

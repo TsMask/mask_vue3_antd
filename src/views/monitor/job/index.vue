@@ -363,9 +363,9 @@ function fnRecordStatus(row: Record<string, string>) {
     onOk() {
       changeJobStatus(row.jobId, row.status).then(res => {
         if (res.code === 200) {
-          message.success(`${text}成功`, 1.5);
+          message.success(`${row.jobName} ${text}成功`, 1.5);
         } else {
-          message.error(`${text}失败`, 1.5);
+          message.error(`${row.jobName} ${text}失败`, 1.5);
         }
         fnGetList();
       });
@@ -679,7 +679,7 @@ onMounted(() => {
               checked-children="开"
               un-checked-value="0"
               un-checked-children="关"
-              size="default"
+              size="small"
               @change="fnRecordStatus(record)"
             />
           </template>
