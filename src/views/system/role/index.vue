@@ -10,8 +10,10 @@ import {
   SearchOutlined,
   ReloadOutlined,
   DeleteOutlined,
+  SecurityScanOutlined,
+  TeamOutlined,
 } from '@ant-design/icons-vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { message, Modal, Form } from 'ant-design-vue';
 import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
@@ -29,15 +31,6 @@ import {
   deptTreeSelect,
 } from '@/api/system/role';
 import { roleMenuTreeselect, menuTreeselect } from '@/api/system/menu';
-
-import {
-  exportPost,
-  listPost,
-  addPost,
-  delPost,
-  getPost,
-  updatePost,
-} from '@/api/system/post';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/DateUtils';
 import useDictStore from '@/store/modules/dict';
@@ -45,6 +38,7 @@ import { DataNode } from 'ant-design-vue/es/tree';
 import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/ParseUtils';
 const { getDict } = useDictStore();
 const route = useRoute();
+const router = useRouter();
 
 /**路由标题 */
 let title = ref<string>(route.meta.title ?? '标题');
@@ -429,7 +423,6 @@ function fnModalCancel() {
  * 对话框表单树勾选事件
  */
 function fnModalTreeChecked(keys: any, type: 'menu' | 'dept') {
-  console.log(keys, type);
   if (type === 'menu') {
     modalState.from.menuIds = Array.isArray(keys) ? keys : keys.checked;
   }
@@ -442,7 +435,6 @@ function fnModalTreeChecked(keys: any, type: 'menu' | 'dept') {
  * 对话框表单树（展开/折叠）事件
  */
 function fnModalExpandedKeys(checked: boolean, type: 'menu' | 'dept') {
-  console.log(checked, type);
   if (type === 'menu') {
     modalState.menuTree.expandedKeys = checked ? menuTree.expandedKeys : [];
   }
@@ -455,7 +447,6 @@ function fnModalExpandedKeys(checked: boolean, type: 'menu' | 'dept') {
  * 对话框表单树（全选/全不选）事件
  */
 function fnModalCheckedKeys(checked: boolean, type: 'menu' | 'dept') {
-  console.log(checked, type);
   if (type === 'menu') {
     modalState.menuTree.checkedKeys = checked ? menuTree.checkedKeys : [];
     modalState.from.menuIds = modalState.menuTree.checkedKeys;
@@ -470,7 +461,6 @@ function fnModalCheckedKeys(checked: boolean, type: 'menu' | 'dept') {
  * 对话框表单树（父子联动）事件
  */
 function fnModalCheckStrictly(checked: boolean, type: 'menu' | 'dept') {
-  console.log(checked, type);
   if (type === 'menu') {
     modalState.from.menuCheckStrictly = checked ? '1' : '0';
   }
@@ -529,26 +519,34 @@ function fnRecordDataScope(roleId: string | number) {
 }
 
 /**
- * 角色分配用户
+ * 角色分配用户跳转
  * @param roleId 角色编号ID
  */
-function fnRecordAuthUser(roleId: string = '0') {
-  // router.push("/system/role-auth/user/" + row.roleId);
-  if (roleId === '0') {
-    roleId = tableState.selectedRowKeys.join(',');
-  }
+function fnRecordAuthUser(roleId: string | number = '0') {
+  router.push(`/system/role/inline/auth-user/${roleId}`);
+}
+
+/**
+ * 角色状态修改
+ * @param row 角色记录对象
+ */
+function fnRecordStatus(row: Record<string, string>) {
+  const text = row.status === '1' ? '启用' : '停用';
   Modal.confirm({
     title: '提示',
-    content: `确认删除角色编号为 【${roleId}】 的数据项?`,
+    content: `确定要${text} ${row.roleName} 角色吗?`,
     onOk() {
-      delRole(roleId).then(res => {
+      changeRoleStatus(row.roleId, row.status).then(res => {
         if (res.code === 200) {
-          message.success(`删除成功`, 1.5);
-          fnGetList();
+          message.success(`${row.roleName} ${text}成功`, 1.5);
         } else {
-          message.error(`${res.msg}`, 1.5);
+          message.error(`${row.roleName} ${text}失败`, 1.5);
         }
+        fnGetList();
       });
+    },
+    onCancel() {
+      row.status = row.status === '1' ? '0' : '1';
     },
   });
 }
@@ -635,7 +633,9 @@ onMounted(() => {
 <template>
   <page-container :title="title">
     <template #content>
-      <a-typography-paragraph> 给予用户角色标记 </a-typography-paragraph>
+      <a-typography-paragraph>
+        给予用户角色标记，可分配给用户多个角色，分配数据权限需要关联部门数据表进行相关配置生效。
+      </a-typography-paragraph>
     </template>
 
     <a-card
@@ -692,12 +692,12 @@ onMounted(() => {
               <a-space :size="8">
                 <a-button type="primary" @click.prevent="fnGetList">
                   <template #icon><SearchOutlined /></template>
-                  搜索</a-button
-                >
+                  搜索
+                </a-button>
                 <a-button type="default" @click.prevent="fnQueryReset">
                   <template #icon><ClearOutlined /></template>
-                  重置</a-button
-                >
+                  重置
+                </a-button>
               </a-space>
             </a-form-item>
           </a-col>
@@ -795,7 +795,21 @@ onMounted(() => {
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.status" />
+            <a-switch
+              v-if="record.roleId !== '1'"
+              v-model:checked="record.status"
+              checked-value="1"
+              checked-children="开"
+              un-checked-value="0"
+              un-checked-children="关"
+              size="small"
+              @change="fnRecordStatus(record)"
+            />
+            <DictTag
+              v-else
+              :options="dict.sysNormalDisable"
+              :value="record.status"
+            />
           </template>
           <template v-if="column.key === 'roleId'">
             <a-space :size="8" align="center">
@@ -808,7 +822,7 @@ onMounted(() => {
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip v-if="record.roleId !== '1'">
                 <template #title>编辑</template>
                 <a-button
                   type="link"
@@ -817,7 +831,7 @@ onMounted(() => {
                   <template #icon><FormOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip v-if="record.roleId !== '1'">
                 <template #title>删除</template>
                 <a-button
                   type="link"
@@ -826,22 +840,22 @@ onMounted(() => {
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip v-if="record.roleId !== '1'">
                 <template #title>分配数据权限</template>
                 <a-button
                   type="link"
                   @click.prevent="fnRecordDataScope(record.roleId)"
                 >
-                  <template #icon><DeleteOutlined /></template>
+                  <template #icon><SecurityScanOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip v-if="record.roleId !== '1'">
                 <template #title>分配用户</template>
                 <a-button
                   type="link"
                   @click.prevent="fnRecordAuthUser(record.roleId)"
                 >
-                  <template #icon><DeleteOutlined /></template>
+                  <template #icon><TeamOutlined /></template>
                 </a-button>
               </a-tooltip>
             </a-space>
