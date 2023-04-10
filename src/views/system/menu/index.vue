@@ -34,12 +34,9 @@ let title = ref<string>(route.meta.title ?? '标题');
 
 /**字典数据 */
 let dict: {
-  /**菜单侧边栏显示状态 */
-  syShowHide: DictType[];
   /**菜单状态 */
   sysNormalDisable: DictType[];
 } = reactive({
-  syShowHide: [],
   sysNormalDisable: [],
 });
 
@@ -105,20 +102,13 @@ let tableColumns: ColumnsType = [
     align: 'center',
   },
   {
-    title: '图标',
+    title: '菜单排序',
+    dataIndex: 'menuSort',
+    align: 'center',
+  },
+  {
+    title: '菜单图标',
     dataIndex: 'icon',
-    align: 'center',
-    width: '100px',
-  },
-  {
-    title: '排序',
-    dataIndex: 'orderNum',
-    align: 'center',
-    width: '60px',
-  },
-  {
-    title: '所属部门',
-    dataIndex: 'deptName',
     align: 'center',
   },
   {
@@ -132,11 +122,16 @@ let tableColumns: ColumnsType = [
     align: 'center',
   },
   {
-    title: '状态',
+    title: '显示状态',
+    dataIndex: 'visible',
+    key: 'visible',
+    align: 'center',
+  },
+  {
+    title: '菜单状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
-    width: '80px',
   },
   {
     title: '创建时间',
@@ -199,19 +194,20 @@ let modalState: ModalStateType = reactive({
   title: '菜单',
   from: {
     menuId: undefined,
+    parentId: '0',
     menuName: '',
     menuSort: 0,
     menuType: 'M',
-    parentId: '0',
     component: '',
-    icon: '',
     path: '',
+    icon: '#',
     perms: '',
     isFrame: '1',
     isCache: '0',
     visible: '0',
     status: '0',
     createTime: '0',
+    remark: '',
   },
   confirmLoading: false,
   treeData: [],
@@ -223,9 +219,12 @@ const modalStateFrom = Form.useForm(
   reactive({
     parentId: [{ required: true, message: '上级菜单不能为空' }],
     menuName: [
-      { required: true, min: 1, max: 30, message: '请正确输入菜单名称' },
+      { required: true, min: 1, max: 50, message: '请正确输入菜单名称' },
     ],
-    path: [{ required: true, min: 1, max: 50, message: '请正确输入路由地址' }],
+    component: [
+      { required: true, min: 1, max: 200, message: '请正确输入组件路径' },
+    ],
+    path: [{ required: true, min: 1, max: 200, message: '请正确输入路由地址' }],
   })
 );
 
@@ -285,8 +284,16 @@ function fnModalVisibleByEdit(
  * 进行表达规则校验
  */
 function fnModalOk() {
+  let validateNames = ['parentId', 'menuName'];
+  if (modalState.from.menuType === 'M') {
+    validateNames.push('path');
+  }
+  if (modalState.from.menuType === 'C') {
+    validateNames.push('component');
+    validateNames.push('path');
+  }
   modalStateFrom
-    .validate()
+    .validate(validateNames)
     .then(() => {
       modalState.confirmLoading = true;
       const from = toRaw(modalState.from);
@@ -297,6 +304,7 @@ function fnModalOk() {
             message.success(`${modalState.title}成功`, 1.5);
             modalState.visibleByEdit = false;
             modalStateFrom.resetFields();
+            treeDataAll = [];
             fnGetList();
           } else {
             message.error(res.msg, 1.5);
@@ -374,15 +382,9 @@ function fnGetList() {
 
 onMounted(() => {
   // 初始字典数据
-  Promise.allSettled([
-    getDict('sys_normal_disable'),
-    getDict('sys_show_hide'),
-  ]).then(resArr => {
+  Promise.allSettled([getDict('sys_normal_disable')]).then(resArr => {
     if (resArr[0].status === 'fulfilled') {
       dict.sysNormalDisable = resArr[0].value;
-    }
-    if (resArr[1].status === 'fulfilled') {
-      dict.syShowHide = resArr[1].value;
     }
   });
   // 获取列表数据
@@ -394,7 +396,7 @@ onMounted(() => {
   <page-container :title="title">
     <template #content>
       <a-typography-paragraph>
-        动态路由菜单，内嵌页面需要x/inline/xx进行分隔开
+        动态路由菜单，根节点下不要创建菜单哦
       </a-typography-paragraph>
     </template>
 
@@ -528,6 +530,11 @@ onMounted(() => {
         @expandedRowsChange="fnTableExpandedRowsChange"
       >
         <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'visible'">
+            <a-tag :color="+record.visible ? 'processing' : 'warning'">
+              {{ ['隐藏', '显示'][+record.visible] }}
+            </a-tag>
+          </template>
           <template v-if="column.key === 'status'">
             <DictTag :options="dict.sysNormalDisable" :value="record.status" />
           </template>
@@ -560,7 +567,7 @@ onMounted(() => {
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip v-if="record.menuType !== 'F'">
                 <template #title>新增子菜单</template>
                 <a-button
                   type="link"
@@ -587,68 +594,126 @@ onMounted(() => {
       <a-form layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="上级部门" name="parentId">
+            <a-form-item label="上级菜单" name="parentId">
               <a-tree-select
-                v-model:value="modalState.from.parentId"
-                placeholder="上级部门"
+                :value="modalState.from.parentId"
+                placeholder="上级菜单"
                 disabled
                 :tree-data="modalState.treeData"
                 :field-names="{
                   children: 'children',
-                  label: 'deptName',
-                  value: 'deptId',
+                  label: 'menuName',
+                  value: 'menuId',
                 }"
-                tree-node-label-prop="deptName"
+                tree-node-label-prop="menuName"
               >
                 <template #suffixIcon></template>
               </a-tree-select>
             </a-form-item>
           </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="显示排序" name="orderNum">
-              {{ modalState.from.orderNum }}
+          <a-col :lg="6" :md="6" :xs="24">
+            <a-form-item label="菜单编号" name="menuId">
+              {{ modalState.from.menuId }}
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="6" :xs="24">
+            <a-form-item label="菜单排序" name="menuSort">
+              {{ modalState.from.menuSort }}
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="部门状态" name="status">
+            <a-form-item label="菜单名称" name="menuName">
+              {{ modalState.from.menuName }}
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="6" :xs="24">
+            <a-form-item label="菜单类型" name="menuType">
+              <a-tag v-if="modalState.from.menuType === 'M'" color="purple">
+                目录
+              </a-tag>
+              <a-tag v-if="modalState.from.menuType === 'C'" color="cyan">
+                菜单
+              </a-tag>
+              <a-tag v-if="modalState.from.menuType === 'F'" color="orange">
+                按钮
+              </a-tag>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="6" :xs="24">
+            <a-form-item label="菜单图标" name="icon">
+              {{ modalState.from.icon }}
+            </a-form-item>
+          </a-col>
+        </a-row>
+
+        <a-row :gutter="16">
+          <a-col
+            :lg="12"
+            :md="12"
+            :xs="24"
+            v-if="modalState.from.menuType !== 'F'"
+          >
+            <a-form-item label="路由地址" name="path">
+              {{ modalState.from.path }}
+            </a-form-item>
+          </a-col>
+          <a-col
+            :lg="12"
+            :md="12"
+            :xs="24"
+            v-if="modalState.from.menuType === 'C'"
+          >
+            <a-form-item label="组件路径" name="component">
+              {{ modalState.from.component }}
+            </a-form-item>
+          </a-col>
+        </a-row>
+
+        <a-row :gutter="16" v-if="modalState.from.menuType !== 'F'">
+          <a-col :lg="6" :md="6" :xs="24">
+            <a-form-item label="内部地址" name="isFrame">
+              <a-tag color="default">
+                {{ ['否', '是'][+modalState.from.isFrame] }}
+              </a-tag>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="6" :xs="24">
+            <a-form-item label="页面缓存" name="isCache">
+              <a-tag color="default">
+                {{ ['不缓存', '缓存'][+modalState.from.isCache] }}
+              </a-tag>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="6" :xs="24">
+            <a-form-item label="显示状态" name="visible">
+              <a-tag color="default">
+                {{ ['隐藏', '显示'][+modalState.from.visible] }}
+              </a-tag>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="6" :xs="24">
+            <a-form-item label="菜单状态" name="status">
               <DictTag
                 :options="dict.sysNormalDisable"
                 :value="modalState.from.status"
               />
             </a-form-item>
           </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="部门编号" name="deptId">
-              {{ modalState.from.deptId }}
-            </a-form-item>
-          </a-col>
         </a-row>
-        <a-row :gutter="16">
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="部门名称" name="deptName">
-              {{ modalState.from.deptName }}
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="负责人" name="leader">
-              {{ modalState.from.leader }}
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row :gutter="16">
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="联系电话" name="phone">
-              {{ modalState.from.phone }}
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="邮箱" name="email">
-              {{ modalState.from.email }}
-            </a-form-item>
-          </a-col>
-        </a-row>
+
+        <a-form-item
+          label="权限标识"
+          name="perms"
+          v-if="modalState.from.menuType !== 'M'"
+        >
+          {{ modalState.from.perms }}
+        </a-form-item>
+
+        <a-form-item label="菜单说明" name="remark">
+          {{ modalState.from.remark }}
+        </a-form-item>
       </a-form>
       <template #footer>
         <a-button key="cancel" @click="fnModalCancel">关闭</a-button>
@@ -712,57 +777,28 @@ onMounted(() => {
                 :min="0"
                 :max="9999"
                 :step="1"
-                placeholder="请输入菜单排序"
+                placeholder="排序值"
               ></a-input-number>
             </a-form-item>
           </a-col>
         </a-row>
 
         <a-form-item label="菜单类型" name="menuType">
-          <a-select
-            v-model:value="modalState.from.menuType"
-            default-value="M"
-            placeholder="菜单类型"
-          >
-            <a-select-option key="M" value="M">目录</a-select-option>
-            <a-select-option key="C" value="C">菜单</a-select-option>
-            <a-select-option key="F" value="F">按钮</a-select-option>
-          </a-select>
-        </a-form-item>
-
-        <a-form-item
-          label="组件路径"
-          name="component"
-          v-bind="modalStateFrom.validateInfos.component"
-          v-if="modalState.from.menuType === 'C'"
-        >
-          <a-input
-            v-model:value="modalState.from.component"
-            allow-clear
-            placeholder="请输入组件路径"
-          >
-            <template #prefix>
-              <a-tooltip placement="topLeft">
-                <template #title>
-                  <div>
-                    页面组件目录 views <br />
-                    访问的组件路径,如：system/user/index <br />
-                    不要带 .vue 文件后缀
-                  </div>
-                </template>
-                <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />
-              </a-tooltip>
-            </template>
-          </a-input>
+          <a-radio-group v-model:value="modalState.from.menuType">
+            <a-radio key="M" value="M">目录</a-radio>
+            <a-radio
+              key="C"
+              value="C"
+              :disabled="modalState.from.parentId === '0'"
+              >菜单</a-radio
+            >
+            <a-radio key="F" value="F">按钮</a-radio>
+          </a-radio-group>
         </a-form-item>
 
         <a-row :gutter="16" v-if="modalState.from.menuType !== 'F'">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="菜单图标"
-              name="icon"
-              v-bind="modalStateFrom.validateInfos.icon"
-            >
+            <a-form-item label="菜单图标" name="icon">
               <a-input
                 v-model:value="modalState.from.icon"
                 allow-clear
@@ -853,9 +889,34 @@ onMounted(() => {
         </a-row>
 
         <a-form-item
+          label="组件路径"
+          name="component"
+          v-bind="modalStateFrom.validateInfos.component"
+          v-if="modalState.from.menuType === 'C'"
+        >
+          <a-input
+            v-model:value="modalState.from.component"
+            allow-clear
+            placeholder="请输入组件路径"
+          >
+            <template #prefix>
+              <a-tooltip placement="topLeft">
+                <template #title>
+                  <div>
+                    页面组件目录 views <br />
+                    访问的组件路径,如：system/user/index <br />
+                    不带 .vue 文件后缀
+                  </div>
+                </template>
+                <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />
+              </a-tooltip>
+            </template>
+          </a-input>
+        </a-form-item>
+
+        <a-form-item
           label="权限标识"
           name="perms"
-          v-bind="modalStateFrom.validateInfos.perms"
           v-if="modalState.from.menuType !== 'M'"
         >
           <a-input
@@ -876,6 +937,16 @@ onMounted(() => {
               </a-tooltip>
             </template>
           </a-input>
+        </a-form-item>
+
+        <a-form-item label="菜单说明" name="remark">
+          <a-textarea
+            v-model:value="modalState.from.remark"
+            :auto-size="{ minRows: 4, maxRows: 6 }"
+            :maxlength="450"
+            :show-count="true"
+            placeholder="请输入菜单说明"
+          />
         </a-form-item>
       </a-form>
     </a-modal>

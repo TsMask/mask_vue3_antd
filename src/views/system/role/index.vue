@@ -1010,7 +1010,7 @@ onMounted(() => {
                 :min="0"
                 :max="9999"
                 :step="1"
-                placeholder="请输入角色顺序"
+                placeholder="排序值"
               ></a-input-number>
             </a-form-item>
           </a-col>

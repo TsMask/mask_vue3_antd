@@ -87,7 +87,7 @@ export function parseDataToTreeExclude(
     // 排除值跳过
     let exclude = item[excludeField];
     if (exclude && exclude === excludeValue) {
-      break;
+      continue;
     }
     let parentId = item[fieldParentId];
     // 分组

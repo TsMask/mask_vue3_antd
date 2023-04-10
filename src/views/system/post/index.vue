@@ -690,7 +690,7 @@ onMounted(() => {
                 :min="0"
                 :max="9999"
                 :step="1"
-                placeholder="请输入岗位顺序"
+                placeholder="排序值"
               ></a-input-number>
             </a-form-item>
           </a-col>

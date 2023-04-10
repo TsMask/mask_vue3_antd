@@ -568,7 +568,7 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="上级部门" name="parentId">
               <a-tree-select
-                v-model:value="modalState.from.parentId"
+                :value="modalState.from.parentId"
                 placeholder="上级部门"
                 disabled
                 :tree-data="modalState.treeData"
@@ -714,7 +714,7 @@ onMounted(() => {
                 :min="0"
                 :max="9999"
                 :step="1"
-                placeholder="请输入显示顺序"
+                placeholder="排序值"
               ></a-input-number>
             </a-form-item>
           </a-col>
