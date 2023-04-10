@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  createFromIconfontCN,
   PlusOutlined,
   FormOutlined,
   ProfileOutlined,
@@ -11,7 +12,7 @@ import {
   InfoCircleOutlined,
 } from '@ant-design/icons-vue';
 import { useRoute } from 'vue-router';
-import { reactive, ref, onMounted, toRaw, nextTick } from 'vue';
+import { reactive, ref, onMounted, toRaw } from 'vue';
 import { message, Modal, Form } from 'ant-design-vue';
 import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import { SizeType } from 'ant-design-vue/es/config-provider';
@@ -26,8 +27,15 @@ import {
 import { parseDateToStr } from '@/utils/DateUtils';
 import useDictStore from '@/store/modules/dict';
 import { parseDataToTree, parseDataToTreeExclude } from '@/utils/ParseUtils';
+import iconFonts from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 const { getDict } = useDictStore();
 const route = useRoute();
+const IconFont = createFromIconfontCN({
+  scriptUrl: '/font_8d5l8fzk5b87iudi.js',
+});
+
+/**字体图标选择数据 */
+let icons = reactive(iconFonts.map(item => ({ value: item, label: item })));
 
 /**路由标题 */
 let title = ref<string>(route.meta.title ?? '标题');
@@ -109,6 +117,7 @@ let tableColumns: ColumnsType = [
   {
     title: '菜单图标',
     dataIndex: 'icon',
+    key: 'icon',
     align: 'center',
   },
   {
@@ -530,6 +539,9 @@ onMounted(() => {
         @expandedRowsChange="fnTableExpandedRowsChange"
       >
         <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'icon'">
+            <IconFont :type="record.icon" style="font-size: 18px"></IconFont>
+          </template>
           <template v-if="column.key === 'visible'">
             <a-tag :color="+record.visible ? 'processing' : 'warning'">
               {{ ['隐藏', '显示'][+record.visible] }}
@@ -643,7 +655,10 @@ onMounted(() => {
           </a-col>
           <a-col :lg="6" :md="6" :xs="24">
             <a-form-item label="菜单图标" name="icon">
-              {{ modalState.from.icon }}
+              <IconFont
+                :type="modalState.from.icon || '#'"
+                style="font-size: 18px"
+              ></IconFont>
             </a-form-item>
           </a-col>
         </a-row>
@@ -799,11 +814,24 @@ onMounted(() => {
         <a-row :gutter="16" v-if="modalState.from.menuType !== 'F'">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单图标" name="icon">
-              <a-input
+              <a-select
                 v-model:value="modalState.from.icon"
-                allow-clear
-                placeholder="请输入菜单图标"
-              ></a-input>
+                placeholder="请选择菜单图标"
+                show-search
+                option-filter-prop="label"
+                option-label-prop="label"
+                :options="icons"
+              >
+                <template #suffixIcon>
+                  <IconFont :type="modalState.from.icon"></IconFont>
+                </template>
+                <template #option="{ value, label }">
+                  <div style="font-size: 18px">
+                    <IconFont :type="value"></IconFont>
+                    &nbsp;&nbsp;{{ label }}
+                  </div>
+                </template>
+              </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">

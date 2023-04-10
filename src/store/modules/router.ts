@@ -84,8 +84,7 @@ function buildRouters(recordRaws: RecordRaws[]): RouteRecordRaw[] {
     // 对元数据特殊参数进行处理
     item.meta = Object.assign(item.meta, {
       hideInMenu: item.meta.hide,
-      icon: 'icon-pcduan'
-    })
+    });
 
     // 构建路由
     const router: RouteRecordRaw = {
