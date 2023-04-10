@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import {
+  ExportOutlined,
+  SyncOutlined,
   ContainerOutlined,
   PlusOutlined,
   FormOutlined,

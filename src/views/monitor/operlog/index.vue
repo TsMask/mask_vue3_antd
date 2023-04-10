@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  ProfileOutlined,
   ExportOutlined,
   ClearOutlined,
   ColumnHeightOutlined,
