@@ -77,7 +77,7 @@ const breadcrumb = computed(() =>
       :breadcrumb="{ routes: breadcrumb }"
       disable-content-margin
       v-bind="proConfig"
-      iconfont-url="/icon-font.js"
+      iconfont-url="/font_8d5l8fzk5b87iudi.js"
     >
       <!--插槽-菜单头-->
       <template #menuHeaderRender>
@@ -121,9 +121,21 @@ const breadcrumb = computed(() =>
       <template #footerRender>
         <GlobalFooter
           :links="[
-            { blankTarget: true, title: '帮助', href: '/' },
-            { blankTarget: true, title: '隐私', href: '/' },
-            { blankTarget: false, title: '条款', href: '/' },
+            {
+              blankTarget: true,
+              title: '开发手册',
+              href: 'https://juejin.cn/column/7188761626017792056',
+            },
+            {
+              blankTarget: true,
+              title: '开源仓库',
+              href: 'https://gitee.com/TsMask/',
+            },
+            {
+              blankTarget: true,
+              title: '接口文档',
+              href: 'https://mask-api-midwayjs.apifox.cn/',
+            },
           ]"
           copyright="Copyright © 2023 Gitee For TsMask"
         >
