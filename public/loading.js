@@ -3,9 +3,9 @@
  * 解决首次加载时白屏的问题
  */
 (function () {
-  const _root = document.querySelector('#app');
-  if (_root && _root.innerHTML === '') {
-    _root.innerHTML = `
+  const _app = document.querySelector('#app');
+  if (_app && _app.innerHTML === '') {
+    _app.innerHTML = `
         <style>
           html,
           body,
@@ -22,6 +22,7 @@
             font-size: 1.1rem;
           }
           .loading-sub-title {
+            text-align: center;
             margin-top: 20px;
             font-size: 1rem;
             color: #888;
@@ -175,7 +176,8 @@
             正在加载资源
           </div>
           <div class="loading-sub-title">
-            初次加载资源可能需要较多时间 请耐心等待
+            初次加载资源可能需要较多时间 </br>
+            请耐心等待
           </div>
         </div>
       `;
