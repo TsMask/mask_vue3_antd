@@ -3,6 +3,7 @@
     title="Cron表达式生成"
     :visible="props.visible"
     :body-style="{ padding: '0 24px' }"
+    :destroy-on-close="true"
     @cancel="fnCronModal(false)"
     @ok="fnCronModal(true)"
   >
@@ -38,7 +39,7 @@ import CronMinute from './components/Minute.vue';
 import CronHour from './components/Hour.vue';
 import CronDay from './components/Day.vue';
 import CronMonth from './components/Month.vue';
-import { reactive, computed, onBeforeMount } from 'vue';
+import { reactive, computed, watch } from 'vue';
 
 const emit = defineEmits(['cancel', 'ok', 'update:visible']);
 const props = defineProps({
@@ -69,21 +70,25 @@ const cronStr = computed(() => {
   return `${time} ${date}`;
 });
 
-/**挂载前初始cron属性 */
-onBeforeMount(() => {
-  const arr = props.cron.split(' ');
-  // 6 位以上是合法表达式
-  if (arr.length >= 6) {
-    Object.assign(cronValue, {
-      second: arr[0],
-      minute: arr[1],
-      hour: arr[2],
-      day: arr[3],
-      month: arr[4],
-      week: arr[5],
-    });
+/**监听是否显示，初始cron属性 */
+watch(
+  () => props.visible,
+  val => {
+    if (!val) return;
+    const arr = props.cron.split(' ');
+    // 6 位以上是合法表达式
+    if (arr.length >= 6) {
+      Object.assign(cronValue, {
+        second: arr[0],
+        minute: arr[1],
+        hour: arr[2],
+        day: arr[3],
+        month: arr[4],
+        week: arr[5],
+      });
+    }
   }
-});
+);
 
 /**
  * 窗口事件
