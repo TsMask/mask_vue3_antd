@@ -261,12 +261,22 @@ function fnRecordDelete() {
     title: '提示',
     content: `确认删除访问编号为 【${ids}】 的数据项吗?`,
     onOk() {
+      const key = 'delOperlog';
+      message.loading({ content: '请稍等...', key });
       delOperlog(ids).then(res => {
         if (res.code === 200) {
-          message.success(`删除成功`, 1.5);
+          message.success({
+            content: '删除成功',
+            key,
+            duration: 2,
+          });
           fnGetList();
         } else {
-          message.error(`${res.msg}`, 1.5);
+          message.error({
+            content: `${res.msg}`,
+            key,
+            duration: 2,
+          });
         }
       });
     },
@@ -279,11 +289,22 @@ function fnCleanList() {
     title: '提示',
     content: `确认清空所有登录日志数据项?`,
     onOk() {
+      const key = 'cleanOperlog';
+      message.loading({ content: '请稍等...', key });
       cleanOperlog().then(res => {
         if (res.code === 200) {
-          message.error(`清空成功`, 1.5);
+          message.success({
+            content: '清空成功',
+            key,
+            duration: 2,
+          });
+          fnGetList();
         } else {
-          message.error(`${res.msg}`, 1.5);
+          message.error({
+            content: `${res.msg}`,
+            key,
+            duration: 2,
+          });
         }
       });
     },
@@ -296,18 +317,33 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
+      const key = 'exportOperlog';
+      message.loading({ content: '请稍等...', key });
       exportOperlog(toRaw(queryParams)).then(resBlob => {
         if (resBlob.type === 'application/json') {
           resBlob
             .text()
             .then(txt => {
               const txtRes = JSON.parse(txt);
-              message.error(`${txtRes.msg}`, 1.5);
+              message.error({
+                content: `${txtRes.msg}`,
+                key,
+                duration: 2,
+              });
             })
             .catch(_ => {
-              message.error(`导出数据异常`, 1.5);
+              message.error({
+                content: '导出数据异常',
+                key,
+                duration: 2,
+              });
             });
         } else {
+          message.success({
+            content: `已完成导出`,
+            key,
+            duration: 2,
+          });
           saveAs(resBlob, `operlog_${Date.now()}.xlsx`);
         }
       });

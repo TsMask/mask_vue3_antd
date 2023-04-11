@@ -231,16 +231,21 @@ const modalStateFrom = Form.useForm(
  */
 function fnModalVisibleByVive(postId: string | number) {
   if (!postId) {
-    message.error(`岗位记录存在错误`, 1.5);
+    message.error(`岗位记录存在错误`, 2);
     return;
   }
+  if (modalState.confirmLoading) return;
+  const hide = message.loading('正在打开...', 0);
+  modalState.confirmLoading = true;
   getPost(postId).then(res => {
+    modalState.confirmLoading = false;
+    hide();
     if (res.code === 200) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '岗位信息';
       modalState.visibleByView = true;
     } else {
-      message.error(`获取岗位信息失败`, 1.5);
+      message.error(`获取岗位信息失败`, 2);
     }
   });
 }
@@ -255,13 +260,18 @@ function fnModalVisibleByEdit(postId?: string | number) {
     modalState.title = '添加岗位信息';
     modalState.visibleByEdit = true;
   } else {
+    if (modalState.confirmLoading) return;
+    const hide = message.loading('正在打开...', 0);
+    modalState.confirmLoading = true;
     getPost(postId).then(res => {
+      modalState.confirmLoading = false;
+      hide();
       if (res.code === 200) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改岗位信息';
         modalState.visibleByEdit = true;
       } else {
-        message.error(`获取岗位信息失败`, 1.5);
+        message.error(`获取岗位信息失败`, 2);
       }
     });
   }
@@ -278,15 +288,25 @@ function fnModalOk() {
       modalState.confirmLoading = true;
       const from = toRaw(modalState.from);
       const post = from.postId ? updatePost(from) : addPost(from);
+      const key = 'notice';
+      message.loading({ content: '请稍等...', key });
       post
         .then(res => {
           if (res.code === 200) {
-            message.success(`${modalState.title}成功`, 1.5);
+            message.success({
+              content: `${modalState.title}成功`,
+              key,
+              duration: 2,
+            });
             modalState.visibleByEdit = false;
             modalStateFrom.resetFields();
             fnGetList();
           } else {
-            message.error(res.msg, 1.5);
+            message.error({
+              content: `${res.msg}`,
+              key,
+              duration: 2,
+            });
           }
         })
         .finally(() => {
@@ -294,7 +314,7 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 1.5);
+      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
     });
 }
 
@@ -320,12 +340,22 @@ function fnRecordDelete(postId: string = '0') {
     title: '提示',
     content: `确认删除岗位编号为 【${postId}】 的数据项?`,
     onOk() {
+      const key = 'delPost';
+      message.loading({ content: '请稍等...', key });
       delPost(postId).then(res => {
         if (res.code === 200) {
-          message.success(`删除成功`, 1.5);
+          message.success({
+            content: `删除成功`,
+            key,
+            duration: 2,
+          });
           fnGetList();
         } else {
-          message.error(`${res.msg}`, 1.5);
+          message.error({
+            content: `${res.msg}`,
+            key: key,
+            duration: 2,
+          });
         }
       });
     },
@@ -338,18 +368,33 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
+      const key = 'exportPost';
+      message.loading({ content: '请稍等...', key });
       exportPost(toRaw(queryParams)).then(resBlob => {
         if (resBlob.type === 'application/json') {
           resBlob
             .text()
             .then(txt => {
               const txtRes = JSON.parse(txt);
-              message.error(`${txtRes.msg}`, 1.5);
+              message.error({
+                content: `${txtRes.msg}`,
+                key,
+                duration: 2,
+              });
             })
             .catch(_ => {
-              message.error(`导出数据异常`, 1.5);
+              message.error({
+                content: '导出数据异常',
+                key,
+                duration: 2,
+              });
             });
         } else {
+          message.success({
+            content: `已完成导出`,
+            key,
+            duration: 2,
+          });
           saveAs(resBlob, `post_${Date.now()}.xlsx`);
         }
       });

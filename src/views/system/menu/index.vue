@@ -26,7 +26,10 @@ import {
 } from '@/api/system/menu';
 import { parseDateToStr } from '@/utils/DateUtils';
 import useDictStore from '@/store/modules/dict';
-import { parseDataToTree, parseDataToTreeExclude } from '@/utils/ParseUtils';
+import {
+  parseDataToTree,
+  parseDataToTreeExclude,
+} from '@/utils/ParseTreeUtils.js';
 import iconFonts from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 const { getDict } = useDictStore();
 const route = useRoute();
@@ -243,17 +246,22 @@ const modalStateFrom = Form.useForm(
  */
 function fnModalVisibleByVive(menuId: string | number) {
   if (!menuId) {
-    message.error(`菜单记录存在错误`, 1.5);
+    message.error(`菜单记录存在错误`, 2);
     return;
   }
+  if (modalState.confirmLoading) return;
+  const hide = message.loading('正在打开...', 0);
+  modalState.confirmLoading = true;
   modalState.treeData = treeDataAll;
   getMenu(menuId).then(res => {
+    modalState.confirmLoading = false;
+    hide();
     if (res.code === 200) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '菜单信息';
       modalState.visibleByView = true;
     } else {
-      message.error(`获取菜单信息失败`, 1.5);
+      message.error(`获取菜单信息失败`, 2);
     }
   });
 }
@@ -276,13 +284,18 @@ function fnModalVisibleByEdit(
     modalState.title = '添加菜单信息';
     modalState.visibleByEdit = true;
   } else {
+    if (modalState.confirmLoading) return;
+    const hide = message.loading('正在打开...', 0);
+    modalState.confirmLoading = true;
     getMenu(menuId).then(res => {
+      modalState.confirmLoading = false;
+      hide();
       if (res.code === 200) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改菜单信息';
         modalState.visibleByEdit = true;
       } else {
-        message.error(`获取菜单信息失败`, 1.5);
+        message.error(`获取菜单信息失败`, 2);
       }
     });
   }
@@ -307,16 +320,26 @@ function fnModalOk() {
       modalState.confirmLoading = true;
       const from = toRaw(modalState.from);
       const menu = from.menuId ? updateMenu(from) : addMenu(from);
+      const key = 'menu';
+      message.loading({ content: '请稍等...', key });
       menu
         .then(res => {
           if (res.code === 200) {
-            message.success(`${modalState.title}成功`, 1.5);
+            message.success({
+              content: `${modalState.title}成功`,
+              key,
+              duration: 2,
+            });
             modalState.visibleByEdit = false;
             modalStateFrom.resetFields();
             treeDataAll = [];
             fnGetList();
           } else {
-            message.error(res.msg, 1.5);
+            message.error({
+              content: `${res.msg}`,
+              key,
+              duration: 2,
+            });
           }
         })
         .finally(() => {
@@ -324,7 +347,7 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 1.5);
+      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
     });
 }
 
@@ -347,12 +370,22 @@ function fnRecordDelete(menuId: string | number) {
     title: '提示',
     content: `确认删除菜单编号为 【${menuId}】 的数据项?`,
     onOk() {
+      const key = 'delMenu';
+      message.loading({ content: '请稍等...', key });
       delMenu(menuId).then(res => {
         if (res.code === 200) {
-          message.success(`删除成功`, 1.5);
+          message.success({
+            content: `删除成功`,
+            key,
+            duration: 2,
+          });
           fnGetList();
         } else {
-          message.error(`${res.msg}`, 1.5);
+          message.error({
+            content: `${res.msg}`,
+            key: key,
+            duration: 2,
+          });
         }
       });
     },

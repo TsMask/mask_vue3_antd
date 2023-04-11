@@ -25,7 +25,7 @@ import {
 } from '@/api/system/dept';
 import { parseDateToStr } from '@/utils/DateUtils';
 import useDictStore from '@/store/modules/dict';
-import { parseDataToTree } from '@/utils/ParseUtils';
+import { parseDataToTree } from '@/utils/ParseTreeUtils.js';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -222,17 +222,22 @@ const modalStateFrom = Form.useForm(
  */
 function fnModalVisibleByVive(deptId: string | number) {
   if (!deptId) {
-    message.error(`部门记录存在错误`, 1.5);
+    message.error(`部门记录存在错误`, 2);
     return;
   }
+  if (modalState.confirmLoading) return;
+  const hide = message.loading('正在打开...', 0);
+  modalState.confirmLoading = true;
   modalState.treeData = treeDataAll;
   getDept(deptId).then(res => {
+    modalState.confirmLoading = false;
+    hide();
     if (res.code === 200) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '部门信息';
       modalState.visibleByView = true;
     } else {
-      message.error(`获取部门信息失败`, 1.5);
+      message.error(`获取部门信息失败`, 2);
     }
   });
 }
@@ -255,24 +260,26 @@ function fnModalVisibleByEdit(
     modalState.title = '添加部门信息';
     modalState.visibleByEdit = true;
   } else {
-    // 排除下级部门
-    listDeptExcludeChild(deptId)
-      .then(res => {
-        if (res.code === 200 && Array.isArray(res.data)) {
-          modalState.treeData = parseDataToTree(res.data, 'deptId');
-        }
-        // 获取部门信息
-        return getDept(deptId);
-      })
-      .then(res => {
-        if (res.code === 200) {
-          modalState.from = Object.assign(modalState.from, res.data);
+    if (modalState.confirmLoading) return;
+    const hide = message.loading('正在打开...', 0);
+    modalState.confirmLoading = true;
+    // 获取部门信息同时查询部门列表（排除节点）
+    Promise.all([getDept(deptId), listDeptExcludeChild(deptId)]).then(
+      resArr => {
+        modalState.confirmLoading = false;
+        hide();
+        if (resArr[0].code === 200) {
+          modalState.from = Object.assign(modalState.from, resArr[0].data);
+          if (resArr[1].code === 200 && Array.isArray(resArr[1].menus)) {
+            modalState.treeData = parseDataToTree(resArr[1].menus, 'deptId');
+          }
           modalState.title = '修改部门信息';
           modalState.visibleByEdit = true;
         } else {
-          message.error(`获取部门信息失败`, 1.5);
+          message.error(`获取部门信息失败`, 2);
         }
-      });
+      }
+    );
   }
 }
 
@@ -287,15 +294,25 @@ function fnModalOk() {
       modalState.confirmLoading = true;
       const from = toRaw(modalState.from);
       const dept = from.deptId ? updateDept(from) : addDept(from);
+      const key = 'dept';
+      message.loading({ content: '请稍等...', key });
       dept
         .then(res => {
           if (res.code === 200) {
-            message.success(`${modalState.title}成功`, 1.5);
+            message.success({
+              content: `${modalState.title}成功`,
+              key,
+              duration: 2,
+            });
             modalState.visibleByEdit = false;
             modalStateFrom.resetFields();
             fnGetList();
           } else {
-            message.error(res.msg, 1.5);
+            message.error({
+              content: `${res.msg}`,
+              key,
+              duration: 2,
+            });
           }
         })
         .finally(() => {
@@ -303,7 +320,7 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 1.5);
+      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
     });
 }
 
@@ -326,12 +343,22 @@ function fnRecordDelete(deptId: string | number) {
     title: '提示',
     content: `确认删除部门编号为 【${deptId}】 的数据项?`,
     onOk() {
+      const key = 'delDept';
+      message.loading({ content: '请稍等...', key });
       delDept(deptId).then(res => {
         if (res.code === 200) {
-          message.success(`删除成功`, 1.5);
+          message.success({
+            content: `删除成功`,
+            key,
+            duration: 2,
+          });
           fnGetList();
         } else {
-          message.error(`${res.msg}`, 1.5);
+          message.error({
+            content: `${res.msg}`,
+            key: key,
+            duration: 2,
+          });
         }
       });
     },

@@ -28,14 +28,14 @@ import {
   getRole,
   listRole,
   updateRole,
-  deptTreeSelect,
+  roleDeptTreeSelect,
 } from '@/api/system/role';
-import { roleMenuTreeselect, menuTreeselect } from '@/api/system/menu';
+import { roleMenuTreeSelect, menuTreeSelect } from '@/api/system/menu';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/DateUtils';
 import useDictStore from '@/store/modules/dict';
 import { DataNode } from 'ant-design-vue/es/tree';
-import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/ParseUtils';
+import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/ParseTreeUtils.js';
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
@@ -83,6 +83,7 @@ function fnQueryReset() {
     pageNum: 1,
     pageSize: 20,
   });
+  queryRangePicker.value = ['', ''];
   tablePagination.current = 1;
   tablePagination.pageSize = 20;
   fnGetList();
@@ -304,11 +305,16 @@ const modalStateFrom = Form.useForm(
  */
 function fnModalVisibleByVive(roleId: string | number) {
   if (!roleId) {
-    message.error(`角色记录存在错误`, 1.5);
+    message.error(`角色记录存在错误`, 2);
     return;
   }
+  if (modalState.confirmLoading) return;
+  const hide = message.loading('正在打开...', 0);
+  modalState.confirmLoading = true;
   // 查询角色详细同时根据角色ID查询菜单下拉树结构
-  Promise.all([getRole(roleId), roleMenuTreeselect(roleId)]).then(resArr => {
+  Promise.all([getRole(roleId), roleMenuTreeSelect(roleId)]).then(resArr => {
+    modalState.confirmLoading = false;
+    hide();
     if (resArr[0].code === 200) {
       modalState.from = Object.assign(modalState.from, resArr[0].data);
       if (resArr[1].code === 200 && Array.isArray(resArr[1].menus)) {
@@ -322,7 +328,7 @@ function fnModalVisibleByVive(roleId: string | number) {
       modalState.title = '角色信息';
       modalState.visibleByView = true;
     } else {
-      message.error(`获取角色信息失败`, 1.5);
+      message.error(`获取角色信息失败`, 2);
     }
   });
 }
@@ -339,8 +345,13 @@ function fnModalVisibleByEdit(roleId?: string | number) {
       modalState.title = '添加角色信息';
       modalState.visibleByEdit = true;
     } else {
+      if (modalState.confirmLoading) return;
+      const hide = message.loading('正在打开...', 0);
+      modalState.confirmLoading = true;
       // 查询菜单下拉树结构
-      menuTreeselect().then(res => {
+      menuTreeSelect().then(res => {
+        modalState.confirmLoading = false;
+        hide();
         if (res.code === 200 && Array.isArray(res.data)) {
           menuTree.checkedKeys = parseTreeKeys(res.data, 'id');
           menuTree.expandedKeys = parseTreeNodeKeys(res.data, 'id');
@@ -352,8 +363,13 @@ function fnModalVisibleByEdit(roleId?: string | number) {
       });
     }
   } else {
+    if (modalState.confirmLoading) return;
+    const hide = message.loading('正在打开...', 0);
+    modalState.confirmLoading = true;
     // 查询角色详细同时根据角色ID查询菜单下拉树结构
-    Promise.all([getRole(roleId), roleMenuTreeselect(roleId)]).then(resArr => {
+    Promise.all([getRole(roleId), roleMenuTreeSelect(roleId)]).then(resArr => {
+      modalState.confirmLoading = false;
+      hide();
       if (resArr[0].code === 200) {
         modalState.from = Object.assign(modalState.from, resArr[0].data);
         if (resArr[1].code === 200 && Array.isArray(resArr[1].menus)) {
@@ -367,7 +383,7 @@ function fnModalVisibleByEdit(roleId?: string | number) {
         modalState.title = '修改角色信息';
         modalState.visibleByEdit = true;
       } else {
-        message.error(`获取角色信息失败`, 1.5);
+        message.error(`获取角色信息失败`, 2);
       }
     });
   }
@@ -384,15 +400,25 @@ function fnModalOk() {
       modalState.confirmLoading = true;
       const from = toRaw(modalState.from);
       const role = from.roleId ? updateRole(from) : addRole(from);
+      const key = 'role';
+      message.loading({ content: '请稍等...', key });
       role
         .then(res => {
           if (res.code === 200) {
-            message.success(`${modalState.title}成功`, 1.5);
+            message.success({
+              content: `${modalState.title}成功`,
+              key,
+              duration: 2,
+            });
             modalState.visibleByEdit = false;
             modalStateFrom.resetFields();
             fnGetList();
           } else {
-            message.error(res.msg, 1.5);
+            message.error({
+              content: `${res.msg}`,
+              key,
+              duration: 2,
+            });
           }
         })
         .finally(() => {
@@ -400,7 +426,7 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 1.5);
+      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
     });
 }
 
@@ -473,15 +499,26 @@ function fnModalCheckStrictly(checked: boolean, type: 'menu' | 'dept') {
  * 对话框弹出分配数据权限确认执行函数
  */
 function fnModalOkDataScope() {
+  if (modalState.confirmLoading) return;
   modalState.confirmLoading = true;
+  const key = 'dataScope';
+  message.loading({ content: '请稍等...', key });
   dataScope(toRaw(modalState.from))
     .then(res => {
       if (res.code === 200) {
-        message.success(`${modalState.title}成功`, 1.5);
+        message.success({
+          content: `${modalState.title}成功`,
+          key,
+          duration: 2,
+        });
         modalState.visibleByDataScope = false;
         modalStateFrom.resetFields();
       } else {
-        message.error(res.msg, 1.5);
+        message.error({
+          content: `${res.msg}`,
+          key,
+          duration: 2,
+        });
       }
     })
     .finally(() => {
@@ -495,11 +532,11 @@ function fnModalOkDataScope() {
  */
 function fnRecordDataScope(roleId: string | number) {
   if (!roleId) {
-    message.error(`角色记录存在错误`, 1.5);
+    message.error(`角色记录存在错误`, 2);
     return;
   }
-  // 查询角色详细同时根据角色ID查询菜单下拉树结构
-  Promise.all([getRole(roleId), deptTreeSelect(roleId)]).then(resArr => {
+  // 查询角色详细同时根据角色ID查询部门树结构
+  Promise.all([getRole(roleId), roleDeptTreeSelect(roleId)]).then(resArr => {
     if (resArr[0].code === 200) {
       modalState.from = Object.assign(modalState.from, resArr[0].data);
       if (resArr[1].code === 200 && Array.isArray(resArr[1].depts)) {
@@ -513,7 +550,7 @@ function fnRecordDataScope(roleId: string | number) {
       modalState.title = '分配数据权限';
       modalState.visibleByDataScope = true;
     } else {
-      message.error(`获取角色信息失败`, 1.5);
+      message.error(`获取角色信息失败`, 2);
     }
   });
 }
@@ -522,7 +559,7 @@ function fnRecordDataScope(roleId: string | number) {
  * 角色分配用户跳转
  * @param roleId 角色编号ID
  */
-function fnRecordAuthUser(roleId: string | number = '0') {
+function fnRecordAuthUser(roleId: string | number) {
   router.push(`/system/role/inline/auth-user/${roleId}`);
 }
 
@@ -536,11 +573,21 @@ function fnRecordStatus(row: Record<string, string>) {
     title: '提示',
     content: `确定要${text} ${row.roleName} 角色吗?`,
     onOk() {
+      const key = 'changeRoleStatus';
+      message.loading({ content: '请稍等...', key });
       changeRoleStatus(row.roleId, row.status).then(res => {
         if (res.code === 200) {
-          message.success(`${row.roleName} ${text}成功`, 1.5);
+          message.success({
+            content: `${row.roleName} ${text}成功`,
+            key: key,
+            duration: 2,
+          });
         } else {
-          message.error(`${row.roleName} ${text}失败`, 1.5);
+          message.error({
+            content: `${row.roleName} ${text}失败`,
+            key: key,
+            duration: 2,
+          });
         }
         fnGetList();
       });
@@ -563,12 +610,22 @@ function fnRecordDelete(roleId: string = '0') {
     title: '提示',
     content: `确认删除角色编号为 【${roleId}】 的数据项?`,
     onOk() {
+      const key = 'delRole';
+      message.loading({ content: '请稍等...', key });
       delRole(roleId).then(res => {
         if (res.code === 200) {
-          message.success(`删除成功`, 1.5);
+          message.success({
+            content: `删除成功`,
+            key,
+            duration: 2,
+          });
           fnGetList();
         } else {
-          message.error(`${res.msg}`, 1.5);
+          message.error({
+            content: `${res.msg}`,
+            key: key,
+            duration: 2,
+          });
         }
       });
     },
@@ -581,18 +638,33 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
+      const key = 'exportRole';
+      message.loading({ content: '请稍等...', key });
       exportRole(toRaw(queryParams)).then(resBlob => {
         if (resBlob.type === 'application/json') {
           resBlob
             .text()
             .then(txt => {
               const txtRes = JSON.parse(txt);
-              message.error(`${txtRes.msg}`, 1.5);
+              message.error({
+                content: `${txtRes.msg}`,
+                key,
+                duration: 2,
+              });
             })
             .catch(_ => {
-              message.error(`导出数据异常`, 1.5);
+              message.error({
+                content: '导出数据异常',
+                key,
+                duration: 2,
+              });
             });
         } else {
+          message.success({
+            content: `已完成导出`,
+            key,
+            duration: 2,
+          });
           saveAs(resBlob, `role_${Date.now()}.xlsx`);
         }
       });
@@ -800,9 +872,9 @@ onMounted(() => {
               v-if="record.roleId !== '1'"
               v-model:checked="record.status"
               checked-value="1"
-              checked-children="开"
+              checked-children="正常"
               un-checked-value="0"
-              un-checked-children="关"
+              un-checked-children="暂停"
               size="small"
               @change="fnRecordStatus(record)"
             />

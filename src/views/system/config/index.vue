@@ -245,7 +245,7 @@ const modalStateFrom = Form.useForm(
  */
 function fnModalVisibleByVive(configId: string | number) {
   if (!configId) {
-    message.error(`参数配置记录存在错误`, 1.5);
+    message.error(`参数配置记录存在错误`, 2);
     return;
   }
   getConfig(configId).then(res => {
@@ -254,7 +254,7 @@ function fnModalVisibleByVive(configId: string | number) {
       modalState.title = '参数配置信息';
       modalState.visibleByView = true;
     } else {
-      message.error(`获取参数配置信息失败`, 1.5);
+      message.error(`获取参数配置信息失败`, 2);
     }
   });
 }
@@ -269,13 +269,18 @@ function fnModalVisibleByEdit(configId?: string | number) {
     modalState.title = '添加参数配置';
     modalState.visibleByEdit = true;
   } else {
+    if (modalState.confirmLoading) return;
+    const hide = message.loading('正在打开...', 0);
+    modalState.confirmLoading = true;
     getConfig(configId).then(res => {
+      modalState.confirmLoading = false;
+      hide();
       if (res.code === 200) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改参数配置';
         modalState.visibleByEdit = true;
       } else {
-        message.error(`获取参数配置信息失败`, 1.5);
+        message.error(`获取参数配置信息失败`, 2);
       }
     });
   }
@@ -292,15 +297,25 @@ function fnModalOk() {
       modalState.confirmLoading = true;
       const from = toRaw(modalState.from);
       const config = from.configId ? updateConfig(from) : addConfig(from);
+      const key = 'config';
+      message.loading({ content: '请稍等...', key });
       config
         .then(res => {
           if (res.code === 200) {
-            message.success(`${modalState.title}成功`, 1.5);
+            message.success({
+              content: `${modalState.title}成功`,
+              key,
+              duration: 2,
+            });
             modalState.visibleByEdit = false;
             modalStateFrom.resetFields();
             fnGetList();
           } else {
-            message.error(res.msg, 1.5);
+            message.error({
+              content: `${res.msg}`,
+              key,
+              duration: 2,
+            });
           }
         })
         .finally(() => {
@@ -308,7 +323,7 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 1.5);
+      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
     });
 }
 
@@ -334,12 +349,22 @@ function fnRecordDelete(configId: string = '0') {
     title: '提示',
     content: `确认删除参数编号为 【${configId}】 的数据项?`,
     onOk() {
+      const key = 'delConfig';
+      message.loading({ content: '请稍等...', key });
       delConfig(configId).then(res => {
         if (res.code === 200) {
-          message.success(`删除成功`, 1.5);
+          message.success({
+            content: `删除成功`,
+            key,
+            duration: 2,
+          });
           fnGetList();
         } else {
-          message.error(`${res.msg}`, 1.5);
+          message.error({
+            content: `${res.msg}`,
+            key: key,
+            duration: 2,
+          });
         }
       });
     },
@@ -352,18 +377,33 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
+      const key = 'exportConfig';
+      message.loading({ content: '请稍等...', key });
       exportConfig(toRaw(queryParams)).then(resBlob => {
         if (resBlob.type === 'application/json') {
           resBlob
             .text()
             .then(txt => {
               const txtRes = JSON.parse(txt);
-              message.error(`${txtRes.msg}`, 1.5);
+              message.error({
+                content: `${txtRes.msg}`,
+                key,
+                duration: 2,
+              });
             })
             .catch(_ => {
-              message.error(`导出数据异常`, 1.5);
+              message.error({
+                content: '导出数据异常',
+                key,
+                duration: 2,
+              });
             });
         } else {
+          message.success({
+            content: `已完成导出`,
+            key,
+            duration: 2,
+          });
           saveAs(resBlob, `config_${Date.now()}.xlsx`);
         }
       });
@@ -379,11 +419,21 @@ function fnRefreshCache() {
     title: '提示',
     content: `确定要刷新参数配置缓存吗?`,
     onOk() {
+      const key = 'refreshCache';
+      message.loading({ content: '请稍等...', key });
       refreshCache().then(res => {
         if (res.code === 200) {
-          message.success(`刷新缓存成功`, 1.5);
+          message.success({
+            content: `刷新缓存成功`,
+            key,
+            duration: 2,
+          });
         } else {
-          message.error(`${res.msg}`, 1.5);
+          message.error({
+            content: `${res.msg}`,
+            key: key,
+            duration: 2,
+          });
         }
       });
     },

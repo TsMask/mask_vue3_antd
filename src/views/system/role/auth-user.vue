@@ -15,7 +15,7 @@ import { message, Modal } from 'ant-design-vue';
 import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import { SizeType } from 'ant-design-vue/es/config-provider';
 import { ColumnsType } from 'ant-design-vue/es/table';
-import AuthUserSelect from './auth-user-select.vue';
+import AuthUserSelect from './components/auth-user-select.vue';
 import {
   authUserAllocatedList,
   authUserCancel,
@@ -214,16 +214,26 @@ function fnModalVisibleBySelectUser() {
  */
 function fnModalOk(userIds: string[] | number[]) {
   if (userIds.length <= 0) {
-    message.error(`请选择要分配的用户`, 1.5);
+    message.error(`请选择要分配的用户`, 2);
     return;
   }
+  const key = 'authUserSelect';
+  message.loading({ content: '请稍等...', key });
   authUserSelect({ userIds: userIds, roleId: roleId }).then(res => {
     if (res.code === 200) {
       modalState.visibleBySelectUser = false;
-      message.success(`授权用户添加成功`, 1.5);
+      message.success({
+        content: `授权用户添加成功`,
+        key,
+        duration: 2,
+      });
       fnGetList();
     } else {
-      message.error(`${res.msg}`, 1.5);
+      message.error({
+        content: `${res.msg}`,
+        key: key,
+        duration: 2,
+      });
     }
   });
 }
@@ -240,12 +250,22 @@ function fnRecordDelete(userId: string | number) {
     title: '提示',
     content: `确认取消用户编号为 【${userId}】 的数据项授权?`,
     onOk() {
+      const key = 'authUserCancel';
+      message.loading({ content: '请稍等...', key });
       authUserCancel({ userIds: userId, roleId: roleId }).then(res => {
         if (res.code === 200) {
-          message.success(`取消授权成功`, 1.5);
+          message.success({
+            content: `取消授权成功`,
+            key,
+            duration: 2,
+          });
           fnGetList();
         } else {
-          message.error(`${res.msg}`, 1.5);
+          message.error({
+            content: `${res.msg}`,
+            key: key,
+            duration: 2,
+          });
         }
       });
     },

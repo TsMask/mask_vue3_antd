@@ -245,16 +245,21 @@ const modalStateFrom = Form.useForm(
  */
 function fnModalVisibleByVive(noticeId: string | number) {
   if (!noticeId) {
-    message.error(`公告记录存在错误`, 1.5);
+    message.error(`公告记录存在错误`, 2);
     return;
   }
+  if (modalState.confirmLoading) return;
+  const hide = message.loading('正在打开...', 0);
+  modalState.confirmLoading = true;
   getNotice(noticeId).then(res => {
+    modalState.confirmLoading = false;
+    hide();
     if (res.code === 200) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '公告信息';
       modalState.visibleByView = true;
     } else {
-      message.error(`获取公告信息失败`, 1.5);
+      message.error(`获取公告信息失败`, 2);
     }
   });
 }
@@ -269,13 +274,18 @@ function fnModalVisibleByEdit(noticeId?: string | number) {
     modalState.title = '添加公告';
     modalState.visibleByEdit = true;
   } else {
+    if (modalState.confirmLoading) return;
+    const hide = message.loading('正在打开...', 0);
+    modalState.confirmLoading = true;
     getNotice(noticeId).then(res => {
+      modalState.confirmLoading = false;
+      hide();
       if (res.code === 200) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改公告';
         modalState.visibleByEdit = true;
       } else {
-        message.error(`获取公告信息失败`, 1.5);
+        message.error(`获取公告信息失败`, 2);
       }
     });
   }
@@ -292,15 +302,25 @@ function fnModalOk() {
       modalState.confirmLoading = true;
       const from = toRaw(modalState.from);
       const notice = from.noticeId ? updateNotice(from) : addNotice(from);
+      const key = 'notice';
+      message.loading({ content: '请稍等...', key });
       notice
         .then(res => {
           if (res.code === 200) {
-            message.success(`${modalState.title}成功`, 1.5);
+            message.success({
+              content: `${modalState.title}成功`,
+              key,
+              duration: 2,
+            });
             modalState.visibleByEdit = false;
             modalStateFrom.resetFields();
             fnGetList();
           } else {
-            message.error(res.msg, 1.5);
+            message.error({
+              content: `${res.msg}`,
+              key,
+              duration: 2,
+            });
           }
         })
         .finally(() => {
@@ -308,7 +328,7 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 1.5);
+      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
     });
 }
 
@@ -334,12 +354,22 @@ function fnRecordDelete(noticeId: string = '0') {
     title: '提示',
     content: `确认删除公告编号为 【${noticeId}】 的数据项?`,
     onOk() {
+      const key = 'delNotice';
+      message.loading({ content: '请稍等...', key });
       delNotice(noticeId).then(res => {
         if (res.code === 200) {
-          message.success(`删除成功`, 1.5);
+          message.success({
+            content: `删除成功`,
+            key,
+            duration: 2,
+          });
           fnGetList();
         } else {
-          message.error(`${res.msg}`, 1.5);
+          message.error({
+            content: `${res.msg}`,
+            key: key,
+            duration: 2,
+          });
         }
       });
     },

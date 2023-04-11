@@ -181,7 +181,7 @@ function fnGetList() {
 function fnModalOk() {
   const userIds = tableState.selectedRowKeys;
   if (userIds.length <= 0) {
-    message.error(`请选择要分配的用户`, 1.5);
+    message.error(`请选择要分配的用户`, 2);
     return;
   }
   emit('update:visible', false);
@@ -206,11 +206,13 @@ function init() {
   fnGetList();
 }
 
-watch(props, () => {
-  if (props.visible) {
-    init();
+/**监听是否显示，初始数据 */
+watch(
+  () => props.visible,
+  val => {
+    if (val) init();
   }
-});
+);
 </script>
 
 <template>

@@ -174,12 +174,17 @@ function fnForceLogout(row: Record<string, string>) {
     title: '提示',
     content: `确认强退用户名称为 ${row.userName} 的用户?`,
     onOk() {
+      const key = 'forceLogout';
+      message.loading({ content: '请稍等...', key });
       forceLogout(row.tokenId).finally(() => {
-        message.success(`已强退用户 ${row.userName}`, 1.5);
+        message.error({
+          content: `已强退用户 ${row.userName}`,
+          key,
+          duration: 2,
+        });
       });
       fnGetList();
     },
-    onCancel() {},
   });
 }
 

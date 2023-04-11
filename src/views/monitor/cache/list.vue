@@ -22,6 +22,9 @@ const route = useRoute();
 /**路由标题 */
 let title = ref<string>(route.meta.title ?? '标题');
 
+/**请求点击 */
+let isClick = ref<boolean>(false);
+
 /**缓存列表表格字段列 */
 let cacheNameTableColumns: ColumnsType = [
   {
@@ -111,13 +114,13 @@ let cacheKeyTableColumns: ColumnsType = [
   },
 ];
 
-/**缓存列表表格数据 */
+/**键名列表表格数据 */
 let cacheKeyTable = reactive({
   loading: true,
   data: [],
 });
 
-/**缓存列表表格数据 */
+/**缓存内容信息 */
 let cacheKeyInfo = reactive({
   loading: true,
   data: {
@@ -133,13 +136,15 @@ let cacheKeyInfo = reactive({
  * @param cacheKey
  */
 function fnCacheKeyInfo(cacheKey: string) {
+  if (isClick.value) return;
+  isClick.value = true;
   cacheKeyInfo.loading = true;
-  getCacheValue(cacheKeyTableByName.value, cacheKey).then(response => {
-    cacheKeyInfo.data = response.data;
-    // 延迟关闭等待避免闪烁
-    setTimeout(() => {
+  getCacheValue(cacheKeyTableByName.value, cacheKey).then(res => {
+    isClick.value = false;
+    if (res.code === 200) {
+      cacheKeyInfo.data = Object.assign(cacheKeyInfo.data, res.data);
       cacheKeyInfo.loading = false;
-    }, 300);
+    }
   });
 }
 
@@ -148,9 +153,18 @@ function fnCacheKeyInfo(cacheKey: string) {
  * @param cacheName 缓存名称
  */
 function fnCacheKeyClear(cacheKey: string) {
+  if (isClick.value) return;
+  isClick.value = true;
+  const key = 'clearCacheKey';
+  message.loading({ content: '请稍等...', key });
   clearCacheKey(`${cacheKeyTableByName.value}:${cacheKey}`).then(res => {
+    isClick.value = true;
     if (res.code === 200) {
-      message.success(`已删除缓存键名 ${cacheKey}`, 1.5);
+      message.success({
+        content: `已删除缓存键名 ${cacheKey}`,
+        key,
+        duration: 2,
+      });
     }
     fnCacheKeyList();
   });
@@ -158,11 +172,14 @@ function fnCacheKeyClear(cacheKey: string) {
 
 /** 查询缓存键名列表 */
 function fnCacheKeyList(cacheName: string = 'load') {
+  if (isClick.value) return;
+  isClick.value = true;
   if (cacheName === 'load') {
     cacheName = cacheKeyTableByName.value;
   }
   cacheKeyTable.loading = true;
   listCacheKey(cacheName).then(res => {
+    isClick.value = false;
     if (res.code === 200 && res.data) {
       cacheKeyTable.data = res.data;
       cacheKeyTable.loading = false;
@@ -176,9 +193,18 @@ function fnCacheKeyList(cacheName: string = 'load') {
  * @param cacheName 缓存名称
  */
 function fnCacheNameClear(cacheName: string) {
+  if (isClick.value) return;
+  isClick.value = true;
+  const key = 'clearCacheName';
+  message.loading({ content: '请稍等...', key });
   clearCacheName(cacheName).then(res => {
+    isClick.value = false;
     if (res.code === 200) {
-      message.success(`已清理缓存名称 ${cacheName}`, 1.5);
+      message.success({
+        content: `已清理缓存名称 ${cacheName}`,
+        key,
+        duration: 2,
+      });
     }
     fnCacheKeyList(cacheName);
   });
@@ -186,8 +212,11 @@ function fnCacheNameClear(cacheName: string) {
 
 /**查询缓存名称列表 */
 function fnCacheNameList() {
+  if (isClick.value) return;
+  isClick.value = true;
   cacheNameTable.loading = true;
   listCacheName().then(res => {
+    isClick.value = false;
     if (res.code === 200 && res.data) {
       cacheNameTable.data = res.data;
       cacheNameTable.loading = false;
@@ -197,9 +226,18 @@ function fnCacheNameList() {
 
 /**安全清理缓存 */
 function fnClearCacheSafe() {
+  if (isClick.value) return;
+  isClick.value = true;
+  const key = 'clearCacheSafe';
+  message.loading({ content: '请稍等...', key });
   clearCacheSafe().then(res => {
+    isClick.value = false;
     if (res.code === 200) {
-      message.success('已完成安全清理缓存', 1.5);
+      message.success({
+        content: '已完成安全清理缓存',
+        key,
+        duration: 2,
+      });
     }
   });
 }
