@@ -1,11 +1,25 @@
 import { request, ResultType } from '@/plugins/Fetch';
 
 /**
+ * 用户列表导出
+ * @param query 查询参数
+ * @returns bolb
+ */
+export function exportUser(query: Record<string, any>) {
+  return request<Blob>({
+    url: '/system/user/export',
+    method: 'post',
+    data: query,
+    responseType: 'blob',
+  });
+}
+
+/**
  * 查询用户列表
  * @param query 查询参数
  * @returns object
  */
-export function listRole(query: Record<string, any>) {
+export function listUser(query: Record<string, any>) {
   return request<ResultType>({
     url: '/system/user/list',
     method: 'get',
@@ -19,11 +33,12 @@ export function listRole(query: Record<string, any>) {
  * @returns object
  */
 export function getUser(userId?: string | number) {
-  if (!userId || userId == 'undefined' || userId == 'null') {
-    userId = '';
+  let url = '/system/user';
+  if (userId && userId !== 'undefined' && userId !== 'null') {
+    url = `/system/user/${userId}`;
   }
   return request<ResultType>({
-    url: `/system/user/${userId}`,
+    url: url,
     method: 'get',
   });
 }
@@ -154,42 +169,5 @@ export function uploadAvatar(data: FormData) {
     url: '/system/user/profile/avatar',
     method: 'post',
     data,
-  });
-}
-
-/**
- * 查询授权角色
- * @param userId 用户ID
- * @param status 变更状态值
- * @returns object
- */
-export function getAuthRole(userId: string | number) {
-  return request<ResultType>({
-    url: `/system/user/authRole/${userId}`,
-    method: 'get',
-  });
-}
-
-/**
- * 保存授权角色
- * @param data 用户对象
- * @returns object
- */
-export function updateAuthRole(data: Record<string, any>) {
-  return request<ResultType>({
-    url: '/system/user/authRole',
-    method: 'put',
-    data: data,
-  });
-}
-
-/**
- * 查询部门下拉树结构
- * @returns object
- */
-export function deptTreeSelect() {
-  return request<ResultType>({
-    url: '/system/user/deptTree',
-    method: 'get',
   });
 }

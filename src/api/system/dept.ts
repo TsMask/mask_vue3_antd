@@ -74,3 +74,14 @@ export function delDept(deptId: string | number) {
     method: 'delete',
   });
 }
+
+/**
+ * 查询部门下拉树结构
+ * @returns object
+ */
+export function deptTreeSelect() {
+  return request<ResultType>({
+    url: '/system/dept/treeSelect',
+    method: 'get',
+  });
+}

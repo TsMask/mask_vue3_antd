@@ -29,9 +29,9 @@ export function getMenu(menuId: string | number) {
  * 查询菜单下拉树结构
  * @returns object
  */
-export function menuTreeselect() {
+export function menuTreeSelect() {
   return request<ResultType>({
-    url: '/system/menu/treeselect',
+    url: '/system/menu/treeSelect',
     method: 'get',
   });
 }
@@ -41,9 +41,9 @@ export function menuTreeselect() {
  * @param roleId 角色ID
  * @returns object
  */
-export function roleMenuTreeselect(roleId: string | number) {
+export function roleMenuTreeSelect(roleId: string | number) {
   return request<ResultType>({
-    url: `/system/menu/roleMenuTreeselect/${roleId}`,
+    url: `/system/menu/roleMenuTreeSelect/${roleId}`,
     method: 'get',
   });
 }

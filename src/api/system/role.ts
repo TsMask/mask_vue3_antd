@@ -112,7 +112,7 @@ export function dataScope(data: Record<string, any>) {
  * @param roleId 角色ID
  * @returns object
  */
-export function deptTreeSelect(roleId: string | number) {
+export function roleDeptTreeSelect(roleId: string | number) {
   return request<ResultType>({
     url: `/system/role/deptTree/${roleId}`,
     method: 'get',
