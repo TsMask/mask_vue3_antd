@@ -133,7 +133,12 @@ onMounted(() => {
             <a-form-item
               name="username"
               :rules="[
-                { required: true, min: 2, message: '请输入正确登录账号' },
+                {
+                  required: true,
+                  min: 2,
+                  max: 18,
+                  message: '请输入正确登录账号',
+                },
               ]"
             >
               <a-input
@@ -151,7 +156,12 @@ onMounted(() => {
             <a-form-item
               name="password"
               :rules="[
-                { required: true, min: 6, message: '请输入正确登录密码' },
+                {
+                  required: true,
+                  min: 6,
+                  max: 26,
+                  message: '请输入正确登录密码',
+                },
               ]"
             >
               <a-input-password
