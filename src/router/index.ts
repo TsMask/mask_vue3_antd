@@ -12,10 +12,10 @@ import Guard from './Guard';
 // mate数据类型 MetaRecord
 // 根据/路径构建菜单列表，列表项类型 MenuDataItem
 // https://github.com/vueComponent/pro-components/blob/a19279f3a28190bf11e8c36f316c92dbd3387a6d/packages/pro-layout/src/typings.ts#L16
-// 菜单图标来源 https://ant.design/components/icon
+// 菜单图标来源 https://ant.design/components/icon 自定义iconfont
 
 /**公共路由 */
-export const constantRoutes: RouteRecordRaw[] = [
+const constantRoutes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Root',
@@ -30,73 +30,64 @@ export const constantRoutes: RouteRecordRaw[] = [
         component: () => import('@/views/index.vue'),
       },
       {
-        path: '/welcome',
-        name: 'welcome',
-        meta: { title: '欢迎', icon: 'icon-pcduan' },
-        component: () => import('@/views/admins2/Page1.vue'),
+        path: '/dome1',
+        name: 'dome1',
+        meta: { title: '示例一', icon: 'icon-ios' },
+        component: () => import('@/views/dome/dome1.vue'),
       },
       {
-        path: '/welcome2',
-        name: 'welcome2',
-        meta: { title: '欢迎2', icon: 'icon-pcduan' },
-        component: () => import('@/views/admins2/Page2.vue'),
+        path: '/dome2',
+        name: 'dome2',
+        meta: { title: '示例二', icon: 'icon-anzhuo' },
+        component: () => import('@/views/dome/dome2.vue'),
       },
       {
-        path: '/detail',
-        name: 'Detail',
-        meta: { title: 'Detail', icon: 'icon-pcduan' },
-        component: () => import('@/views/admins2/Detail.vue'),
+        path: '/dome3',
+        name: 'dome3',
+        meta: { title: '示例三', icon: 'icon-qunzhu' },
+        component: () => import('@/views/dome/dome3.vue'),
       },
       {
-        path: '/admins',
-        name: 'admins',
+        path: '/domes',
+        name: 'Domes',
         meta: {
-          title: '管理页',
-          icon: 'icon-huizhiguize',
-          hideChildInMenu: false,
-          flatMenu: false,
+          title: '示例目录',
+          icon: 'icon-zhizuoliucheng',
         },
         component: BlankLayout,
-        redirect: () => ({ name: 'page1' }),
+        redirect: () => ({ name: 'PageInfo' }),
         children: [
           {
-            path: 'page-1',
-            name: 'page1',
-            meta: { title: '一级页面', icon: 'icon-icon-test' },
-            component: () => import('../views/admins/PageInfo.vue'),
+            path: 'page-info',
+            name: 'PageInfo',
+            meta: { title: '页面信息', icon: 'icon-huifu' },
+            component: () => import('../views/domes/PageInfo.vue'),
           },
           {
-            path: 'page-2',
-            name: 'page2',
-            meta: { title: '二级页面', icon: 'icon-huizhiguize' },
-            component: () => import('../views/admins/PageTypography.vue'),
+            path: 'page-typography',
+            name: 'PageTypography',
+            meta: { title: '文本信息', icon: 'icon-huizhiguize' },
+            component: () => import('../views/domes/PageTypography.vue'),
           },
           {
             path: 'dynamic-match/:id(\\d+)',
-            name: 'dynamic-match',
+            name: 'DynamicMatch',
             // 路由 path 默认参数再 meta.params 里
             meta: { title: '动态参数页面', params: { id: 1 } },
-            component: () => import('../views/admins/DynamicMatch.vue'),
+            component: () => import('../views/domes/DynamicMatch.vue'),
           },
           {
-            path: 'ds-2',
-            name: 'ds2',
-            meta: { title: 'ds2', type: 'group' },
-            component: () => import('../views/admins/PageTypography.vue'),
-          },
-          {
-            path: 'ds',
-            name: 'ds',
-            // 路由 path 默认参数再 meta.params 里
-            meta: { title: 'ds', disabled: true },
-            component: () => import('../views/admins/DynamicMatch.vue'),
+            path: 'disabled',
+            name: 'Disabled',
+            meta: { title: '禁止点击', disabled: true },
+            component: () => import('../views/domes/PageInfo.vue'),
           },
         ],
       },
       {
-        path: 'https://baidu.com/',
-        name: 'baidu_target',
-        meta: { title: 'Baidu', icon: 'icon-twitter', target: '_blank' },
+        path: 'https://github.com/',
+        name: 'GithubBlank',
+        meta: { title: '打开Github', icon: 'icon-github', target: '_blank' },
         component: () => {},
       },
     ],

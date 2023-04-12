@@ -8,7 +8,9 @@
         </a-descriptions-item>
         <a-descriptions-item label="创建时间">2017-01-10</a-descriptions-item>
         <a-descriptions-item label="更新时间">2017-10-10</a-descriptions-item>
-        <a-descriptions-item label="备注">中国浙江省杭州市西湖区古翠路</a-descriptions-item>
+        <a-descriptions-item label="备注">
+          中国浙江省杭州市西湖区古翠路
+        </a-descriptions-item>
       </a-descriptions>
     </template>
     <template #extra>
@@ -34,7 +36,12 @@
         <a-button type="dashed" @click="next">跳转下一页</a-button>
       </a-space>
       <a-divider />
-      <a-pagination :current="currentId" :total="total" show-less-items @change="handlePageChange" />
+      <a-pagination
+        :current="currentId"
+        :total="total"
+        show-less-items
+        @change="handlePageChange"
+      />
     </div>
   </page-container>
 </template>
@@ -47,7 +54,9 @@ import { useRoute, useRouter } from 'vue-router';
 const route = useRoute();
 const router = useRouter();
 
-const currentId = computed(() => Number.parseInt(route.params.id as string, 10));
+const currentId = computed(() =>
+  Number.parseInt(route.params.id as string, 10)
+);
 const total = computed(() => {
   const v = currentId.value * 20;
   if (v >= Number.MAX_SAFE_INTEGER) {
@@ -58,19 +67,19 @@ const total = computed(() => {
 
 const next = () => {
   router.push({
-    name: 'dynamic-match',
+    name: 'DynamicMatch',
     params: { id: currentId.value + 1 },
   });
 };
 const prev = () => {
   router.push({
-    name: 'dynamic-match',
+    name: 'DynamicMatch',
     params: { id: currentId.value > 1 ? currentId.value - 1 : 1 },
   });
 };
 const handlePageChange = (currentPage: number) => {
   router.push({
-    name: 'dynamic-match',
+    name: 'DynamicMatch',
     params: { id: currentPage },
   });
 };

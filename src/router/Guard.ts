@@ -10,6 +10,9 @@ import useRouterStore from '@/store/modules/router';
 // NProgress Configuration
 NProgress.configure({ showSpinner: false });
 
+/**无Token可访问页面地址白名单 */
+const WHITE_LIST: string[] = ['/login', '/auth-redirect', '/bind', '/register'];
+
 /**
  * 路由守卫
  *
@@ -17,14 +20,6 @@ NProgress.configure({ showSpinner: false });
  */
 export default class Guard {
   private router: Router;
-
-  /**无Token可访问页面地址白名单 */
-  private whiteList: string[] = [
-    '/login',
-    '/auth-redirect',
-    '/bind',
-    '/register',
-  ];
 
   constructor(router: Router) {
     this.router = router;
@@ -42,11 +37,11 @@ export default class Guard {
   private beforeEach() {
     this.router.beforeEach((to, from, next) => {
       NProgress.start();
-
       const token = getToken();
+
       // 没有token
       if (!token) {
-        if (this.whiteList.includes(to.path)) {
+        if (WHITE_LIST.includes(to.path)) {
           // 在免登录白名单，直接进入
           next();
         } else {

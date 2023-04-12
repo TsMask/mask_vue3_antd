@@ -20,12 +20,12 @@
         <a-breadcrumb-item>App</a-breadcrumb-item>
       </a-breadcrumb>
       <div :style="{ background: '#fff', padding: '24px', minHeight: '280px' }">
-        Content
+        Content {{ selectedKeys }}
       </div>
     </a-layout-content>
-    <a-layout-footer style="text-align: center"
-      >Ant Design ©2018 Created by Ant UED</a-layout-footer
-    >
+    <a-layout-footer style="text-align: center">
+      Ant Design ©2018 Created by Ant UED
+    </a-layout-footer>
   </a-layout>
 </template>
 
