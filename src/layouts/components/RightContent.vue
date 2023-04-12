@@ -10,7 +10,7 @@ import { useRouter } from 'vue-router';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
 
 const { changeVisibleLayoutSetting } = useLayoutStore();
-const { name, avatar, fnLogOut } = useUserStore();
+const { userName, nickName, avatar, fnLogOut } = useUserStore();
 const router = useRouter();
 
 /**头像展开项点击 */
@@ -38,9 +38,9 @@ async function fnClick({ key }: MenuInfo) {
           shape="circle"
           size="default"
           :src="avatar"
-          :alt="name"
+          :alt="userName"
         ></a-avatar>
-        <span class="username">{{ name }}</span>
+        <span class="nick">{{ nickName }}</span>
       </div>
 
       <template #overlay>
@@ -77,7 +77,7 @@ async function fnClick({ key }: MenuInfo) {
   justify-content: flex-start;
   align-items: center;
   cursor: pointer;
-  & .username {
+  .nick {
     margin-left: 8px;
     font-size: 16px;
   }

@@ -9,7 +9,9 @@ type UserInfo = {
   /**授权凭证 */
   token: string;
   /**用户名称 */
-  name: string;
+  userName: string;
+  /**用户昵称 */
+  nickName: string;
   /**用户头像 */
   avatar: string;
   /**用户角色 字符串数组 */
@@ -21,7 +23,8 @@ type UserInfo = {
 const useUserStore = defineStore('user', {
   state: (): UserInfo => ({
     token: getToken(),
-    name: '',
+    userName: '',
+    nickName: '',
     avatar: '',
     roles: [],
     permissions: [],
@@ -41,7 +44,8 @@ const useUserStore = defineStore('user', {
       const res = await getInfo();
       const user = res.user;
 
-      this.name = user.userName;
+      this.userName = user.userName;
+      this.nickName = user.nickName;
 
       // 头像初始化
       if (user.avatar) {

@@ -87,7 +87,7 @@ const constantRoutes: RouteRecordRaw[] = [
       {
         path: 'https://github.com/',
         name: 'GithubBlank',
-        meta: { title: '打开Github', icon: 'icon-github', target: '_blank' },
+        meta: { title: 'Github-外链', icon: 'icon-github', target: '_blank' },
         component: () => {},
       },
     ],
