@@ -1,27 +1,43 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { decode } from 'js-base64';
+import { useRoute } from 'vue-router';
+import { reactive, ref } from 'vue';
+import { validHttp } from '@/utils/RegularUtils';
+const route = useRoute();
+const height = ref<string>(document.documentElement.clientHeight - 94.5 + 'px');
 
-defineProps({
-  src: {
-    type: String,
-    default: '/',
-  },
-  iframeId: {
-    type: String,
-    default: `${Math.random()}`.slice(2),
-  },
+let iframe = reactive({
+  id: `link`,
+  scr: '',
 });
 
-const height = ref(document.documentElement.clientHeight - 94.5 + 'px');
+// 设置Frame窗口名称并设置链接地址
+if (route.name) {
+  const name = route.name.toString();
+  const pathArr = route.matched.concat().map(i => i.path);
+  const pathLen = pathArr.length;
+  const path = pathArr[pathLen - 1].replace(pathArr[pathLen - 2], '');
+  const url = decode(path.substring(1));
+  if (validHttp(url)) {
+    iframe.scr = url;
+  } else {
+    let endS = name.substring(4, 5).endsWith('s');
+    iframe.scr = `${endS ? 'https://' : 'http://'}${url}`;
+  }
+  iframe.id = name;
+}
 </script>
 
 <template>
   <div :style="'height:' + height">
     <iframe
-      :id="iframeId"
-      style="width: 100%; height: 100%"
-      :src="src"
+      :id="iframe.id"
+      :src="iframe.scr"
       frameborder="no"
+      style="width: 100%; height: 100%"
+      scrolling="auto"
     ></iframe>
   </div>
 </template>
+
+<style lang="less" scoped></style>

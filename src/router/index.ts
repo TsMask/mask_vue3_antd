@@ -4,8 +4,10 @@ import {
   createWebHashHistory,
   RouteRecordRaw,
 } from 'vue-router';
+import { encode } from 'js-base64';
 import BasicLayout from '../layouts/BasicLayout.vue';
 import BlankLayout from '../layouts/BlankLayout.vue';
+import LinkLayout from '../layouts/LinkLayout.vue';
 import Guard from './Guard';
 
 // import { MetaRecord, MenuDataItem } from '@ant-design-vue/pro-layout';
@@ -82,13 +84,47 @@ const constantRoutes: RouteRecordRaw[] = [
             meta: { title: '禁止点击', disabled: true },
             component: () => import('../views/domes/PageInfo.vue'),
           },
+          {
+            path: 'https://github.com/TsMask',
+            name: 'BlankGithubTsMask',
+            meta: {
+              title: 'TsMask-打开新窗',
+              icon: 'icon-github',
+              target: '_blank',
+            },
+            component: () => {},
+          },
+          {
+            path: encode('https://www.antdv.com/components/comment-cn'),
+            name: 'HttpsAntDesignVue',
+            meta: {
+              title: 'Antdv-内嵌窗口',
+              icon: 'icon-morentouxiang',
+              target: null,
+            },
+            component: LinkLayout,
+          },
         ],
       },
       {
         path: 'https://github.com/',
-        name: 'GithubBlank',
-        meta: { title: 'Github-外链', icon: 'icon-github', target: '_blank' },
+        name: 'BlankGithub',
+        meta: {
+          title: 'Github-打开新窗',
+          icon: 'icon-github',
+          target: '_blank',
+        },
         component: () => {},
+      },
+      {
+        path: 'https://www.antdv.com/components/comment-cn?sdf=12321&id=12&sdnf',
+        name: 'SelfAnt Design Vue',
+        meta: {
+          title: 'Antdv-当前窗口',
+          icon: 'icon-morentouxiang',
+          target: '_self',
+        },
+        component: LinkLayout,
       },
     ],
   },

@@ -6,9 +6,7 @@ import {
   WaterMark,
   getMenuData,
   clearMenuItem,
-  RouteContextProps,
 } from '@ant-design-vue/pro-layout';
-import { TagsOutlined, TagOutlined } from '@ant-design/icons-vue';
 import { computed, reactive, watch } from 'vue';
 import useLayoutStore from '@/store/modules/layout';
 import useAppStore from '@/store/modules/app';
@@ -19,27 +17,29 @@ const { proConfig, waterMarkContent } = useLayoutStore();
 const { systemName } = useAppStore();
 const router = useRouter();
 
-// 菜单面板
-const state = reactive<Omit<RouteContextProps, 'menuData'>>({
-  collapsed: false, // default collapsed
-  openKeys: [], // default openKeys
-  selectedKeys: [], // default selectedKeys
+/**菜单面板 */
+let layoutState = reactive({
+  collapsed: false, // 是否展开菜单面板
+  openKeys: ['/'], // 打开菜单key
+  selectedKeys: ['/index'], // 选中高亮菜单key
 });
 
-// 监听路由变化改变菜单面板选项
+/**监听路由变化改变菜单面板选项 */
 watch(
   router.currentRoute,
   v => {
     const matched = v.matched.concat();
-    state.openKeys = matched.filter(r => r.path !== v.path).map(r => r.path);
-    state.selectedKeys = matched
+    layoutState.openKeys = matched
+      .filter(r => r.path !== v.path)
+      .map(r => r.path);
+    layoutState.selectedKeys = matched
       .filter(r => r.name !== 'Root')
       .map(r => r.path);
     // 路由地址含有"/inline"又是隐藏菜单需要处理打开高亮菜单栏
     if (v.path.includes('/inline') && v.meta.hideInMenu) {
       const idx = v.path.lastIndexOf('/inline');
-      state.openKeys.splice(-1);
-      state.selectedKeys[matched.length - 1] = v.path.slice(0, idx);
+      layoutState.openKeys.splice(-1);
+      layoutState.selectedKeys[matched.length - 1] = v.path.slice(0, idx);
     }
   },
   { immediate: true }
@@ -56,23 +56,27 @@ if (buildRouterData && buildRouterData.length > 0) {
 }
 const { menuData } = getMenuData(clearMenuItem(router.getRoutes()));
 
-// 面包屑
-const breadcrumb = computed(() =>
-  router.currentRoute.value.matched.concat().map(item => {
-    return {
-      path: item.path,
-      breadcrumbName: item.meta.title || '',
-    };
-  })
-);
+/**面包屑数据对象 */
+const breadcrumb = computed(() => {
+  const matched = router.currentRoute.value.matched.concat();
+  return matched
+    .filter(r => r.name !== 'Root')
+    .map(item => {
+      return {
+        path: item.path,
+        name: item.name,
+        title: item.meta.title || '',
+      };
+    });
+});
 </script>
 
 <template>
   <WaterMark :content="waterMarkContent" :z-index="100">
     <pro-layout
-      v-model:collapsed="state.collapsed"
-      v-model:selectedKeys="state.selectedKeys"
-      v-model:openKeys="state.openKeys"
+      v-model:collapsed="layoutState.collapsed"
+      v-model:selectedKeys="layoutState.selectedKeys"
+      v-model:openKeys="layoutState.openKeys"
       :menu-data="menuData"
       :breadcrumb="{ routes: breadcrumb }"
       disable-content-margin
@@ -99,12 +103,10 @@ const breadcrumb = computed(() =>
       <!--页面路由导航面包屑-->
       <template #breadcrumbRender="{ route, params, routes }">
         <span v-if="routes.indexOf(route) === routes.length - 1">
-          <TagOutlined />
-          {{ route.breadcrumbName }}
+          {{ route.title }}
         </span>
         <router-link v-else :to="{ path: route.path, params }">
-          <TagsOutlined />
-          {{ route.breadcrumbName }}
+          {{ route.title }}
         </router-link>
       </template>
 

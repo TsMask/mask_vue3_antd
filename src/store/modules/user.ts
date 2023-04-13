@@ -1,6 +1,6 @@
 import { login, logout, getInfo } from '@/api/login';
 import { getToken, setToken, removeToken } from '@/plugins/AuthToken';
-import defaultAvatar from '@/assets/images_default/avatar.png';
+import defaultAvatar from '@/assets/images/default_avatar.png';
 import { defineStore } from 'pinia';
 import { TOKEN_RESPONSE_FIELD } from '@/constants/TokenConstants';
 
