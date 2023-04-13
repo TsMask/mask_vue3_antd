@@ -35,7 +35,7 @@ import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/DateUtils';
 import useDictStore from '@/store/modules/dict';
 import { DataNode } from 'ant-design-vue/es/tree';
-import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/ParseTreeUtils.js';
+import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/ParseTreeUtils';
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();

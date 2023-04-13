@@ -1,3 +1,5 @@
+<script setup lang="ts"></script>
+
 <template>
   <a-result
     status="404"
@@ -18,7 +20,5 @@
     </a-typography>
   </a-result>
 </template>
-
-<script setup lang="ts"></script>
 
 <style lang="less" scoped></style>

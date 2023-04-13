@@ -34,7 +34,7 @@ import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/DateUtils';
 import useDictStore from '@/store/modules/dict';
 import { DataNode } from 'ant-design-vue/es/tree';
-import defaultAvatar from '@/assets/images_default/avatar.png';
+import defaultAvatar from '@/assets/images/default_avatar.png';
 const { getDict } = useDictStore();
 const route = useRoute();
 

@@ -25,7 +25,7 @@ import {
 } from '@/api/system/dept';
 import { parseDateToStr } from '@/utils/DateUtils';
 import useDictStore from '@/store/modules/dict';
-import { parseDataToTree } from '@/utils/ParseTreeUtils.js';
+import { parseDataToTree } from '@/utils/ParseTreeUtils';
 const { getDict } = useDictStore();
 const route = useRoute();
 

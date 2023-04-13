@@ -29,7 +29,7 @@ import useDictStore from '@/store/modules/dict';
 import {
   parseDataToTree,
   parseDataToTreeExclude,
-} from '@/utils/ParseTreeUtils.js';
+} from '@/utils/ParseTreeUtils';
 import iconFonts from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 const { getDict } = useDictStore();
 const route = useRoute();
@@ -885,8 +885,11 @@ onMounted(() => {
                         访问的路由地址，如：user
                         <br />
                         1. 如网络地址需内部访问<br />则以 http(s):// 开头
+                        <br />根节点菜单行为为：当前窗口打开
+                        <br />非根节点菜单行为：内嵌窗口。
                         <br />
                         2. 如网络地址需外部访问<br />则将内部地址选项设为否
+                        <br />菜单行为：打开新标签
                         <br />
                         3. 如内嵌子页面需要隐藏页面<br />则将显示状态选项设为隐藏并在内嵌路由地址后拼接/inline/子页面地址
                       </div>
