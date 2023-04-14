@@ -8,7 +8,7 @@ const height = ref<string>(document.documentElement.clientHeight - 94.5 + 'px');
 
 let iframe = reactive({
   id: `link`,
-  scr: '',
+  src: '',
 });
 
 // 设置Frame窗口名称并设置链接地址
@@ -19,10 +19,10 @@ if (route.name) {
   const path = pathArr[pathLen - 1].replace(pathArr[pathLen - 2], '');
   const url = decode(path.substring(1));
   if (validHttp(url)) {
-    iframe.scr = url;
+    iframe.src = url;
   } else {
     let endS = name.substring(4, 5).endsWith('s');
-    iframe.scr = `${endS ? 'https://' : 'http://'}${url}`;
+    iframe.src = `${endS ? 'https://' : 'http://'}${url}`;
   }
   iframe.id = name;
 }
@@ -32,7 +32,7 @@ if (route.name) {
   <div :style="'height:' + height">
     <iframe
       :id="iframe.id"
-      :src="iframe.scr"
+      :src="iframe.src"
       frameborder="no"
       style="width: 100%; height: 100%"
       scrolling="auto"
