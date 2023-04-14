@@ -8,85 +8,91 @@ import {
   QqOutlined,
 } from '@ant-design/icons-vue';
 import { GlobalFooter } from '@ant-design-vue/pro-layout';
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import useUserStore from '@/store/modules/user';
 import { getCaptchaImage } from '@/api/login';
+import { regExpMobile, validMobile } from '@/utils/RegularUtils';
 import { useRouter, useRoute } from 'vue-router';
+import { message } from 'ant-design-vue';
 const router = useRouter();
 const route = useRoute();
+const codeImgFall =
+  'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
 /**登录后重定向页面 */
 const redirectPath =
   (route.query && (route.query.redirect as string)) || '/index';
 
 /**Tab默认激活 */
-let tabActiveKey = ref<'username' | 'phonenumber'>('username');
+let activeKey = ref<'username' | 'phonenumber'>('username');
 
-/**Tab表单属性 */
-let tabForm = reactive({
-  /**账号 */
-  username: 'admin',
-  /**密码 */
-  password: 'admin@1234',
-  /**验证码 */
-  code: '',
-  /**手机号 */
-  phonenumber: '',
-  /**提交点击状态 */
-  click: false,
-});
-
-/**验证码状态 */
-let captchaState = reactive({
-  /**验证码开关 */
-  enabled: true,
-  /**验证码uuid */
-  uuid: '',
-  /**验证码图片地址 */
-  codeImg: '',
-  codeImgFall:
-    'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
-  /**短信发送倒计时 */
-  time: 120,
-  /**短信发送点击状态 */
-  click: false,
+let state = reactive({
+  /**表单属性 */
+  from: {
+    /**账号 */
+    username: 'admin',
+    /**密码 */
+    password: 'admin@1234',
+    /**手机号 */
+    phonenumber: '',
+    /**验证码 */
+    code: '',
+    /**验证码uuid */
+    uuid: '',
+  },
+  /**表单提交点击状态 */
+  fromClick: false,
+  /**验证码状态 */
+  captcha: {
+    /**验证码开关 */
+    enabled: true,
+    /**验证码图片地址 */
+    codeImg: '',
+    codeImgFall: codeImgFall,
+  },
+  /**验证码点击状态 */
+  captchaClick: false,
 });
 
 /**表单验证通过 */
 function fnFinish() {
-  tabForm.click = true;
+  state.fromClick = true;
   let form = {};
   // 账号密码登录
-  if (tabActiveKey.value === 'username') {
+  if (activeKey.value === 'username') {
     form = {
-      username: tabForm.username,
-      password: tabForm.password,
-      code: tabForm.code,
-      uuid: captchaState.uuid,
+      username: state.from.username,
+      password: state.from.password,
+      code: state.from.code,
+      uuid: state.from.uuid,
     };
   }
   // 手机号登录
-  if (tabActiveKey.value === 'phonenumber') {
+  if (activeKey.value === 'phonenumber') {
     form = {
-      phonenumber: tabForm.phonenumber,
-      code: tabForm.code,
-      uuid: captchaState.uuid,
+      phonenumber: state.from.phonenumber,
+      code: state.from.code,
+      uuid: state.from.uuid,
     };
   }
   // 发送请求
   useUserStore()
     .fnLogin(form)
     .then(res => {
-      if (res.code !== 500) {
+      if (res.code === 200) {
+        message.success('登录成功', 3);
         router.push({ path: redirectPath });
       } else {
-        tabForm.click = false;
+        message.error(`${res.msg}`, 3);
         // 刷新验证码
-        if (captchaState.enabled) {
-          tabForm.code = '';
+        if (state.captcha.enabled) {
+          state.from.code = '';
           fnGetCaptcha();
         }
       }
+    })
+    .finally(() => {
+      state.fromClick = false;
     });
 }
 
@@ -94,17 +100,63 @@ function fnFinish() {
  * 获取验证码
  */
 function fnGetCaptcha() {
+  if (state.captchaClick) return;
+  state.captchaClick = true;
   getCaptchaImage().then(res => {
-    captchaState.enabled = Boolean(res.captchaEnabled);
-    if (captchaState.enabled) {
-      captchaState.codeImg = res.img;
-      captchaState.uuid = res.uuid;
+    state.captchaClick = false;
+    state.captcha.enabled = Boolean(res.captchaEnabled);
+    if (state.captcha.enabled) {
+      state.captcha.codeImg = res.img;
+      state.from.uuid = res.uuid;
     }
   });
 }
 
+/**短信验证码定时器 */
+let smsInterval: any = undefined;
+
+/**短信验证码信息状态 */
+let smsState = reactive({
+  /**点击状态 */
+  click: false,
+  /**发送倒计时 */
+  time: 120,
+});
+
+/**获取短信验证码 */
+function fnGetSmsCaptcha() {
+  if (smsState.click) return;
+  if (!validMobile(state.from.phonenumber)) {
+    message.warning('请确认手机号码是否有效', 3);
+    return;
+  }
+  smsState.click = true;
+
+  setTimeout(() => {
+    // start 得到发送结果启动定时
+    message.success('发送成功，请注意查看短信', 3);
+    state.from.uuid = '短信校验id';
+    smsInterval = setInterval(() => {
+      if (smsState.time <= 0) {
+        smsState.time = 120;
+        smsState.click = false;
+        clearTimeout(smsInterval);
+      } else {
+        smsState.time--;
+      }
+    }, 1000);
+    // end
+  }, 1000);
+}
+
 onMounted(() => {
   fnGetCaptcha();
+});
+
+onBeforeUnmount(() => {
+  smsState.time = 120;
+  smsState.click = false;
+  clearTimeout(smsInterval);
 });
 </script>
 
@@ -121,9 +173,9 @@ onMounted(() => {
     </div>
 
     <div class="main">
-      <a-form :model="tabForm" name="tabForm" @finish="fnFinish">
+      <a-form :model="state.from" name="stateFrom" @finish="fnFinish">
         <a-tabs
-          v-model:activeKey="tabActiveKey"
+          v-model:activeKey="activeKey"
           tabPosition="top"
           type="line"
           :centered="true"
@@ -142,7 +194,7 @@ onMounted(() => {
               ]"
             >
               <a-input
-                v-model:value="tabForm.username"
+                v-model:value="state.from.username"
                 size="large"
                 placeholder="登录账号"
                 :maxlength="18"
@@ -165,7 +217,7 @@ onMounted(() => {
               ]"
             >
               <a-input-password
-                v-model:value="tabForm.password"
+                v-model:value="state.from.password"
                 size="large"
                 placeholder="登录密码"
                 :maxlength="26"
@@ -176,14 +228,16 @@ onMounted(() => {
               </a-input-password>
             </a-form-item>
 
-            <a-row :gutter="8">
+            <a-row :gutter="8" v-if="state.captcha.enabled">
               <a-col :span="16">
                 <a-form-item
                   name="code"
-                  :rules="[{ required: true, message: '请输入正确验证码' }]"
+                  :rules="[
+                    { required: true, min: 4, message: '请输入正确验证码' },
+                  ]"
                 >
                   <a-input
-                    v-model:value="tabForm.code"
+                    v-model:value="state.from.code"
                     size="large"
                     placeholder="验证码"
                     :maxlength="6"
@@ -199,8 +253,8 @@ onMounted(() => {
                   alt="验证码"
                   class="captcha-img"
                   :preview="false"
-                  :src="captchaState.codeImg"
-                  :fallback="captchaState.codeImgFall"
+                  :src="state.captcha.codeImg"
+                  :fallback="state.captcha.codeImgFall"
                   @click="fnGetCaptcha"
                 />
               </a-col>
@@ -208,9 +262,16 @@ onMounted(() => {
 
             <a-row :gutter="8" align="middle" style="margin-bottom: 16px">
               <a-col :span="6">
-                <a-button type="link">注册账户</a-button>
+                <a-button
+                  type="link"
+                  target="_self"
+                  title="注册账号"
+                  @click="() => router.push({ name: 'Register' })"
+                >
+                  注册账号
+                </a-button>
               </a-col>
-              <a-col :span="6" :offset="12">
+              <a-col :span="6" :offset="12" v-if="false">
                 <a-button type="link">忘记密码</a-button>
               </a-col>
             </a-row>
@@ -222,13 +283,15 @@ onMounted(() => {
               :rules="[
                 {
                   required: true,
-                  pattern: /^1\d{10}$/,
+                  min: 11,
+                  max: 11,
+                  pattern: regExpMobile,
                   message: '请输入正确的手机号码',
                 },
               ]"
             >
               <a-input
-                v-model:value="tabForm.phonenumber"
+                v-model:value="state.from.phonenumber"
                 size="large"
                 placeholder="手机号码"
                 :maxlength="11"
@@ -240,10 +303,12 @@ onMounted(() => {
             </a-form-item>
             <a-form-item
               name="code"
-              :rules="[{ required: true, message: '请输入正确的验证码' }]"
+              :rules="[
+                { required: true, min: 4, message: '请输入正确的验证码' },
+              ]"
             >
               <a-input
-                v-model:value="tabForm.code"
+                v-model:value="state.from.code"
                 size="large"
                 placeholder="验证码"
                 :maxlength="6"
@@ -252,7 +317,14 @@ onMounted(() => {
                   <RobotOutlined class="prefix-icon" />
                 </template>
                 <template #suffix>
-                  <a-button size="small" type="link">获取验证码</a-button>
+                  <a-button
+                    size="small"
+                    type="link"
+                    :disabled="smsState.click"
+                    @click="fnGetSmsCaptcha"
+                  >
+                    {{ smsState.click ? `${smsState.time} s` : '获取验证码' }}
+                  </a-button>
                 </template>
               </a-input>
             </a-form-item>
@@ -264,9 +336,10 @@ onMounted(() => {
           type="primary"
           size="large"
           html-type="submit"
-          :loading="tabForm.click"
-          >登 录</a-button
+          :loading="state.fromClick"
         >
+          登录
+        </a-button>
 
         <a-row :gutter="8" align="middle" style="margin-top: 18px">
           <a-col :span="24">
@@ -282,9 +355,9 @@ onMounted(() => {
             </a-tooltip>
             <a-tooltip title="QQ扫码登录">
               <a-button shape="circle" size="middle" type="link">
-                <template #icon
-                  ><QqOutlined :style="{ color: '#40a9ff', fontSize: '18px' }"
-                /></template>
+                <template #icon>
+                  <QqOutlined :style="{ color: '#40a9ff', fontSize: '18px' }" />
+                </template>
               </a-button>
             </a-tooltip>
           </a-col>
@@ -305,7 +378,7 @@ onMounted(() => {
   </div>
 </template>
 
-<style lang="less">
+<style lang="less" scoped>
 .container {
   position: relative;
   width: 100%;
