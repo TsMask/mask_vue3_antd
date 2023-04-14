@@ -1,10 +1,13 @@
-<template>
-   <i-frame v-model:src="url"></i-frame>
-</template>
-
 <script lang="ts" setup>
-import iFrame from '@/components/iFrame/index.vue'
+import LinkiFrame from '@/components/LinkiFrame/index.vue';
 import { ref } from 'vue';
 
-const url = ref(import.meta.env.VITE_API_BASE_URL + "/swagger-ui/index.html")
+const baseUrl = import.meta.env.VITE_API_BASE_URL;
+const url = ref<string>(`${baseUrl}/swagger-ui/index.html`);
 </script>
+
+<template>
+  <LinkiFrame :src="url"></LinkiFrame>
+</template>
+
+<style lang="less" scoped></style>
