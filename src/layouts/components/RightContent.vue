@@ -19,7 +19,7 @@ async function fnClick({ key }: MenuInfo) {
     case 'layoutSetting':
       changeVisibleLayoutSetting();
       break;
-    case 'perfile':
+    case 'profile':
       router.push({ name: 'Profile' });
       break;
     case 'logout':
@@ -45,17 +45,17 @@ async function fnClick({ key }: MenuInfo) {
 
       <template #overlay>
         <a-menu @click="fnClick">
+          <a-menu-item key="profile">
+            <template #icon>
+              <UserOutlined />
+            </template>
+            <span>个人中心</span>
+          </a-menu-item>
           <a-menu-item key="layoutSetting">
             <template #icon>
               <SettingOutlined />
             </template>
             <span>布局设置</span>
-          </a-menu-item>
-          <a-menu-item key="perfile">
-            <template #icon>
-              <UserOutlined />
-            </template>
-            <span>个人设置</span>
           </a-menu-item>
           <a-menu-divider />
           <a-menu-item key="logout">

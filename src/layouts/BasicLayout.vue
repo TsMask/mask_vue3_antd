@@ -65,7 +65,7 @@ const breadcrumb = computed(() => {
       return {
         path: item.path,
         name: item.name,
-        title: item.meta.title || '',
+        title: item.meta.title || '-',
       };
     });
 });
