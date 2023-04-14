@@ -37,6 +37,10 @@ export default class Guard {
   private beforeEach() {
     this.router.beforeEach((to, from, next) => {
       NProgress.start();
+      // 设置标题
+      if (to.meta?.title) {
+        useAppStore().setTitle(to.meta.title);
+      }
       const token = getToken();
 
       // 没有token
@@ -52,10 +56,6 @@ export default class Guard {
 
       // 有Token
       if (token) {
-        // 设置标题
-        if (to.meta?.title) {
-          useAppStore().setTitle(to.meta.title);
-        }
         // 防止重复访问登录页面
         if (to.path === '/login') {
           next({ name: 'Index' });
