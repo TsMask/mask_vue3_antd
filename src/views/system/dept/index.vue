@@ -24,6 +24,7 @@ import {
   listDeptExcludeChild,
 } from '@/api/system/dept';
 import { parseDateToStr } from '@/utils/DateUtils';
+import { regExpMobile, regExpEmail } from '@/utils/RegularUtils';
 import useDictStore from '@/store/modules/dict';
 import { parseDataToTree } from '@/utils/ParseTreeUtils';
 const { getDict } = useDictStore();
@@ -200,7 +201,7 @@ const modalStateFrom = Form.useForm(
         required: false,
         min: 6,
         max: 50,
-        type: 'email',
+        pattern: regExpEmail,
         message: '请输入正确的邮箱地址',
       },
     ],
@@ -209,7 +210,7 @@ const modalStateFrom = Form.useForm(
         required: false,
         min: 11,
         max: 11,
-        pattern: /^1[3|4|5|6|7|8|9][0-9]\d{8}$/,
+        pattern: regExpMobile,
         message: '请输入正确的手机号码',
       },
     ],

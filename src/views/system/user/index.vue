@@ -32,6 +32,7 @@ import {
 import { deptTreeSelect } from '@/api/system/dept';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/DateUtils';
+import { regExpPasswd, regExpMobile } from '@/utils/RegularUtils';
 import useDictStore from '@/store/modules/dict';
 import { DataNode } from 'ant-design-vue/es/tree';
 import defaultAvatar from '@/assets/images/default_avatar.png';
@@ -290,8 +291,7 @@ const modalStateFrom = Form.useForm(
         required: true,
         min: 6,
         max: 26,
-        pattern:
-          /^(?![A-Za-z0-9]+$)(?![a-z0-9\W]+$)(?![A-Za-z\W]+$)(?![A-Z0-9\W]+$)[a-zA-Z0-9\W]{6,18}$/,
+        pattern: regExpPasswd,
         message: '密码至少包含大小写字母、数字、特殊符号，且不少于6位',
       },
     ],
@@ -312,7 +312,7 @@ const modalStateFrom = Form.useForm(
         required: false,
         min: 11,
         max: 11,
-        pattern: /^1[3|4|5|6|7|8|9][0-9]\d{8}$/,
+        pattern: regExpMobile,
         message: '请输入正确的手机号码',
       },
     ],
