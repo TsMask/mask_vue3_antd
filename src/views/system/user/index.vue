@@ -32,7 +32,12 @@ import {
 import { deptTreeSelect } from '@/api/system/dept';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/DateUtils';
-import { regExpPasswd, regExpMobile } from '@/utils/RegularUtils';
+import {
+  regExpPasswd,
+  regExpMobile,
+  regExpNick,
+  regExpEmail,
+} from '@/utils/RegularUtils';
 import useDictStore from '@/store/modules/dict';
 import { DataNode } from 'ant-design-vue/es/tree';
 import defaultAvatar from '@/assets/images/default_avatar.png';
@@ -296,14 +301,20 @@ const modalStateFrom = Form.useForm(
       },
     ],
     nickName: [
-      { required: true, min: 1, max: 30, message: '请输入正确用户昵称' },
+      {
+        required: true,
+        min: 1,
+        max: 30,
+        pattern: regExpNick,
+        message: '昵称只能包含字母、数字、中文和下划线，且不少于2位',
+      },
     ],
     email: [
       {
         required: false,
         min: 6,
-        max: 50,
-        type: 'email',
+        max: 40,
+        type: regExpEmail,
         message: '请输入正确的邮箱地址',
       },
     ],
@@ -343,8 +354,8 @@ function fnModalVisibleByVive(userId: string | number) {
       // 头像初始化
       let avatar = modalState.from.avatar;
       if (avatar) {
-        const baseApi = import.meta.env.VITE_APP_BASE_API;
-        avatar = `${baseApi}/${avatar}`;
+        const baseApi = import.meta.env.VITE_API_BASE_URL;
+        avatar = `${baseApi}${avatar}`;
       } else {
         avatar = defaultAvatar;
       }
