@@ -233,7 +233,7 @@ onBeforeUnmount(() => {
                 <a-form-item
                   name="code"
                   :rules="[
-                    { required: true, min: 4, message: '请输入正确验证码' },
+                    { required: true, min: 1, message: '请输入正确验证码' },
                   ]"
                 >
                   <a-input
@@ -337,6 +337,7 @@ onBeforeUnmount(() => {
           size="large"
           html-type="submit"
           :loading="state.fromClick"
+          :disabled="state.fromClick"
         >
           登录
         </a-button>

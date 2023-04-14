@@ -9,7 +9,7 @@ import { Modal, message } from 'ant-design-vue';
 import { reactive, onMounted, toRaw } from 'vue';
 import { getCaptchaImage, register } from '@/api/login';
 import { regExpPasswd } from '@/utils/RegularUtils';
-import { useRouter, useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 const router = useRouter();
 const codeImgFall =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
@@ -18,11 +18,11 @@ let state = reactive({
   /**表单属性 */
   form: {
     /**账号 */
-    username: 'admin',
+    username: '',
     /**密码 */
-    password: 'admin@1234',
+    password: '',
     /**确认密码 */
-    confirmPassword: 'admin@1234',
+    confirmPassword: '',
     /**验证码 */
     code: '',
     /**验证码uuid */
@@ -48,10 +48,13 @@ function fnEqualToPassword(
   value: string,
   callback: (error?: string) => void
 ) {
+  if (!value) {
+    return Promise.reject('请正确输入确认密码');
+  }
   if (state.form.password === value) {
     return Promise.resolve();
   }
-  return Promise.reject(rule.message);
+  return Promise.reject('两次输入的密码不一致');
 }
 
 /**表单验证通过 */
@@ -59,21 +62,20 @@ function fnFinish() {
   state.formClick = true;
   // 发送请求
   const hide = message.loading('请稍等...', 0);
-
   register(toRaw(state.form))
     .then(res => {
       hide();
       if (res.code === 200) {
         Modal.success({
           title: '提示',
-          content: `恭喜您， ${state.form.username} 账号注册成功！`,
+          content: `恭喜您，${state.form.username} 账号注册成功！`,
           okText: '前往登录',
           onOk() {
             router.push({ name: 'Login' });
           },
         });
       } else {
-        message.error(`${res.msg}`, 2);
+        message.error(`${res.msg}`, 3);
         // 刷新验证码
         if (state.captcha.enabled) {
           state.form.code = '';
@@ -174,7 +176,6 @@ onMounted(() => {
               min: 6,
               max: 26,
               validator: fnEqualToPassword,
-              message: '两次输入的密码不一致',
             },
           ]"
         >
@@ -226,6 +227,7 @@ onMounted(() => {
           size="large"
           html-type="submit"
           :loading="state.formClick"
+          :disabled="state.formClick"
         >
           注册
         </a-button>
