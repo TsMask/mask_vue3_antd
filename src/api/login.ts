@@ -16,7 +16,7 @@ export function login(data: Record<string, string>) {
  * @returns object
  */
 export function register(data: Record<string, any>) {
-  return request({
+  return request<ResultType>({
     url: '/register',
     method: 'post',
     data: data,
