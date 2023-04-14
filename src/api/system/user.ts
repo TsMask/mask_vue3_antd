@@ -169,5 +169,6 @@ export function uploadAvatar(data: FormData) {
     url: '/system/user/profile/avatar',
     method: 'post',
     data,
+    dataType: 'form-data',
   });
 }

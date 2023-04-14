@@ -142,7 +142,12 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
     }
   }
 
-  options.body = JSON.stringify(options.data);
+  // 非get参数提交
+  if (options.data instanceof FormData) {
+    options.body = options.data;
+  } else {
+    options.body = JSON.stringify(options.data);
+  }
   return options;
 }
 
