@@ -3,9 +3,8 @@ import { PayCircleOutlined } from '@ant-design/icons-vue';
 import donate from '@/assets/donate.jpg';
 import useAppStore from '@/store/modules/app';
 import useUserStore from '@/store/modules/user';
-
+const userStore = useUserStore();
 const { systemName, systemVersion } = useAppStore();
-const { userName, nickName, avatar } = useUserStore();
 let logoutTime = Date.now() + 1000 * 60 * 60 * 2; // 正式环境2小时，todo接口时间
 
 /**跳转 */
@@ -34,10 +33,12 @@ function fnTo(type: string) {
         <a-avatar
           shape="circle"
           :size="72"
-          :src="avatar"
-          :alt="userName"
+          :src="userStore.getAvatar"
+          :alt="userStore.userName"
         ></a-avatar>
-        <span class="nickname">{{ nickName }} ，祝你开心每一天！</span>
+        <span class="nickname">
+          {{ userStore.nickName }} ，祝你开心每一天！
+        </span>
       </a-space>
     </template>
     <template #extraContent>
