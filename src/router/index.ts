@@ -126,18 +126,28 @@ const constantRoutes: RouteRecordRaw[] = [
         },
         component: LinkLayout,
       },
-    ],
-  },
-  {
-    path: '/user',
-    component: BasicLayout,
-    redirect: () => ({ name: 'Profile' }),
-    children: [
       {
-        path: 'profile',
-        name: 'Profile',
-        meta: { title: '个人中心' },
-        component: () => import('@/views/system/user/profile/index.vue'),
+        path: '/account',
+        name: 'Account',
+        meta: {
+          title: '个人中心',
+        },
+        component: BlankLayout,
+        redirect: () => ({ name: 'Profile' }),
+        children: [
+          {
+            path: 'profile',
+            name: 'Profile',
+            meta: { title: '个人信息' },
+            component: () => import('@/views/account/profile.vue'),
+          },
+          {
+            path: 'settings',
+            name: 'settings',
+            meta: { title: '个人设置' },
+            component: () => import('@/views/account/settings.vue'),
+          },
+        ],
       },
     ],
   },
