@@ -10,11 +10,11 @@ import { useRouter } from 'vue-router';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
 
 const { changeVisibleLayoutSetting } = useLayoutStore();
-const { userName, nickName, avatar, fnLogOut } = useUserStore();
+const userStore = useUserStore();
 const router = useRouter();
 
 /**头像展开项点击 */
-async function fnClick({ key }: MenuInfo) {
+function fnClick({ key }: MenuInfo) {
   switch (key) {
     case 'layoutSetting':
       changeVisibleLayoutSetting();
@@ -23,7 +23,7 @@ async function fnClick({ key }: MenuInfo) {
       router.push({ name: 'Profile' });
       break;
     case 'logout':
-      await fnLogOut();
+      userStore.fnLogOut();
       router.push({ name: 'Login' });
       break;
   }
@@ -37,10 +37,10 @@ async function fnClick({ key }: MenuInfo) {
         <a-avatar
           shape="circle"
           size="default"
-          :src="avatar"
-          :alt="userName"
+          :src="userStore.getAvatar"
+          :alt="userStore.userName"
         ></a-avatar>
-        <span class="nick">{{ nickName }}</span>
+        <span class="nick">{{ userStore.nickName }}</span>
       </div>
 
       <template #overlay>
