@@ -37,10 +37,11 @@ import {
   regExpMobile,
   regExpNick,
   regExpEmail,
+  regExpUserName,
 } from '@/utils/RegularUtils';
 import useDictStore from '@/store/modules/dict';
+import useUserStore from '@/store/modules/user';
 import { DataNode } from 'ant-design-vue/es/tree';
-import defaultAvatar from '@/assets/images/default_avatar.png';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -289,7 +290,13 @@ const modalStateFrom = Form.useForm(
   modalState.from,
   reactive({
     userName: [
-      { required: true, min: 2, max: 18, message: '请输入正确登录账号' },
+      {
+        required: true,
+        min: 5,
+        max: 18,
+        pattern: regExpUserName,
+        message: '账号不能以数字开头，可包含大写小写字母，数字，且不少于5位',
+      },
     ],
     password: [
       {
@@ -314,7 +321,7 @@ const modalStateFrom = Form.useForm(
         required: false,
         min: 6,
         max: 40,
-        type: regExpEmail,
+        pattern: regExpEmail,
         message: '请输入正确的邮箱地址',
       },
     ],
@@ -351,15 +358,8 @@ function fnModalVisibleByVive(userId: string | number) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.from.roleIds = res.roleIds;
       modalState.from.postIds = res.postIds;
-      // 头像初始化
-      let avatar = modalState.from.avatar;
-      if (avatar) {
-        const baseApi = import.meta.env.VITE_API_BASE_URL;
-        avatar = `${baseApi}${avatar}`;
-      } else {
-        avatar = defaultAvatar;
-      }
-      modalState.from.avatar = avatar;
+      // 头像解析
+      modalState.from.avatar = useUserStore().fnAvatar(modalState.from.avatar);
       modalState.title = '用户信息';
       modalState.visibleByView = true;
     } else {
