@@ -150,7 +150,7 @@ const breadcrumb = computed(() => {
 <style lang="less" scoped>
 .logo {
   height: 32px;
-  vertical-align: top;
+  vertical-align: middle;
   border-style: none;
   border-radius: 6.66px;
 }
