@@ -3,10 +3,10 @@ import { message } from 'ant-design-vue';
 import { getUserProfile } from '@/api/system/user';
 import { reactive, ref, onMounted } from 'vue';
 import { parseDateToStr } from '@/utils/DateUtils';
-import defaultAvatar from '@/assets/images/default_avatar.png';
+import useUserStore from '@/store/modules/user';
 
 /**Tab标签激活 */
-let activeKey = ref<string>('1');
+let activeKey = ref<string>('empty');
 
 /**个人信息数据状态 */
 let state = reactive<{
@@ -22,16 +22,28 @@ let state = reactive<{
 /**列表数据 */
 let listData = ref([
   {
-    title: 'Vue',
-    description: 'vue',
+    id: 'Vue',
+    title: 'Vue.js - 渐进式 JavaScript 框架 | Vue.js',
+    description:
+      '基于标准 HTML、CSS 和 JavaScript 构建,提供容易上手的 API 和一流的文档。 性能出色 经过编译器优化、完全响应式的渲染系统,几乎不需要手动优化。',
   },
   {
-    title: 'Pina',
-    description: 'Pina',
+    id: 'Vue Router',
+    title: 'Vue Router | Vue.js 的官方路由',
+    description:
+      '为Vue.js 提供富有表现力、可配置的、方便的路由，用直观且强大的语法来定义静态或动态路由。',
   },
   {
-    title: 'Vite',
-    description: 'Vite',
+    id: 'Pinia',
+    title: 'Pinia | The intuitive store for Vue.js',
+    description:
+      'Pinia hooks into Vue devtools to give you an enhanced development experience in both Vue 2 and Vue 3. ',
+  },
+  {
+    id: 'Vite',
+    title: 'Vite | 下一代的前端工具链',
+    description:
+      'Vite(法语意为 "快速的",发音 /vit/,发音同 "veet")是一种新型前端构建工具,能够显著提升前端开发体验',
   },
 ]);
 
@@ -42,15 +54,8 @@ function fnGetProfile() {
       state.user = res.data;
       state.roleGroup = res.roleGroup;
       state.postGroup = res.postGroup;
-      // 头像初始化
-      let avatar = state.user.avatar;
-      if (avatar) {
-        const baseApi = import.meta.env.VITE_API_BASE_URL;
-        avatar = `${baseApi}${avatar}`;
-      } else {
-        avatar = defaultAvatar;
-      }
-      state.user.avatar = avatar;
+      // 头像解析
+      state.user.avatar = useUserStore().fnAvatar(state.user.avatar);
     } else {
       message.error(res.msg, 3);
     }
@@ -112,12 +117,16 @@ onMounted(() => {
       </a-col>
       <a-col :lg="18" :md="18" :xs="24">
         <a-card>
-          <a-tabs tab-position="top" v-model:activeKey="activeKey">
-            <a-tab-pane key="1" tab="列表">
+          <a-tabs
+            tab-position="top"
+            :destroy-inactive-tab-pane="true"
+            v-model:activeKey="activeKey"
+          >
+            <a-tab-pane key="list" tab="列表">
               <a-list
                 item-layout="horizontal"
                 :data-source="listData"
-                row-key="title"
+                row-key="id"
               >
                 <template #renderItem="{ item }">
                   <a-list-item>
@@ -129,14 +138,14 @@ onMounted(() => {
                         {{ item.description }}
                       </template>
                       <template #avatar>
-                        <a-avatar>{{ item.title }}</a-avatar>
+                        <a-avatar>{{ item.id }}</a-avatar>
                       </template>
                     </a-list-item-meta>
                   </a-list-item>
                 </template>
               </a-list>
             </a-tab-pane>
-            <a-tab-pane key="2" tab="空状态">
+            <a-tab-pane key="empty" tab="空状态">
               <a-empty>
                 <template #description> 暂无数据，尝试刷新看看 </template>
                 <a-button type="primary">刷新</a-button>

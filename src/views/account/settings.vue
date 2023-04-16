@@ -1,30 +1,40 @@
 <script lang="ts" setup>
 import BaseInfo from './components/base-info.vue';
 import ResetPasswd from './components/reset-passwd.vue';
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
+import { getLocalColor, changePrimaryColor } from '@/hooks/useTheme';
 
-let activeKey = ref<string>('1');
+/**Tab标签激活 */
+let activeKey = ref<string>('base-info');
 
-onMounted(() => {});
+/**改变主题色 */
+function fnColorChange(e: any) {
+  if (!e.target) return;
+  changePrimaryColor(e.target.value ?? '#1890ff');
+}
 </script>
 
 <template>
   <page-container>
     <a-card>
       <a-tabs tab-position="left" v-model:activeKey="activeKey">
-        <a-tab-pane key="1" tab="基础信息">
+        <a-tab-pane key="base-info" tab="基础信息">
           <BaseInfo></BaseInfo>
         </a-tab-pane>
-        <a-tab-pane key="2" tab="重置密码">
+        <a-tab-pane key="reset-passwd" tab="重置密码">
           <ResetPasswd></ResetPasswd>
         </a-tab-pane>
-        <a-tab-pane key="3" tab="cs">
+        <a-tab-pane key="style-layout" tab="个性化">
           <a-list item-layout="vertical" size="large" row-key="title">
             <a-list-item>
-              账户密码
-              <template #actions> 当前密码强度:强 </template>
+              风格配色
+              <template #actions> 整体风格配色设置 </template>
               <template #extra>
-                <a-button type="link">修改</a-button>
+                <input
+                  type="color"
+                  :value="getLocalColor()"
+                  @input="fnColorChange"
+                />
               </template>
             </a-list-item>
           </a-list>

@@ -56,8 +56,7 @@ function fnFinish() {
               content: `恭喜您，${userName} 账号密码修改成功！`,
               okText: '重新登录',
               onOk() {
-                fnLogOut();
-                router.push({ name: 'Login' });
+                fnLogOut().finally(() => router.push({ name: 'Login' }));
               },
             });
           } else {
