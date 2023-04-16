@@ -27,6 +27,22 @@ type UserInfo = {
   sex: string | undefined;
 };
 
+/**
+ * 格式解析头像地址
+ * @param avatar 头像路径
+ * @returns url地址
+ */
+function parseAvatar(avatar: string): string {
+  if (!avatar) {
+    return defaultAvatar;
+  }
+  if (validHttp(avatar)) {
+    return avatar;
+  }
+  const baseApi = import.meta.env.VITE_API_BASE_URL;
+  return `${baseApi}${avatar}`;
+}
+
 const useUserStore = defineStore('user', {
   state: (): UserInfo => ({
     token: getToken(),
@@ -40,19 +56,19 @@ const useUserStore = defineStore('user', {
     sex: undefined,
   }),
   getters: {
-    // 获取头像
+    /**
+     * 获取正确头像地址
+     * @param state 内部属性不用传入
+     * @returns 头像地址url
+     */
     getAvatar(state) {
-      const avatar = state.avatar;
-      if (!avatar) {
-        return defaultAvatar;
-      }
-      if (validHttp(avatar)) {
-        return avatar;
-      }
-      const baseApi = import.meta.env.VITE_API_BASE_URL;
-      return `${baseApi}${avatar}`;
+      return parseAvatar(state.avatar);
     },
-    // 获取基础信息属性
+    /**
+     * 获取基础信息属性
+     * @param state 内部属性不用传入
+     * @returns 基础信息
+     */
     getBaseInfo(state) {
       return {
         nickName: state.nickName,
@@ -63,16 +79,29 @@ const useUserStore = defineStore('user', {
     },
   },
   actions: {
-    // 更新基础信息属性
+    /**
+     * 更新基础信息属性
+     * @param data 变更信息
+     */
     setBaseInfo(data: Record<string, any>) {
       this.nickName = data.nickName;
       this.phonenumber = data.phonenumber;
       this.email = data.email;
       this.sex = data.sex;
     },
-    // 更新头像
+    /**
+     * 更新头像
+     * @param avatar 上传后的地址
+     */
     setAvatar(avatar: string) {
       this.avatar = avatar;
+    },
+    /**
+     * 获取正确头像地址
+     * @param avatar
+     */
+    fnAvatar(avatar: string) {
+      return parseAvatar(avatar);
     },
     // 登录
     async fnLogin(loginBody: Record<string, string>) {
