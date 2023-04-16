@@ -8,7 +8,7 @@ import { localGet, localSet } from '@/plugins/CacheLocal';
  */
 export const usePrimaryColor = () => {
   onBeforeMount(() => {
-    changePrimaryColor(localColor());
+    changePrimaryColor(getLocalColor());
   });
 };
 
@@ -18,7 +18,7 @@ export const usePrimaryColor = () => {
  */
 export function changePrimaryColor(color?: string) {
   if (!color) {
-    color = randomColor();
+    color = getRandomColor();
   }
   ConfigProvider.config({
     theme: {
@@ -29,10 +29,18 @@ export function changePrimaryColor(color?: string) {
 }
 
 /**
- * 随机颜色范围
+ * 获取主题色-本地缓存
  * @returns 颜色
  */
-function randomColor(): string {
+export function getLocalColor() {
+  return localGet(CACHE_LOCAL_PRIMARY_COLOR) || '#1890ff';
+}
+
+/**
+ * 获取随机颜色范围
+ * @returns 颜色
+ */
+function getRandomColor(): string {
   const colors: string[] = [
     '#f5222d',
     '#fa541c',
@@ -47,12 +55,4 @@ function randomColor(): string {
   ];
   const i = Math.floor(Math.random() * 10);
   return colors[i];
-}
-
-/**
- * 本地缓存
- * @returns 颜色
- */
-function localColor() {
-  return localGet(CACHE_LOCAL_PRIMARY_COLOR) || '#1890ff';
 }
