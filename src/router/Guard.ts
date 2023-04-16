@@ -85,7 +85,7 @@ export default class Guard {
               .catch(e => {
                 console.error('路由守卫异常 ', e);
                 user.fnLogOut().finally(() => {
-                  next({ name: 'Index' });
+                  next({ name: 'Login' });
                 });
               });
           } else {

@@ -23,8 +23,7 @@ function fnClick({ key }: MenuInfo) {
       router.push({ name: 'Profile' });
       break;
     case 'logout':
-      userStore.fnLogOut();
-      router.push({ name: 'Login' });
+      userStore.fnLogOut().finally(()=>router.push({ name: 'Login' }));
       break;
   }
 }
@@ -78,7 +77,7 @@ function fnClick({ key }: MenuInfo) {
   align-items: center;
   cursor: pointer;
   .nick {
-    margin-left: 8px;
+    padding: 0 8px;
     font-size: 16px;
   }
 }
