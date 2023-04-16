@@ -11,7 +11,7 @@ const router = useRouter();
   >
     <template #extra>
       <a-button type="primary" href="/index"> 返回首页 </a-button>
-      <a-button @click="() => router.go(-1)"> 返回 </a-button>
+      <a-button @click="() => router.back()"> 返回 </a-button>
     </template>
   </a-result>
 </template>
