@@ -22,7 +22,7 @@ function fnTo(type: string) {
   <page-container :title="systemName" sub-title="by TsMask">
     <template #tags>
       <a-tag>当前版本：{{ systemVersion }}</a-tag>
-      <a-tag color="red"><PayCircleOutlined /> 免费开源</a-tag>
+      <a-tag color="magenta"><PayCircleOutlined /> 免费开源</a-tag>
     </template>
     <template #extra>
       <a-button type="primary" @click="fnTo('code')">开源仓库</a-button>
@@ -37,7 +37,7 @@ function fnTo(type: string) {
           :alt="userStore.userName"
         ></a-avatar>
         <span class="nickname">
-          {{ userStore.nickName }} ，祝你开心每一天！
+          {{ userStore.nickName }} ，想必你那里一切安好吧。
         </span>
       </a-space>
     </template>
