@@ -1,10 +1,16 @@
 /**
+ * 有效用户名格式
+ * 
+ * 用户名不能以数字开头，可包含大写小写字母，数字，且不少于5位
+ */
+export const regExpUserName = /^[a-zA-Z][a-z0-9A-Z]{5,}$/
+/**
  * 有效密码格式
  *
  * 密码至少包含大小写字母、数字、特殊符号，且不少于6位
  */
 export const regExpPasswd =
-  /^(?![A-Za-z0-9]+$)(?![a-z0-9\W]+$)(?![A-Za-z\W]+$)(?![A-Z0-9\W]+$)[a-zA-Z0-9\W]{6,30}$/;
+  /^(?![A-Za-z0-9]+$)(?![a-z0-9\W]+$)(?![A-Za-z\W]+$)(?![A-Z0-9\W]+$)[a-zA-Z0-9\W]{6,}$/;
 
 /**
  * 有效手机号格式
@@ -22,7 +28,7 @@ export const regExpEmail =
  *
  * 用户昵称只能包含字母、数字、中文和下划线，且不少于2位
  */
-export const regExpNick = /^[\w\u4e00-\u9fa5-]{2,40}$/;
+export const regExpNick = /^[\w\u4e00-\u9fa5-]{2,}$/;
 
 /**
  * 是否为http(s)://开头
@@ -35,6 +41,7 @@ export const regExpHttp = /^http(s)?:\/\/+/;
  * @returns true | false
  */
 export function validHttp(link: string): boolean {
+  if (!link) return false;
   return regExpHttp.test(link);
 }
 
@@ -44,6 +51,7 @@ export function validHttp(link: string): boolean {
  * @returns true | false
  */
 export function validMobile(mobile: string): boolean {
+  if (!mobile) return false;
   return regExpMobile.test(mobile);
 }
 
@@ -53,5 +61,6 @@ export function validMobile(mobile: string): boolean {
  * @returns true | false
  */
 export function validEmail(email: string): boolean {
+  if (!email) return false;
   return regExpEmail.test(email);
 }
