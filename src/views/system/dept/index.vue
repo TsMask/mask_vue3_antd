@@ -199,8 +199,6 @@ const modalStateFrom = Form.useForm(
     email: [
       {
         required: false,
-        min: 6,
-        max: 50,
         pattern: regExpEmail,
         message: '请输入正确的邮箱地址',
       },
@@ -208,8 +206,6 @@ const modalStateFrom = Form.useForm(
     phone: [
       {
         required: false,
-        min: 11,
-        max: 11,
         pattern: regExpMobile,
         message: '请输入正确的手机号码',
       },
@@ -706,6 +702,7 @@ onMounted(() => {
           <a-input
             v-model:value="modalState.from.deptName"
             allow-clear
+            :maxlength="30"
             placeholder="请输入部门名称"
           ></a-input>
         </a-form-item>
@@ -758,6 +755,7 @@ onMounted(() => {
               <a-input
                 v-model:value="modalState.from.phone"
                 allow-clear
+                :maxlength="11"
                 placeholder="请输入负责人联系电话"
               ></a-input>
             </a-form-item>
@@ -771,6 +769,7 @@ onMounted(() => {
               <a-input
                 v-model:value="modalState.from.email"
                 allow-clear
+                :maxlength="40"
                 placeholder="请输入负责人邮箱"
               ></a-input>
             </a-form-item>

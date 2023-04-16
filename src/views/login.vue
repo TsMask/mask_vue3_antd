@@ -283,8 +283,6 @@ onBeforeUnmount(() => {
               :rules="[
                 {
                   required: true,
-                  min: 11,
-                  max: 11,
                   pattern: regExpMobile,
                   message: '请输入正确的手机号码',
                 },

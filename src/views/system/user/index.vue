@@ -292,8 +292,6 @@ const modalStateFrom = Form.useForm(
     userName: [
       {
         required: true,
-        min: 5,
-        max: 18,
         pattern: regExpUserName,
         message: '账号不能以数字开头，可包含大写小写字母，数字，且不少于5位',
       },
@@ -301,8 +299,6 @@ const modalStateFrom = Form.useForm(
     password: [
       {
         required: true,
-        min: 6,
-        max: 26,
         pattern: regExpPasswd,
         message: '密码至少包含大小写字母、数字、特殊符号，且不少于6位',
       },
@@ -310,8 +306,6 @@ const modalStateFrom = Form.useForm(
     nickName: [
       {
         required: true,
-        min: 1,
-        max: 30,
         pattern: regExpNick,
         message: '昵称只能包含字母、数字、中文和下划线，且不少于2位',
       },
@@ -319,8 +313,6 @@ const modalStateFrom = Form.useForm(
     email: [
       {
         required: false,
-        min: 6,
-        max: 40,
         pattern: regExpEmail,
         message: '请输入正确的邮箱地址',
       },
@@ -328,8 +320,6 @@ const modalStateFrom = Form.useForm(
     phonenumber: [
       {
         required: false,
-        min: 11,
-        max: 11,
         pattern: regExpMobile,
         message: '请输入正确的手机号码',
       },
@@ -884,6 +874,7 @@ onMounted(() => {
           </template>
           <template v-if="column.key === 'status'">
             <a-switch
+              v-if="record.userId !== '1'"
               v-model:checked="record.status"
               checked-value="1"
               checked-children="正常"
@@ -892,9 +883,14 @@ onMounted(() => {
               size="small"
               @change="fnRecordStatus(record)"
             />
+            <DictTag
+              v-else
+              :options="dict.sysNormalDisable"
+              :value="record.status"
+            />
           </template>
           <template v-if="column.key === 'userId'">
-            <a-space :size="8" align="center">
+            <a-space :size="8" align="center" v-if="record.userId !== '1'">
               <a-tooltip>
                 <template #title>查看详情</template>
                 <a-button
@@ -1138,6 +1134,7 @@ onMounted(() => {
               <a-input
                 v-model:value="modalState.from.nickName"
                 allow-clear
+                :maxlength="30"
                 placeholder="请输入用户昵称"
               ></a-input>
             </a-form-item>
@@ -1176,6 +1173,7 @@ onMounted(() => {
               <a-input
                 v-model:value="modalState.from.phonenumber"
                 allow-clear
+                :maxlength="11"
                 placeholder="请输入手机号码"
               ></a-input>
             </a-form-item>
@@ -1189,6 +1187,7 @@ onMounted(() => {
               <a-input
                 v-model:value="modalState.from.email"
                 allow-clear
+                :maxlength="40"
                 placeholder="请输入电子邮箱"
               ></a-input>
             </a-form-item>

@@ -107,8 +107,6 @@ function fnFinish() {
       :rules="[
         {
           required: true,
-          min: 6,
-          max: 26,
           pattern: regExpPasswd,
           message: '密码至少包含大小写字母、数字、特殊符号，且不少于6位',
         },
@@ -130,8 +128,6 @@ function fnFinish() {
       :rules="[
         {
           required: true,
-          min: 6,
-          max: 26,
           validator: fnEqualToPassword,
         },
       ]"

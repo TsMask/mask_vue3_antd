@@ -150,8 +150,6 @@ onMounted(() => {
           :rules="[
             {
               required: true,
-              min: 6,
-              max: 26,
               pattern: regExpPasswd,
               message: '密码至少包含大小写字母、数字、特殊符号，且不少于6位',
             },
@@ -195,7 +193,7 @@ onMounted(() => {
           <a-col :span="16">
             <a-form-item
               name="code"
-              :rules="[{ required: true, min: 4, message: '请输入正确验证码' }]"
+              :rules="[{ required: true, min: 1, message: '请输入正确验证码' }]"
             >
               <a-input
                 v-model:value="state.form.code"

@@ -68,7 +68,6 @@ let upState = ref<boolean>(false);
 /**上传前检查或转换压缩 */
 function fnBeforeUpload(file: FileType) {
   if (upState.value) return false;
-  console.log(file);
   const isJpgOrPng = ['image/jpeg', 'image/png'].includes(file.type);
   if (!isJpgOrPng) {
     message.error('只支持上传图片格式（jpg、png）', 3);
@@ -82,7 +81,6 @@ function fnBeforeUpload(file: FileType) {
 
 /**上传变更 */
 function fnUpload(up: UploadRequestOption) {
-  console.log(up);
   Modal.confirm({
     title: '提示',
     content: `确认要头上传/变更用户头像吗?`,
@@ -132,16 +130,15 @@ onMounted(() => {
           :rules="[
             {
               required: true,
-              min: 6,
-              max: 26,
               pattern: regExpNick,
-              message: '用户昵称不能为空',
+              message: '昵称只能包含字母、数字、中文和下划线，且不少于2位',
             },
           ]"
         >
           <a-input
             v-model:value="stateForm.form.nickName"
             allow-clear
+            :maxlength="26"
             placeholder="请输入用户昵称"
           ></a-input>
         </a-form-item>
@@ -152,8 +149,6 @@ onMounted(() => {
           :rules="[
             {
               required: false,
-              min: 11,
-              max: 11,
               pattern: regExpMobile,
               message: '请输入正确手机号码',
             },
@@ -162,6 +157,7 @@ onMounted(() => {
           <a-input
             v-model:value="stateForm.form.phonenumber"
             allow-clear
+            :maxlength="11"
             placeholder="请输入手机号码"
           ></a-input>
         </a-form-item>
@@ -172,8 +168,6 @@ onMounted(() => {
           :rules="[
             {
               required: false,
-              min: 6,
-              max: 40,
               pattern: regExpEmail,
               message: '请输入正确电子邮箱',
             },
@@ -182,6 +176,7 @@ onMounted(() => {
           <a-input
             v-model:value="stateForm.form.email"
             allow-clear
+            :maxlength="40"
             placeholder="请输入电子邮箱"
           ></a-input>
         </a-form-item>
