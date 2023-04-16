@@ -143,7 +143,7 @@ const constantRoutes: RouteRecordRaw[] = [
           },
           {
             path: 'settings',
-            name: 'settings',
+            name: 'Settings',
             meta: { title: '个人设置' },
             component: () => import('@/views/account/settings.vue'),
           },
