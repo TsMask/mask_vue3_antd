@@ -83,7 +83,7 @@ const FATCH_OPTIONS: OptionsType = {
 /**请求前的拦截 */
 function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
   options.headers = Object.assign({}, options.headers);
-  console.log('请求前的拦截', options);
+  //console.log('请求前的拦截', options);
 
   // 给发送数据类型设置请求头
   if (options.dataType === 'json') {
@@ -93,6 +93,9 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
       'application/json;charset=utf-8'
     );
   }
+
+  // 使用mock.apifox.cn时开启
+  // Reflect.set(options.headers, 'apifoxToken', 'xBhhq0RbnbKByxColuCtxUKF8gEhS7lW');
 
   // 是否需要设置 token
   const token = getToken();
@@ -110,14 +113,13 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
     if (sessionObj) {
       const { url, data, time } = sessionObj;
       const interval = 1000; // 间隔时间(ms)，小于此时间视为重复提交
-      console.log(requestObj.time - time);
       if (
         requestObj.url === url &&
         requestObj.data === data &&
         requestObj.time - time < interval
       ) {
         const message = '数据正在处理，请勿重复提交';
-        console.warn(`[${url}]: ` + message);
+        console.warn(`[${url}]: ${message}`);
         return Promise.reject(message);
       } else {
         sessionSetJSON(CACHE_SESSION_FATCH, requestObj);
@@ -153,7 +155,7 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
 
 /**请求后的拦截 */
 function interceptorResponse(res: ResultType): ResultType | Promise<any> {
-  console.log('请求后的拦截', res);
+  //console.log('请求后的拦截', res);
   return res;
 }
 
@@ -182,7 +184,7 @@ export function request<T>(options: OptionsType): Promise<T> {
 
     fetch(options.url, options)
       .then(res => {
-        console.log('请求结果：', res);
+        //console.log('请求结果：', res);
         if (!res.ok) {
           return reject({
             code: res.status,
