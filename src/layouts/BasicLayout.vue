@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import RightContent from './components/RightContent.vue';
 import LayoutSetting from './components/LayoutSetting.vue';
 import {
@@ -81,7 +82,7 @@ const breadcrumb = computed(() => {
       :breadcrumb="{ routes: breadcrumb }"
       disable-content-margin
       v-bind="proConfig"
-      iconfont-url="/font_8d5l8fzk5b87iudi.js"
+      :iconfont-url="scriptUrl"
     >
       <!--插槽-菜单头-->
       <template #menuHeaderRender>

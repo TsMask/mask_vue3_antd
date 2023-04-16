@@ -1,8 +1,17 @@
 /**
+ * 字体图标文件-静态资源文件路径
+ */
+
+export const scriptUrl = `${
+  import.meta.env.VITE_HISTORY_BASE_URL
+}/font_8d5l8fzk5b87iudi.js`;
+
+/**
  * 读取 font_8d5l8fzk5b87iudi.js 文件内svg图标名称
+ *
  * JSON.stringify(txt.match(/icon-(\S*)"/gi).map(i=>i.slice(0,-1)))
  */
-export default [
+export const iconFonts = [
   '#',
   'icon-alibaba',
   'icon-alimama',

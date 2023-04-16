@@ -30,14 +30,16 @@ import {
   parseDataToTree,
   parseDataToTreeExclude,
 } from '@/utils/ParseTreeUtils';
-import iconFonts from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
+import { iconFonts, scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 const { getDict } = useDictStore();
 const route = useRoute();
+
+/**字体图标加载为组件 */
 const IconFont = createFromIconfontCN({
-  scriptUrl: '/font_8d5l8fzk5b87iudi.js',
+  scriptUrl: scriptUrl,
 });
 
-/**字体图标选择数据 */
+/**字体图标可选择数据 */
 let icons = reactive(iconFonts.map(item => ({ value: item, label: item })));
 
 /**路由标题 */
