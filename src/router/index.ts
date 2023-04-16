@@ -3,12 +3,22 @@ import {
   createWebHistory,
   createWebHashHistory,
   RouteRecordRaw,
+  isNavigationFailure,
 } from 'vue-router';
-import { encode } from 'js-base64';
+import NProgress from 'nprogress';
+import 'nprogress/nprogress.css';
 import BasicLayout from '../layouts/BasicLayout.vue';
 import BlankLayout from '../layouts/BlankLayout.vue';
 import LinkLayout from '../layouts/LinkLayout.vue';
-import Guard from './Guard';
+import { encode } from 'js-base64';
+import { getToken } from '@/plugins/AuthToken';
+import { validHttp } from '@/utils/RegularUtils';
+import useUserStore from '@/store/modules/user';
+import useAppStore from '@/store/modules/app';
+import useRouterStore from '@/store/modules/router';
+
+// NProgress Configuration
+NProgress.configure({ showSpinner: false });
 
 // import { MetaRecord, MenuDataItem } from '@ant-design-vue/pro-layout';
 // mate数据类型 MetaRecord
@@ -192,6 +202,7 @@ const constantRoutes: RouteRecordRaw[] = [
 const hasHash = import.meta.env.VITE_HISTORY_HASH;
 const bashUrl = import.meta.env.VITE_HISTORY_BASE_URL;
 
+/**全局路由 */
 const router = createRouter({
   history:
     hasHash === 'true'
@@ -207,4 +218,78 @@ const router = createRouter({
   },
 });
 
-export default new Guard(router).getRouter();
+/**全局路由-后置守卫 */
+router.afterEach((to, from, failure) => {
+  NProgress.done();
+
+  // 失败原因
+  if (isNavigationFailure(failure)) {
+    console.error(`[${to.path}]: ${failure.message}`);
+  }
+});
+
+/**无Token可访问页面地址白名单 */
+const WHITE_LIST: string[] = ['/login', '/auth-redirect', '/bind', '/register'];
+
+/**全局路由-前置守卫 */
+router.beforeEach((to, from, next) => {
+  NProgress.start();
+  // 设置标题
+  if (to.meta?.title) {
+    useAppStore().setTitle(to.meta.title);
+  }
+  const token = getToken();
+
+  // 没有token
+  if (!token) {
+    if (WHITE_LIST.includes(to.path)) {
+      // 在免登录白名单，直接进入
+      next();
+    } else {
+      // 否则全部重定向到登录页
+      next(`/login?redirect=${to.fullPath}`);
+    }
+  }
+
+  // 有Token
+  if (token) {
+    // 防止重复访问登录页面
+    if (to.path === '/login') {
+      next({ name: 'Index' });
+    } else {
+      // 判断当前用户是否有角色信息
+      const user = useUserStore();
+      if (user.roles && user.roles.length === 0) {
+        // 获取用户信息
+        user
+          .fnGetInfo()
+          .then(() => {
+            return useRouterStore().generateRoutes();
+          })
+          .then(accessRoutes => {
+            // 根据后台配置生成可访问的路由表
+            if (accessRoutes && accessRoutes.length !== 0) {
+              for (const route of accessRoutes) {
+                // 动态添加可访问路由表，http开头会异常
+                if (!validHttp(route.path)) {
+                  router.addRoute(route);
+                }
+              }
+            }
+            // 刷新替换原先路由，确保addRoutes已完成
+            next({ ...to, replace: true });
+          })
+          .catch(e => {
+            console.error(`[${to.path}]: ${e.message}`);
+            user.fnLogOut().finally(() => {
+              next({ name: 'Login' });
+            });
+          });
+      } else {
+        next();
+      }
+    }
+  }
+});
+
+export default router;
