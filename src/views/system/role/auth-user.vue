@@ -375,6 +375,7 @@ onMounted(() => {
           <a-button
             type="primary"
             @click.prevent="fnModalVisibleBySelectUser()"
+            v-perms:has="['system:role:add']"
           >
             <template #icon><UsergroupAddOutlined /></template>
             分配用户
@@ -384,6 +385,7 @@ onMounted(() => {
             danger
             :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="fnRecordDelete('0')"
+            v-perms:has="['system:role:remove']"
           >
             <template #icon><UsergroupDeleteOutlined /></template>
             批量取消授权
@@ -466,6 +468,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnRecordDelete(record.userId)"
+                  v-perms:has="['system:role:remove']"
                 >
                   <template #icon><UserDeleteOutlined /></template>
                 </a-button>

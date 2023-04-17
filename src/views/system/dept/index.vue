@@ -451,7 +451,11 @@ onMounted(() => {
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button type="primary" @click.prevent="fnModalVisibleByEdit()">
+          <a-button
+            type="primary"
+            @click.prevent="fnModalVisibleByEdit()"
+            v-perms:has="['system:dept:add']"
+          >
             <template #icon><PlusOutlined /></template>
             新建
           </a-button>
@@ -541,6 +545,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByVive(record.deptId)"
+                  v-perms:has="['system:dept:query']"
                 >
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
@@ -550,6 +555,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByEdit(record.deptId)"
+                  v-perms:has="['system:dept:edit']"
                 >
                   <template #icon><FormOutlined /></template>
                 </a-button>
@@ -559,6 +565,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnRecordDelete(record.deptId)"
+                  v-perms:has="['system:dept:remove']"
                 >
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
@@ -570,6 +577,7 @@ onMounted(() => {
                   @click.prevent="
                     fnModalVisibleByEdit(undefined, record.deptId)
                   "
+                  v-perms:has="['system:dept:add']"
                 >
                   <template #icon><PlusOutlined /></template>
                 </a-button>
@@ -582,6 +590,7 @@ onMounted(() => {
 
     <!-- 详情框 -->
     <a-modal
+      v-perms:has="['system:dept:query']"
       width="800px"
       :visible="modalState.visibleByView"
       :title="modalState.title"
@@ -660,6 +669,7 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <a-modal
+      v-perms:has="['system:dept:add','system:dept:edit']"
       width="800px"
       :keyboard="false"
       :mask-closable="false"

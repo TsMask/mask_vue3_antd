@@ -272,7 +272,7 @@ onMounted(() => {
                   <template #icon><ReloadOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip v-perms:has="['monitor:cache:remove']">
                 <template #title>安全清理</template>
                 <a-popconfirm
                   placement="bottomRight"
@@ -339,6 +339,7 @@ onMounted(() => {
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'option'">
                 <a-popconfirm
+                  v-perms:has="['monitor:cache:remove']"
                   placement="topRight"
                   title="确认要清理该缓存名称下的所有键名吗?`"
                   ok-text="确认"

@@ -550,7 +550,11 @@ onMounted(() => {
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button type="primary" @click.prevent="fnModalVisibleByEdit()">
+          <a-button
+            type="primary"
+            @click.prevent="fnModalVisibleByEdit()"
+            v-perms:has="['system:config:add']"
+          >
             <template #icon><PlusOutlined /></template>
             新建
           </a-button>
@@ -559,15 +563,25 @@ onMounted(() => {
             danger
             :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="fnRecordDelete()"
+            v-perms:has="['system:config:remove']"
           >
             <template #icon><DeleteOutlined /></template>
             删除
           </a-button>
-          <a-button type="dashed" danger @click.prevent="fnRefreshCache">
+          <a-button
+            type="dashed"
+            danger
+            @click.prevent="fnRefreshCache"
+            v-perms:has="['system:config:remove']"
+          >
             <template #icon><SyncOutlined /></template>
             刷新缓存
           </a-button>
-          <a-button type="dashed" @click.prevent="fnExportList()">
+          <a-button
+            type="dashed"
+            @click.prevent="fnExportList()"
+            v-perms:has="['system:config:export']"
+          >
             <template #icon><ExportOutlined /></template>
             导出
           </a-button>
@@ -649,6 +663,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByVive(record.configId)"
+                  v-perms:has="['system:config:query']"
                 >
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
@@ -658,6 +673,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByEdit(record.configId)"
+                  v-perms:has="['system:config:edit']"
                 >
                   <template #icon><FormOutlined /></template>
                 </a-button>
@@ -667,6 +683,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnRecordDelete(record.configId)"
+                  v-perms:has="['system:config:remove']"
                 >
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
@@ -679,6 +696,7 @@ onMounted(() => {
 
     <!-- 详情框 -->
     <a-modal
+      v-perms:has="['system:config:query']"
       width="800px"
       :visible="modalState.visibleByView"
       :title="modalState.title"
@@ -723,6 +741,7 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <a-modal
+      v-perms:has="['system:config:add', 'system:config:edit']"
       width="800px"
       :keyboard="false"
       :mask-closable="false"

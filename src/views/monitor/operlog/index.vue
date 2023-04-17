@@ -483,15 +483,25 @@ onMounted(() => {
             danger
             :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="fnRecordDelete()"
+            v-perms:has="['monitor:operlog:remove']"
           >
             <template #icon><DeleteOutlined /></template>
             删除
           </a-button>
-          <a-button type="dashed" danger @click.prevent="fnCleanList()">
+          <a-button
+            type="dashed"
+            danger
+            @click.prevent="fnCleanList()"
+            v-perms:has="['monitor:operlog:remove']"
+          >
             <template #icon><DeleteOutlined /></template>
             清空
           </a-button>
-          <a-button type="dashed" @click.prevent="fnExportList()">
+          <a-button
+            type="dashed"
+            @click.prevent="fnExportList()"
+            v-perms:has="['monitor:operlog:export']"
+          >
             <template #icon><ExportOutlined /></template>
             导出
           </a-button>
@@ -579,6 +589,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByVive(record)"
+                  v-perms:has="['monitor:operlog:query']"
                 >
                   <template #icon><ProfileOutlined /></template>
                   详情
@@ -592,6 +603,7 @@ onMounted(() => {
 
     <!-- 详情框 -->
     <a-modal
+      v-perms:has="['monitor:operlog:query']"
       width="800px"
       :visible="modalState.visibleByView"
       :title="modalState.title"

@@ -42,6 +42,7 @@ import {
 import useDictStore from '@/store/modules/dict';
 import useUserStore from '@/store/modules/user';
 import { DataNode } from 'ant-design-vue/es/tree';
+import { hasPermissions } from '@/plugins/AuthUser';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -784,7 +785,11 @@ onMounted(() => {
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button type="primary" @click.prevent="fnModalVisibleByEdit()">
+          <a-button
+            type="primary"
+            @click.prevent="fnModalVisibleByEdit()"
+            v-perms:has="['system:user:add']"
+          >
             <template #icon><PlusOutlined /></template>
             新建
           </a-button>
@@ -793,11 +798,16 @@ onMounted(() => {
             danger
             :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="fnRecordDelete()"
+            v-perms:has="['system:user:remove']"
           >
             <template #icon><DeleteOutlined /></template>
             删除
           </a-button>
-          <a-button type="dashed" @click.prevent="fnExportList()">
+          <a-button
+            type="dashed"
+            @click.prevent="fnExportList()"
+            v-perms:has="['system:user:import']"
+          >
             <template #icon><ExportOutlined /></template>
             导出
           </a-button>
@@ -874,7 +884,9 @@ onMounted(() => {
           </template>
           <template v-if="column.key === 'status'">
             <a-switch
-              v-if="record.userId !== '1'"
+              v-if="
+                record.userId !== '1' && hasPermissions(['system:user:edit'])
+              "
               v-model:checked="record.status"
               checked-value="1"
               checked-children="正常"
@@ -896,6 +908,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByVive(record.userId)"
+                  v-perms:has="['system:user:query']"
                 >
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
@@ -905,6 +918,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByEdit(record.userId)"
+                  v-perms:has="['system:user:edit']"
                 >
                   <template #icon><FormOutlined /></template>
                 </a-button>
@@ -914,13 +928,18 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnRecordDelete(record.userId)"
+                  v-perms:has="['system:user:remove']"
                 >
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
               </a-tooltip>
               <a-tooltip>
                 <template #title>重置密码</template>
-                <a-button type="link" @click.prevent="fnRecordResetPwd(record)">
+                <a-button
+                  type="link"
+                  @click.prevent="fnRecordResetPwd(record)"
+                  v-perms:has="['system:user:resetPwd']"
+                >
                   <template #icon><SecurityScanOutlined /></template>
                 </a-button>
               </a-tooltip>
@@ -932,6 +951,7 @@ onMounted(() => {
 
     <!-- 详情框 -->
     <a-modal
+      v-perms:has="['system:user:query']"
       width="800px"
       :visible="modalState.visibleByView"
       :title="modalState.title"
@@ -1077,6 +1097,7 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <a-modal
+      v-perms:has="['system:user:add', 'system:user:edit']"
       width="800px"
       :keyboard="false"
       :mask-closable="false"
@@ -1263,6 +1284,7 @@ onMounted(() => {
 
     <!-- 重置密码修改框 -->
     <a-modal
+      v-perms:has="['system:user:resetPwd']"
       width="500px"
       :keyboard="false"
       :mask-closable="false"

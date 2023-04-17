@@ -446,6 +446,7 @@ onMounted(() => {
             type="primary"
             :disabled="!tableState.selectedUserName"
             @click.prevent="fnUnlock()"
+            v-perms:has="['monitor:logininfor:unlock']"
           >
             <template #icon><UnlockOutlined /></template>
             解锁
@@ -455,15 +456,25 @@ onMounted(() => {
             danger
             :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="fnRecordDelete()"
+            v-perms:has="['monitor:logininfor:remove']"
           >
             <template #icon><DeleteOutlined /></template>
             删除
           </a-button>
-          <a-button type="dashed" danger @click.prevent="fnCleanList()">
+          <a-button
+            type="dashed"
+            danger
+            @click.prevent="fnCleanList()"
+            v-perms:has="['monitor:logininfor:remove']"
+          >
             <template #icon><DeleteOutlined /></template>
             清空
           </a-button>
-          <a-button type="dashed" @click.prevent="fnExportList()">
+          <a-button
+            type="dashed"
+            @click.prevent="fnExportList()"
+            v-perms:has="['monitor:logininfor:export']"
+          >
             <template #icon><ExportOutlined /></template>
             导出
           </a-button>

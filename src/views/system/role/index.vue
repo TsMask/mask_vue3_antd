@@ -36,6 +36,7 @@ import { parseDateToStr } from '@/utils/DateUtils';
 import useDictStore from '@/store/modules/dict';
 import { DataNode } from 'ant-design-vue/es/tree';
 import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/ParseTreeUtils';
+import { hasPermissions } from '@/plugins/AuthUser';
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
@@ -782,7 +783,11 @@ onMounted(() => {
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button type="primary" @click.prevent="fnModalVisibleByEdit()">
+          <a-button
+            type="primary"
+            @click.prevent="fnModalVisibleByEdit()"
+            v-perms:has="['system:role:add']"
+          >
             <template #icon><PlusOutlined /></template>
             新建
           </a-button>
@@ -791,11 +796,16 @@ onMounted(() => {
             danger
             :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="fnRecordDelete()"
+            v-perms:has="['system:role:remove']"
           >
             <template #icon><DeleteOutlined /></template>
             删除
           </a-button>
-          <a-button type="dashed" @click.prevent="fnExportList()">
+          <a-button
+            type="dashed"
+            @click.prevent="fnExportList()"
+            v-perms:has="['system:role:export']"
+          >
             <template #icon><ExportOutlined /></template>
             导出
           </a-button>
@@ -869,7 +879,9 @@ onMounted(() => {
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
             <a-switch
-              v-if="record.roleId !== '1'"
+              v-if="
+                record.roleId !== '1' && hasPermissions(['system:role:edit'])
+              "
               v-model:checked="record.status"
               checked-value="1"
               checked-children="正常"
@@ -891,6 +903,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByVive(record.roleId)"
+                  v-perms:has="['system:role:query']"
                 >
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
@@ -900,6 +913,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByEdit(record.roleId)"
+                  v-perms:has="['system:role:edit']"
                 >
                   <template #icon><FormOutlined /></template>
                 </a-button>
@@ -909,6 +923,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnRecordDelete(record.roleId)"
+                  v-perms:has="['system:role:remove']"
                 >
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
@@ -918,6 +933,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnRecordDataScope(record.roleId)"
+                  v-perms:has="['system:role:edit']"
                 >
                   <template #icon><SecurityScanOutlined /></template>
                 </a-button>
@@ -927,6 +943,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnRecordAuthUser(record.roleId)"
+                  v-perms:has="['system:role:edit']"
                 >
                   <template #icon><TeamOutlined /></template>
                 </a-button>
@@ -939,6 +956,7 @@ onMounted(() => {
 
     <!-- 详情框 -->
     <a-modal
+      v-perms:has="['system:role:query']"
       width="800px"
       :visible="modalState.visibleByView"
       :title="modalState.title"
@@ -1011,6 +1029,7 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <a-modal
+      v-perms:has="['system:role:add', 'system:role:edit']"
       width="800px"
       :keyboard="false"
       :mask-closable="false"
@@ -1135,6 +1154,7 @@ onMounted(() => {
 
     <!-- 分配角色数据权限修改框 -->
     <a-modal
+      v-perms:has="['system:role:edit']"
       width="800px"
       :keyboard="false"
       :mask-closable="false"

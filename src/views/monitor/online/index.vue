@@ -316,7 +316,11 @@ onMounted(() => {
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'tokenId'">
-            <a-button type="link" @click.prevent="fnForceLogout(record)">
+            <a-button
+              type="link"
+              @click.prevent="fnForceLogout(record)"
+              v-perms:has="['monitor:online:forceLogout']"
+            >
               <template #icon><LogoutOutlined /></template>
               强退
             </a-button>

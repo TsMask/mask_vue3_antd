@@ -494,7 +494,11 @@ onMounted(() => {
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button type="primary" @click.prevent="fnModalVisibleByEdit()">
+          <a-button
+            type="primary"
+            @click.prevent="fnModalVisibleByEdit()"
+            v-perms:has="['system:menu:add']"
+          >
             <template #icon><PlusOutlined /></template>
             新建
           </a-button>
@@ -592,6 +596,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByVive(record.menuId)"
+                  v-perms:has="['system:menu:query']"
                 >
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
@@ -601,6 +606,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByEdit(record.menuId)"
+                  v-perms:has="['system:menu:edit']"
                 >
                   <template #icon><FormOutlined /></template>
                 </a-button>
@@ -610,6 +616,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnRecordDelete(record.menuId)"
+                  v-perms:has="['system:menu:remove']"
                 >
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
@@ -621,6 +628,7 @@ onMounted(() => {
                   @click.prevent="
                     fnModalVisibleByEdit(undefined, record.menuId)
                   "
+                  v-perms:has="['system:menu:add']"
                 >
                   <template #icon><PlusOutlined /></template>
                 </a-button>
@@ -633,6 +641,7 @@ onMounted(() => {
 
     <!-- 详情框 -->
     <a-modal
+      v-perms:has="['system:menu:query']"
       width="800px"
       :visible="modalState.visibleByView"
       :title="modalState.title"
@@ -772,6 +781,7 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <a-modal
+      v-perms:has="['system:menu:add', 'system:menu:edit']"
       width="800px"
       :keyboard="false"
       :mask-closable="false"

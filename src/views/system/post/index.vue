@@ -496,7 +496,11 @@ onMounted(() => {
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button type="primary" @click.prevent="fnModalVisibleByEdit()">
+          <a-button
+            type="primary"
+            @click.prevent="fnModalVisibleByEdit()"
+            v-perms:has="['system:post:add']"
+          >
             <template #icon><PlusOutlined /></template>
             新建
           </a-button>
@@ -505,11 +509,16 @@ onMounted(() => {
             danger
             :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="fnRecordDelete()"
+            v-perms:has="['system:post:remove']"
           >
             <template #icon><DeleteOutlined /></template>
             删除
           </a-button>
-          <a-button type="dashed" @click.prevent="fnExportList()">
+          <a-button
+            type="dashed"
+            @click.prevent="fnExportList()"
+            v-perms:has="['system:post:export']"
+          >
             <template #icon><ExportOutlined /></template>
             导出
           </a-button>
@@ -591,6 +600,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByVive(record.postId)"
+                  v-perms:has="['system:post:query']"
                 >
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
@@ -600,6 +610,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByEdit(record.postId)"
+                  v-perms:has="['system:post:edit']"
                 >
                   <template #icon><FormOutlined /></template>
                 </a-button>
@@ -609,6 +620,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnRecordDelete(record.postId)"
+                  v-perms:has="['system:post:remove']"
                 >
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
@@ -621,6 +633,7 @@ onMounted(() => {
 
     <!-- 详情框 -->
     <a-modal
+      v-perms:has="['system:post:query']"
       width="800px"
       :visible="modalState.visibleByView"
       :title="modalState.title"
@@ -677,6 +690,7 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <a-modal
+      v-perms:has="['system:post:add','system:post:edit']"
       width="800px"
       :keyboard="false"
       :mask-closable="false"

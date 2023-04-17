@@ -35,6 +35,7 @@ import {
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/DateUtils';
 import useDictStore from '@/store/modules/dict';
+import { hasPermissions } from '@/plugins/AuthUser';
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
@@ -651,7 +652,11 @@ onMounted(() => {
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button type="primary" @click.prevent="fnModalVisibleByEdit()">
+          <a-button
+            type="primary"
+            @click.prevent="fnModalVisibleByEdit()"
+            v-perms:has="['monitor:job:add']"
+          >
             <template #icon><PlusOutlined /></template>
             新建
           </a-button>
@@ -660,19 +665,33 @@ onMounted(() => {
             danger
             :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="fnRecordDelete()"
+            v-perms:has="['monitor:job:remove']"
           >
             <template #icon><DeleteOutlined /></template>
             删除
           </a-button>
-          <a-button type="dashed" @click.prevent="fnExportList()">
+          <a-button
+            type="dashed"
+            @click.prevent="fnExportList()"
+            v-perms:has="['monitor:job:export']"
+          >
             <template #icon><ExportOutlined /></template>
             导出
           </a-button>
-          <a-button type="default" @click.prevent="fnJobLogView()">
+          <a-button
+            type="default"
+            @click.prevent="fnJobLogView()"
+            v-perms:has="['monitor:job:query']"
+          >
             <template #icon><ContainerOutlined /></template>
             日志
           </a-button>
-          <a-button type="dashed" danger @click.prevent="fnResetQueueJob">
+          <a-button
+            type="dashed"
+            danger
+            @click.prevent="fnResetQueueJob"
+            v-perms:has="['monitor:job:remove']"
+          >
             <template #icon><SyncOutlined /></template>
             重置队列
           </a-button>
@@ -749,6 +768,7 @@ onMounted(() => {
           </template>
           <template v-if="column.key === 'status'">
             <a-switch
+              v-if="hasPermissions(['monitor:job:changeStatus'])"
               v-model:checked="record.status"
               checked-value="1"
               checked-children="正常"
@@ -756,6 +776,11 @@ onMounted(() => {
               un-checked-children="暂停"
               size="small"
               @change="fnRecordStatus(record)"
+            />
+            <DictTag
+              v-else
+              :options="dict.sysJobStatus"
+              :value="record.status"
             />
           </template>
           <template v-if="column.key === 'jobId'">
@@ -765,6 +790,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByVive(record.jobId)"
+                  v-perms:has="['monitor:job:query']"
                 >
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
@@ -774,6 +800,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByEdit(record.jobId)"
+                  v-perms:has="['monitor:job:edit']"
                 >
                   <template #icon><FormOutlined /></template>
                 </a-button>
@@ -783,13 +810,18 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnRecordDelete(record.jobId)"
+                  v-perms:has="['monitor:job:remove']"
                 >
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
               </a-tooltip>
               <a-tooltip>
                 <template #title>执行一次</template>
-                <a-button type="link" @click.prevent="fnRecordRunOne(record)">
+                <a-button
+                  type="link"
+                  @click.prevent="fnRecordRunOne(record)"
+                  v-perms:has="['monitor:job:changeStatus']"
+                >
                   <template #icon><RocketOutlined /></template>
                 </a-button>
               </a-tooltip>
@@ -798,6 +830,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnJobLogView(record.jobId)"
+                  v-perms:has="['monitor:job:query']"
                 >
                   <template #icon><ContainerOutlined /></template>
                 </a-button>
@@ -810,6 +843,7 @@ onMounted(() => {
 
     <!-- 详情框 -->
     <a-modal
+      v-perms:has="['monitor:job:query']"
       width="800px"
       :visible="modalState.visibleByView"
       :title="modalState.title"
@@ -889,6 +923,7 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <a-modal
+      v-perms:has="['monitor:job:add', 'monitor:job:edit']"
       width="800px"
       :keyboard="false"
       :mask-closable="false"
