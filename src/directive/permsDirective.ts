@@ -4,11 +4,11 @@ import { DirectiveBinding } from 'vue';
 /**
  * perms-权限标识
  *
- * 指令值：单字符串/多字符串数组
+ * 指令值：字符串数组
  *
  * 指令的参数：has/math，默认has
  *
- * v-perms="'monitor:server:query'"
+ * v-perms="['monitor:server:query']"
  * 等同
  * v-perms:has="['monitor:server:query']"
  *
@@ -21,20 +21,14 @@ export default function (el: any, binding: DirectiveBinding<any>) {
   const value = binding.value;
   let arg = binding.arg;
   let ok: boolean = false;
-  // 匹配
-  if (arg === 'math') {
-    if (Array.isArray(value) && value.length > 0) {
+  if (Array.isArray(value) && value.length > 0) {
+    // 匹配
+    if (arg === 'math') {
       ok = matchPermissions(value);
-    } else {
-      ok = matchPermissions([value]);
     }
-  }
-  // 含有
-  if (!arg || arg === 'has') {
-    if (Array.isArray(value) && value.length > 0) {
+    // 含有
+    if (!arg || arg === 'has') {
       ok = hasPermissions(value);
-    } else {
-      ok = hasPermissions([value]);
     }
   }
   // 没有权限就移除节点
