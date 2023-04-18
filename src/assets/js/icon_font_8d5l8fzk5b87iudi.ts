@@ -1,9 +1,13 @@
 /**
  * 字体图标文件-静态资源文件路径
  */
-
+const baseUrl = import.meta.env.VITE_HISTORY_BASE_URL;
 export const scriptUrl = `${
-  import.meta.env.VITE_HISTORY_BASE_URL
+  baseUrl.length === 1 && baseUrl.indexOf('/') === 0
+    ? ''
+    : baseUrl.indexOf('/') === -1
+    ? '/' + baseUrl
+    : baseUrl
 }/font_8d5l8fzk5b87iudi.js`;
 
 /**
