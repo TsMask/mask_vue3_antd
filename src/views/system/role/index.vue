@@ -149,7 +149,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'createTime',
     align: 'center',
     customRender(opt) {
-      if(+opt.value <= 0) return ''
+      if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
     },
   },
@@ -450,12 +450,19 @@ function fnModalCancel() {
 /**
  * 对话框表单树勾选事件
  */
-function fnModalTreeChecked(keys: any, type: 'menu' | 'dept') {
+function fnModalTreeChecked(keys: any, info: any, type: 'menu' | 'dept') {
+  let ids = Array.isArray(keys) ? keys : keys.checked;
   if (type === 'menu') {
-    modalState.from.menuIds = Array.isArray(keys) ? keys : keys.checked;
+    if (modalState.from.menuCheckStrictly === '1') {
+      ids = ids.concat(info.halfCheckedKeys);
+    }
+    modalState.from.menuIds = ids;
   }
   if (type === 'dept') {
-    modalState.from.deptIds = Array.isArray(keys) ? keys : keys.checked;
+    if (modalState.from.deptCheckStrictly === '1') {
+      ids = ids.concat(info.halfCheckedKeys);
+    }
+    modalState.from.deptIds = ids;
   }
 }
 
@@ -944,7 +951,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnRecordAuthUser(record.roleId)"
-                  v-perms:has="['system:role:edit']"
+                  v-perms:has="['system:role:auth']"
                 >
                   <template #icon><TeamOutlined /></template>
                 </a-button>
@@ -1139,7 +1146,9 @@ onMounted(() => {
           <a-tree
             checkable
             :selectable="false"
-            @check="checked => fnModalTreeChecked(checked, 'menu')"
+            @check="
+              (checked, info) => fnModalTreeChecked(checked, info, 'menu')
+            "
             v-model:expanded-keys="modalState.menuTree.expandedKeys"
             v-model:checked-keys="modalState.menuTree.checkedKeys"
             :check-strictly="modalState.from.menuCheckStrictly === '0'"
@@ -1244,7 +1253,9 @@ onMounted(() => {
           <a-tree
             checkable
             :selectable="false"
-            @check="checked => fnModalTreeChecked(checked, 'dept')"
+            @check="
+              (checked, info) => fnModalTreeChecked(checked, info, 'dept')
+            "
             v-model:expanded-keys="modalState.deptTree.expandedKeys"
             v-model:checked-keys="modalState.deptTree.checkedKeys"
             :check-strictly="modalState.from.deptCheckStrictly === '0'"

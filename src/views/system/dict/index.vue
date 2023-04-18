@@ -705,7 +705,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnDataView(record.dictId)"
-                  v-perms:has="['system:dict:query']"
+                  v-perms:has="['system:dict:data']"
                 >
                   <template #icon><ContainerOutlined /></template>
                 </a-button>

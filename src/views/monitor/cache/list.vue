@@ -172,11 +172,15 @@ function fnCacheKeyClear(cacheKey: string) {
 
 /** 查询缓存键名列表 */
 function fnCacheKeyList(cacheName: string = 'load') {
-  if (isClick.value) return;
-  isClick.value = true;
   if (cacheName === 'load') {
     cacheName = cacheKeyTableByName.value;
   }
+  if (!cacheName) {
+    message.warning('请选择缓存列表中的缓存名称获取数据！', 3);
+    return;
+  }
+  if (isClick.value) return;
+  isClick.value = true;
   cacheKeyTable.loading = true;
   listCacheKey(cacheName).then(res => {
     isClick.value = false;
@@ -272,7 +276,7 @@ onMounted(() => {
                   <template #icon><ReloadOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip v-perms:has="['monitor:cache:remove']">
+              <a-tooltip>
                 <template #title>安全清理</template>
                 <a-popconfirm
                   placement="bottomRight"
@@ -281,7 +285,7 @@ onMounted(() => {
                   cancel-text="取消"
                   @confirm="fnClearCacheSafe()"
                 >
-                  <a-button type="text">
+                  <a-button type="text" v-perms:has="['monitor:cache:remove']">
                     <template #icon><ClearOutlined /></template>
                   </a-button>
                 </a-popconfirm>
@@ -339,14 +343,13 @@ onMounted(() => {
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'option'">
                 <a-popconfirm
-                  v-perms:has="['monitor:cache:remove']"
                   placement="topRight"
                   title="确认要清理该缓存名称下的所有键名吗?`"
                   ok-text="确认"
                   cancel-text="取消"
                   @confirm="fnCacheNameClear(record.cacheName)"
                 >
-                  <a-button type="text">
+                  <a-button type="text" v-perms:has="['monitor:cache:remove']">
                     <template #icon><ClearOutlined /></template>
                   </a-button>
                 </a-popconfirm>
@@ -355,6 +358,7 @@ onMounted(() => {
           </a-table>
         </a-card>
       </a-col>
+
       <a-col :lg="8" :md="8" :xs="24">
         <a-card
           title="键名列表"
@@ -426,7 +430,7 @@ onMounted(() => {
                   cancel-text="取消"
                   @confirm="fnCacheKeyClear(record.cacheKey)"
                 >
-                  <a-button type="text">
+                  <a-button type="text" v-perms:has="['monitor:cache:remove']">
                     <template #icon><DeleteOutlined /></template>
                   </a-button>
                 </a-popconfirm>
@@ -435,6 +439,7 @@ onMounted(() => {
           </a-table>
         </a-card>
       </a-col>
+
       <a-col :lg="8" :md="8" :xs="24">
         <a-card
           title="缓存内容"
