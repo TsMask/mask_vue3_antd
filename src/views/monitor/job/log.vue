@@ -151,6 +151,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'createTime',
     align: 'center',
     customRender(opt) {
+      if(+opt.value <= 0) return ''
       return parseDateToStr(+opt.value);
     },
   },
@@ -603,7 +604,6 @@ onMounted(() => {
 
     <!-- 详情框 -->
     <a-modal
-      v-perms:has="['monitor:job:query']"
       width="800px"
       :visible="modalState.visibleByView"
       :title="modalState.title"
@@ -647,7 +647,9 @@ onMounted(() => {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="记录时间" name="createTime">
-              {{ parseDateToStr(+modalState.from.createTime) }}
+              <span v-if="+modalState.from.createTime > 0">
+                {{ parseDateToStr(+modalState.from.createTime) }}
+              </span>
             </a-form-item>
           </a-col>
         </a-row>

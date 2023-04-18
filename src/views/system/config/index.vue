@@ -140,6 +140,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'createTime',
     align: 'center',
     customRender(opt) {
+      if(+opt.value <= 0) return ''
       return parseDateToStr(+opt.value);
     },
   },
@@ -696,7 +697,6 @@ onMounted(() => {
 
     <!-- 详情框 -->
     <a-modal
-      v-perms:has="['system:config:query']"
       width="800px"
       :visible="modalState.visibleByView"
       :title="modalState.title"
@@ -741,7 +741,6 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <a-modal
-      v-perms:has="['system:config:add', 'system:config:edit']"
       width="800px"
       :keyboard="false"
       :mask-closable="false"

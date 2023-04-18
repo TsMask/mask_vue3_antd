@@ -82,7 +82,9 @@ onMounted(() => {
                 :src="state.user.avatar"
                 :alt="state.user.userName"
               ></a-avatar>
-              <div class="info-top-nickname">{{ state.user.nickName }}</div>
+              <div class="info-top-nickname" :title="state.user.nickName">
+                {{ state.user.nickName }}
+              </div>
             </div>
           </template>
           <a-descriptions
@@ -92,25 +94,34 @@ onMounted(() => {
             :column="1"
           >
             <a-descriptions-item label="手机号码">
-              {{ state.user.phonenumber }}
+              {{ state.user.phonenumber || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="用户邮箱">
-              {{ state.user.email }}
+              {{ state.user.email || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="所属部门">
-              {{ state.user.dept?.deptName }}
+              {{ state.user.dept?.deptName || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="拥有岗位">
-              <a-tag v-for="v in state.postGroup" :key="v">{{ v }}</a-tag>
+              <span v-if="state.postGroup.length === 0">-</span>
+              <a-tag v-else v-for="v in state.postGroup" :key="v">
+                {{ v }}
+              </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="拥有角色">
-              <a-tag v-for="v in state.roleGroup" :key="v">{{ v }}</a-tag>
+              <span v-if="state.roleGroup.length === 0">-</span>
+              <a-tag v-else v-for="v in state.roleGroup" :key="v">
+                {{ v }}
+              </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="登录地址">
-              {{ state.user.loginIp }}
+              {{ state.user.loginIp || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="登录时间">
-              {{ parseDateToStr(+state.user.loginDate) }}
+              <span v-if="+state.user.loginDate > 0">
+                {{ parseDateToStr(+state.user.loginDate) }}
+              </span>
+              <span>-</span>
             </a-descriptions-item>
           </a-descriptions>
         </a-card>
@@ -171,6 +182,10 @@ onMounted(() => {
   &-nickname {
     margin-top: 16px;
     font-size: 24px;
+    align-self: flex-start;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
   }
 }
 </style>

@@ -134,6 +134,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'createTime',
     align: 'center',
     customRender(opt) {
+      if(+opt.value <= 0) return ''
       return parseDateToStr(+opt.value);
     },
   },

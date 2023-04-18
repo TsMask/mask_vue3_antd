@@ -151,6 +151,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'operTime',
     align: 'center',
     customRender(opt) {
+      if(+opt.value <= 0) return ''
       return parseDateToStr(+opt.value);
     },
   },
@@ -603,7 +604,6 @@ onMounted(() => {
 
     <!-- 详情框 -->
     <a-modal
-      v-perms:has="['monitor:operlog:query']"
       width="800px"
       :visible="modalState.visibleByView"
       :title="modalState.title"
@@ -649,7 +649,9 @@ onMounted(() => {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="操作时间" name="operTime">
-              {{ parseDateToStr(+modalState.from.operTime) }}
+              <span v-if="+modalState.from.operTime > 0">
+                {{ parseDateToStr(+modalState.from.operTime) }}
+              </span>
             </a-form-item>
           </a-col>
         </a-row>

@@ -166,6 +166,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'loginDate',
     align: 'center',
     customRender(opt) {
+      if(+opt.value <= 0) return ''
       return parseDateToStr(+opt.value);
     },
   },
@@ -951,7 +952,6 @@ onMounted(() => {
 
     <!-- 详情框 -->
     <a-modal
-      v-perms:has="['system:user:query']"
       width="800px"
       :visible="modalState.visibleByView"
       :title="modalState.title"
@@ -966,7 +966,9 @@ onMounted(() => {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="创建时间" name="createTime">
-              {{ parseDateToStr(+modalState.from.createTime) }}
+              <span v-if="+modalState.from.createTime > 0">
+                {{ parseDateToStr(+modalState.from.createTime) }}
+              </span>
             </a-form-item>
           </a-col>
         </a-row>
@@ -978,7 +980,9 @@ onMounted(() => {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="登录时间" name="loginDate">
-              {{ parseDateToStr(+modalState.from.loginDate) }}
+              <span v-if="+modalState.from.loginDate > 0">
+                {{ parseDateToStr(+modalState.from.loginDate) }}
+              </span>
             </a-form-item>
           </a-col>
         </a-row>
@@ -1097,7 +1101,6 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <a-modal
-      v-perms:has="['system:user:add', 'system:user:edit']"
       width="800px"
       :keyboard="false"
       :mask-closable="false"
@@ -1284,7 +1287,6 @@ onMounted(() => {
 
     <!-- 重置密码修改框 -->
     <a-modal
-      v-perms:has="['system:user:resetPwd']"
       width="500px"
       :keyboard="false"
       :mask-closable="false"

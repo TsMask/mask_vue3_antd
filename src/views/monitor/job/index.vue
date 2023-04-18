@@ -843,7 +843,6 @@ onMounted(() => {
 
     <!-- 详情框 -->
     <a-modal
-      v-perms:has="['monitor:job:query']"
       width="800px"
       :visible="modalState.visibleByView"
       :title="modalState.title"
@@ -903,7 +902,9 @@ onMounted(() => {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="创建时间" name="createTime">
-              {{ parseDateToStr(+modalState.from.createTime) }}
+              <span v-if="+modalState.from.createTime > 0">
+                {{ parseDateToStr(+modalState.from.createTime) }}
+              </span>
             </a-form-item>
           </a-col>
         </a-row>
@@ -923,7 +924,6 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <a-modal
-      v-perms:has="['monitor:job:add', 'monitor:job:edit']"
       width="800px"
       :keyboard="false"
       :mask-closable="false"

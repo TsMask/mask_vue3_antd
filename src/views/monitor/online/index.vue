@@ -102,6 +102,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'loginTime',
     align: 'center',
     customRender(opt) {
+      if(+opt.value <= 0) return ''
       return parseDateToStr(+opt.value);
     },
   },

@@ -149,6 +149,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'createTime',
     align: 'center',
     customRender(opt) {
+      if(+opt.value <= 0) return ''
       return parseDateToStr(+opt.value);
     },
   },
@@ -956,7 +957,6 @@ onMounted(() => {
 
     <!-- 详情框 -->
     <a-modal
-      v-perms:has="['system:role:query']"
       width="800px"
       :visible="modalState.visibleByView"
       :title="modalState.title"
@@ -971,7 +971,9 @@ onMounted(() => {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="创建时间" name="createTime">
-              {{ parseDateToStr(+modalState.from.createTime) }}
+              <span v-if="+modalState.from.createTime > 0">
+                {{ parseDateToStr(+modalState.from.createTime) }}
+              </span>
             </a-form-item>
           </a-col>
         </a-row>
@@ -1029,7 +1031,6 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <a-modal
-      v-perms:has="['system:role:add', 'system:role:edit']"
       width="800px"
       :keyboard="false"
       :mask-closable="false"
@@ -1154,7 +1155,6 @@ onMounted(() => {
 
     <!-- 分配角色数据权限修改框 -->
     <a-modal
-      v-perms:has="['system:role:edit']"
       width="800px"
       :keyboard="false"
       :mask-closable="false"
@@ -1173,7 +1173,9 @@ onMounted(() => {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="创建时间" name="createTime">
-              {{ parseDateToStr(+modalState.from.createTime) }}
+              <span v-if="+modalState.from.createTime > 0">
+                {{ parseDateToStr(+modalState.from.createTime) }}
+              </span>
             </a-form-item>
           </a-col>
         </a-row>
