@@ -17,15 +17,33 @@ import {
 
 /**路由构建参数类型 */
 type RouterStore = {
+  /**根路由数据 */
+  rootRouterData: RouteRecordRaw[];
   /**动态路由数据 */
   buildRouterData: RouteRecordRaw[];
 };
 
 const useRouterStore = defineStore('router', {
   state: (): RouterStore => ({
+    rootRouterData: [],
     buildRouterData: [],
   }),
   actions: {
+    /**
+     * 记录初始根节点菜单数据
+     * @param data 初始数据
+     * @returns 初始数据
+     */
+    setRootRouterData(data: RouteRecordRaw[]) {
+      if (this.rootRouterData.length <= 0) {
+        this.rootRouterData = data;
+      }
+      return this.rootRouterData;
+    },
+    /**
+     * 动态路由列表数据生成
+     * @returns 生成的路由菜单
+     */
     async generateRoutes() {
       const res = await getRouters();
       if (res.code === 200 && Array.isArray(res.data)) {

@@ -13,9 +13,9 @@ import useLayoutStore from '@/store/modules/layout';
 import useAppStore from '@/store/modules/app';
 import useRouterStore from '@/store/modules/router';
 import { useRouter } from 'vue-router';
-const { buildRouterData } = useRouterStore();
 const { proConfig, waterMarkContent } = useLayoutStore();
 const { systemName } = useAppStore();
+const routerStore = useRouterStore();
 const router = useRouter();
 
 /**菜单面板 */
@@ -47,12 +47,12 @@ watch(
 );
 
 // 动态路由添加到菜单面板
-if (buildRouterData && buildRouterData.length > 0) {
-  const rootRoute = router.getRoutes().find(item => item.name === 'Root');
+const buildRouterData = routerStore.buildRouterData;
+if (buildRouterData.length > 0) {
+  const rootRoute = router.getRoutes().find(r => r.name === 'Root');
   if (rootRoute) {
-    rootRoute.children = [
-      ...new Set(rootRoute.children.concat(buildRouterData)),
-    ];
+    const children = routerStore.setRootRouterData(rootRoute.children);
+    rootRoute.children = children.concat(buildRouterData);
   }
 }
 const { menuData } = getMenuData(clearMenuItem(router.getRoutes()));
