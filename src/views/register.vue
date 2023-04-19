@@ -225,7 +225,6 @@ onMounted(() => {
           size="large"
           html-type="submit"
           :loading="state.formClick"
-          :disabled="state.formClick"
         >
           注册
         </a-button>

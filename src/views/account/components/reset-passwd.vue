@@ -149,7 +149,6 @@ function fnFinish() {
         type="primary"
         html-type="submit"
         :loading="state.formClick"
-        :disabled="state.formClick"
       >
         提交修改
       </a-button>

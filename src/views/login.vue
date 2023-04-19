@@ -32,7 +32,7 @@ let state = reactive({
     /**账号 */
     username: 'admin',
     /**密码 */
-    password: 'admin@1234',
+    password: 'Admin@1234',
     /**手机号 */
     phonenumber: '',
     /**验证码 */
@@ -335,7 +335,6 @@ onBeforeUnmount(() => {
           size="large"
           html-type="submit"
           :loading="state.fromClick"
-          :disabled="state.fromClick"
         >
           登录
         </a-button>

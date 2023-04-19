@@ -204,7 +204,6 @@ onMounted(() => {
             block
             type="primary"
             html-type="submit"
-            :disabled="stateForm.formClick"
             :loading="stateForm.formClick"
           >
             确认修改
@@ -213,7 +212,6 @@ onMounted(() => {
             type="default"
             @click="fnInitstateForm"
             :disabled="stateForm.formClick"
-            :loading="stateForm.formClick"
           >
             重置
           </a-button>
@@ -231,7 +229,7 @@ onMounted(() => {
             :before-upload="fnBeforeUpload"
             :custom-request="fnUpload"
           >
-            <a-button type="default" :loading="upState" :disabled="upState">
+            <a-button type="default" :loading="upState">
               上传/变更图片
             </a-button>
           </a-upload>
