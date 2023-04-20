@@ -8,8 +8,7 @@ import useLayoutStore from '@/store/modules/layout';
 import useUserStore from '@/store/modules/user';
 import { useRouter } from 'vue-router';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
-
-const { changeVisibleLayoutSetting } = useLayoutStore();
+const layoutStore = useLayoutStore();
 const userStore = useUserStore();
 const router = useRouter();
 
@@ -17,13 +16,13 @@ const router = useRouter();
 function fnClick({ key }: MenuInfo) {
   switch (key) {
     case 'layoutSetting':
-      changeVisibleLayoutSetting();
+      layoutStore.changeVisibleLayoutSetting();
       break;
     case 'profile':
       router.push({ name: 'Profile' });
       break;
     case 'logout':
-      userStore.fnLogOut().finally(()=>router.push({ name: 'Login' }));
+      userStore.fnLogOut().finally(() => router.push({ name: 'Login' }));
       break;
   }
 }
@@ -39,9 +38,15 @@ function fnClick({ key }: MenuInfo) {
           :src="userStore.getAvatar"
           :alt="userStore.userName"
         ></a-avatar>
-        <span class="nick">{{ userStore.nickName }}</span>
+        <span
+          class="nick"
+          :class="
+            layoutStore.getNavTheme === 'dark' ? 'text-dark' : 'text-light'
+          "
+        >
+          {{ userStore.nickName }}
+        </span>
       </div>
-
       <template #overlay>
         <a-menu @click="fnClick">
           <a-menu-item key="profile">
@@ -70,6 +75,12 @@ function fnClick({ key }: MenuInfo) {
 </template>
 
 <style lang="less" scoped>
+.text-dark {
+  color: hsla(0, 0%, 100%, 0.65);
+}
+.text-light {
+  color: rgba(0, 0, 0, 0.85);
+}
 .user {
   display: flex;
   flex-direction: row;
@@ -77,8 +88,13 @@ function fnClick({ key }: MenuInfo) {
   align-items: center;
   cursor: pointer;
   .nick {
-    padding: 0 8px;
+    padding-left: 8px;
+    padding-right: 16px;
     font-size: 16px;
+    width: 164px;
+    text-align: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 }
 </style>
