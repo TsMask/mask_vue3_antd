@@ -32,10 +32,10 @@ import {
 } from '@/api/system/role';
 import { roleMenuTreeSelect, menuTreeSelect } from '@/api/system/menu';
 import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/DateUtils';
+import { parseDateToStr } from '@/utils/date-utils.js';
 import useDictStore from '@/store/modules/dict';
 import { DataNode } from 'ant-design-vue/es/tree';
-import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/ParseTreeUtils';
+import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/parse-tree-utils.js';
 import { hasPermissions } from '@/plugins/AuthUser';
 const { getDict } = useDictStore();
 const route = useRoute();

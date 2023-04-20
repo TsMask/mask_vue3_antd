@@ -8,7 +8,7 @@ import { GlobalFooter } from '@ant-design-vue/pro-layout';
 import { Modal, message } from 'ant-design-vue';
 import { reactive, onMounted, toRaw } from 'vue';
 import { getCaptchaImage, register } from '@/api/login';
-import { regExpPasswd } from '@/utils/RegularUtils';
+import { regExpPasswd } from '@/utils/regular-utils.js';
 import { useRouter } from 'vue-router';
 const router = useRouter();
 const codeImgFall =

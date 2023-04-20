@@ -25,7 +25,7 @@ import {
   updatePost,
 } from '@/api/system/post';
 import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/DateUtils';
+import { parseDateToStr } from '@/utils/date-utils.js';
 import useDictStore from '@/store/modules/dict';
 const { getDict } = useDictStore();
 const route = useRoute();

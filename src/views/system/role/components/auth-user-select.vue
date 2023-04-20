@@ -5,7 +5,7 @@ import { message } from 'ant-design-vue';
 import { SizeType } from 'ant-design-vue/es/config-provider';
 import { ColumnsType } from 'ant-design-vue/es/table';
 import { authUserAllocatedList } from '@/api/system/role';
-import { parseDateToStr } from '@/utils/DateUtils';
+import { parseDateToStr } from '@/utils/date-utils.js';
 import useDictStore from '@/store/modules/dict';
 const { getDict } = useDictStore();
 const emit = defineEmits(['ok', 'cancel', 'update:visible']);

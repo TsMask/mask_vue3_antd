@@ -21,7 +21,7 @@ import {
   authUserCancel,
   authUserSelect,
 } from '@/api/system/role';
-import { parseDateToStr } from '@/utils/DateUtils';
+import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
 const { getDict } = useDictStore();
 const route = useRoute();

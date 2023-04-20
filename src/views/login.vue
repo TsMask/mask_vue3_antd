@@ -11,7 +11,7 @@ import { GlobalFooter } from '@ant-design-vue/pro-layout';
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import useUserStore from '@/store/modules/user';
 import { getCaptchaImage } from '@/api/login';
-import { regExpMobile, validMobile } from '@/utils/RegularUtils';
+import { regExpMobile, validMobile } from '@/utils/regular-utils.js';
 import { useRouter, useRoute } from 'vue-router';
 import { message } from 'ant-design-vue';
 const router = useRouter();

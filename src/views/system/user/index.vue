@@ -31,14 +31,14 @@ import {
 } from '@/api/system/user';
 import { deptTreeSelect } from '@/api/system/dept';
 import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/DateUtils';
+import { parseDateToStr } from '@/utils/date-utils.js';
 import {
   regExpPasswd,
   regExpMobile,
   regExpNick,
   regExpEmail,
   regExpUserName,
-} from '@/utils/RegularUtils';
+} from '@/utils/regular-utils.js';
 import useDictStore from '@/store/modules/dict';
 import useUserStore from '@/store/modules/user';
 import { DataNode } from 'ant-design-vue/es/tree';

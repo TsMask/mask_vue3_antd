@@ -23,10 +23,10 @@ import {
   updateDept,
   listDeptExcludeChild,
 } from '@/api/system/dept';
-import { parseDateToStr } from '@/utils/DateUtils';
-import { regExpMobile, regExpEmail } from '@/utils/RegularUtils';
+import { parseDateToStr } from '@/utils/date-utils.js';
+import { regExpMobile, regExpEmail } from '@/utils/regular-utils.js';
 import useDictStore from '@/store/modules/dict';
-import { parseDataToTree } from '@/utils/ParseTreeUtils';
+import { parseDataToTree } from '@/utils/parse-tree-utils.js';
 const { getDict } = useDictStore();
 const route = useRoute();
 

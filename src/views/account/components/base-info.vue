@@ -2,7 +2,7 @@
 import { Modal, message } from 'ant-design-vue';
 import { onMounted, reactive, ref, toRaw } from 'vue';
 import { updateUserProfile, uploadAvatar } from '@/api/system/user';
-import { regExpEmail, regExpMobile, regExpNick } from '@/utils/RegularUtils';
+import { regExpEmail, regExpMobile, regExpNick } from '@/utils/regular-utils.js';
 import useUserStore from '@/store/modules/user';
 import useDictStore from '@/store/modules/dict';
 import { FileType } from 'ant-design-vue/es/upload/interface';

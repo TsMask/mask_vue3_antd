@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {
-  createFromIconfontCN,
   PlusOutlined,
   FormOutlined,
   ProfileOutlined,
@@ -11,6 +10,7 @@ import {
   DeleteOutlined,
   InfoCircleOutlined,
 } from '@ant-design/icons-vue';
+import IconFont from '@/components/IconFont/index.vue';
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { message, Modal, Form } from 'ant-design-vue';
@@ -24,20 +24,15 @@ import {
   listMenu,
   updateMenu,
 } from '@/api/system/menu';
-import { parseDateToStr } from '@/utils/DateUtils';
+import { parseDateToStr } from '@/utils/date-utils.js';
 import useDictStore from '@/store/modules/dict';
 import {
   parseDataToTree,
   parseDataToTreeExclude,
-} from '@/utils/ParseTreeUtils';
-import { iconFonts, scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
+} from '@/utils/parse-tree-utils.js';
+import { iconFonts } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 const { getDict } = useDictStore();
 const route = useRoute();
-
-/**字体图标加载为组件 */
-const IconFont = createFromIconfontCN({
-  scriptUrl: scriptUrl,
-});
 
 /**字体图标可选择数据 */
 let icons = reactive(iconFonts.map(item => ({ value: item, label: item })));
@@ -152,7 +147,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'createTime',
     align: 'center',
     customRender(opt) {
-      if(+opt.value <= 0) return ''
+      if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
     },
   },

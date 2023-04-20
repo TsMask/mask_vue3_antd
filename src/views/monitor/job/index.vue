@@ -33,7 +33,7 @@ import {
   resetQueueJob,
 } from '@/api/monitor/job';
 import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/DateUtils';
+import { parseDateToStr } from '@/utils/date-utils.js';
 import useDictStore from '@/store/modules/dict';
 import { hasPermissions } from '@/plugins/AuthUser';
 const { getDict } = useDictStore();

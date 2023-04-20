@@ -2,7 +2,7 @@
 import { message } from 'ant-design-vue';
 import { getUserProfile } from '@/api/system/user';
 import { reactive, ref, onMounted } from 'vue';
-import { parseDateToStr } from '@/utils/DateUtils';
+import { parseDateToStr } from '@/utils/date-utils.js';
 import useUserStore from '@/store/modules/user';
 
 /**Tab标签激活 */
@@ -183,6 +183,7 @@ onMounted(() => {
     margin-top: 16px;
     font-size: 24px;
     align-self: flex-start;
+    text-align: center;
     text-overflow: ellipsis;
     overflow: hidden;
     width: 100%;

@@ -13,7 +13,7 @@ import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import { SizeType } from 'ant-design-vue/es/config-provider';
 import { ColumnsType } from 'ant-design-vue/es/table';
 import { forceLogout, listOnline } from '@/api/monitor/online';
-import { parseDateToStr } from '@/utils/DateUtils';
+import { parseDateToStr } from '@/utils/date-utils.js';
 const route = useRoute();
 
 /**路由标题 */

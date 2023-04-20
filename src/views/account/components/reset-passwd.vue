@@ -3,7 +3,7 @@ import { LockOutlined } from '@ant-design/icons-vue';
 import { Modal, message } from 'ant-design-vue';
 import { reactive } from 'vue';
 import { updateUserPwd } from '@/api/system/user';
-import { regExpPasswd } from '@/utils/RegularUtils';
+import { regExpPasswd } from '@/utils/regular-utils.js';
 import useUserStore from '@/store/modules/user';
 import { useRouter } from 'vue-router';
 const { userName, fnLogOut } = useUserStore();
