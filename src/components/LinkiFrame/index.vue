@@ -19,7 +19,7 @@ onMounted(() => {
   if (route.name) {
     iframe.id = route.name.toString();
   }
-  window.onresize = function temp() {
+  window.onresize = () => {
     height.value = document.documentElement.clientHeight - 94.5 + 'px;';
   };
 });
