@@ -70,6 +70,7 @@ declare module '@vue/runtime-core' {
     Day: typeof import('./../components/CronModal/components/Day.vue')['default']
     DictTag: typeof import('./../components/DictTag/index.vue')['default']
     Hour: typeof import('./../components/CronModal/components/Hour.vue')['default']
+    IconFont: typeof import('./../components/IconFont/index.vue')['default']
     LinkiFrame: typeof import('./../components/LinkiFrame/index.vue')['default']
     Minute: typeof import('./../components/CronModal/components/Minute.vue')['default']
     Month: typeof import('./../components/CronModal/components/Month.vue')['default']

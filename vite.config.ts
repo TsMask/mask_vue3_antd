@@ -52,7 +52,7 @@ export default defineConfig(({ mode }) => {
       Components({
         dts: 'src/typings/components.d.ts',
         deep: true,
-        // dirs: ['src/components'],
+        dirs: ['src/components'],
         extensions: ['vue', 'tsx'],
         resolvers: [
           AntDesignVueResolver({
