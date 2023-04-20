@@ -3,7 +3,7 @@ import { getToken, setToken, removeToken } from '@/plugins/AuthToken';
 import defaultAvatar from '@/assets/images/default_avatar.png';
 import { defineStore } from 'pinia';
 import { TOKEN_RESPONSE_FIELD } from '@/constants/TokenConstants';
-import { validHttp } from '@/utils/RegularUtils';
+import { validHttp } from '@/utils/regular-utils';
 
 /**用户信息类型 */
 type UserInfo = {

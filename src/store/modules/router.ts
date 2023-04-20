@@ -17,7 +17,7 @@ import {
 
 /**路由构建参数类型 */
 type RouterStore = {
-  /**根路由数据 */
+  /**初始的根路由数据 */
   rootRouterData: RouteRecordRaw[];
   /**动态路由数据 */
   buildRouterData: RouteRecordRaw[];

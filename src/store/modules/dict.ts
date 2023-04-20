@@ -24,7 +24,7 @@ const useDictStore = defineStore('dict', {
     async getDict(key: string) {
       if (!key) return [];
       let disct = this.dicts.get(key);
-      if (disct === undefined) {
+      if (disct === undefined || disct.length === 0) {
         const res = await getDicts(key);
         if (res.code === 200 && Array.isArray(res.data)) {
           const dictData: DictType[] = res.data.map(d => ({

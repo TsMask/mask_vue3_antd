@@ -63,6 +63,12 @@ const useLayoutStore = defineStore('layout', {
     },
     waterMarkContent: import.meta.env.VITE_APP_SYSTEM_NAME,
   }),
+  getters: {
+    /**获取导航菜单主题-改变文字颜色 */
+    getNavTheme(state) {
+      return state.proConfig.navTheme;
+    },
+  },
   actions: {
     /**改变显示状态 */
     changeVisibleLayoutSetting() {
