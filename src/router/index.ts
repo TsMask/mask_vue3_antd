@@ -12,7 +12,7 @@ import BlankLayout from '../layouts/BlankLayout.vue';
 import LinkLayout from '../layouts/LinkLayout.vue';
 import { encode } from 'js-base64';
 import { getToken } from '@/plugins/AuthToken';
-import { validHttp } from '@/utils/RegularUtils';
+import { validHttp } from '@/utils/regular-utils';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
 import useRouterStore from '@/store/modules/router';
@@ -221,7 +221,10 @@ const router = createRouter({
 /**全局路由-后置守卫 */
 router.afterEach((to, from, failure) => {
   NProgress.done();
-
+  // 设置标题
+  if (to.meta?.title) {
+    useAppStore().setTitle(to.meta.title);
+  }
   // 失败原因
   if (isNavigationFailure(failure)) {
     console.error(`[${to.path}]: ${failure.message}`);
@@ -234,10 +237,6 @@ const WHITE_LIST: string[] = ['/login', '/auth-redirect', '/bind', '/register'];
 /**全局路由-前置守卫 */
 router.beforeEach((to, from, next) => {
   NProgress.start();
-  // 设置标题
-  if (to.meta?.title) {
-    useAppStore().setTitle(to.meta.title);
-  }
   const token = getToken();
 
   // 没有token
