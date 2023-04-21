@@ -178,8 +178,22 @@ function fnTableExpandedRowsChange(expandedRows: (string | number)[]) {
   tableState.expandedRowKeys = expandedRows;
 }
 
+/**初始菜单原始数据 */
+let menuListData: Record<string, any>[] = [];
+
 /**初始上级菜单选择树 */
 let treeDataAll: Record<string, any>[] = [];
+
+/**
+ * 获取选择上级菜单值
+ * @param value 菜单选中值
+ */
+function fnTreeDataChange(value: any) {
+  if (!value) return;
+  const menu = menuListData.find(m => m.menuId === value);
+  if (!menu) return;
+  modalState.from.parentType = menu.menuType;
+}
 
 /**对话框对象信息状态类型 */
 type ModalStateType = {
@@ -218,6 +232,7 @@ let modalState: ModalStateType = reactive({
     status: '0',
     createTime: '0',
     remark: '',
+    parentType: '', // 标记禁止菜单类型添加目录和菜单
   },
   confirmLoading: false,
   treeData: [],
@@ -235,6 +250,7 @@ const modalStateFrom = Form.useForm(
       { required: true, min: 1, max: 200, message: '请正确输入组件路径' },
     ],
     path: [{ required: true, min: 1, max: 200, message: '请正确输入路由地址' }],
+    perms: [{ required: true, min: 1, max: 40, message: '请正确输入权限标识' }],
   })
 );
 
@@ -271,13 +287,15 @@ function fnModalVisibleByVive(menuId: string | number) {
  */
 function fnModalVisibleByEdit(
   menuId?: string | number,
-  parentId?: string | number
+  parentId?: string | number,
+  parentType?: string | number
 ) {
   modalState.treeData = treeDataAll;
   if (!menuId) {
     modalStateFrom.resetFields();
     if (parentId) {
       modalState.from.parentId = parentId;
+      modalState.from.parentType = parentType;
     }
     modalState.title = '添加菜单信息';
     modalState.visibleByEdit = true;
@@ -311,6 +329,10 @@ function fnModalOk() {
   if (modalState.from.menuType === 'C') {
     validateNames.push('component');
     validateNames.push('path');
+    validateNames.push('perms');
+  }
+  if (modalState.from.menuType === 'F') {
+    validateNames.push('perms');
   }
   modalStateFrom
     .validate(validateNames)
@@ -396,6 +418,7 @@ function fnGetList() {
   tableState.loading = true;
   listMenu(toRaw(queryParams)).then(res => {
     if (res.code === 200 && Array.isArray(res.data)) {
+      menuListData = JSON.parse(JSON.stringify(res.data));
       // 初始上级菜单和展开编号key
       if (treeDataAll.length <= 0) {
         // 解除可变副作用
@@ -414,6 +437,7 @@ function fnGetList() {
         expandedRowKeys = [...new Set(data.map(item => item.parentId))];
         fnTableExpandedRowsAll(tableState.expandedRowAll);
       }
+      // 解析生成菜单树结构
       tableState.data = parseDataToTree(res.data, 'menuId');
     }
     tableState.loading = false;
@@ -622,7 +646,11 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="
-                    fnModalVisibleByEdit(undefined, record.menuId)
+                    fnModalVisibleByEdit(
+                      undefined,
+                      record.menuId,
+                      record.menuType
+                    )
                   "
                   v-perms:has="['system:menu:add']"
                 >
@@ -806,6 +834,7 @@ onMounted(() => {
             tree-node-filter-prop="menuName"
             style="width: 100%"
             :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+            @change="fnTreeDataChange"
           >
           </a-tree-select>
         </a-form-item>
@@ -839,13 +868,23 @@ onMounted(() => {
 
         <a-form-item label="菜单类型" name="menuType">
           <a-radio-group v-model:value="modalState.from.menuType">
-            <a-radio key="M" value="M">目录</a-radio>
+            <a-radio
+              key="M"
+              value="M"
+              :disabled="modalState.from.parentType === 'C'"
+            >
+              目录
+            </a-radio>
             <a-radio
               key="C"
               value="C"
-              :disabled="modalState.from.parentId === '0'"
-              >菜单</a-radio
+              :disabled="
+                modalState.from.parentId === '0' ||
+                modalState.from.parentType === 'C'
+              "
             >
+              菜单
+            </a-radio>
             <a-radio key="F" value="F">按钮</a-radio>
           </a-radio-group>
         </a-form-item>
@@ -888,11 +927,11 @@ onMounted(() => {
                   <a-tooltip placement="topLeft">
                     <template #title>
                       <div>
-                        访问的路由地址，如：user
+                        访问的路由地址，如：user、/auth
                         <br />
                         1. 如网络地址需内部访问<br />则以 http(s):// 开头
-                        <br />根节点菜单行为为：当前窗口打开
-                        <br />非根节点菜单行为：内嵌窗口。
+                        <br />菜单行为（根节点）：当前窗口打开
+                        <br />菜单行为（非根节点）：内嵌窗口
                         <br />
                         2. 如网络地址需外部访问<br />则将内部地址选项设为否
                         <br />菜单行为：打开新标签
@@ -988,6 +1027,7 @@ onMounted(() => {
           label="权限标识"
           name="perms"
           v-if="modalState.from.menuType !== 'M'"
+          v-bind="modalStateFrom.validateInfos.perms"
         >
           <a-input
             v-model:value="modalState.from.perms"
