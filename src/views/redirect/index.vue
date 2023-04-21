@@ -6,3 +6,7 @@ const { params, query } = route;
 
 router.replace({ path: `/${params.path}`, query });
 </script>
+
+<template>
+  <span>稍等...</span>
+</template>
