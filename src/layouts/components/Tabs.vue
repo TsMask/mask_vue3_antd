@@ -2,10 +2,9 @@
 import { DownOutlined, ReloadOutlined } from '@ant-design/icons-vue';
 import IconFont from '@/components/IconFont/index.vue';
 import { computed, onMounted, reactive, watch } from 'vue';
-import { RouteLocationNormalizedLoaded, useRoute, useRouter } from 'vue-router';
+import { RouteLocationNormalizedLoaded, useRouter } from 'vue-router';
 import useTabsStore from '@/store/modules/tabs';
 const tabsStore = useTabsStore();
-const route = useRoute();
 const router = useRouter();
 
 /**标签属性状态 */
@@ -25,6 +24,7 @@ let tabLen = computed(() => tabsStore.getTabs.length);
  */
 function fnTabMenu(key: string | number) {
   console.log(key);
+  const route = router.currentRoute.value;
   // 刷新当前
   if (key === 'reload') {
     tabsStore.removeCache(route.path);
@@ -70,16 +70,24 @@ function fnTabClose(path: string) {
   // 获取当前项和最后项下标
   const tabIndex = tabsStore.getTabs.findIndex(tab => tab.path === path);
   const lastIndex = tabLen.value - 1;
-  // 移除标签
-  tabsStore.remove(path);
+
+  // 只有一项默认跳首页
   if (lastIndex === 0) {
-    // 只有一项默认跳首页
     router.push('/index');
-  } else if (tabIndex <= lastIndex) {
-    // 默认跳前一项
+  }
+  // 关闭当期标签，操作第一项跳后一项
+  if (path === tabState.activeKey && tabIndex === 0) {
+    const tab = tabsStore.getTabs[tabIndex + 1];
+    router.push(tab.path);
+  }
+  // 关闭当期标签，默认跳前一项
+  if (path === tabState.activeKey && tabIndex <= lastIndex) {
     const tab = tabsStore.getTabs[tabIndex - 1];
     router.push(tab.path);
   }
+
+  // 移除标签
+  tabsStore.remove(path);
 }
 
 /**
@@ -87,21 +95,30 @@ function fnTabClose(path: string) {
  * @param raw 当前路由
  */
 function fnTabAdd(raw: RouteLocationNormalizedLoaded) {
+  // 刷新重定向不记录
   if (raw.path.startsWith('/redirect')) return;
   const name = raw.name && raw.name.toString();
   if (!name) return;
-  tabsStore.add({
-    path: raw.path,
-    name: name,
-    title: raw.meta.title || '-',
-    icon: raw.meta.icon || '#',
-    cache: Boolean(raw.meta.cache),
-  });
+  // 新增到当期标签后面打开，获取当期标签下标
+  const tabIndex = tabsStore.getTabs.findIndex(
+    tab => tab.path === tabState.activeKey
+  );
+  tabsStore.add(
+    {
+      path: raw.path,
+      name: name,
+      title: raw.meta.title || '-',
+      icon: raw.meta.icon || '#',
+      cache: Boolean(raw.meta.cache),
+    },
+    tabIndex + 1
+  );
+  // 设置激活项
   tabState.activeKey = raw.path;
 }
 
 /**监听当前路由添加到导航标签列表 */
-watch(route, v => fnTabAdd(v), { immediate: true });
+watch(router.currentRoute, v => fnTabAdd(v), { immediate: true });
 
 /**计算侧边栏的宽度，不然导致左边的样式会出问题 */
 onMounted(() => {
