@@ -67,19 +67,19 @@ const total = computed(() => {
 
 const next = () => {
   router.push({
-    name: 'DynamicMatch',
+    name: 'dynamic-match',
     params: { id: currentId.value + 1 },
   });
 };
 const prev = () => {
   router.push({
-    name: 'DynamicMatch',
+    name: 'dynamic-match',
     params: { id: currentId.value > 1 ? currentId.value - 1 : 1 },
   });
 };
 const handlePageChange = (currentPage: number) => {
   router.push({
-    name: 'DynamicMatch',
+    name: 'dynamic-match',
     params: { id: currentPage },
   });
 };
