@@ -151,7 +151,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'operTime',
     align: 'center',
     customRender(opt) {
-      if(+opt.value <= 0) return ''
+      if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
     },
   },
