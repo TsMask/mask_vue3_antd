@@ -37,8 +37,8 @@ const constantRoutes: RouteRecordRaw[] = [
     children: [
       {
         path: '/index',
-        name: 'Index',
-        meta: { title: '首页', icon: 'icon-pcduan' },
+        name: 'index',
+        meta: { title: '首页', icon: 'icon-pcduan', cache: true },
         component: () => import('@/views/index.vue'),
       },
       {
@@ -61,38 +61,38 @@ const constantRoutes: RouteRecordRaw[] = [
       },
       {
         path: '/domes',
-        name: 'Domes',
+        name: 'domes',
         meta: {
           title: '示例目录',
           icon: 'icon-zhizuoliucheng',
         },
         component: BlankLayout,
-        redirect: () => ({ name: 'PageInfo' }),
+        redirect: () => ({ name: 'page-info' }),
         children: [
           {
             path: 'page-info',
-            name: 'PageInfo',
+            name: 'page-info',
             meta: { title: '页面信息', icon: 'icon-huifu' },
-            component: () => import('../views/domes/PageInfo.vue'),
+            component: () => import('../views/domes/page-info.vue'),
           },
           {
             path: 'page-typography',
-            name: 'PageTypography',
+            name: 'page-typography',
             meta: { title: '文本信息', icon: 'icon-huizhiguize' },
-            component: () => import('../views/domes/PageTypography.vue'),
+            component: () => import('../views/domes/page-typography.vue'),
           },
           {
             path: 'dynamic-match/:id(\\d+)',
-            name: 'DynamicMatch',
+            name: 'dynamic-match',
             // 路由 path 默认参数再 meta.params 里
-            meta: { title: '动态参数页面', params: { id: 1 } },
-            component: () => import('../views/domes/DynamicMatch.vue'),
+            meta: { title: '动态参数页面', params: { id: 1 }, cache: true },
+            component: () => import('../views/domes/dynamic-match.vue'),
           },
           {
             path: 'disabled',
-            name: 'Disabled',
+            name: 'disabled',
             meta: { title: '禁止点击', disabled: true },
-            component: () => import('../views/domes/PageInfo.vue'),
+            component: () => {},
           },
           {
             path: 'https://github.com/TsMask',
@@ -138,23 +138,23 @@ const constantRoutes: RouteRecordRaw[] = [
       },
       {
         path: '/account',
-        name: 'Account',
+        name: 'account',
         meta: {
           title: '个人中心',
         },
         component: BlankLayout,
-        redirect: () => ({ name: 'Profile' }),
+        redirect: '/account/profile',
         children: [
           {
             path: 'profile',
-            name: 'Profile',
+            name: 'profile',
             meta: { title: '个人信息' },
             component: () => import('@/views/account/profile.vue'),
           },
           {
             path: 'settings',
-            name: 'Settings',
-            meta: { title: '个人设置' },
+            name: 'settings',
+            meta: { title: '个人设置', cache: true },
             component: () => import('@/views/account/settings.vue'),
           },
         ],
@@ -254,7 +254,7 @@ router.beforeEach((to, from, next) => {
   if (token) {
     // 防止重复访问登录页面
     if (to.path === '/login') {
-      next({ name: 'Index' });
+      next('/index');
     } else {
       // 判断当前用户是否有角色信息
       const user = useUserStore();
@@ -281,7 +281,7 @@ router.beforeEach((to, from, next) => {
           .catch(e => {
             console.error(`[${to.path}]: ${e.message}`);
             user.fnLogOut().finally(() => {
-              next({ name: 'Login' });
+              next('/login');
             });
           });
       } else {

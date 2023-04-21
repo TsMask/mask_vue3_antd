@@ -2,6 +2,7 @@
 import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import RightContent from './components/RightContent.vue';
 import LayoutSetting from './components/LayoutSetting.vue';
+import Tabs from './components/Tabs.vue';
 import {
   GlobalFooter,
   WaterMark,
@@ -12,10 +13,12 @@ import { computed, reactive, watch } from 'vue';
 import useLayoutStore from '@/store/modules/layout';
 import useAppStore from '@/store/modules/app';
 import useRouterStore from '@/store/modules/router';
+import useTabsStore from '@/store/modules/tabs';
 import { useRouter } from 'vue-router';
 const { proConfig, waterMarkContent } = useLayoutStore();
 const { systemName } = useAppStore();
 const routerStore = useRouterStore();
+const tabsStore = useTabsStore();
 const router = useRouter();
 
 /**菜单面板 */
@@ -65,11 +68,26 @@ const breadcrumb = computed(() => {
     .map(item => {
       return {
         path: item.path,
-        name: item.name,
+        name: item.name || '-',
         title: item.meta.title || '-',
       };
     });
 });
+
+/**
+ * 给页面组件设置路由名称
+ *
+ * 路由名称设为缓存key
+ * @param component 页面组件
+ * @param name 路由名称
+ */
+function fnComponentSetName(component: any, name: any = '-') {
+  if (component) {
+    component.type.name = name;
+    delete component.type.__name;
+  }
+  return component;
+}
 </script>
 
 <template>
@@ -86,7 +104,7 @@ const breadcrumb = computed(() => {
     >
       <!--插槽-菜单头-->
       <template #menuHeaderRender>
-        <router-link :to="{ name: 'Index' }">
+        <router-link to="/index">
           <img class="logo" src="@/assets/logo.png" />
           <h1>{{ systemName }}</h1>
         </router-link>
@@ -101,7 +119,7 @@ const breadcrumb = computed(() => {
         <LayoutSetting />
       </template>
 
-      <!--页面路由导航面包屑-->
+      <!--插槽-页面路由导航面包屑-->
       <template #breadcrumbRender="{ route, params, routes }">
         <span v-if="routes.indexOf(route) === routes.length - 1">
           {{ route.title }}
@@ -111,16 +129,22 @@ const breadcrumb = computed(() => {
         </router-link>
       </template>
 
-      <!--页面视图-->
+      <!--导航标签栏-->
+      <Tabs />
+      
+      <!--内容页面视图-->
       <RouterView v-slot="{ Component, route }">
         <transition name="slide-left" mode="out-in">
-          <div :key="route.name || 0">
-            <component :is="Component" :key="route.path" />
-          </div>
+          <KeepAlive :include="tabsStore.getCaches">
+            <component
+              :is="fnComponentSetName(Component, route.name)"
+              :key="route.path"
+            />
+          </KeepAlive>
         </transition>
       </RouterView>
 
-      <!--插槽-底部-->
+      <!--插槽-内容底部-->
       <template #footerRender>
         <GlobalFooter
           :links="[
