@@ -24,7 +24,9 @@ import {
 import { getJob } from '@/api/monitor/job';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils.js';
+import useTabsStore from '@/store/modules/tabs';
 import useDictStore from '@/store/modules/dict';
+const tabsStore = useTabsStore();
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
@@ -112,7 +114,7 @@ let tableState: TabeStateType = reactive({
   loading: false,
   size: 'middle',
   striped: false,
-  seached: false,
+  seached: true,
   data: [],
   selectedRowKeys: [],
 });
@@ -349,8 +351,9 @@ function fnExportList() {
 
 /**关闭跳转 */
 function fnClose() {
-  // 任务管理
-  router.push('/monitor/job');
+  const to = tabsStore.tabClose(route.path);
+  if (!to) return;
+  router.push(to);
 }
 
 /**查询调度日志列表 */

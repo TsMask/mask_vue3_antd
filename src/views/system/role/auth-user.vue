@@ -22,13 +22,16 @@ import {
   authUserSelect,
 } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
+import useTabsStore from '@/store/modules/tabs';
 import useDictStore from '@/store/modules/dict';
+const tabsStore = useTabsStore();
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
 
 // 获取地址栏参数
 const roleId = route.params && (route.params.roleId as string);
+const roleName = route.query && (route.query.roleName as string);
 
 /**字典数据 */
 let dict: {
@@ -91,7 +94,7 @@ let tableState: TabeStateType = reactive({
   loading: false,
   size: 'middle',
   striped: false,
-  seached: false,
+  seached: true,
   data: [],
   selectedRowKeys: [],
 });
@@ -134,7 +137,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'createTime',
     align: 'center',
     customRender(opt) {
-      if(+opt.value <= 0) return ''
+      if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
     },
   },
@@ -275,8 +278,9 @@ function fnRecordDelete(userId: string | number) {
 
 /**关闭跳转 */
 function fnClose() {
-  // 角色管理
-  router.push('/system/role');
+  const to = tabsStore.tabClose(route.path);
+  if (!to) return;
+  router.push(to);
 }
 
 /**查询角色已授权用户列表 */
@@ -318,6 +322,15 @@ onMounted(() => {
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="角色名称" name="roleName">
+              <a-input
+                :value="roleName"
+                disabled
+                placeholder="请输入角色名称"
+              ></a-input>
+            </a-form-item>
+          </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="用户名称" name="userName">
               <a-input

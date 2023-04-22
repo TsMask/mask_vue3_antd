@@ -28,7 +28,9 @@ import {
 import { getDictOptionselect, getType } from '@/api/system/dict/type';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils.js';
+import useTabsStore from '@/store/modules/tabs';
 import useDictStore from '@/store/modules/dict';
+const tabsStore = useTabsStore();
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
@@ -127,7 +129,7 @@ let tableState: TabeStateType = reactive({
   loading: false,
   size: 'middle',
   striped: false,
-  seached: false,
+  seached: true,
   data: [],
   selectedRowKeys: [],
 });
@@ -432,8 +434,9 @@ function fnExportList() {
 
 /**关闭跳转 */
 function fnClose() {
-  // 字典管理
-  router.push('/system/dict');
+  const to = tabsStore.tabClose(route.path);
+  if (!to) return;
+  router.push(to);
 }
 
 /**查询字典数据列表 */
