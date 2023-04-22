@@ -1,5 +1,5 @@
 <template>
-  <page-container :title="route.meta.title">
+  <page-container :title="title">
     <template #content>
       <a-descriptions size="small" :column="2">
         <a-descriptions-item label="创建人">张三</a-descriptions-item>
@@ -8,7 +8,9 @@
         </a-descriptions-item>
         <a-descriptions-item label="创建时间">2017-01-10</a-descriptions-item>
         <a-descriptions-item label="更新时间">2017-10-10</a-descriptions-item>
-        <a-descriptions-item label="备注">中国浙江省杭州市西湖区古翠路</a-descriptions-item>
+        <a-descriptions-item label="备注">
+          中国浙江省杭州市西湖区古翠路
+        </a-descriptions-item>
       </a-descriptions>
     </template>
     <template #extra>
@@ -47,7 +49,10 @@
 
 <script setup lang="ts">
 import { LikeOutlined } from '@ant-design/icons-vue';
+import { ref } from 'vue';
 import { useRoute } from 'vue-router';
-
 const route = useRoute();
+
+/**路由标题 */
+let title = ref<string>(route.meta.title ?? '标题');
 </script>

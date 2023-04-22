@@ -54,9 +54,10 @@ import { useRoute, useRouter } from 'vue-router';
 const route = useRoute();
 const router = useRouter();
 
-const currentId = computed(() =>
-  Number.parseInt(route.params.id as string, 10)
-);
+const currentId = computed(() => {
+  let id = route.params && (route.params.id as string);
+  return Number.parseInt(id as string, 10) || 1;
+});
 const total = computed(() => {
   const v = currentId.value * 20;
   if (v >= Number.MAX_SAFE_INTEGER) {
@@ -67,19 +68,19 @@ const total = computed(() => {
 
 const next = () => {
   router.push({
-    name: 'dynamic-match',
+    name: 'DynamicMatch',
     params: { id: currentId.value + 1 },
   });
 };
 const prev = () => {
   router.push({
-    name: 'dynamic-match',
+    name: 'DynamicMatch',
     params: { id: currentId.value > 1 ? currentId.value - 1 : 1 },
   });
 };
 const handlePageChange = (currentPage: number) => {
   router.push({
-    name: 'dynamic-match',
+    name: 'DynamicMatch',
     params: { id: currentPage },
   });
 };

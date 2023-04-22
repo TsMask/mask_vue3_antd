@@ -79,7 +79,7 @@ type TabeStateType = {
 /**表格状态 */
 let tableState: TabeStateType = reactive({
   loading: false,
-  size: 'middle',
+  size: 'small',
   data: [],
   selectedRowKeys: [],
 });
@@ -122,7 +122,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'createTime',
     align: 'center',
     customRender(opt) {
-      if(+opt.value <= 0) return ''
+      if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
     },
   },
