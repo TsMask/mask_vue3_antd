@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router';
-const route = useRoute();
+import { useRouter } from 'vue-router';
 const router = useRouter();
-const { params, query } = route;
+const { params, query } = router.currentRoute.value;
 
 router.replace({ path: `/${params.path}`, query });
 </script>
