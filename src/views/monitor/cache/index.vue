@@ -300,7 +300,7 @@ onMounted(() => {
             :loading="cacheNameTable.loading"
             :row-selection="{
               type: 'radio',
-              onChange: selectedRowKeys => fnCacheKeyList(selectedRowKeys[0] as string),
+              onChange: (selectedRowKeys: (string|number)[]) => fnCacheKeyList(selectedRowKeys[0] as string),
             }"
             :pagination="false"
           >
@@ -381,7 +381,7 @@ onMounted(() => {
             :loading="cacheKeyTable.loading"
             :row-selection="{
               type: 'radio',
-              onChange: selectedRowKeys => fnCacheKeyInfo(selectedRowKeys[0] as string),
+              onChange: (selectedRowKeys: (string|number)[]) => fnCacheKeyInfo(selectedRowKeys[0] as string),
             }"
             :pagination="false"
           >

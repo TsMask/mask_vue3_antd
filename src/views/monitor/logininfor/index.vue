@@ -198,7 +198,10 @@ function fnTableStriped(_record: unknown, index: number) {
 }
 
 /**表格多选 */
-function fnTableSelectedRows(rows: Record<string, string>[]) {
+function fnTableSelectedRows(
+  _: (string | number)[],
+  rows: Record<string, string>[]
+) {
   tableState.selectedRowKeys = rows.map(item => item.infoId);
   // 针对单个用户名称解锁
   if (rows.length === 1) {
@@ -543,7 +546,7 @@ onMounted(() => {
         :pagination="tablePagination"
         :row-selection="{
           type: 'checkbox',
-          onChange: (_, rows) => fnTableSelectedRows(rows),
+          onChange: fnTableSelectedRows,
         }"
       >
         <template #bodyCell="{ column, record }">

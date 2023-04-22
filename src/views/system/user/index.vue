@@ -166,7 +166,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'loginDate',
     align: 'center',
     customRender(opt) {
-      if(+opt.value <= 0) return ''
+      if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
     },
   },
@@ -876,7 +876,7 @@ onMounted(() => {
         :scroll="{ x: true }"
         :row-selection="{
           type: 'checkbox',
-          onChange: selectedRowKeys => fnTableSelectedRowKeys(selectedRowKeys),
+          onChange: fnTableSelectedRowKeys,
         }"
       >
         <template #bodyCell="{ column, record }">

@@ -570,7 +570,7 @@ onMounted(() => {
         :pagination="tablePagination"
         :row-selection="{
           type: 'checkbox',
-          onChange: keys => fnTableSelectedRowKeys(keys),
+          onChange: fnTableSelectedRowKeys,
         }"
       >
         <template #bodyCell="{ column, record }">

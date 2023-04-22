@@ -153,7 +153,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'createTime',
     align: 'center',
     customRender(opt) {
-      if(+opt.value <= 0) return ''
+      if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
     },
   },
@@ -574,7 +574,7 @@ onMounted(() => {
         :pagination="tablePagination"
         :row-selection="{
           type: 'checkbox',
-          onChange: selectedRowKeys => fnTableSelectedRowKeys(selectedRowKeys),
+          onChange: fnTableSelectedRowKeys,
         }"
       >
         <template #bodyCell="{ column, record }">
