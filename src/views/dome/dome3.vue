@@ -14,7 +14,7 @@
       <a-tag color="pink">Tag2</a-tag>
     </template>
     <a-card title="Info">
-      <p v-for="i in 50" :key="i">
+      <p v-for="i in list" :key="i">
         text block...
         <a-tag>{{ i }}</a-tag>
       </p>
@@ -22,4 +22,8 @@
   </page-container>
 </template>
 
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+import { ref } from 'vue';
+
+const list = ref<number>(50);
+</script>
