@@ -53,7 +53,7 @@ function fnTo(type: string) {
 
     <a-row :gutter="16">
       <a-col :lg="16" :md="16" :xs="24">
-        <a-card title="项目简介">
+        <a-card title="项目简介" style="margin-bottom: 16px">
           <a-typography>
             <a-typography-paragraph>
               <a-typography-text mark> Vue3 </a-typography-text>
@@ -70,7 +70,7 @@ function fnTo(type: string) {
         </a-card>
       </a-col>
       <a-col :lg="8" :md="8" :xs="24">
-        <a-card title="快速开始">
+        <a-card title="快速开始" style="margin-bottom: 16px">
           <a-row :gutter="16">
             <a-col :lg="6" :md="12" :xs="24">
               <a-button

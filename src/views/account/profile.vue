@@ -127,7 +127,7 @@ onMounted(() => {
         </a-card>
       </a-col>
       <a-col :lg="18" :md="18" :xs="24">
-        <a-card>
+        <a-card style="margin-top: 16px">
           <a-tabs
             tab-position="top"
             :destroy-inactive-tab-pane="true"
