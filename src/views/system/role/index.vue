@@ -544,32 +544,42 @@ function fnRecordDataScope(roleId: string | number) {
     message.error(`角色记录存在错误`, 2);
     return;
   }
+  if (modalState.confirmLoading) return;
+  const hide = message.loading('正在打开...', 0);
+  modalState.confirmLoading = true;
   // 查询角色详细同时根据角色ID查询部门树结构
-  Promise.all([getRole(roleId), roleDeptTreeSelect(roleId)]).then(resArr => {
-    if (resArr[0].code === 200) {
-      modalState.from = Object.assign(modalState.from, resArr[0].data);
-      if (resArr[1].code === 200 && Array.isArray(resArr[1].depts)) {
-        deptTree.checkedKeys = parseTreeKeys(resArr[1].depts, 'id');
-        deptTree.expandedKeys = parseTreeNodeKeys(resArr[1].depts, 'id');
-        deptTree.treeData = resArr[1].depts;
-        modalState.deptTree.treeData = resArr[1].depts;
-        modalState.deptTree.checkedKeys = resArr[1].checkedKeys;
-        modalState.from.deptIds = resArr[1].checkedKeys;
+  Promise.all([getRole(roleId), roleDeptTreeSelect(roleId)])
+    .then(resArr => {
+      if (resArr[0].code === 200) {
+        modalState.from = Object.assign(modalState.from, resArr[0].data);
+        if (resArr[1].code === 200 && Array.isArray(resArr[1].depts)) {
+          deptTree.checkedKeys = parseTreeKeys(resArr[1].depts, 'id');
+          deptTree.expandedKeys = parseTreeNodeKeys(resArr[1].depts, 'id');
+          deptTree.treeData = resArr[1].depts;
+          modalState.deptTree.treeData = resArr[1].depts;
+          modalState.deptTree.checkedKeys = resArr[1].checkedKeys;
+          modalState.from.deptIds = resArr[1].checkedKeys;
+        }
+        modalState.title = '分配数据权限';
+        modalState.visibleByDataScope = true;
+      } else {
+        message.error(`获取角色信息失败`, 2);
       }
-      modalState.title = '分配数据权限';
-      modalState.visibleByDataScope = true;
-    } else {
-      message.error(`获取角色信息失败`, 2);
-    }
-  });
+    })
+    .finally(() => {
+      modalState.confirmLoading = false;
+      hide();
+    });
 }
 
 /**
  * 角色分配用户跳转
  * @param roleId 角色编号ID
  */
-function fnRecordAuthUser(roleId: string | number) {
-  router.push(`/system/role/inline/auth-user/${roleId}`);
+function fnRecordAuthUser(row: Record<string, string>) {
+  router.push(
+    `/system/role/inline/auth-user/${row.roleId}?roleName=${row.roleName}`
+  );
 }
 
 /**
@@ -950,7 +960,7 @@ onMounted(() => {
                 <template #title>分配用户</template>
                 <a-button
                   type="link"
-                  @click.prevent="fnRecordAuthUser(record.roleId)"
+                  @click.prevent="fnRecordAuthUser(record)"
                   v-perms:has="['system:role:auth']"
                 >
                   <template #icon><TeamOutlined /></template>
