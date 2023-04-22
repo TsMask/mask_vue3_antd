@@ -37,60 +37,60 @@ const constantRoutes: RouteRecordRaw[] = [
     children: [
       {
         path: '/index',
-        name: 'index',
+        name: 'Index',
         meta: { title: '首页', icon: 'icon-pcduan', cache: true },
         component: () => import('@/views/index.vue'),
       },
       {
         path: '/dome1',
-        name: 'dome1',
+        name: 'Dome1',
         meta: { title: '示例一', icon: 'icon-ios' },
         component: () => import('@/views/dome/dome1.vue'),
       },
       {
         path: '/dome2',
-        name: 'dome2',
+        name: 'Dome2',
         meta: { title: '示例二', icon: 'icon-anzhuo' },
         component: () => import('@/views/dome/dome2.vue'),
       },
       {
         path: '/dome3',
-        name: 'dome3',
+        name: 'Dome3',
         meta: { title: '示例三', icon: 'icon-qunzhu' },
         component: () => import('@/views/dome/dome3.vue'),
       },
       {
         path: '/domes',
-        name: 'domes',
+        name: 'Domes',
         meta: {
           title: '示例目录',
           icon: 'icon-zhizuoliucheng',
         },
         component: BlankLayout,
-        redirect: () => ({ name: 'page-info' }),
+        redirect: () => ({ name: 'PageInfo' }),
         children: [
           {
             path: 'page-info',
-            name: 'page-info',
+            name: 'PageInfo',
             meta: { title: '页面信息', icon: 'icon-huifu' },
             component: () => import('../views/domes/page-info.vue'),
           },
           {
             path: 'page-typography',
-            name: 'page-typography',
+            name: 'PageTypography',
             meta: { title: '文本信息', icon: 'icon-huizhiguize' },
             component: () => import('../views/domes/page-typography.vue'),
           },
           {
             path: 'dynamic-match/:id(\\d+)',
-            name: 'dynamic-match',
+            name: 'DynamicMatch',
             // 路由 path 默认参数再 meta.params 里
             meta: { title: '动态参数页面', params: { id: 1 }, cache: true },
             component: () => import('../views/domes/dynamic-match.vue'),
           },
           {
             path: 'disabled',
-            name: 'disabled',
+            name: 'Disabled',
             meta: { title: '禁止点击', disabled: true },
             component: () => {},
           },
@@ -138,7 +138,7 @@ const constantRoutes: RouteRecordRaw[] = [
       },
       {
         path: '/account',
-        name: 'account',
+        name: 'Account',
         meta: {
           title: '个人中心',
         },
@@ -147,13 +147,13 @@ const constantRoutes: RouteRecordRaw[] = [
         children: [
           {
             path: 'profile',
-            name: 'profile',
+            name: 'Profile',
             meta: { title: '个人信息' },
             component: () => import('@/views/account/profile.vue'),
           },
           {
             path: 'settings',
-            name: 'settings',
+            name: 'Settings',
             meta: { title: '个人设置', cache: true },
             component: () => import('@/views/account/settings.vue'),
           },
