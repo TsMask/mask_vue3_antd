@@ -81,10 +81,22 @@ const breadcrumb = computed(() => {
  * @param component 页面组件
  * @param name 路由名称
  */
-function fnComponentSetName(component: any, name: any = '-') {
-  if (component) {
-    component.type.name = name;
-    delete component.type.__name;
+function fnComponentSetName(component: any, to: any) {
+  if (component.type) {
+    // 通过路由取最后匹配的，确认是缓存的才处理
+    const matched = to.matched.concat();
+    const lastRoute = matched[matched.length - 1];
+    if (!lastRoute.meta.cache) return component;
+    const routeName = lastRoute.name;
+    const routeDef = lastRoute.components.default;
+    // 有命名但不是跳转的路由文件
+    const __name = component.type.__name;
+    if (__name && __name !== routeName) {
+      routeDef.name = routeName;
+      routeDef.__name = routeName;
+      Reflect.set(component, 'type', routeDef);
+      return component;
+    }
   }
   return component;
 }
@@ -104,10 +116,10 @@ function fnComponentSetName(component: any, name: any = '-') {
     >
       <!--插槽-菜单头-->
       <template #menuHeaderRender>
-        <router-link to="/index">
+        <RouterLink to="/index">
           <img class="logo" src="@/assets/logo.png" />
           <h1>{{ systemName }}</h1>
-        </router-link>
+        </RouterLink>
       </template>
 
       <!--插槽-顶部左侧-->
@@ -124,20 +136,18 @@ function fnComponentSetName(component: any, name: any = '-') {
         <span v-if="routes.indexOf(route) === routes.length - 1">
           {{ route.title }}
         </span>
-        <router-link v-else :to="{ path: route.path, params }">
+        <RouterLink v-else :to="{ path: route.path, params }">
           {{ route.title }}
-        </router-link>
+        </RouterLink>
       </template>
 
-      <!--导航标签栏-->
-      <Tabs />
-      
       <!--内容页面视图-->
       <RouterView v-slot="{ Component, route }">
+        <Tabs />
         <transition name="slide-left" mode="out-in">
           <KeepAlive :include="tabsStore.getCaches">
             <component
-              :is="fnComponentSetName(Component, route.name)"
+              :is="fnComponentSetName(Component, route)"
               :key="route.path"
             />
           </KeepAlive>
