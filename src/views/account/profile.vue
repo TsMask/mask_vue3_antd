@@ -72,7 +72,7 @@ onMounted(() => {
   <page-container>
     <a-row :gutter="16">
       <a-col :lg="6" :md="6" :xs="24">
-        <a-card :body-style="{ padding: '0px' }">
+        <a-card :body-style="{ padding: '0px' }" style="margin-bottom: 16px">
           <template #title>
             <div class="info-top">
               <div class="info-top-no">No：{{ state.user.userId }}</div>
@@ -127,7 +127,7 @@ onMounted(() => {
         </a-card>
       </a-col>
       <a-col :lg="18" :md="18" :xs="24">
-        <a-card style="margin-top: 16px">
+        <a-card>
           <a-tabs
             tab-position="top"
             :destroy-inactive-tab-pane="true"

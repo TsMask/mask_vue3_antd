@@ -90,14 +90,12 @@ onMounted(() => {
   if (element && element.length > 0) {
     // 获取初始宽度
     const { width } = Reflect.get(element[0], 'style');
-    console.log(101, width);
     tabWidth.value = width;
     // 监听DOM中style属性变化，这属于全局的监听没做销毁
     let MutationObserver = window.MutationObserver;
     new MutationObserver(callback => {
       if (callback && callback.length > 0) {
         const { width } = Reflect.get(callback[0].target, 'style');
-        console.log(108, width);
         tabWidth.value = width;
       }
     }).observe(element[0], {
@@ -146,7 +144,7 @@ onMounted(() => {
 
       <template #rightExtra>
         <a-space :size="8" align="end">
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>刷新当前</template>
             <a-button
               type="ghost"
@@ -157,7 +155,7 @@ onMounted(() => {
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>更多选项</template>
             <a-dropdown :trigger="['click', 'hover']" placement="bottomRight">
               <a-button type="ghost" shape="circle" size="small">

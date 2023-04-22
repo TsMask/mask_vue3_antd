@@ -91,8 +91,8 @@ function fnClick({ key }: MenuInfo) {
     padding-left: 8px;
     padding-right: 16px;
     font-size: 16px;
-    width: 164px;
-    text-align: center;
+    max-width: 164px;
+    text-align: start;
     text-overflow: ellipsis;
     overflow: hidden;
   }
