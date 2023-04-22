@@ -1,33 +1,33 @@
 <script lang="ts" setup>
 import { DownOutlined, ReloadOutlined } from '@ant-design/icons-vue';
 import IconFont from '@/components/IconFont/index.vue';
-import { computed, onMounted, reactive, watch } from 'vue';
-import { RouteLocationNormalizedLoaded, useRouter } from 'vue-router';
+import { computed, onMounted, onUpdated, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import useLayoutStore from '@/store/modules/layout';
 import useTabsStore from '@/store/modules/tabs';
+const layoutStore = useLayoutStore();
 const tabsStore = useTabsStore();
 const router = useRouter();
 
-/**标签属性状态 */
-let tabState = reactive({
-  /**标签栏宽度 */
-  width: '100%',
-  /**标签激活项 */
-  activeKey: '',
-});
+/**标签栏宽度 */
+let tabWidth = ref<string>('100%');
 
 /**导航标签项列表长度 */
 let tabLen = computed(() => tabsStore.getTabs.length);
+
+/**是否固定顶部栏 */
+let fixedHeader = computed(() => layoutStore.proConfig.fixedHeader);
 
 /**
  * 标签更多菜单项
  * @param key 菜单key
  */
 function fnTabMenu(key: string | number) {
-  console.log(key);
   const route = router.currentRoute.value;
   // 刷新当前
   if (key === 'reload') {
-    tabsStore.removeCache(route.path);
+    const name = (route.name && route.name.toString()) || '';
+    tabsStore.cacheDelete(name);
     router.replace({
       path: `/redirect${route.path}`,
       query: route.query,
@@ -35,19 +35,26 @@ function fnTabMenu(key: string | number) {
   }
   // 关闭当前
   if (key === 'current') {
-    fnTabClose(route.path);
+    const to = tabsStore.tabClose(route.path);
+    if (!to) return;
+    // 避免重复跳转
+    if (route.path === to.path) {
+      tabsStore.tabOpen(route);
+    } else {
+      router.push(to);
+    }
   }
   // 关闭其他
   if (key === 'other') {
     tabsStore.clear();
-    fnTabAdd(route);
+    tabsStore.tabOpen(route);
   }
   // 关闭全部
   if (key === 'all') {
     tabsStore.clear();
     // 已经是首页的避免重复跳转，默认返回首页
     if (route.path === '/index') {
-      fnTabAdd(route);
+      tabsStore.tabOpen(route);
     } else {
       router.push('/index');
     }
@@ -59,7 +66,9 @@ function fnTabMenu(key: string | number) {
  * @param path 标签的路由路径
  */
 function fnTabClick(path: string) {
-  router.push(`${path}`);
+  const to = tabsStore.tabGoto(path);
+  if (!to) return;
+  router.push(to);
 }
 
 /**
@@ -67,58 +76,13 @@ function fnTabClick(path: string) {
  * @param path 标签的路由路径
  */
 function fnTabClose(path: string) {
-  // 获取当前项和最后项下标
-  const tabIndex = tabsStore.getTabs.findIndex(tab => tab.path === path);
-  const lastIndex = tabLen.value - 1;
-
-  // 只有一项默认跳首页
-  if (lastIndex === 0) {
-    router.push('/index');
-  }
-  // 关闭当期标签，操作第一项跳后一项
-  if (path === tabState.activeKey && tabIndex === 0) {
-    const tab = tabsStore.getTabs[tabIndex + 1];
-    router.push(tab.path);
-  }
-  // 关闭当期标签，默认跳前一项
-  if (path === tabState.activeKey && tabIndex <= lastIndex) {
-    const tab = tabsStore.getTabs[tabIndex - 1];
-    router.push(tab.path);
-  }
-
-  // 移除标签
-  tabsStore.remove(path);
-}
-
-/**
- * 导航标签新增
- * @param raw 当前路由
- */
-function fnTabAdd(raw: RouteLocationNormalizedLoaded) {
-  // 刷新重定向不记录
-  if (raw.path.startsWith('/redirect')) return;
-  const name = raw.name && raw.name.toString();
-  if (!name) return;
-  // 新增到当期标签后面打开，获取当期标签下标
-  const tabIndex = tabsStore.getTabs.findIndex(
-    tab => tab.path === tabState.activeKey
-  );
-  tabsStore.add(
-    {
-      path: raw.path,
-      name: name,
-      title: raw.meta.title || '-',
-      icon: raw.meta.icon || '#',
-      cache: Boolean(raw.meta.cache),
-    },
-    tabIndex + 1
-  );
-  // 设置激活项
-  tabState.activeKey = raw.path;
+  const to = tabsStore.tabClose(path);
+  if (!to) return;
+  router.push(to);
 }
 
 /**监听当前路由添加到导航标签列表 */
-watch(router.currentRoute, v => fnTabAdd(v), { immediate: true });
+watch(router.currentRoute, v => tabsStore.tabOpen(v), { immediate: true });
 
 /**计算侧边栏的宽度，不然导致左边的样式会出问题 */
 onMounted(() => {
@@ -126,13 +90,15 @@ onMounted(() => {
   if (element && element.length > 0) {
     // 获取初始宽度
     const { width } = Reflect.get(element[0], 'style');
-    tabState.width = width;
+    console.log(101, width);
+    tabWidth.value = width;
     // 监听DOM中style属性变化，这属于全局的监听没做销毁
     let MutationObserver = window.MutationObserver;
     new MutationObserver(callback => {
       if (callback && callback.length > 0) {
         const { width } = Reflect.get(callback[0].target, 'style');
-        tabState.width = width;
+        console.log(108, width);
+        tabWidth.value = width;
       }
     }).observe(element[0], {
       attributeFilter: ['style'],
@@ -149,19 +115,19 @@ onMounted(() => {
 
 <template>
   <div>
-    <header
-      class="ant-layout-header"
-      style="height: 36px; line-height: 36px; background: transparent"
-    ></header>
+    <header class="ant-layout-header tabs-header" v-if="fixedHeader"></header>
     <a-tabs
       class="tabs"
-      :style="{ width: tabState.width }"
+      :class="{ 'tabs-fixed': fixedHeader }"
+      :style="{
+        width: tabWidth,
+      }"
       hide-add
       tab-position="top"
       type="editable-card"
       :tab-bar-gutter="8"
       :tab-bar-style="{ margin: '0', height: '28px', lineHeight: '28px' }"
-      v-model:activeKey="tabState.activeKey"
+      v-model:activeKey="tabsStore.activePath"
       @tab-click="path => fnTabClick(path as string)"
       @edit="path => fnTabClose(path as string)"
     >
@@ -179,7 +145,7 @@ onMounted(() => {
       </a-tab-pane>
 
       <template #rightExtra>
-        <a-space :size="8" align="center">
+        <a-space :size="8" align="end">
           <a-tooltip>
             <template #title>刷新当前</template>
             <a-button
@@ -213,17 +179,26 @@ onMounted(() => {
 </template>
 
 <style lang="less" scoped>
+.tabs-header {
+  height: 36px;
+  line-height: 36px;
+  background: transparent;
+}
+
 .tabs {
   z-index: 16;
   margin: 0px;
   padding: 4px 16px;
   width: calc(100% - 208px);
-  right: 0px;
-  top: 48px;
-  position: fixed;
   background: #fff;
   box-shadow: 0 1px 4px #0015291f;
   transition: background 0.3s, width 0.2s;
+
+  &.tabs-fixed {
+    right: 0px;
+    top: 48px;
+    position: fixed;
+  }
 }
 
 .tabs :deep(.ant-tabs-nav:before) {
