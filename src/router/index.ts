@@ -148,7 +148,7 @@ const constantRoutes: RouteRecordRaw[] = [
           {
             path: 'profile',
             name: 'Profile',
-            meta: { title: '个人信息' },
+            meta: { title: '个人信息', cache: true },
             component: () => import('@/views/account/profile.vue'),
           },
           {
