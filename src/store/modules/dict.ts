@@ -18,7 +18,23 @@ const useDictStore = defineStore('dict', {
     },
     /**删除字典 */
     removeDict(key: string) {
+      if (!key) return;
       return this.dicts.delete(key);
+    },
+    /**
+     * 处理字典数据对象用于回显标签
+     * @param data 字典数据项
+     * @returns
+     */
+    parseDataDict(data: Record<string, any>) {
+      return [
+        {
+          label: data.dictLabel,
+          value: data.dictValue,
+          elTagType: data.tagType,
+          elTagClass: data.tagClass,
+        },
+      ];
     },
     /**获取字典 */
     async getDict(key: string) {
@@ -30,8 +46,8 @@ const useDictStore = defineStore('dict', {
           const dictData: DictType[] = res.data.map(d => ({
             label: d.dictLabel,
             value: d.dictValue,
-            elTagType: d.listClass,
-            elTagClass: d.cssClass,
+            elTagType: d.tagType,
+            elTagClass: d.tagClass,
           }));
           this.dicts.set(key, dictData);
           disct = dictData;

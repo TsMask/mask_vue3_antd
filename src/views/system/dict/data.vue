@@ -31,33 +31,34 @@ import { parseDateToStr } from '@/utils/date-utils.js';
 import useTabsStore from '@/store/modules/tabs';
 import useDictStore from '@/store/modules/dict';
 const tabsStore = useTabsStore();
-const { getDict } = useDictStore();
+const { parseDataDict, getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
 
 // 获取地址栏参数
 const dictId = route.params && (route.params.dictId as string);
 
-/**数据标签回显样式 */
-const listClassOptions = ref([
-  { value: 'default', label: 'default' },
-  { value: 'blue ', label: 'blue' },
-  { value: 'cyan', label: 'cyan' },
-  { value: 'gold', label: 'gold' },
-  { value: 'green', label: 'green' },
-  { value: 'lime', label: 'lime' },
-  { value: 'magenta', label: 'magenta' },
-  { value: 'orange', label: 'orange' },
-  { value: 'pink', label: 'pink' },
-  { value: 'purple', label: 'purple' },
-  { value: 'red', label: 'red' },
-  { value: 'yellow', label: 'yellow' },
-  { value: 'error', label: 'error' },
-  { value: 'success', label: 'success' },
-  { value: 'warning', label: 'warning' },
-  { value: 'processing', label: 'processing' },
-  { value: 'geekblue', label: 'geekblue' },
-  { value: 'volcano', label: 'volcano' },
+/**标签类型数据固定项 */
+const tagTypeOptions = ref([
+  { value: '', label: '普通文本' },
+  { value: 'default', label: '默认（default）' },
+  { value: 'blue ', label: '蓝色（blue）' },
+  { value: 'cyan', label: '青色（cyan）' },
+  { value: 'gold', label: '金色（gold）' },
+  { value: 'green', label: '绿色（green）' },
+  { value: 'lime', label: '亮绿（lime）' },
+  { value: 'magenta', label: '紫红（magenta）' },
+  { value: 'orange', label: '橘黄（orange）' },
+  { value: 'pink', label: '粉色（pink）' },
+  { value: 'purple', label: '紫色（purple）' },
+  { value: 'red', label: '红色（red）' },
+  { value: 'yellow', label: '黄色（yellow）' },
+  { value: 'geekblue', label: '深蓝（geekblue）' },
+  { value: 'volcano', label: '棕色（volcano）' },
+  { value: 'processing', label: '进行（processing）' },
+  { value: 'warning', label: '警告（warning）' },
+  { value: 'error', label: '错误（error）' },
+  { value: 'success', label: '成功（success）' },
 ]);
 
 /**字典数据 */
@@ -167,7 +168,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'createTime',
     align: 'center',
     customRender(opt) {
-      if(+opt.value <= 0) return ''
+      if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
     },
   },
@@ -246,9 +247,8 @@ let modalState: ModalStateType = reactive({
     dictSort: 0,
     dictType: 'sys_oper_type',
     dictValue: '',
-    isDefault: 'N',
-    cssClass: '',
-    listClass: 'default',
+    tagClass: '',
+    tagType: '',
     remark: '',
     status: '0',
     createTime: '',
@@ -745,17 +745,26 @@ onMounted(() => {
         </a-row>
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="回显样式" name="listClass">
-              <a-tag
-                :class="modalState.from.cssClass"
-                color="modalState.from.listClass"
-              >
-                {{
-                  listClassOptions.find(
-                    i => i.value === modalState.from.listClass
-                  )?.label
-                }}
-              </a-tag>
+            <a-form-item label="标签类型" name="tagType">
+              <DictTag
+                :options="tagTypeOptions"
+                :value="modalState.from.tagType"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="样式属性" name="tagClass">
+              {{ modalState.from.tagClass }}
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="回显预览" name="tagType">
+              <DictTag
+                :options="parseDataDict(modalState.from)"
+                :value="modalState.from.dictValue"
+              />
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
@@ -764,9 +773,6 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="样式属性" name="cssClass">
-          {{ modalState.from.cssClass }}
-        </a-form-item>
         <a-form-item label="数据说明" name="remark">
           {{ modalState.from.remark }}
         </a-form-item>
@@ -842,12 +848,11 @@ onMounted(() => {
         </a-row>
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="回显样式" name="listClass">
+            <a-form-item label="标签类型" name="tagType">
               <a-select
-                v-model:value="modalState.from.listClass"
-                default-value="default"
-                placeholder="回显样式"
-                :options="listClassOptions"
+                v-model:value="modalState.from.tagType"
+                placeholder="标签类型"
+                :options="tagTypeOptions"
               >
               </a-select>
             </a-form-item>
@@ -862,9 +867,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="样式属性" name="cssClass">
+        <a-form-item label="样式属性" name="tagClass">
           <a-input
-            v-model:value="modalState.from.cssClass"
+            v-model:value="modalState.from.tagClass"
             allow-clear
             placeholder="请输入样式属性"
           ></a-input>
