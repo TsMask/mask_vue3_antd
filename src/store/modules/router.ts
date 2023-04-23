@@ -10,9 +10,9 @@ import BasicLayout from '@/layouts/BasicLayout.vue';
 import BlankLayout from '@/layouts/BlankLayout.vue';
 import LinkLayout from '@/layouts/LinkLayout.vue';
 import {
-  MENU_COMPONENT_BASIC_LAYOUT,
-  MENU_COMPONENT_BLANK_LAYOUT,
-  MENU_COMPONENT_LINK_LAYOUT,
+  MENU_COMPONENT_LAYOUT_BASIC,
+  MENU_COMPONENT_LAYOUT_BLANK,
+  MENU_COMPONENT_LAYOUT_LINK,
 } from '@/constants/MenuConstants';
 
 /**路由构建参数类型 */
@@ -81,11 +81,11 @@ function buildRouters(recordRaws: RecordRaws[]): RouteRecordRaw[] {
     let component: RouteComponent = {};
     if (item.component) {
       const comp = item.component;
-      if (comp === MENU_COMPONENT_BASIC_LAYOUT) {
+      if (comp === MENU_COMPONENT_LAYOUT_BASIC) {
         component = BasicLayout;
-      } else if (comp === MENU_COMPONENT_BLANK_LAYOUT) {
+      } else if (comp === MENU_COMPONENT_LAYOUT_BLANK) {
         component = BlankLayout;
-      } else if (comp === MENU_COMPONENT_LINK_LAYOUT) {
+      } else if (comp === MENU_COMPONENT_LAYOUT_LINK) {
         component = LinkLayout;
       } else {
         // 指定页面视图，一般用于显示子菜单

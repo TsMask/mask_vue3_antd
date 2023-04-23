@@ -31,6 +31,12 @@ import {
   parseDataToTreeExclude,
 } from '@/utils/parse-tree-utils.js';
 import { iconFonts } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
+import {
+  MENU_PATH_INLINE,
+  MENU_TYPE_DIR,
+  MENU_TYPE_MENU,
+  MENU_TYPE_BUTTON,
+} from '@/constants/MenuConstants';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -192,6 +198,13 @@ function fnTreeDataChange(value: any) {
   if (!value) return;
   const menu = menuListData.find(m => m.menuId === value);
   if (!menu) return;
+  // 限制可选类型
+  if (menu.menuType === MENU_TYPE_DIR) {
+    modalState.from.menuType = MENU_TYPE_MENU;
+  }
+  if (menu.menuType === MENU_TYPE_MENU) {
+    modalState.from.menuType = MENU_TYPE_BUTTON;
+  }
   modalState.from.parentType = menu.menuType;
 }
 
@@ -221,7 +234,7 @@ let modalState: ModalStateType = reactive({
     parentId: '0',
     menuName: '',
     menuSort: 0,
-    menuType: 'M',
+    menuType: MENU_TYPE_BUTTON,
     component: '',
     path: '',
     icon: '#',
@@ -250,7 +263,9 @@ const modalStateFrom = Form.useForm(
       { required: true, min: 1, max: 200, message: '请正确输入组件路径' },
     ],
     path: [{ required: true, min: 1, max: 200, message: '请正确输入路由地址' }],
-    perms: [{ required: true, min: 1, max: 40, message: '请正确输入权限标识' }],
+    perms: [
+      { required: true, min: 1, max: 100, message: '请正确输入权限标识' },
+    ],
   })
 );
 
@@ -323,15 +338,15 @@ function fnModalVisibleByEdit(
  */
 function fnModalOk() {
   let validateNames = ['parentId', 'menuName'];
-  if (modalState.from.menuType === 'M') {
+  if (modalState.from.menuType === MENU_TYPE_DIR) {
     validateNames.push('path');
   }
-  if (modalState.from.menuType === 'C') {
+  if (modalState.from.menuType === MENU_TYPE_MENU) {
     validateNames.push('component');
     validateNames.push('path');
     validateNames.push('perms');
   }
-  if (modalState.from.menuType === 'F') {
+  if (modalState.from.menuType === MENU_TYPE_BUTTON) {
     validateNames.push('perms');
   }
   modalStateFrom
@@ -430,7 +445,12 @@ function fnGetList() {
           {
             menuId: '0',
             menuName: '根节点',
-            children: parseDataToTreeExclude(data, 'menuType', 'F', 'menuId'),
+            children: parseDataToTreeExclude(
+              data,
+              'menuType',
+              MENU_TYPE_BUTTON,
+              'menuId'
+            ),
           },
         ];
         // 展开编号key
@@ -641,7 +661,7 @@ onMounted(() => {
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip v-if="record.menuType !== 'F'">
+              <a-tooltip v-if="record.menuType !== MENU_TYPE_BUTTON">
                 <template #title>新增子菜单</template>
                 <a-button
                   type="link"
@@ -709,13 +729,22 @@ onMounted(() => {
           </a-col>
           <a-col :lg="6" :md="6" :xs="24">
             <a-form-item label="菜单类型" name="menuType">
-              <a-tag v-if="modalState.from.menuType === 'M'" color="purple">
+              <a-tag
+                v-if="modalState.from.menuType === MENU_TYPE_DIR"
+                color="purple"
+              >
                 目录
               </a-tag>
-              <a-tag v-if="modalState.from.menuType === 'C'" color="cyan">
+              <a-tag
+                v-if="modalState.from.menuType === MENU_TYPE_MENU"
+                color="cyan"
+              >
                 菜单
               </a-tag>
-              <a-tag v-if="modalState.from.menuType === 'F'" color="orange">
+              <a-tag
+                v-if="modalState.from.menuType === MENU_TYPE_BUTTON"
+                color="orange"
+              >
                 按钮
               </a-tag>
             </a-form-item>
@@ -735,7 +764,7 @@ onMounted(() => {
             :lg="12"
             :md="12"
             :xs="24"
-            v-if="modalState.from.menuType !== 'F'"
+            v-if="modalState.from.menuType !== MENU_TYPE_BUTTON"
           >
             <a-form-item label="路由地址" name="path">
               {{ modalState.from.path }}
@@ -745,7 +774,7 @@ onMounted(() => {
             :lg="12"
             :md="12"
             :xs="24"
-            v-if="modalState.from.menuType === 'C'"
+            v-if="modalState.from.menuType === MENU_TYPE_MENU"
           >
             <a-form-item label="组件路径" name="component">
               {{ modalState.from.component }}
@@ -753,7 +782,10 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16" v-if="modalState.from.menuType !== 'F'">
+        <a-row
+          :gutter="16"
+          v-if="modalState.from.menuType !== MENU_TYPE_BUTTON"
+        >
           <a-col :lg="6" :md="6" :xs="24">
             <a-form-item label="内部地址" name="isFrame">
               <a-tag color="default">
@@ -788,7 +820,7 @@ onMounted(() => {
         <a-form-item
           label="权限标识"
           name="perms"
-          v-if="modalState.from.menuType !== 'M'"
+          v-if="modalState.from.menuType !== MENU_TYPE_DIR"
         >
           {{ modalState.from.perms }}
         </a-form-item>
@@ -869,27 +901,32 @@ onMounted(() => {
         <a-form-item label="菜单类型" name="menuType">
           <a-radio-group v-model:value="modalState.from.menuType">
             <a-radio
-              key="M"
-              value="M"
-              :disabled="modalState.from.parentType === 'C'"
+              :key="MENU_TYPE_DIR"
+              :value="MENU_TYPE_DIR"
+              :disabled="modalState.from.parentType === MENU_TYPE_MENU"
             >
               目录
             </a-radio>
             <a-radio
-              key="C"
-              value="C"
+              :key="MENU_TYPE_MENU"
+              :value="MENU_TYPE_MENU"
               :disabled="
                 modalState.from.parentId === '0' ||
-                modalState.from.parentType === 'C'
+                modalState.from.parentType === MENU_TYPE_MENU
               "
             >
               菜单
             </a-radio>
-            <a-radio key="F" value="F">按钮</a-radio>
+            <a-radio :key="MENU_TYPE_BUTTON" :value="MENU_TYPE_BUTTON">
+              按钮
+            </a-radio>
           </a-radio-group>
         </a-form-item>
 
-        <a-row :gutter="16" v-if="modalState.from.menuType !== 'F'">
+        <a-row
+          :gutter="16"
+          v-if="modalState.from.menuType !== MENU_TYPE_BUTTON"
+        >
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单图标" name="icon">
               <a-select
@@ -936,7 +973,9 @@ onMounted(() => {
                         2. 如网络地址需外部访问<br />则将内部地址选项设为否
                         <br />菜单行为：打开新标签
                         <br />
-                        3. 如内嵌子页面需要隐藏页面<br />则将显示状态选项设为隐藏并在内嵌路由地址后拼接/inline/子页面地址
+                        3. 如内嵌子页面需要隐藏页面<br />则将显示状态选项设为隐藏
+                        <br />地址拼接以内嵌路由地址
+                        {{ MENU_PATH_INLINE }}/子页面地址
                       </div>
                     </template>
                     <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />
@@ -947,7 +986,10 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16" v-if="modalState.from.menuType !== 'F'">
+        <a-row
+          :gutter="16"
+          v-if="modalState.from.menuType !== MENU_TYPE_BUTTON"
+        >
           <a-col :lg="6" :md="6" :xs="24">
             <a-form-item label="内部地址" name="isFrame">
               <a-select
@@ -1001,7 +1043,7 @@ onMounted(() => {
           label="组件路径"
           name="component"
           v-bind="modalStateFrom.validateInfos.component"
-          v-if="modalState.from.menuType === 'C'"
+          v-if="modalState.from.menuType === MENU_TYPE_MENU"
         >
           <a-input
             v-model:value="modalState.from.component"
@@ -1026,7 +1068,7 @@ onMounted(() => {
         <a-form-item
           label="权限标识"
           name="perms"
-          v-if="modalState.from.menuType !== 'M'"
+          v-if="modalState.from.menuType !== MENU_TYPE_DIR"
           v-bind="modalStateFrom.validateInfos.perms"
         >
           <a-input
@@ -1039,8 +1081,11 @@ onMounted(() => {
                 <template #title>
                   <div>
                     权限标识示例：monitor:server:query <br />
-                    控制器中使用权限标识，如： <br />
+                    后端控制器中使用权限标识，如： <br />
                     @PreAuthorize({ hasPermissions: ['monitor:server:query'] })
+                    <br />
+                    前端vue页面中使用权限标识，如： <br />
+                    v-perms:has="['monitor:server:query']"
                   </div>
                 </template>
                 <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />

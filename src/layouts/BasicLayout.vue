@@ -15,6 +15,7 @@ import useAppStore from '@/store/modules/app';
 import useRouterStore from '@/store/modules/router';
 import useTabsStore from '@/store/modules/tabs';
 import { useRouter } from 'vue-router';
+import { MENU_PATH_INLINE } from '@/constants/MenuConstants';
 const { proConfig, waterMarkContent } = useLayoutStore();
 const { systemName } = useAppStore();
 const routerStore = useRouterStore();
@@ -39,9 +40,9 @@ watch(
     layoutState.selectedKeys = matched
       .filter(r => r.name !== 'Root')
       .map(r => r.path);
-    // 路由地址含有"/inline"又是隐藏菜单需要处理打开高亮菜单栏
-    if (v.path.includes('/inline') && v.meta.hideInMenu) {
-      const idx = v.path.lastIndexOf('/inline');
+    // 路由地址含有内嵌地址标识又是隐藏菜单需要处理打开高亮菜单栏
+    if (v.path.includes(MENU_PATH_INLINE) && v.meta.hideInMenu) {
+      const idx = v.path.lastIndexOf(MENU_PATH_INLINE);
       layoutState.openKeys.splice(-1);
       layoutState.selectedKeys[matched.length - 1] = v.path.slice(0, idx);
     }
@@ -100,6 +101,9 @@ function fnComponentSetName(component: any, to: any) {
   }
   return component;
 }
+
+// 清空导航栏标签
+tabsStore.clear();
 </script>
 
 <template>
