@@ -17,6 +17,7 @@ import {
 
 import { ColumnsType } from 'ant-design-vue/es/table/Table';
 import { message } from 'ant-design-vue';
+import { hasPermissions } from '@/plugins/AuthUser';
 const route = useRoute();
 
 /**路由标题 */
@@ -136,6 +137,7 @@ let cacheKeyInfo = reactive({
  * @param cacheKey
  */
 function fnCacheKeyInfo(cacheKey: string) {
+  if (!hasPermissions(['monitor:cache:query'])) return;
   if (isClick.value) return;
   isClick.value = true;
   cacheKeyInfo.loading = true;
@@ -440,7 +442,7 @@ onMounted(() => {
         </a-card>
       </a-col>
 
-      <a-col :lg="8" :md="8" :xs="24">
+      <a-col :lg="8" :md="8" :xs="24" v-perms:has="['monitor:cache:query']">
         <a-card
           title="缓存内容"
           :bordered="false"
