@@ -336,6 +336,7 @@ onMounted(() => {
               <a-input
                 v-model:value="queryParams.userName"
                 allow-clear
+                :maxlength="30"
                 placeholder="请输入用户名称"
               ></a-input>
             </a-form-item>
@@ -345,6 +346,7 @@ onMounted(() => {
               <a-input
                 v-model:value="queryParams.phonenumber"
                 allow-clear
+                :maxlength="11"
                 placeholder="请输入手机号码"
               ></a-input>
             </a-form-item>

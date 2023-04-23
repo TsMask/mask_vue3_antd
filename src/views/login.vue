@@ -30,7 +30,7 @@ let state = reactive({
   /**表单属性 */
   from: {
     /**账号 */
-    username: 'admin',
+    username: 'maskAdmin',
     /**密码 */
     password: 'Admin@1234',
     /**手机号 */
@@ -188,7 +188,7 @@ onBeforeUnmount(() => {
                 {
                   required: true,
                   min: 2,
-                  max: 18,
+                  max: 30,
                   message: '请输入正确登录账号',
                 },
               ]"
@@ -197,7 +197,7 @@ onBeforeUnmount(() => {
                 v-model:value="state.from.username"
                 size="large"
                 placeholder="登录账号"
-                :maxlength="18"
+                :maxlength="30"
               >
                 <template #prefix>
                   <UserOutlined class="prefix-icon" />

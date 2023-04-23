@@ -742,6 +742,7 @@ onMounted(() => {
               <a-input
                 v-model:value="queryParams.userName"
                 allow-clear
+                :maxlength="30"
                 placeholder="请输入登录账号"
               ></a-input>
             </a-form-item>
@@ -751,6 +752,7 @@ onMounted(() => {
               <a-input
                 v-model:value="queryParams.phonenumber"
                 allow-clear
+                :maxlength="11"
                 placeholder="请输入手机号码"
               ></a-input>
             </a-form-item>
@@ -1121,6 +1123,7 @@ onMounted(() => {
               <a-input
                 v-model:value="modalState.from.userName"
                 allow-clear
+                :maxlength="30"
                 placeholder="请输入登录账号"
               >
                 <template #prefix>
@@ -1305,6 +1308,7 @@ onMounted(() => {
           <a-input
             :value="modalState.from.userName"
             disabled
+            :maxlength="30"
             placeholder="登录账号"
           >
             <template #prefix>
