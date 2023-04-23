@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-// pink red orange green cyan blue purple
 const props = defineProps({
   /**数据 */
   options: {
@@ -18,6 +17,7 @@ const props = defineProps({
   },
 });
 
+/**遍历找到对应值数据项 */
 const item = computed(() => {
   if (Array.isArray(props.options) && props.options.length > 0) {
     const option = (props.options as any[]).find(
@@ -31,21 +31,18 @@ const item = computed(() => {
 
 <template>
   <template v-if="item">
-    <span
-      v-if="item.elTagType == 'default' || item.elTagType == ''"
-      :class="item.elTagClass"
-    >
-      {{ item.label }}
-    </span>
     <a-tag
-      v-else
+      v-if="item.elTagType"
       :class="item.elTagClass"
-      :color="item.elTagType === 'primary' ? '' : item.elTagType"
+      :color="item.elTagType"
     >
       {{ item.label }}
     </a-tag>
+    <span v-else :class="item.elTagClass">
+      {{ item.label }}
+    </span>
   </template>
-  <a-tag v-else color="default">未知</a-tag>
+  <span v-else></span>
 </template>
 
 <style lang="less" scoped></style>
