@@ -58,7 +58,7 @@ export function parseDataToTree(
 }
 
 /**
- * 解析数据层级转树结构
+ * 解析数据层级转树结构-排除节点
  *
  * @param data 数组数据
  * @param excludeField 排除节点字段 默认 'type'
