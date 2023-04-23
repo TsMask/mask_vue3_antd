@@ -37,6 +37,7 @@ import useDictStore from '@/store/modules/dict';
 import { DataNode } from 'ant-design-vue/es/tree';
 import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/parse-tree-utils.js';
 import { hasPermissions } from '@/plugins/AuthUser';
+import { MENU_PATH_INLINE } from '@/constants/MenuConstants';
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
@@ -577,9 +578,12 @@ function fnRecordDataScope(roleId: string | number) {
  * @param roleId 角色编号ID
  */
 function fnRecordAuthUser(row: Record<string, string>) {
-  router.push(
-    `/system/role/inline/auth-user/${row.roleId}?roleName=${row.roleName}`
-  );
+  router.push({
+    path: `/system/role${MENU_PATH_INLINE}/auth-user/${row.roleId}`,
+    query: {
+      roleName: row.roleName,
+    },
+  });
 }
 
 /**

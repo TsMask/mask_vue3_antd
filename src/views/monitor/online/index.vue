@@ -102,7 +102,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'loginTime',
     align: 'center',
     customRender(opt) {
-      if(+opt.value <= 0) return ''
+      if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
     },
   },
@@ -219,6 +219,7 @@ onMounted(() => {
               <a-input
                 v-model:value="queryParams.userName"
                 allow-clear
+                :maxlength="30"
                 placeholder="请输入用户名称"
               ></a-input>
             </a-form-item>
@@ -228,6 +229,7 @@ onMounted(() => {
               <a-input
                 v-model:value="queryParams.ipaddr"
                 allow-clear
+                :maxlength="128"
                 placeholder="请输入登录主机"
               ></a-input> </a-form-item
           ></a-col>
