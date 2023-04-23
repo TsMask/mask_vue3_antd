@@ -2,7 +2,11 @@
 import { Modal, message } from 'ant-design-vue';
 import { onMounted, reactive, ref, toRaw } from 'vue';
 import { updateUserProfile, uploadAvatar } from '@/api/system/user';
-import { regExpEmail, regExpMobile, regExpNick } from '@/utils/regular-utils.js';
+import {
+  regExpEmail,
+  regExpMobile,
+  regExpNick,
+} from '@/utils/regular-utils.js';
 import useUserStore from '@/store/modules/user';
 import useDictStore from '@/store/modules/dict';
 import { FileType } from 'ant-design-vue/es/upload/interface';
@@ -107,7 +111,15 @@ function fnUpload(up: UploadRequestOption) {
 onMounted(() => {
   // 初始字典数据
   getDict('sys_user_sex').then(res => {
-    sysUserSex.value = res;
+    if (res.length > 0) {
+      sysUserSex.value = res;
+    } else {
+      sysUserSex.value = [
+        { label: '未知', value: '0', elTagType: '', elTagClass: '' },
+        { label: '男', value: '1', elTagType: '', elTagClass: '' },
+        { label: '女', value: '2', elTagType: '', elTagClass: '' },
+      ];
+    }
   });
   // 初始表单值
   fnInitstateForm();
