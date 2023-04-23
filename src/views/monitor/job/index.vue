@@ -36,6 +36,7 @@ import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils.js';
 import useDictStore from '@/store/modules/dict';
 import { hasPermissions } from '@/plugins/AuthUser';
+import { MENU_PATH_INLINE } from '@/constants/MenuConstants';
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
@@ -218,7 +219,7 @@ let modalState: ModalStateType = reactive({
     jobName: '',
     invokeTarget: '',
     cronExpression: '',
-    misfirePolicy: '1',
+    misfirePolicy: '3',
     concurrent: '0',
     jobGroup: 'DEFAULT',
     status: '0',
@@ -542,7 +543,7 @@ function fnExportList() {
 
 /**跳转任务日志页面 */
 function fnJobLogView(jobId: string | number = '0') {
-  router.push(`/monitor/job/inline/log/${jobId}`);
+  router.push(`/monitor/job${MENU_PATH_INLINE}/log/${jobId}`);
 }
 
 /**查询定时任务列表 */
@@ -830,7 +831,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnJobLogView(record.jobId)"
-                  v-perms:has="['monitor:job:query']"
+                  v-perms:has="['monitor:job:log']"
                 >
                   <template #icon><ContainerOutlined /></template>
                 </a-button>
@@ -856,7 +857,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="6" :xs="24">
-            <a-form-item label="执行策略" name="misfirePolicy">
+            <a-form-item label="出错策略" name="misfirePolicy">
               {{
                 ['立即执行', '执行一次', '放弃执行'][
                   +modalState.from.misfirePolicy - 1
@@ -953,9 +954,8 @@ onMounted(() => {
               <a-select
                 :disabled="true"
                 v-model:value="modalState.from.misfirePolicy"
-                default-value="1"
-                placeholder="执行策略"
-                :maxlength="20"
+                default-value="3"
+                placeholder="出错策略"
               >
                 <a-select-option key="1" value="1">立即执行</a-select-option>
                 <a-select-option key="2" value="2">执行一次</a-select-option>
