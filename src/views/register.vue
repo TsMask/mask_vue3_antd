@@ -8,7 +8,7 @@ import { GlobalFooter } from '@ant-design-vue/pro-layout';
 import { Modal, message } from 'ant-design-vue';
 import { reactive, onMounted, toRaw } from 'vue';
 import { getCaptchaImage, register } from '@/api/login';
-import { regExpPasswd } from '@/utils/regular-utils.js';
+import { regExpPasswd, regExpUserName } from '@/utils/regular-utils.js';
 import { useRouter } from 'vue-router';
 const router = useRouter();
 const codeImgFall =
@@ -128,9 +128,9 @@ onMounted(() => {
           :rules="[
             {
               required: true,
-              min: 2,
-              max: 18,
-              message: '请输入正确登录账号',
+              pattern: regExpUserName,
+              message:
+                '账号不能以数字开头，可包含大写小写字母，数字，且不少于5位',
             },
           ]"
         >
@@ -138,7 +138,7 @@ onMounted(() => {
             v-model:value="state.form.username"
             size="large"
             placeholder="登录账号"
-            :maxlength="18"
+            :maxlength="30"
           >
             <template #prefix>
               <UserOutlined class="prefix-icon" />
