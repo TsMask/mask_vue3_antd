@@ -30,6 +30,7 @@ import {
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils.js';
 import useDictStore from '@/store/modules/dict';
+import { MENU_PATH_INLINE } from '@/constants/MenuConstants';
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
@@ -137,7 +138,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'createTime',
     align: 'center',
     customRender(opt) {
-      if(+opt.value <= 0) return ''
+      if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
     },
   },
@@ -441,7 +442,7 @@ function fnRefreshCache() {
 
 /**跳转字典数据页面 */
 function fnDataView(dictId: string | number = '0') {
-  router.push(`/system/dict/inline/data/${dictId}`);
+  router.push(`/system/dict${MENU_PATH_INLINE}/data/${dictId}`);
 }
 
 /**查询参数配置列表 */
@@ -575,7 +576,7 @@ onMounted(() => {
           <a-button
             type="default"
             @click.prevent="fnDataView()"
-            v-perms:has="['system:dict:query']"
+            v-perms:has="['system:dict:data']"
           >
             <template #icon><ContainerOutlined /></template>
             字典数据
