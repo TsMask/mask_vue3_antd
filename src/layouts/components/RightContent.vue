@@ -35,9 +35,7 @@ function fnClick({ key }: MenuInfo) {
         ></a-avatar>
         <span
           class="nick"
-          :class="
-            layoutStore.getNavTheme === 'dark' ? 'text-dark' : 'text-light'
-          "
+          :class="layoutStore.isNavTextDark ? 'text-dark' : 'text-light'"
         >
           {{ userStore.nickName }}
         </span>
