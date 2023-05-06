@@ -75,7 +75,7 @@ const FATCH_OPTIONS: OptionsType = {
   dataType: 'json',
   responseType: 'json',
   cache: 'no-cache',
-  credentials: 'include',
+  credentials: undefined,
   repeatSubmit: true,
   whithToken: true,
 };
