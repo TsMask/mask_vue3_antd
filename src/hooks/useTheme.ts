@@ -1,7 +1,7 @@
 import { onBeforeMount } from 'vue';
-import { ConfigProvider } from 'ant-design-vue';
-import { CACHE_LOCAL_PRIMARY_COLOR } from '@/constants/CacheKeysConstants';
-import { localGet, localSet } from '@/plugins/CacheLocal';
+import { ConfigProvider } from 'ant-design-vue/lib';
+import { CACHE_LOCAL_PRIMARY_COLOR } from '@/constants/cache-keys-constants';
+import { localGet, localSet } from '@/utils/cache-local-utils';
 
 /**
  * 初始主题色

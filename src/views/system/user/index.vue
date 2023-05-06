@@ -1,24 +1,10 @@
 <script setup lang="ts">
-import {
-  UserOutlined,
-  LockOutlined,
-  ExportOutlined,
-  PlusOutlined,
-  FormOutlined,
-  ProfileOutlined,
-  ClearOutlined,
-  ColumnHeightOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-  DeleteOutlined,
-  SecurityScanOutlined,
-} from '@ant-design/icons-vue';
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
-import { message, Modal, Form } from 'ant-design-vue';
-import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
-import { SizeType } from 'ant-design-vue/es/config-provider';
-import { ColumnsType } from 'ant-design-vue/es/table';
+import { message, Modal, Form } from 'ant-design-vue/lib';
+import { SizeType } from 'ant-design-vue/lib/config-provider';
+import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
+import { ColumnsType } from 'ant-design-vue/lib/table';
 import {
   exportUser,
   changeUserStatus,
@@ -41,8 +27,8 @@ import {
 } from '@/utils/regular-utils.js';
 import useDictStore from '@/store/modules/dict';
 import useUserStore from '@/store/modules/user';
-import { DataNode } from 'ant-design-vue/es/tree';
-import { hasPermissions } from '@/plugins/AuthUser';
+import { DataNode } from 'ant-design-vue/lib/tree';
+import { hasPermissions } from '@/plugins/auth-user';
 const { getDict } = useDictStore();
 const route = useRoute();
 

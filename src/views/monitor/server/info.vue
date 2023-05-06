@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted } from 'vue';
-import { ColumnsType } from 'ant-design-vue/es/table';
+import { ColumnsType } from 'ant-design-vue/lib/table';
 import { getServer } from '@/api/monitor/server';
 const route = useRoute();
 

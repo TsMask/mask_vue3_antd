@@ -1,11 +1,6 @@
 <script lang="ts" setup>
-import {
-  UserOutlined,
-  LockOutlined,
-  RobotOutlined,
-} from '@ant-design/icons-vue';
 import { GlobalFooter } from '@ant-design-vue/pro-layout';
-import { Modal, message } from 'ant-design-vue';
+import { Modal, message } from 'ant-design-vue/lib';
 import { reactive, onMounted, toRaw } from 'vue';
 import { getCaptchaImage, register } from '@/api/login';
 import { regExpPasswd, regExpUserName } from '@/utils/regular-utils.js';

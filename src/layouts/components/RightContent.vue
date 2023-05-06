@@ -1,9 +1,4 @@
 <script setup lang="ts">
-import {
-  UserOutlined,
-  SettingOutlined,
-  LogoutOutlined,
-} from '@ant-design/icons-vue';
 import useLayoutStore from '@/store/modules/layout';
 import useUserStore from '@/store/modules/user';
 import { useRouter } from 'vue-router';

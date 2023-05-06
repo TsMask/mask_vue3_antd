@@ -1,8 +1,8 @@
 import { login, logout, getInfo } from '@/api/login';
-import { getToken, setToken, removeToken } from '@/plugins/AuthToken';
+import { getToken, setToken, removeToken } from '@/plugins/auth-token';
 import defaultAvatar from '@/assets/images/default_avatar.png';
 import { defineStore } from 'pinia';
-import { TOKEN_RESPONSE_FIELD } from '@/constants/TokenConstants';
+import { TOKEN_RESPONSE_FIELD } from '@/constants/token-constants';
 import { validHttp } from '@/utils/regular-utils';
 
 /**用户信息类型 */

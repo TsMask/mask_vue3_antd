@@ -1,9 +1,4 @@
 <script setup lang="ts">
-import {
-  ClearOutlined,
-  DeleteOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons-vue';
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted } from 'vue';
 import {
@@ -15,9 +10,9 @@ import {
   clearCacheSafe,
 } from '@/api/monitor/cache';
 
-import { ColumnsType } from 'ant-design-vue/es/table/Table';
-import { message } from 'ant-design-vue';
-import { hasPermissions } from '@/plugins/AuthUser';
+import { ColumnsType } from 'ant-design-vue/lib/table/Table';
+import { message } from 'ant-design-vue/lib';
+import { hasPermissions } from '@/plugins/auth-user';
 const route = useRoute();
 
 /**路由标题 */

@@ -47,7 +47,6 @@
 </template>
 
 <script setup lang="ts">
-import { LikeOutlined } from '@ant-design/icons-vue';
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 

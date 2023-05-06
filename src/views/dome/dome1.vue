@@ -17,7 +17,7 @@
 </template>
 
 <script lang="ts" setup>
-import { message } from 'ant-design-vue';
+import { message } from 'ant-design-vue/lib';
 
 const handleClick = () => {
   console.log('info');

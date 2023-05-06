@@ -1,5 +1,5 @@
-import { CACHE_LOCAL_PROCONFIG } from '@/constants/CacheKeysConstants';
-import { localGetJSON, localSetJSON } from '@/plugins/CacheLocal';
+import { CACHE_LOCAL_PROCONFIG } from '@/constants/cache-keys-constants';
+import { localGetJSON, localSetJSON } from '@/utils/cache-local-utils';
 import { defineStore } from 'pinia';
 
 /**布局参数类型 */

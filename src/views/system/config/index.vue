@@ -1,22 +1,10 @@
 <script setup lang="ts">
-import {
-  ExportOutlined,
-  SyncOutlined,
-  PlusOutlined,
-  FormOutlined,
-  ProfileOutlined,
-  ClearOutlined,
-  ColumnHeightOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-  DeleteOutlined,
-} from '@ant-design/icons-vue';
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
-import { message, Modal, Form } from 'ant-design-vue';
-import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
-import { SizeType } from 'ant-design-vue/es/config-provider';
-import { ColumnsType } from 'ant-design-vue/es/table';
+import { message, Modal, Form } from 'ant-design-vue/lib';
+import { SizeType } from 'ant-design-vue/lib/config-provider';
+import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
+import { ColumnsType } from 'ant-design-vue/lib/table';
 import {
   exportConfig,
   listConfig,

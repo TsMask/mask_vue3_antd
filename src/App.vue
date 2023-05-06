@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ConfigProvider } from 'ant-design-vue';
+import { ConfigProvider } from 'ant-design-vue/lib';
 import { usePrimaryColor } from '@/hooks/useTheme';
-import zhCN from 'ant-design-vue/es/locale/zh_CN';
+import zhCN from 'ant-design-vue/lib/locale/zh_CN';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 dayjs.locale('zh-cn'); // 默认中文

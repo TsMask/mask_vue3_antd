@@ -1,19 +1,11 @@
 <script lang="ts" setup>
-import {
-  UserOutlined,
-  LockOutlined,
-  MobileOutlined,
-  RobotOutlined,
-  WechatOutlined,
-  QqOutlined,
-} from '@ant-design/icons-vue';
 import { GlobalFooter } from '@ant-design-vue/pro-layout';
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import useUserStore from '@/store/modules/user';
 import { getCaptchaImage } from '@/api/login';
 import { regExpMobile, validMobile } from '@/utils/regular-utils.js';
 import { useRouter, useRoute } from 'vue-router';
-import { message } from 'ant-design-vue';
+import { message } from 'ant-design-vue/lib';
 const router = useRouter();
 const route = useRoute();
 const codeImgFall =

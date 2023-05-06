@@ -1,22 +1,12 @@
 <script setup lang="ts">
-import {
-  PlusOutlined,
-  FormOutlined,
-  ProfileOutlined,
-  ClearOutlined,
-  ColumnHeightOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-  DeleteOutlined,
-  InfoCircleOutlined,
-} from '@ant-design/icons-vue';
+import { message, Modal, Form } from 'ant-design-vue/lib';
+import { SizeType } from 'ant-design-vue/lib/config-provider';
+import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
+import { ColumnsType } from 'ant-design-vue/lib/table';
 import IconFont from '@/components/IconFont/index.vue';
+import { iconFonts } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
-import { message, Modal, Form } from 'ant-design-vue';
-import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
-import { SizeType } from 'ant-design-vue/es/config-provider';
-import { ColumnsType } from 'ant-design-vue/es/table';
 import {
   addMenu,
   delMenu,
@@ -24,19 +14,18 @@ import {
   listMenu,
   updateMenu,
 } from '@/api/system/menu';
-import { parseDateToStr } from '@/utils/date-utils.js';
-import useDictStore from '@/store/modules/dict';
 import {
   parseDataToTree,
   parseDataToTreeExclude,
 } from '@/utils/parse-tree-utils.js';
-import { iconFonts } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
+import { parseDateToStr } from '@/utils/date-utils.js';
 import {
   MENU_PATH_INLINE,
   MENU_TYPE_DIR,
   MENU_TYPE_MENU,
   MENU_TYPE_BUTTON,
-} from '@/constants/MenuConstants';
+} from '@/constants/menu-constants';
+import useDictStore from '@/store/modules/dict';
 const { getDict } = useDictStore();
 const route = useRoute();
 

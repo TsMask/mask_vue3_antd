@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import { LockOutlined } from '@ant-design/icons-vue';
-import { Modal, message } from 'ant-design-vue';
+import { Modal, message } from 'ant-design-vue/lib';
 import { reactive } from 'vue';
 import { updateUserPwd } from '@/api/system/user';
 import { regExpPasswd } from '@/utils/regular-utils.js';

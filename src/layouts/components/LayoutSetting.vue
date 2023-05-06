@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { BgColorsOutlined } from '@ant-design/icons-vue';
 import { changePrimaryColor } from '@/hooks/useTheme';
 import useLayoutStore from '@/store/modules/layout';
 import { storeToRefs } from 'pinia';

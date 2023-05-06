@@ -1,26 +1,10 @@
 <script setup lang="ts">
-import {
-  FieldTimeOutlined,
-  SyncOutlined,
-  PlusOutlined,
-  ExportOutlined,
-  RocketOutlined,
-  ContainerOutlined,
-  FormOutlined,
-  InfoCircleOutlined,
-  ProfileOutlined,
-  ClearOutlined,
-  ColumnHeightOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-  DeleteOutlined,
-} from '@ant-design/icons-vue';
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
-import { message, Modal, Form } from 'ant-design-vue';
-import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
-import { SizeType } from 'ant-design-vue/es/config-provider';
-import { ColumnsType } from 'ant-design-vue/es/table';
+import { message, Modal, Form } from 'ant-design-vue/lib';
+import { SizeType } from 'ant-design-vue/lib/config-provider';
+import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
+import { ColumnsType } from 'ant-design-vue/lib/table';
 import {
   exportJob,
   listJob,
@@ -35,8 +19,8 @@ import {
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils.js';
 import useDictStore from '@/store/modules/dict';
-import { hasPermissions } from '@/plugins/AuthUser';
-import { MENU_PATH_INLINE } from '@/constants/MenuConstants';
+import { hasPermissions } from '@/plugins/auth-user';
+import { MENU_PATH_INLINE } from '@/constants/menu-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();

@@ -7,7 +7,9 @@
     sub-title="对不起，您正在寻找的页面不存在。"
   >
     <template #extra>
-      <a-button type="primary" href="/index">返回首页</a-button>
+      <RouterLink :to="{ name: 'Index' }" :replace="true">
+        <a-button type="primary"> 返回首页 </a-button>
+      </RouterLink>
     </template>
     <a-typography>
       <a-typography-title> 找不到网页？ </a-typography-title>

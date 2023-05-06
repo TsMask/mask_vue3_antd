@@ -1,19 +1,12 @@
 <script setup lang="ts">
-import {
-  LogoutOutlined,
-  ClearOutlined,
-  ColumnHeightOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons-vue';
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted } from 'vue';
-import { message, Modal } from 'ant-design-vue';
-import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
-import { SizeType } from 'ant-design-vue/es/config-provider';
-import { ColumnsType } from 'ant-design-vue/es/table';
+import { message, Modal } from 'ant-design-vue/lib';
 import { forceLogout, listOnline } from '@/api/monitor/online';
 import { parseDateToStr } from '@/utils/date-utils.js';
+import { SizeType } from 'ant-design-vue/lib/config-provider';
+import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
+import { ColumnsType } from 'ant-design-vue/lib/table';
 const route = useRoute();
 
 /**路由标题 */

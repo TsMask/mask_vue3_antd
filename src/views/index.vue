@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { PayCircleOutlined } from '@ant-design/icons-vue';
 import donate from '@/assets/donate.jpg';
 import useAppStore from '@/store/modules/app';
 import useUserStore from '@/store/modules/user';

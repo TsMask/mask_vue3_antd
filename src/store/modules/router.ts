@@ -13,7 +13,7 @@ import {
   MENU_COMPONENT_LAYOUT_BASIC,
   MENU_COMPONENT_LAYOUT_BLANK,
   MENU_COMPONENT_LAYOUT_LINK,
-} from '@/constants/MenuConstants';
+} from '@/constants/menu-constants';
 
 /**路由构建参数类型 */
 type RouterStore = {

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Modal, message } from 'ant-design-vue';
+import { Modal, message } from 'ant-design-vue/lib';
 import { onMounted, reactive, ref, toRaw } from 'vue';
 import { updateUserProfile, uploadAvatar } from '@/api/system/user';
 import {
@@ -9,8 +9,8 @@ import {
 } from '@/utils/regular-utils.js';
 import useUserStore from '@/store/modules/user';
 import useDictStore from '@/store/modules/dict';
-import { FileType } from 'ant-design-vue/es/upload/interface';
-import { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface';
+import { FileType } from 'ant-design-vue/lib/upload/interface';
+import { UploadRequestOption } from 'ant-design-vue/lib/vc-upload/interface';
 const uerStore = useUserStore();
 const { getDict } = useDictStore();
 

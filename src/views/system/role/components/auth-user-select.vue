@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ClearOutlined, SearchOutlined } from '@ant-design/icons-vue';
 import { reactive, toRaw, watch } from 'vue';
-import { message } from 'ant-design-vue';
-import { SizeType } from 'ant-design-vue/es/config-provider';
-import { ColumnsType } from 'ant-design-vue/es/table';
+import { message } from 'ant-design-vue/lib';
+import { SizeType } from 'ant-design-vue/lib/config-provider';
+import { ColumnsType } from 'ant-design-vue/lib/table';
 import { authUserAllocatedList } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils.js';
 import useDictStore from '@/store/modules/dict';

@@ -5,8 +5,8 @@ import router from './router';
 import '@ant-design-vue/pro-layout/dist/style.css';
 import 'ant-design-vue/dist/antd.variable.min.css';
 import ProLayout, { PageContainer } from '@ant-design-vue/pro-layout';
-import permsDirective from './directive/permsDirective';
-import rolesDirective from './directive/rolesDirective';
+import permsDirective from './directive/perms-directive';
+import rolesDirective from './directive/roles-directive';
 
 const app = createApp(App);
 app.use(store);

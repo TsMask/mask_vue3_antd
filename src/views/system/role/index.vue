@@ -1,24 +1,10 @@
 <script setup lang="ts">
-import {
-  InfoCircleOutlined,
-  ExportOutlined,
-  PlusOutlined,
-  FormOutlined,
-  ProfileOutlined,
-  ClearOutlined,
-  ColumnHeightOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-  DeleteOutlined,
-  SecurityScanOutlined,
-  TeamOutlined,
-} from '@ant-design/icons-vue';
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
-import { message, Modal, Form } from 'ant-design-vue';
-import { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
-import { SizeType } from 'ant-design-vue/es/config-provider';
-import { ColumnsType } from 'ant-design-vue/es/table';
+import { message, Modal, Form } from 'ant-design-vue/lib';
+import { SizeType } from 'ant-design-vue/lib/config-provider';
+import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
+import { ColumnsType } from 'ant-design-vue/lib/table';
 import {
   exportRole,
   addRole,
@@ -34,10 +20,10 @@ import { roleMenuTreeSelect, menuTreeSelect } from '@/api/system/menu';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils.js';
 import useDictStore from '@/store/modules/dict';
-import { DataNode } from 'ant-design-vue/es/tree';
+import { DataNode } from 'ant-design-vue/lib/tree';
 import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/parse-tree-utils.js';
-import { hasPermissions } from '@/plugins/AuthUser';
-import { MENU_PATH_INLINE } from '@/constants/MenuConstants';
+import { hasPermissions } from '@/plugins/auth-user';
+import { MENU_PATH_INLINE } from '@/constants/menu-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();

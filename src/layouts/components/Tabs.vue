@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-import { DownOutlined, ReloadOutlined } from '@ant-design/icons-vue';
 import IconFont from '@/components/IconFont/index.vue';
-import { computed, onMounted, onUpdated, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import useLayoutStore from '@/store/modules/layout';
 import useTabsStore from '@/store/modules/tabs';
@@ -56,7 +55,7 @@ function fnTabMenu(key: string | number) {
     if (route.path === '/index') {
       tabsStore.tabOpen(route);
     } else {
-      router.push('/index');
+      router.push({ name: 'Index' });
     }
   }
 }

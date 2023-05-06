@@ -11,7 +11,7 @@ import BasicLayout from '../layouts/BasicLayout.vue';
 import BlankLayout from '../layouts/BlankLayout.vue';
 import LinkLayout from '../layouts/LinkLayout.vue';
 import { encode } from 'js-base64';
-import { getToken } from '@/plugins/AuthToken';
+import { getToken } from '@/plugins/auth-token';
 import { validHttp } from '@/utils/regular-utils';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
@@ -225,10 +225,6 @@ router.afterEach((to, from, failure) => {
   if (to.meta?.title) {
     useAppStore().setTitle(to.meta.title);
   }
-  // 失败原因
-  if (isNavigationFailure(failure)) {
-    console.error(`[${to.path}]: ${failure.message}`);
-  }
 });
 
 /**无Token可访问页面地址白名单 */
@@ -254,7 +250,7 @@ router.beforeEach((to, from, next) => {
   if (token) {
     // 防止重复访问登录页面
     if (to.path === '/login') {
-      next('/index');
+      next({ name: 'Index' });
     } else {
       // 判断当前用户是否有角色信息
       const user = useUserStore();
@@ -281,7 +277,7 @@ router.beforeEach((to, from, next) => {
           .catch(e => {
             console.error(`[${to.path}]: ${e.message}`);
             user.fnLogOut().finally(() => {
-              next('/login');
+              next({ name: 'Login' });
             });
           });
       } else {
