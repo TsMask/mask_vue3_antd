@@ -1,14 +1,16 @@
-import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import { defineConfig, loadEnv } from 'vite';
 import Components from 'unplugin-vue-components/vite';
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers';
+import Compression from "vite-plugin-compression";
+import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // 读取环境配置变量，指定前缀
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   return {
+    // 访问基础路径
     base: env.VITE_HISTORY_BASE_URL,
     // 本地开发服务配置
     server: {
@@ -57,8 +59,16 @@ export default defineConfig(({ mode }) => {
         resolvers: [
           AntDesignVueResolver({
             importStyle: false,
+            resolveIcons: true,
+            cjs: true, // 避免es模块打包缺失
           }),
         ],
+      }),
+      // gzip静态压缩文件
+      Compression({
+        algorithm: 'gzip',
+        ext: '.gz',
+        disable: false, // 是否禁用
       }),
     ],
   };
