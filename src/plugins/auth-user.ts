@@ -1,4 +1,4 @@
-import { ADMIN_PERMISSION, ADMIN_ROLE_KEY } from '@/constants/AdminConstants';
+import { ADMIN_PERMISSION, ADMIN_ROLE_KEY } from '@/constants/admin-constants';
 import useUserStore from '@/store/modules/user';
 
 /**

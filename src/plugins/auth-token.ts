@@ -1,4 +1,4 @@
-import { TOKEN_COOKIE_KEY } from '@/constants/TokenConstants';
+import { TOKEN_COOKIE_KEY } from '@/constants/token-constants';
 import Cookies from 'js-cookie';
 
 /**获取cookis中Token字符串 */

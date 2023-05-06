@@ -1,18 +1,18 @@
-import { hasPermissions, matchPermissions } from '@/plugins/AuthUser';
+import { hasRoles, matchRoles } from '@/plugins/auth-user';
 import { DirectiveBinding } from 'vue';
 
 /**
- * perms-权限标识
+ * roles-权限标识
  *
  * 指令值：字符串数组
  *
  * 指令的参数：has/math，默认has
  *
- * v-perms="['monitor:server:query']"
+ * v-roles="['admin']"
  * 等同
- * v-perms:has="['monitor:server:query']"
+ * v-roles:has="['admin']"
  *
- * v-perms:math="['style:user:query', 'style:user:edit']"
+ * v-roles:math="['common', 'user']"
  *
  * @param el 指令绑定到的元素
  * @param binding 一个对象
@@ -24,11 +24,11 @@ export default function (el: any, binding: DirectiveBinding<any>) {
   if (Array.isArray(value) && value.length > 0) {
     // 匹配
     if (arg === 'math') {
-      ok = matchPermissions(value);
+      ok = matchRoles(value);
     }
     // 含有
     if (!arg || arg === 'has') {
-      ok = hasPermissions(value);
+      ok = hasRoles(value);
     }
   }
   // 没有权限就移除节点

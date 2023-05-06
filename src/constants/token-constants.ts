@@ -1,9 +1,3 @@
-/**
- * 令牌常量信息
- *
- * @author TsMask
- */
-
 /**令牌-数据响应字段 */
 export const TOKEN_RESPONSE_FIELD = 'token';
 

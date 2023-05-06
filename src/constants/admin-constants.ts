@@ -1,9 +1,3 @@
-/**
- * 管理员常量信息
- *
- * @author TsMask
- */
-
 /**管理员-系统指定角色KEY */
 export const ADMIN_ROLE_KEY = 'admin';
 

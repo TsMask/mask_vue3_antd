@@ -1,10 +1,3 @@
-/**
- * 系统菜单常量信息
- *
- * src\views\system\menu\index.vue
- * @author TsMask
- */
-
 /**组件布局类型-基础布局组件标识 */
 export const MENU_COMPONENT_LAYOUT_BASIC = 'BasicLayout';
 
