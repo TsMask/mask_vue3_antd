@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/Fetch';
+import { request, ResultType } from '@/plugins/http-fetch';
 
 // 登录方法
 export function login(data: Record<string, string>) {

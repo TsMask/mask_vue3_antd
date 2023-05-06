@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/Fetch';
+import { request, ResultType } from '@/plugins/http-fetch';
 
 /**
  * 用户列表导出

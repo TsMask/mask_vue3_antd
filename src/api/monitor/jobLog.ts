@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/Fetch';
+import { request, ResultType } from '@/plugins/http-fetch';
 
 /**
  * 定时任务调度日志列表导出
