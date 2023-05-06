@@ -51,14 +51,17 @@ watch(
 );
 
 // 动态路由添加到菜单面板
-const buildRouterData = routerStore.buildRouterData;
-if (buildRouterData.length > 0) {
-  const rootRoute = router.getRoutes().find(r => r.name === 'Root');
-  if (rootRoute) {
-    const children = routerStore.setRootRouterData(rootRoute.children);
+const rootRoute = router.getRoutes().find(r => r.name === 'Root');
+if (rootRoute) {
+  const children = routerStore.setRootRouterData(rootRoute.children);
+  const buildRouterData = routerStore.buildRouterData;
+  if (buildRouterData.length > 0) {
     rootRoute.children = children.concat(buildRouterData);
+  } else {
+    rootRoute.children = children;
   }
 }
+
 const { menuData } = getMenuData(clearMenuItem(router.getRoutes()));
 
 /**面包屑数据对象 */
