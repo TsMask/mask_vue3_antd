@@ -1,6 +1,6 @@
 import { getToken } from '@/plugins/auth-token';
 import { sessionGetJSON, sessionSetJSON } from '@/utils/cache-session-utils';
-import { TOKEN_HEADER, TOKEN_HEADER_PREFIX } from '@/constants/token-constants';
+import { TOKEN_KEY, TOKEN_KEY_PREFIX } from '@/constants/token-constants';
 import { CACHE_SESSION_FATCH } from '@/constants/cache-keys-constants';
 
 /**响应结果类型 */
@@ -100,7 +100,7 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
   // 是否需要设置 token
   const token = getToken();
   if (options.whithToken && token) {
-    Reflect.set(options.headers, TOKEN_HEADER, TOKEN_HEADER_PREFIX + token);
+    Reflect.set(options.headers, TOKEN_KEY, TOKEN_KEY_PREFIX + token);
   }
   // 是否需要防止数据重复提交
   if (options.repeatSubmit && ['post', 'put'].includes(options.method)) {
