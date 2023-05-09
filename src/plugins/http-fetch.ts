@@ -6,7 +6,7 @@ import { CACHE_SESSION_FATCH } from '@/constants/cache-keys-constants';
 /**响应结果类型 */
 export type ResultType = {
   /**响应码 */
-  code: number;
+  code: number | 200 | 500;
   /**信息 */
   msg: string;
   /**数据 */
