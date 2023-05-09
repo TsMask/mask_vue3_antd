@@ -50,12 +50,13 @@ let listData = ref([
 /**查询用户个人信息 */
 function fnGetProfile() {
   getUserProfile().then(res => {
-    if (res.code === 200) {
-      state.user = res.data;
-      state.roleGroup = res.roleGroup;
-      state.postGroup = res.postGroup;
+    if (res.code === 200 && res.data) {
+      const {user,roleGroup,postGroup} = res.data;
+      state.user = user;
+      state.roleGroup = roleGroup;
+      state.postGroup = postGroup;
       // 头像解析
-      state.user.avatar = useUserStore().fnAvatar(state.user.avatar);
+      state.user.avatar = useUserStore().fnAvatar(user.avatar);
     } else {
       message.error(res.msg, 3);
     }

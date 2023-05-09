@@ -106,35 +106,37 @@ const useUserStore = defineStore('user', {
     // 登录
     async fnLogin(loginBody: Record<string, string>) {
       const res = await login(loginBody);
-      if (res[TOKEN_RESPONSE_FIELD]) {
-        setToken(res.token);
-        this.token = res.token;
+      if (res.code === 200 && res.data) {
+        const token = res.data[TOKEN_RESPONSE_FIELD];
+        setToken(token);
+        this.token = token;
       }
       return res;
     },
     // 获取用户信息
     async fnGetInfo() {
       const res = await getInfo();
-      const user = res.user;
-      // 用户名称账号
-      this.userName = user.userName;
-      // 用户头像
-      this.avatar = user.avatar;
-      // 基础信息
-      this.nickName = user.nickName;
-      this.phonenumber = user.phonenumber;
-      this.email = user.email;
-      this.sex = user.sex;
+      if (res.code === 200 && res.data) {
+        const { user, roles, permissions } = res.data;
+        // 用户名称账号
+        this.userName = user.userName;
+        // 用户头像
+        this.avatar = user.avatar;
+        // 基础信息
+        this.nickName = user.nickName;
+        this.phonenumber = user.phonenumber;
+        this.email = user.email;
+        this.sex = user.sex;
 
-      // 验证返回的roles是否是一个非空数组
-      if (res.roles && res.roles.length > 0) {
-        this.roles = res.roles;
-        this.permissions = res.permissions;
-      } else {
-        this.roles = ['ROLE_DEFAULT'];
-        this.permissions = [];
+        // 验证返回的roles是否是一个非空数组
+        if (Array.isArray(roles) && roles.length > 0) {
+          this.roles = roles;
+          this.permissions = permissions;
+        } else {
+          this.roles = ['ROLE_DEFAULT'];
+          this.permissions = [];
+        }
       }
-
       return res;
     },
     // 退出系统
