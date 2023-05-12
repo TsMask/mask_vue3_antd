@@ -122,7 +122,7 @@ onMounted(() => {
               <span v-if="+state.user.loginDate > 0">
                 {{ parseDateToStr(+state.user.loginDate) }}
               </span>
-              <span>-</span>
+              <span v-else>-</span>
             </a-descriptions-item>
           </a-descriptions>
         </a-card>
