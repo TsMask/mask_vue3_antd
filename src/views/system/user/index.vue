@@ -5,7 +5,10 @@ import { message, Modal, Form } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
 import { ColumnsType } from 'ant-design-vue/lib/table';
+import UploadXlsxImport from './components/UploadXlsxImport.vue';
 import {
+  importData,
+  importTemplate,
   exportUser,
   changeUserStatus,
   listUser,
@@ -620,6 +623,78 @@ function fnExportList() {
   });
 }
 
+/**对话框表格信息导入对象信息状态类型 */
+type ModalUploadXlsxImportStateType = {
+  /**是否显示 */
+  visible: boolean;
+  /**标题 */
+  title: string;
+  /**导入模板下载触发 */
+  templateDownload: boolean;
+};
+
+/**对话框表格信息导入对象信息状态 */
+let modalUploadXlsxImportState: ModalUploadXlsxImportStateType = reactive({
+  visible: false,
+  title: '用户导入',
+  templateDownload: false,
+});
+
+/**
+ * 对话框表格信息导入确认执行函数
+ * @param isUpload 是否已上传文件
+ */
+function fnModalUploadXlsxImportClose(isUpload: boolean) {
+  if (isUpload) {
+    fnGetList();
+  }
+}
+
+/**对话框表格信息导入弹出窗口 */
+function fnModalUploadXlsxImportOpen() {
+  modalUploadXlsxImportState.visible = true;
+}
+
+/**列表导入模板 */
+function fnModalUploadXlsxImportExportTemplate() {
+  if (modalUploadXlsxImportState.templateDownload) return;
+  modalUploadXlsxImportState.templateDownload = true;
+  const key = 'importTemplate';
+  message.loading({ content: '请稍等...', key });
+  importTemplate()
+    .then(resBlob => {
+      if (resBlob.type === 'application/json') {
+        resBlob
+          .text()
+          .then(txt => {
+            const txtRes = JSON.parse(txt);
+            message.error({
+              content: `${txtRes.msg}`,
+              key,
+              duration: 3,
+            });
+          })
+          .catch(_ => {
+            message.error({
+              content: '下载模板异常',
+              key,
+              duration: 3,
+            });
+          });
+      } else {
+        message.success({
+          content: `成功读取导入模板`,
+          key,
+          duration: 3,
+        });
+        saveAs(resBlob, `user_template_${Date.now()}.xlsx`);
+      }
+    })
+    .finally(() => {
+      modalUploadXlsxImportState.templateDownload = false;
+    });
+}
+
 /**查询用户列表 */
 function fnGetList() {
   if (tableState.loading) return;
@@ -794,8 +869,16 @@ onMounted(() => {
           </a-button>
           <a-button
             type="dashed"
-            @click.prevent="fnExportList()"
+            @click.prevent="fnModalUploadXlsxImportOpen()"
             v-perms:has="['system:user:import']"
+          >
+            <template #icon><ImportOutlined /></template>
+            导入
+          </a-button>
+          <a-button
+            type="dashed"
+            @click.prevent="fnExportList()"
+            v-perms:has="['system:user:export']"
           >
             <template #icon><ExportOutlined /></template>
             导出
@@ -1319,6 +1402,16 @@ onMounted(() => {
         </a-form-item>
       </a-form>
     </a-modal>
+
+    <!-- 上传导入表格数据文件框 -->
+    <UploadXlsxImport
+      :title="modalUploadXlsxImportState.title"
+      v-model:visible="modalUploadXlsxImportState.visible"
+      :show-update-support="true"
+      :upload-file-method="importData"
+      :download-template-method="fnModalUploadXlsxImportExportTemplate"
+      @close="fnModalUploadXlsxImportClose"
+    />
   </page-container>
 </template>
 

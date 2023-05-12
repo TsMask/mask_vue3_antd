@@ -1,6 +1,32 @@
 import { request, ResultType } from '@/plugins/http-fetch';
 
 /**
+ * 导入用户模板数据
+ * @param data 表单数据对象
+ * @returns object
+ */
+export function importData(data: FormData) {
+  return request<ResultType>({
+    url: '/system/user/importData',
+    method: 'post',
+    data,
+    dataType: 'form-data',
+  });
+}
+
+/**
+ * 导入用户模板下载
+ * @returns bolb
+ */
+export function importTemplate() {
+  return request<Blob>({
+    url: '/system/user/importTemplate',
+    method: 'post',
+    responseType: 'blob',
+  });
+}
+
+/**
  * 用户列表导出
  * @param query 查询参数
  * @returns bolb
