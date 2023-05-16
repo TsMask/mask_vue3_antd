@@ -85,3 +85,15 @@ export function deptTreeSelect() {
     method: 'get',
   });
 }
+
+/**
+ * 部门树结构列表（指定角色）
+ * @param roleId 角色ID
+ * @returns object
+ */
+export function roleDeptTreeSelect(roleId: string | number) {
+  return request<ResultType>({
+    url: `/system/dept/roleDeptTreeSelect/${roleId}`,
+    method: 'get',
+  });
+}

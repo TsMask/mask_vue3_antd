@@ -108,19 +108,7 @@ export function dataScope(data: Record<string, any>) {
 }
 
 /**
- * 根据角色ID查询部门树结构
- * @param roleId 角色ID
- * @returns object
- */
-export function roleDeptTreeSelect(roleId: string | number) {
-  return request<ResultType>({
-    url: `/system/role/deptTree/${roleId}`,
-    method: 'get',
-  });
-}
-
-/**
- * 查询角色分配用户列表
+ * 角色分配用户列表
  * @param query 查询参数
  * @returns object
  */
@@ -133,26 +121,13 @@ export function authUserAllocatedList(query: Record<string, any>) {
 }
 
 /**
- * 角色选择用户添加授权
+ * 角色分配选择授权
  * @param data 角色对象
  * @returns object
  */
 export function authUserSelect(data: Record<string, any>) {
   return request<ResultType>({
     url: '/system/role/authUser/select',
-    method: 'put',
-    data: data,
-  });
-}
-
-/**
- * 角色选择用户取消授权
- * @param data 角色对象
- * @returns object
- */
-export function authUserCancel(data: Record<string, any>) {
-  return request<ResultType>({
-    url: '/system/role/authUser/cancel',
     method: 'put',
     data: data,
   });

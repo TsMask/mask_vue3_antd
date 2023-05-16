@@ -55,16 +55,12 @@ export function listUser(query: Record<string, any>) {
 
 /**
  * 查询用户详细
- * @param userId 用户ID
+ * @param userId 用户ID，新增0
  * @returns object
  */
-export function getUser(userId?: string | number) {
-  let url = '/system/user';
-  if (userId && userId !== 'undefined' && userId !== 'null') {
-    url = `/system/user/${userId}`;
-  }
+export function getUser(userId: string | number = '0') {
   return request<ResultType>({
-    url: url,
+    url: `/system/user/${userId}`,
     method: 'get',
   });
 }

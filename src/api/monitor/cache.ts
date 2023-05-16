@@ -23,8 +23,8 @@ export function listCacheName() {
 }
 
 /**
- * 查询缓存键名列表
- * @param cacheName 缓存键名
+ * 查询缓存名称下键名列表
+ * @param cacheName 缓存名称列表中得到的缓存名称
  * @returns object
  */
 export function listCacheKey(cacheName: string) {
@@ -36,8 +36,8 @@ export function listCacheKey(cacheName: string) {
 
 /**
  * 查询缓存内容
- * @param cacheName 缓存键名
- * @param cacheKey 缓存键
+ * @param cacheName 键名列表中得到的缓存名称
+ * @param cacheKey 键名列表中得到的缓存键名
  * @returns object
  */
 export function getCacheValue(cacheName: string, cacheKey: string) {
@@ -48,8 +48,8 @@ export function getCacheValue(cacheName: string, cacheKey: string) {
 }
 
 /**
- * 清理指定名称缓存
- * @param cacheName 缓存键名
+ * 删除缓存名称下键名列表
+ * @param cacheName 缓存名称列表中得到的缓存名称
  * @returns object
  */
 export function clearCacheName(cacheName: string) {
@@ -60,19 +60,22 @@ export function clearCacheName(cacheName: string) {
 }
 
 /**
- * 清理指定键名缓存
- * @param cacheKey 缓存键
+ * 删除缓存键名
+ * @param cacheName 键名列表中得到的缓存名称
+ * @param cacheKey 键名列表中得到的缓存键名
  * @returns object
  */
-export function clearCacheKey(cacheKey: string) {
+export function clearCacheKey(cacheName: string, cacheKey: string) {
   return request<ResultType>({
-    url: `/monitor/cache/clearCacheKey/${cacheKey}`,
+    url: `/monitor/cache/clearCacheKey/${cacheName}/${cacheKey}`,
     method: 'delete',
   });
 }
 
 /**
- * 安全清理缓存
+ * 安全清理缓存名称
+ *
+ * 指定可清理的缓存key
  * @returns object
  */
 export function clearCacheSafe() {
