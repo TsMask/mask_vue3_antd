@@ -108,7 +108,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'createTime',
     align: 'center',
     customRender(opt) {
-      if(+opt.value <= 0) return ''
+      if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
     },
   },
@@ -216,11 +216,17 @@ function fnModalVisibleByVive(deptId: string | number) {
   if (modalState.confirmLoading) return;
   const hide = message.loading('正在打开...', 0);
   modalState.confirmLoading = true;
-  modalState.treeData = treeDataAll;
   getDept(deptId).then(res => {
     modalState.confirmLoading = false;
     hide();
-    if (res.code === 200) {
+    if (res.code === 200 && res.data) {
+      if (res.data.parentId === '0') {
+        modalState.treeData = [
+          { deptId: '0', parentId: '0', deptName: '根节点' },
+        ];
+      } else {
+        modalState.treeData = treeDataAll;
+      }
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '部门信息';
       modalState.visibleByView = true;
@@ -256,10 +262,16 @@ function fnModalVisibleByEdit(
       resArr => {
         modalState.confirmLoading = false;
         hide();
-        if (resArr[0].code === 200) {
+        if (resArr[0].code === 200 && resArr[0].data) {
           modalState.from = Object.assign(modalState.from, resArr[0].data);
-          if (resArr[1].code === 200 && Array.isArray(resArr[1].menus)) {
-            modalState.treeData = parseDataToTree(resArr[1].menus, 'deptId');
+          if (resArr[1].code === 200 && Array.isArray(resArr[1].data)) {
+            if (resArr[1].data.length === 0) {
+              modalState.treeData = [
+                { deptId: '0', parentId: '0', deptName: '根节点' },
+              ];
+            } else {
+              modalState.treeData = parseDataToTree(resArr[1].data, 'deptId');
+            }
           }
           modalState.title = '修改部门信息';
           modalState.visibleByEdit = true;
@@ -293,6 +305,10 @@ function fnModalOk() {
               duration: 2,
             });
             modalState.visibleByEdit = false;
+            // 新增时清空上级部门树重新获取
+            if(!from.deptId){
+              treeDataAll = [];
+            }
             modalStateFrom.resetFields();
             fnGetList();
           } else {
