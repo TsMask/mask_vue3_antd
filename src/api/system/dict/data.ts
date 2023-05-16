@@ -40,18 +40,6 @@ export function getData(dictCode: string | number) {
 }
 
 /**
- * 根据字典类型查询字典数据信息
- * @param dictType 字典类型
- * @returns object
- */
-export function getDicts(dictType: string) {
-  return request<ResultType>({
-    url: `/system/dict/data/type/${dictType}`,
-    method: 'get',
-  });
-}
-
-/**
  * 新增字典数据
  * @param data 字典数据对象
  * @returns object
@@ -86,5 +74,17 @@ export function delData(dictCode: string | number) {
   return request<ResultType>({
     url: `/system/dict/data/${dictCode}`,
     method: 'delete',
+  });
+}
+
+/**
+ * 字典数据列表（指定字典类型）
+ * @param dictType 字典类型
+ * @returns object
+ */
+export function getDictDataType(dictType: string) {
+  return request<ResultType>({
+    url: `/system/dict/data/type/${dictType}`,
+    method: 'get',
   });
 }
