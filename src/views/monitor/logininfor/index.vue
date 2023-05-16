@@ -209,22 +209,21 @@ function fnRecordDelete() {
     title: '提示',
     content: `确认删除访问编号为 【${ids}】 的数据项吗?`,
     onOk() {
-      const key = 'delLogininfor';
-      message.loading({ content: '请稍等...', key });
+      const hide = message.loading('请稍等...', 0);
       delLogininfor(ids).then(res => {
+        hide();
         if (res.code === 200) {
           message.success({
             content: `删除成功`,
-            key,
-            duration: 2,
+            duration: 3,
           });
         } else {
           message.error({
             content: `${res.msg}`,
-            key,
-            duration: 2,
+            duration: 3,
           });
         }
+        fnGetList();
       });
     },
   });
@@ -236,22 +235,21 @@ function fnCleanList() {
     title: '提示',
     content: `确认清空所有登录日志数据项?`,
     onOk() {
-      const key = 'cleanLogininfor';
-      message.loading({ content: '请稍等...', key });
+      const hide = message.loading('请稍等...', 0);
       cleanLogininfor().then(res => {
+        hide();
         if (res.code === 200) {
           message.success({
             content: `清空成功`,
-            key,
-            duration: 2,
+            duration: 3,
           });
         } else {
           message.error({
             content: `${res.msg}`,
-            key,
-            duration: 2,
+            duration: 3,
           });
         }
+        fnGetList();
       });
     },
   });
@@ -264,20 +262,18 @@ function fnUnlock() {
     title: '提示',
     content: `确认解锁用户 【${username}】 数据项?`,
     onOk() {
-      const key = 'unlockLogininfor';
-      message.loading({ content: '请稍等...', key });
+      const hide = message.loading('请稍等...', 0);
       unlockLogininfor(username).then(res => {
+        hide();
         if (res.code === 200) {
           message.success({
             content: `${username} 解锁成功`,
-            key,
-            duration: 2,
+            duration: 3,
           });
         } else {
           message.error({
             content: `${res.msg}`,
-            key,
-            duration: 2,
+            duration: 3,
           });
         }
       });
