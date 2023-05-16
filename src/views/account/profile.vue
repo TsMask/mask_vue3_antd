@@ -5,6 +5,9 @@ import { reactive, ref, onMounted } from 'vue';
 import { parseDateToStr } from '@/utils/date-utils.js';
 import useUserStore from '@/store/modules/user';
 
+/**加载状态 */
+let loading = ref<boolean>(true);
+
 /**Tab标签激活 */
 let activeKey = ref<string>('empty');
 
@@ -57,6 +60,7 @@ function fnGetProfile() {
       state.postGroup = postGroup;
       // 头像解析
       state.user.avatar = useUserStore().fnAvatar(user.avatar);
+      loading.value = false
     } else {
       message.error(res.msg, 3);
     }
@@ -70,7 +74,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container>
+  <page-container :loading="loading">
     <a-row :gutter="16">
       <a-col :lg="6" :md="6" :xs="24">
         <a-card :body-style="{ padding: '0px' }" style="margin-bottom: 16px">
