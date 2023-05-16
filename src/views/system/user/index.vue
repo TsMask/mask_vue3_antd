@@ -333,12 +333,13 @@ function fnModalVisibleByVive(userId: string | number) {
   getUser(userId).then(res => {
     modalState.confirmLoading = false;
     hide();
-    if (res.code === 200) {
-      modalState.options.roles = res.roles;
-      modalState.options.posts = res.posts;
-      modalState.from = Object.assign(modalState.from, res.data);
-      modalState.from.roleIds = res.roleIds;
-      modalState.from.postIds = res.postIds;
+    if (res.code === 200 && res.data) {
+      const { user, roleIds, postIds, roles, posts } = res.data;
+      modalState.options.roles = roles;
+      modalState.options.posts = posts;
+      modalState.from = Object.assign(modalState.from, user);
+      modalState.from.roleIds = roleIds;
+      modalState.from.postIds = postIds;
       // 头像解析
       modalState.from.avatar = useUserStore().fnAvatar(modalState.from.avatar);
       modalState.title = '用户信息';
@@ -369,14 +370,15 @@ function fnModalVisibleByEdit(userId?: string | number) {
       getUser().then(res => {
         modalState.confirmLoading = false;
         hide();
-        if (res.code === 200) {
-          options.roles = res.roles;
-          options.posts = res.posts;
-          modalState.options.roles = res.roles;
-          modalState.options.posts = res.posts;
-          modalState.from = Object.assign(modalState.from, res.data);
-          modalState.from.roleIds = res.roleIds;
-          modalState.from.postIds = res.postIds;
+        if (res.code === 200 && res.data) {
+          const { user, roleIds, postIds, roles, posts } = res.data;
+          options.roles = roles;
+          options.posts = posts;
+          modalState.options.roles = roles;
+          modalState.options.posts = posts;
+          modalState.from = Object.assign(modalState.from, user);
+          modalState.from.roleIds = roleIds;
+          modalState.from.postIds = postIds;
           modalState.title = '添加用户信息';
           modalState.visibleByEdit = true;
         } else {
@@ -391,12 +393,13 @@ function fnModalVisibleByEdit(userId?: string | number) {
     getUser(userId).then(res => {
       modalState.confirmLoading = false;
       hide();
-      if (res.code === 200) {
-        modalState.options.roles = res.roles;
-        modalState.options.posts = res.posts;
-        modalState.from = Object.assign(modalState.from, res.data);
-        modalState.from.roleIds = res.roleIds;
-        modalState.from.postIds = res.postIds;
+      if (res.code === 200 && res.data) {
+        const { user, roleIds, postIds, roles, posts } = res.data;
+        modalState.options.roles = roles;
+        modalState.options.posts = posts;
+        modalState.from = Object.assign(modalState.from, user);
+        modalState.from.roleIds = roleIds;
+        modalState.from.postIds = postIds;
         modalState.title = '修改用户信息';
         modalState.visibleByEdit = true;
       } else {
@@ -659,10 +662,10 @@ function fnModalUploadXlsxImportOpen() {
 function fnModalUploadXlsxImportExportTemplate() {
   if (modalUploadXlsxImportState.templateDownload) return;
   modalUploadXlsxImportState.templateDownload = true;
-  const key = 'importTemplate';
-  message.loading({ content: '请稍等...', key });
+  const hide = message.loading('正在打开...', 0);
   importTemplate()
     .then(resBlob => {
+      hide();
       if (resBlob.type === 'application/json') {
         resBlob
           .text()
@@ -670,21 +673,18 @@ function fnModalUploadXlsxImportExportTemplate() {
             const txtRes = JSON.parse(txt);
             message.error({
               content: `${txtRes.msg}`,
-              key,
               duration: 3,
             });
           })
           .catch(_ => {
             message.error({
               content: '下载模板异常',
-              key,
               duration: 3,
             });
           });
       } else {
         message.success({
           content: `成功读取导入模板`,
-          key,
           duration: 3,
         });
         saveAs(resBlob, `user_template_${Date.now()}.xlsx`);

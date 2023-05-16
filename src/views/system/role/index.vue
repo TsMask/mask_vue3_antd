@@ -14,9 +14,9 @@ import {
   getRole,
   listRole,
   updateRole,
-  roleDeptTreeSelect,
 } from '@/api/system/role';
 import { roleMenuTreeSelect, menuTreeSelect } from '@/api/system/menu';
+import { roleDeptTreeSelect } from '@/api/system/dept';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils.js';
 import useDictStore from '@/store/modules/dict';
@@ -304,15 +304,16 @@ function fnModalVisibleByVive(roleId: string | number) {
   Promise.all([getRole(roleId), roleMenuTreeSelect(roleId)]).then(resArr => {
     modalState.confirmLoading = false;
     hide();
-    if (resArr[0].code === 200) {
+    if (resArr[0].code === 200 && resArr[0].data) {
       modalState.from = Object.assign(modalState.from, resArr[0].data);
-      if (resArr[1].code === 200 && Array.isArray(resArr[1].menus)) {
-        menuTree.checkedKeys = parseTreeKeys(resArr[1].menus, 'id');
-        menuTree.expandedKeys = parseTreeNodeKeys(resArr[1].menus, 'id');
-        menuTree.treeData = resArr[1].menus;
-        modalState.menuTree.treeData = resArr[1].menus;
-        modalState.menuTree.checkedKeys = resArr[1].checkedKeys;
-        modalState.from.menuIds = resArr[1].checkedKeys;
+      if (resArr[1].code === 200 && resArr[1].data) {
+        const { menus, checkedKeys } = resArr[1].data;
+        menuTree.checkedKeys = parseTreeKeys(menus, 'id');
+        menuTree.expandedKeys = parseTreeNodeKeys(menus, 'id');
+        menuTree.treeData = menus;
+        modalState.menuTree.treeData = menus;
+        modalState.menuTree.checkedKeys = checkedKeys;
+        modalState.from.menuIds = checkedKeys;
       }
       modalState.title = '角色信息';
       modalState.visibleByView = true;
@@ -359,15 +360,16 @@ function fnModalVisibleByEdit(roleId?: string | number) {
     Promise.all([getRole(roleId), roleMenuTreeSelect(roleId)]).then(resArr => {
       modalState.confirmLoading = false;
       hide();
-      if (resArr[0].code === 200) {
+      if (resArr[0].code === 200 && resArr[0].data) {
         modalState.from = Object.assign(modalState.from, resArr[0].data);
-        if (resArr[1].code === 200 && Array.isArray(resArr[1].menus)) {
-          menuTree.checkedKeys = parseTreeKeys(resArr[1].menus, 'id');
-          menuTree.expandedKeys = parseTreeNodeKeys(resArr[1].menus, 'id');
-          menuTree.treeData = resArr[1].menus;
-          modalState.menuTree.treeData = resArr[1].menus;
-          modalState.menuTree.checkedKeys = resArr[1].checkedKeys;
-          modalState.from.menuIds = resArr[1].checkedKeys;
+        if (resArr[1].code === 200 && resArr[1].data) {
+          const { menus, checkedKeys } = resArr[1].data;
+          menuTree.checkedKeys = parseTreeKeys(menus, 'id');
+          menuTree.expandedKeys = parseTreeNodeKeys(menus, 'id');
+          menuTree.treeData = menus;
+          modalState.menuTree.treeData = menus;
+          modalState.menuTree.checkedKeys = checkedKeys;
+          modalState.from.menuIds = checkedKeys;
         }
         modalState.title = '修改角色信息';
         modalState.visibleByEdit = true;
@@ -537,15 +539,16 @@ function fnRecordDataScope(roleId: string | number) {
   // 查询角色详细同时根据角色ID查询部门树结构
   Promise.all([getRole(roleId), roleDeptTreeSelect(roleId)])
     .then(resArr => {
-      if (resArr[0].code === 200) {
+      if (resArr[0].code === 200 && resArr[0].data) {
         modalState.from = Object.assign(modalState.from, resArr[0].data);
-        if (resArr[1].code === 200 && Array.isArray(resArr[1].depts)) {
-          deptTree.checkedKeys = parseTreeKeys(resArr[1].depts, 'id');
-          deptTree.expandedKeys = parseTreeNodeKeys(resArr[1].depts, 'id');
-          deptTree.treeData = resArr[1].depts;
-          modalState.deptTree.treeData = resArr[1].depts;
-          modalState.deptTree.checkedKeys = resArr[1].checkedKeys;
-          modalState.from.deptIds = resArr[1].checkedKeys;
+        if (resArr[1].code === 200 && resArr[1].data) {
+          const { depts, checkedKeys } = resArr[1].data;
+          deptTree.checkedKeys = parseTreeKeys(depts, 'id');
+          deptTree.expandedKeys = parseTreeNodeKeys(depts, 'id');
+          deptTree.treeData = depts;
+          modalState.deptTree.treeData = depts;
+          modalState.deptTree.checkedKeys = checkedKeys;
+          modalState.from.deptIds = checkedKeys;
         }
         modalState.title = '分配数据权限';
         modalState.visibleByDataScope = true;
@@ -1130,18 +1133,20 @@ onMounted(() => {
             <a-checkbox
               :checked="modalState.menuTree.expandedKeys.length > 0"
               @change="e => fnModalExpandedKeys(e.target.checked, 'menu')"
-              >展开/折叠</a-checkbox
             >
+              展开/折叠
+            </a-checkbox>
             <a-checkbox
               :checked="modalState.from.menuIds.length > 0"
               @change="e => fnModalCheckedKeys(e.target.checked, 'menu')"
-              >全选/全不选</a-checkbox
             >
+              全选/全不选、
+            </a-checkbox>
             <a-checkbox
               :checked="modalState.from.menuCheckStrictly === '1'"
               @change="e => fnModalCheckStrictly(e.target.checked, 'menu')"
-              >父子联动</a-checkbox
-            >
+              >、 父子联动
+            </a-checkbox>
           </a-space>
           <a-tree
             checkable
@@ -1237,18 +1242,21 @@ onMounted(() => {
             <a-checkbox
               :checked="modalState.deptTree.expandedKeys.length > 0"
               @change="e => fnModalExpandedKeys(e.target.checked, 'dept')"
-              >展开/折叠</a-checkbox
             >
+              展开/折叠
+            </a-checkbox>
             <a-checkbox
               :checked="modalState.from.deptIds.length > 0"
               @change="e => fnModalCheckedKeys(e.target.checked, 'dept')"
-              >全选/全不选</a-checkbox
             >
+              全选/全不选
+            </a-checkbox>
             <a-checkbox
               :checked="modalState.from.deptCheckStrictly === '1'"
               @change="e => fnModalCheckStrictly(e.target.checked, 'dept')"
-              >父子联动</a-checkbox
             >
+              父子联动
+            </a-checkbox>
           </a-space>
           <a-tree
             checkable

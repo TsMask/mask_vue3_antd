@@ -6,11 +6,7 @@ import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
 import { ColumnsType } from 'ant-design-vue/lib/table';
 import AuthUserSelect from './components/auth-user-select.vue';
-import {
-  authUserAllocatedList,
-  authUserCancel,
-  authUserSelect,
-} from '@/api/system/role';
+import { authUserAllocatedList, authUserSelect } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
 import useTabsStore from '@/store/modules/tabs';
 import useDictStore from '@/store/modules/dict';
@@ -211,25 +207,25 @@ function fnModalOk(userIds: string[] | number[]) {
     message.error(`请选择要分配的用户`, 2);
     return;
   }
-  const key = 'authUserSelect';
-  message.loading({ content: '请稍等...', key });
-  authUserSelect({ userIds: userIds, roleId: roleId }).then(res => {
-    if (res.code === 200) {
-      modalState.visibleBySelectUser = false;
-      message.success({
-        content: `授权用户添加成功`,
-        key,
-        duration: 2,
-      });
-      fnGetList();
-    } else {
-      message.error({
-        content: `${res.msg}`,
-        key: key,
-        duration: 2,
-      });
+  const hide = message.loading('请稍等...', 0);
+  authUserSelect({ select: true, userIds: userIds, roleId: roleId }).then(
+    res => {
+      if (res.code === 200) {
+        hide();
+        modalState.visibleBySelectUser = false;
+        message.success({
+          content: `授权用户添加成功`,
+          duration: 3,
+        });
+        fnGetList();
+      } else {
+        message.error({
+          content: `${res.msg}`,
+          duration: 3,
+        });
+      }
     }
-  });
+  );
 }
 
 /**
@@ -244,24 +240,24 @@ function fnRecordDelete(userId: string | number) {
     title: '提示',
     content: `确认取消用户编号为 【${userId}】 的数据项授权?`,
     onOk() {
-      const key = 'authUserCancel';
-      message.loading({ content: '请稍等...', key });
-      authUserCancel({ userIds: userId, roleId: roleId }).then(res => {
-        if (res.code === 200) {
-          message.success({
-            content: `取消授权成功`,
-            key,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key: key,
-            duration: 2,
-          });
+      const hide = message.loading('请稍等...', 0);
+      authUserSelect({ select: false, userIds: userId, roleId: roleId }).then(
+        res => {
+          if (res.code === 200) {
+            hide();
+            message.success({
+              content: `取消授权成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
         }
-      });
+      );
     },
   });
 }
