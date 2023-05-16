@@ -4,7 +4,6 @@ import useAppStore from '@/store/modules/app';
 import useUserStore from '@/store/modules/user';
 const userStore = useUserStore();
 const { systemName, systemVersion } = useAppStore();
-let logoutTime = Date.now() + 1000 * 60 * 60 * 2; // 正式环境2小时，todo接口时间
 
 /**跳转 */
 function fnTo(type: string) {
@@ -41,12 +40,8 @@ function fnTo(type: string) {
       </a-space>
     </template>
     <template #extraContent>
-      <a-space :size="8">
-        <a-statistic-countdown
-          title="登录有效期倒计时"
-          :value="logoutTime"
-          format="HH:mm:ss:SSS"
-        />
+      <a-space :size="16">
+        <a-statistic title="在线用户" :value="545486" />
       </a-space>
     </template>
 
