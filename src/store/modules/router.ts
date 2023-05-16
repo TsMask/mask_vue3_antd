@@ -102,6 +102,7 @@ function buildRouters(recordRaws: RecordRaws[]): RouteRecordRaw[] {
     // 对元数据特殊参数进行处理
     item.meta = Object.assign(item.meta, {
       hideInMenu: item.meta.hide,
+      icon: item.meta.icon === '#' ? '' : item.meta.icon,
     });
 
     // 构建路由
