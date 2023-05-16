@@ -236,7 +236,7 @@ function fnModalVisibleByVive(dictId: string | number) {
   getType(dictId).then(res => {
     modalState.confirmLoading = false;
     hide();
-    if (res.code === 200) {
+    if (res.code === 200 && res.data) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '字典类型信息';
       modalState.visibleByView = true;
@@ -262,7 +262,7 @@ function fnModalVisibleByEdit(dictId?: string | number) {
     getType(dictId).then(res => {
       modalState.confirmLoading = false;
       hide();
-      if (res.code === 200) {
+      if (res.code === 200 && res.data) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改字典类型';
         modalState.visibleByEdit = true;

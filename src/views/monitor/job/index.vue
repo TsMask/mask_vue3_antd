@@ -259,7 +259,7 @@ function fnModalVisibleByVive(jobId: string | number) {
   getJob(jobId).then(res => {
     modalState.confirmLoading = false;
     hide();
-    if (res.code === 200) {
+    if (res.code === 200 && res.data) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '任务信息';
       modalState.visibleByView = true;
@@ -285,7 +285,7 @@ function fnModalVisibleByEdit(jobId?: string | number) {
     getJob(jobId).then(res => {
       modalState.confirmLoading = false;
       hide();
-      if (res.code === 200) {
+      if (res.code === 200 && res.data) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改任务';
         modalState.visibleByEdit = true;
@@ -412,7 +412,7 @@ function fnRecordRunOne(row: Record<string, string>) {
           });
         } else {
           message.error({
-            content: `${res.msg}`,
+            content: `${res.msg} 执行失败`,
             key,
             duration: 2,
           });

@@ -463,9 +463,11 @@ onMounted(() => {
   // 指定字典id列表数据
   if (dictId && dictId !== '0') {
     getType(dictId).then(res => {
-      if (res.code === 200) {
+      if (res.code === 200 && res.data) {
         queryParams.dictType = res.data.dictType;
         fnGetList();
+      } else {
+        message.error(`获取字典类型信息失败`, 3);
       }
     });
   } else {

@@ -230,7 +230,7 @@ function fnModalVisibleByVive(postId: string | number) {
   getPost(postId).then(res => {
     modalState.confirmLoading = false;
     hide();
-    if (res.code === 200) {
+    if (res.code === 200 && res.data) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '岗位信息';
       modalState.visibleByView = true;
@@ -256,7 +256,7 @@ function fnModalVisibleByEdit(postId?: string | number) {
     getPost(postId).then(res => {
       modalState.confirmLoading = false;
       hide();
-      if (res.code === 200) {
+      if (res.code === 200 && res.data) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改岗位信息';
         modalState.visibleByEdit = true;

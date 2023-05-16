@@ -238,7 +238,7 @@ function fnModalVisibleByVive(configId: string | number) {
     return;
   }
   getConfig(configId).then(res => {
-    if (res.code === 200) {
+    if (res.code === 200 && res.data) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '参数配置信息';
       modalState.visibleByView = true;
@@ -264,7 +264,7 @@ function fnModalVisibleByEdit(configId?: string | number) {
     getConfig(configId).then(res => {
       modalState.confirmLoading = false;
       hide();
-      if (res.code === 200) {
+      if (res.code === 200 && res.data) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改参数配置';
         modalState.visibleByEdit = true;
@@ -698,7 +698,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="公告状态" name="configType">
+            <a-form-item label="系统内置" name="configType">
               <DictTag
                 :options="dict.sysYesNo"
                 :value="modalState.from.configType"

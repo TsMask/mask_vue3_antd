@@ -274,7 +274,7 @@ function fnModalVisibleByVive(menuId: string | number) {
   getMenu(menuId).then(res => {
     modalState.confirmLoading = false;
     hide();
-    if (res.code === 200) {
+    if (res.code === 200 && res.data) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '菜单信息';
       modalState.visibleByView = true;
@@ -310,7 +310,7 @@ function fnModalVisibleByEdit(
     getMenu(menuId).then(res => {
       modalState.confirmLoading = false;
       hide();
-      if (res.code === 200) {
+      if (res.code === 200 && res.data) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改菜单信息';
         modalState.visibleByEdit = true;
