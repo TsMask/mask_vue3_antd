@@ -1,4 +1,4 @@
-import { getToken } from '@/plugins/auth-token';
+import { getToken, removeToken } from '@/plugins/auth-token';
 import { sessionGetJSON, sessionSetJSON } from '@/utils/cache-session-utils';
 import { TOKEN_KEY, TOKEN_KEY_PREFIX } from '@/constants/token-constants';
 import { CACHE_SESSION_FATCH } from '@/constants/cache-keys-constants';
@@ -95,7 +95,11 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
   }
 
   // 使用mock.apifox.cn时开启
-  // Reflect.set(options.headers, 'apifoxToken', 'xBhhq0RbnbKByxColuCtxUKF8gEhS7lW');
+  // Reflect.set(
+  //   options.headers,
+  //   'apifoxToken',
+  //   'xBhhq0RbnbKByxColuCtxUKF8gEhS7lW'
+  // );
 
   // 是否需要设置 token
   const token = getToken();
@@ -156,6 +160,11 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
 /**请求后的拦截 */
 function interceptorResponse(res: ResultType): ResultType | Promise<any> {
   //console.log('请求后的拦截', res);
+  // 登录失效时，移除授权令牌并重新刷新页面
+  if (res.code === 401) {
+    removeToken();
+    window.location.reload();
+  }
   return res;
 }
 
