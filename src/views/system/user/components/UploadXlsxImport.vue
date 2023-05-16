@@ -82,17 +82,24 @@ function fnBeforeUpload(file: FileType) {
 /**上传请求发出 */
 function fnUpload(up: UploadRequestOption) {
   if (typeof props.uploadFileMethod !== 'function') return;
-  const hide = message.loading('请稍等...', 0);
+  const hide = message.loading('正在上传...', 0);
   updateState.loading = true;
   let formData = new FormData();
   formData.append('file', up.file);
   formData.append('updateSupport', `${updateState.updateSupport}`);
-  props.uploadFileMethod(formData).then((res: ResultType) => {
-    hide();
-    updateState.isUpload = true;
-    updateState.loading = false;
-    updateState.msg = res.msg?.replaceAll(/<br\/>+/g, '\r');
-  });
+  props
+    .uploadFileMethod(formData)
+    .then((res: ResultType) => {
+      updateState.loading = false;
+      updateState.isUpload = true;
+      updateState.msg = res.msg?.replaceAll(/<br\/>+/g, '\r');
+    })
+    .catch((err: { code: number; msg: string }) => {
+      message.error(`上传失败 ${err.msg}`);
+    })
+    .finally(() => {
+      hide();
+    });
 }
 
 /**弹框确认按钮事件 */
