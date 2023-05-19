@@ -120,7 +120,7 @@ function buildRouters(recordRaws: RecordRaws[]): RouteRecordRaw[] {
 }
 
 /**匹配views里面所有的.vue文件 */
-const views = import.meta.glob('./../../views/**/*.vue');
+const views = import.meta.glob('./../../views/**/*.{vue,tsx}');
 
 /**
  * 查找页面模块
@@ -135,7 +135,10 @@ const views = import.meta.glob('./../../views/**/*.vue');
 function findView(dirName: string) {
   let view = () => {};
   for (const dir in views) {
-    const viewDirName = dir.split('views/')[1].split('.vue')[0];
+    const component = dir.split('views/')[1];
+    const existEnd = component.endsWith('.vue') || component.endsWith('.tsx');
+    const lastIndex = existEnd ? component.length : component.lastIndexOf('.');
+    const viewDirName = component.substring(0, lastIndex);
     if (viewDirName === dirName) {
       view = () => views[dir]();
       break;
