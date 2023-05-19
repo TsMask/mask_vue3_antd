@@ -119,13 +119,13 @@ function buildRouters(recordRaws: RecordRaws[]): RouteRecordRaw[] {
   return routers;
 }
 
-/**匹配views里面所有的.vue文件 */
+/**匹配views里面所有的.vue或.tsx文件 */
 const views = import.meta.glob('./../../views/**/*.{vue,tsx}');
 
 /**
  * 查找页面模块
  *
- * 查找 `/views/system/menu/index.vue`
+ * 查找 `/views/system/menu/index.vue` 或 `/views/system/menu/index.tsx`
  *
  * 参数值为 `system/menu/index`
  *
@@ -135,10 +135,11 @@ const views = import.meta.glob('./../../views/**/*.{vue,tsx}');
 function findView(dirName: string) {
   let view = () => {};
   for (const dir in views) {
-    const component = dir.split('views/')[1];
-    const existEnd = component.endsWith('.vue') || component.endsWith('.tsx');
-    const lastIndex = existEnd ? component.length : component.lastIndexOf('.');
-    const viewDirName = component.substring(0, lastIndex);
+    let viewDirName = '';
+    const component = dir.match(/views\/(.+)\.(vue|tsx)/);
+    if (component && component.length === 3) {
+      viewDirName = component[1];
+    }
     if (viewDirName === dirName) {
       view = () => views[dir]();
       break;
