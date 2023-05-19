@@ -1,6 +1,7 @@
+import defaultAvatar from '@/assets/images/default_avatar.png';
+import useLayoutStore from './layout';
 import { login, logout, getInfo } from '@/api/login';
 import { getToken, setToken, removeToken } from '@/plugins/auth-token';
-import defaultAvatar from '@/assets/images/default_avatar.png';
 import { defineStore } from 'pinia';
 import { TOKEN_RESPONSE_FIELD } from '@/constants/token-constants';
 import { validHttp } from '@/utils/regular-utils';
@@ -136,6 +137,13 @@ const useUserStore = defineStore('user', {
           this.roles = ['ROLE_DEFAULT'];
           this.permissions = [];
         }
+
+        // 水印文字信息=用户昵称 手机号
+        let waterMarkContent = this.nickName;
+        if (this.phonenumber) {
+          waterMarkContent = `${this.nickName} ${this.phonenumber}`;
+        }
+        useLayoutStore().changeWaterMark(waterMarkContent);
       }
       return res;
     },
