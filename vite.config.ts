@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
       proxy: {
         // https://cn.vitejs.dev/config/#server-proxy
         '/dev-api': {
-          target: 'http://localhost:6275',
+          target: env.VITE_API_BASE_URL,
           changeOrigin: true,
           rewrite: p => p.replace(/^\/dev-api/, ''),
         },
@@ -66,6 +66,7 @@ export default defineConfig(({ mode }) => {
       }),
       // gzip静态压缩文件
       Compression({
+        verbose: false,
         algorithm: 'gzip',
         ext: '.gz',
         disable: false, // 是否禁用
