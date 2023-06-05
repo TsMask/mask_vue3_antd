@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { Modal, message } from 'ant-design-vue/lib';
 import { onMounted, reactive, ref, toRaw } from 'vue';
-import { updateUserProfile, uploadAvatar } from '@/api/system/user';
+import { updateUserProfile, uploadAvatar } from '@/api/profile';
 import {
   regExpEmail,
   regExpMobile,

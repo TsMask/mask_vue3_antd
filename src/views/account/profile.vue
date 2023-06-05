@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { message } from 'ant-design-vue/lib';
-import { getUserProfile } from '@/api/system/user';
+import { getUserProfile } from '@/api/profile';
 import { reactive, ref, onMounted } from 'vue';
 import { parseDateToStr } from '@/utils/date-utils.js';
 import useUserStore from '@/store/modules/user';

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { Modal, message } from 'ant-design-vue/lib';
 import { reactive } from 'vue';
-import { updateUserPwd } from '@/api/system/user';
+import { updateUserPwd } from '@/api/profile';
 import { regExpPasswd } from '@/utils/regular-utils.js';
 import useUserStore from '@/store/modules/user';
 import { useRouter } from 'vue-router';
