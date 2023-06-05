@@ -129,13 +129,18 @@ tabsStore.clear();
         </RouterLink>
       </template>
 
-      <!--插槽-顶部左侧-->
+      <!--插槽-顶部左侧，只对side布局有效-->
       <template #headerContentRender></template>
 
       <!--插槽-顶部右侧-->
       <template #rightContentRender>
         <RightContent />
         <LayoutSetting />
+      </template>
+
+      <!--插槽-导航标签项-->
+      <template #tabRender="{ width, fixedHeader }">
+        <Tabs :width="width" :fixed-header="fixedHeader" />
       </template>
 
       <!--插槽-页面路由导航面包屑-->
@@ -150,7 +155,6 @@ tabsStore.clear();
 
       <!--内容页面视图-->
       <RouterView v-slot="{ Component, route }">
-        <Tabs />
         <transition name="slide-left" mode="out-in">
           <KeepAlive :include="tabsStore.getCaches">
             <component

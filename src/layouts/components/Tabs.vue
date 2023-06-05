@@ -1,21 +1,26 @@
 <script lang="ts" setup>
 import IconFont from '@/components/IconFont/index.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import useLayoutStore from '@/store/modules/layout';
 import useTabsStore from '@/store/modules/tabs';
-const layoutStore = useLayoutStore();
 const tabsStore = useTabsStore();
 const router = useRouter();
 
-/**标签栏宽度 */
-let tabWidth = ref<string>('100%');
+defineProps({
+  /**标签栏宽度 */
+  width: {
+    type: String,
+    default: '100%',
+  },
+  /**是否固定顶部栏 */
+  fixedHeader: {
+    type: Boolean,
+    default: false,
+  },
+});
 
 /**导航标签项列表长度 */
 let tabLen = computed(() => tabsStore.getTabs.length);
-
-/**是否固定顶部栏 */
-let fixedHeader = computed(() => layoutStore.proConfig.fixedHeader);
 
 /**
  * 标签更多菜单项
@@ -82,32 +87,6 @@ function fnTabClose(path: string) {
 
 /**监听当前路由添加到导航标签列表 */
 watch(router.currentRoute, v => tabsStore.tabOpen(v), { immediate: true });
-
-/**计算侧边栏的宽度，不然导致左边的样式会出问题 */
-onMounted(() => {
-  const element = document.getElementsByClassName('ant-pro-fixed-header');
-  if (element && element.length > 0) {
-    // 获取初始宽度
-    const { width } = Reflect.get(element[0], 'style');
-    tabWidth.value = width;
-    // 监听DOM中style属性变化，这属于全局的监听没做销毁
-    let MutationObserver = window.MutationObserver;
-    new MutationObserver(callback => {
-      if (callback && callback.length > 0) {
-        const { width } = Reflect.get(callback[0].target, 'style');
-        tabWidth.value = width;
-      }
-    }).observe(element[0], {
-      attributeFilter: ['style'],
-      attributes: true,
-      attributeOldValue: false,
-      characterData: false,
-      characterDataOldValue: false,
-      childList: false,
-      subtree: false,
-    });
-  }
-});
 </script>
 
 <template>
@@ -116,9 +95,7 @@ onMounted(() => {
     <a-tabs
       class="tabs"
       :class="{ 'tabs-fixed': fixedHeader }"
-      :style="{
-        width: tabWidth,
-      }"
+      :style="{ width: width }"
       hide-add
       tab-position="top"
       type="editable-card"
@@ -190,6 +167,7 @@ onMounted(() => {
   background: #fff;
   box-shadow: 0 1px 4px #0015291f;
   transition: background 0.3s, width 0.2s;
+  position: relative;
 
   &.tabs-fixed {
     right: 0px;

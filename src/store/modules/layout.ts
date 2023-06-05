@@ -63,12 +63,6 @@ const useLayoutStore = defineStore('layout', {
     },
     waterMarkContent: import.meta.env.VITE_APP_SYSTEM_NAME,
   }),
-  getters: {
-    /**获取导航菜单深色主题是否改变文字颜色 */
-    isNavTextDark(state) {
-      return state.proConfig.layout !== 'side' && state.proConfig.navTheme === 'dark';
-    },
-  },
   actions: {
     /**改变显示状态 */
     changeVisibleLayoutSetting() {

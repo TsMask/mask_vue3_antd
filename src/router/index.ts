@@ -3,7 +3,6 @@ import {
   createWebHistory,
   createWebHashHistory,
   RouteRecordRaw,
-  isNavigationFailure,
 } from 'vue-router';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
