@@ -2,7 +2,7 @@ import vue from '@vitejs/plugin-vue';
 import { defineConfig, loadEnv } from 'vite';
 import Components from 'unplugin-vue-components/vite';
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers';
-import Compression from "vite-plugin-compression";
+import Compression from 'vite-plugin-compression';
 import path from 'path';
 
 // https://vitejs.dev/config/
@@ -14,13 +14,13 @@ export default defineConfig(({ mode }) => {
     base: env.VITE_HISTORY_BASE_URL,
     // 本地开发服务配置
     server: {
-      port: 6269, // 端口
-      host: true, // 暴露到网络地址
+      port: 6269,  // 端口
+      host: true,  // 暴露到网络地址
       open: false, // 完成后自动跳转浏览器打开
       proxy: {
         // https://cn.vitejs.dev/config/#server-proxy
-        '/dev-api': {
-          target: env.VITE_API_BASE_URL,
+        [env.VITE_API_BASE_URL]: {
+          target: 'http://192.168.56.1:6275',
           changeOrigin: true,
           rewrite: p => p.replace(/^\/dev-api/, ''),
         },
