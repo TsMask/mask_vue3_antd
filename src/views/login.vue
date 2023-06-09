@@ -37,7 +37,7 @@ let state = reactive({
   /**验证码状态 */
   captcha: {
     /**验证码开关 */
-    enabled: true,
+    enabled: false,
     /**验证码图片地址 */
     codeImg: '',
     codeImgFall: codeImgFall,
