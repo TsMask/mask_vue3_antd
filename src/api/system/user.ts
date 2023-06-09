@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 导入用户模板数据
@@ -6,7 +6,7 @@ import { request, ResultType } from '@/plugins/http-fetch';
  * @returns object
  */
 export function importData(data: FormData) {
-  return request<ResultType>({
+  return request({
     url: '/system/user/importData',
     method: 'post',
     data,
@@ -19,9 +19,9 @@ export function importData(data: FormData) {
  * @returns bolb
  */
 export function importTemplate() {
-  return request<Blob>({
+  return request({
     url: '/system/user/importTemplate',
-    method: 'post',
+    method: 'get',
     responseType: 'blob',
   });
 }
@@ -32,7 +32,7 @@ export function importTemplate() {
  * @returns bolb
  */
 export function exportUser(query: Record<string, any>) {
-  return request<Blob>({
+  return request({
     url: '/system/user/export',
     method: 'post',
     data: query,
@@ -46,7 +46,7 @@ export function exportUser(query: Record<string, any>) {
  * @returns object
  */
 export function listUser(query: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/user/list',
     method: 'get',
     params: query,
@@ -59,7 +59,7 @@ export function listUser(query: Record<string, any>) {
  * @returns object
  */
 export function getUser(userId: string | number = '0') {
-  return request<ResultType>({
+  return request({
     url: `/system/user/${userId}`,
     method: 'get',
   });
@@ -71,7 +71,7 @@ export function getUser(userId: string | number = '0') {
  * @returns object
  */
 export function addUser(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/user',
     method: 'post',
     data: data,
@@ -84,7 +84,7 @@ export function addUser(data: Record<string, any>) {
  * @returns object
  */
 export function updateUser(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/user',
     method: 'put',
     data: data,
@@ -97,7 +97,7 @@ export function updateUser(data: Record<string, any>) {
  * @returns object
  */
 export function delUser(userId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/user/${userId}`,
     method: 'delete',
   });
@@ -110,7 +110,7 @@ export function delUser(userId: string | number) {
  * @returns object
  */
 export function resetUserPwd(userId: string | number, password: string) {
-  return request<ResultType>({
+  return request({
     url: '/system/user/resetPwd',
     method: 'put',
     data: {
@@ -130,7 +130,7 @@ export function changeUserStatus(
   userId: string | number,
   status: string | number
 ) {
-  return request<ResultType>({
+  return request({
     url: '/system/user/changeStatus',
     method: 'put',
     data: {

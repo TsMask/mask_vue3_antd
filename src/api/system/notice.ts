@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 查询公告列表
@@ -6,7 +6,7 @@ import { request, ResultType } from '@/plugins/http-fetch';
  * @returns object
  */
 export function listNotice(query: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/notice/list',
     method: 'get',
     params: query,
@@ -19,7 +19,7 @@ export function listNotice(query: Record<string, any>) {
  * @returns object
  */
 export function getNotice(noticeId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/notice/${noticeId}`,
     method: 'get',
   });
@@ -31,7 +31,7 @@ export function getNotice(noticeId: string | number) {
  * @returns object
  */
 export function addNotice(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/notice',
     method: 'post',
     data: data,
@@ -44,7 +44,7 @@ export function addNotice(data: Record<string, any>) {
  * @returns object
  */
 export function updateNotice(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/notice',
     method: 'put',
     data: data,
@@ -57,7 +57,7 @@ export function updateNotice(data: Record<string, any>) {
  * @returns object
  */
 export function delNotice(noticeId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/notice/${noticeId}`,
     method: 'delete',
   });

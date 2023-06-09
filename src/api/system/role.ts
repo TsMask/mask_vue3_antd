@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 角色列表导出
@@ -6,7 +6,7 @@ import { request, ResultType } from '@/plugins/http-fetch';
  * @returns bolb
  */
 export function exportRole(query: Record<string, any>) {
-  return request<Blob>({
+  return request({
     url: '/system/role/export',
     method: 'post',
     data: query,
@@ -20,7 +20,7 @@ export function exportRole(query: Record<string, any>) {
  * @returns object
  */
 export function listRole(query: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/role/list',
     method: 'get',
     params: query,
@@ -33,7 +33,7 @@ export function listRole(query: Record<string, any>) {
  * @returns object
  */
 export function getRole(roleId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/role/${roleId}`,
     method: 'get',
   });
@@ -45,7 +45,7 @@ export function getRole(roleId: string | number) {
  * @returns object
  */
 export function addRole(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/role',
     method: 'post',
     data: data,
@@ -58,7 +58,7 @@ export function addRole(data: Record<string, any>) {
  * @returns object
  */
 export function updateRole(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/role',
     method: 'put',
     data: data,
@@ -71,7 +71,7 @@ export function updateRole(data: Record<string, any>) {
  * @returns object
  */
 export function delRole(roleId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/role/${roleId}`,
     method: 'delete',
   });
@@ -84,7 +84,7 @@ export function delRole(roleId: string | number) {
  * @returns object
  */
 export function changeRoleStatus(roleId: string, status: string | number) {
-  return request<ResultType>({
+  return request({
     url: '/system/role/changeStatus',
     method: 'put',
     data: {
@@ -100,7 +100,7 @@ export function changeRoleStatus(roleId: string, status: string | number) {
  * @returns object
  */
 export function dataScope(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/role/dataScope',
     method: 'put',
     data: data,
@@ -113,7 +113,7 @@ export function dataScope(data: Record<string, any>) {
  * @returns object
  */
 export function authUserAllocatedList(query: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/role/authUser/allocatedList',
     method: 'get',
     params: query,
@@ -126,7 +126,7 @@ export function authUserAllocatedList(query: Record<string, any>) {
  * @returns object
  */
 export function authUserSelect(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/role/authUser/select',
     method: 'put',
     data: data,

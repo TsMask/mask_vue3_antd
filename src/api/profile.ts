@@ -1,11 +1,11 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 查询用户个人信息
  * @returns object
  */
 export function getUserProfile() {
-  return request<ResultType>({
+  return request({
     url: '/system/user/profile',
     method: 'get',
   });
@@ -17,7 +17,7 @@ export function getUserProfile() {
  * @returns object
  */
 export function updateUserProfile(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/user/profile',
     method: 'put',
     data: data,
@@ -31,7 +31,7 @@ export function updateUserProfile(data: Record<string, any>) {
  * @returns object
  */
 export function updateUserPwd(oldPassword: string, newPassword: string) {
-  return request<ResultType>({
+  return request({
     url: '/system/user/profile/updatePwd',
     method: 'put',
     data: {
@@ -47,7 +47,7 @@ export function updateUserPwd(oldPassword: string, newPassword: string) {
  * @returns object
  */
 export function uploadAvatar(data: FormData) {
-  return request<ResultType>({
+  return request({
     url: '/system/user/profile/avatar',
     method: 'post',
     data,

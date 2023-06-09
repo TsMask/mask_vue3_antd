@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 查询部门列表
@@ -6,7 +6,7 @@ import { request, ResultType } from '@/plugins/http-fetch';
  * @returns object
  */
 export function listDept(query: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/dept/list',
     method: 'get',
     params: query,
@@ -19,7 +19,7 @@ export function listDept(query: Record<string, any>) {
  * @returns object
  */
 export function listDeptExcludeChild(deptId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/dept/list/exclude/${deptId}`,
     method: 'get',
   });
@@ -31,7 +31,7 @@ export function listDeptExcludeChild(deptId: string | number) {
  * @returns object
  */
 export function getDept(deptId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/dept/${deptId}`,
     method: 'get',
   });
@@ -43,7 +43,7 @@ export function getDept(deptId: string | number) {
  * @returns object
  */
 export function addDept(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/dept',
     method: 'post',
     data: data,
@@ -56,7 +56,7 @@ export function addDept(data: Record<string, any>) {
  * @returns object
  */
 export function updateDept(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/dept',
     method: 'put',
     data: data,
@@ -69,7 +69,7 @@ export function updateDept(data: Record<string, any>) {
  * @returns object
  */
 export function delDept(deptId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/dept/${deptId}`,
     method: 'delete',
   });
@@ -80,7 +80,7 @@ export function delDept(deptId: string | number) {
  * @returns object
  */
 export function deptTreeSelect() {
-  return request<ResultType>({
+  return request({
     url: '/system/dept/treeSelect',
     method: 'get',
   });
@@ -92,7 +92,7 @@ export function deptTreeSelect() {
  * @returns object
  */
 export function roleDeptTreeSelect(roleId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/dept/roleDeptTreeSelect/${roleId}`,
     method: 'get',
   });

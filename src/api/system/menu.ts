@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 查询菜单列表
@@ -6,7 +6,7 @@ import { request, ResultType } from '@/plugins/http-fetch';
  * @returns object
  */
 export function listMenu(query?: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/menu/list',
     method: 'get',
     params: query,
@@ -19,7 +19,7 @@ export function listMenu(query?: Record<string, any>) {
  * @returns object
  */
 export function getMenu(menuId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/menu/${menuId}`,
     method: 'get',
   });
@@ -30,7 +30,7 @@ export function getMenu(menuId: string | number) {
  * @returns object
  */
 export function menuTreeSelect() {
-  return request<ResultType>({
+  return request({
     url: '/system/menu/treeSelect',
     method: 'get',
   });
@@ -42,7 +42,7 @@ export function menuTreeSelect() {
  * @returns object
  */
 export function roleMenuTreeSelect(roleId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/menu/roleMenuTreeSelect/${roleId}`,
     method: 'get',
   });
@@ -54,7 +54,7 @@ export function roleMenuTreeSelect(roleId: string | number) {
  * @returns object
  */
 export function addMenu(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/menu',
     method: 'post',
     data: data,
@@ -67,7 +67,7 @@ export function addMenu(data: Record<string, any>) {
  * @returns object
  */
 export function updateMenu(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/menu',
     method: 'put',
     data: data,
@@ -80,7 +80,7 @@ export function updateMenu(data: Record<string, any>) {
  * @returns object
  */
 export function delMenu(menuId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/menu/${menuId}`,
     method: 'delete',
   });

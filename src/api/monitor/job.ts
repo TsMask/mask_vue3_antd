@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 定时任务调度列表导出
@@ -6,7 +6,7 @@ import { request, ResultType } from '@/plugins/http-fetch';
  * @returns bolb
  */
 export function exportJob(query: Record<string, any>) {
-  return request<Blob>({
+  return request({
     url: '/monitor/job/export',
     method: 'post',
     data: query,
@@ -20,7 +20,7 @@ export function exportJob(query: Record<string, any>) {
  * @returns object
  */
 export function listJob(query: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/monitor/job/list',
     method: 'get',
     params: query,
@@ -33,7 +33,7 @@ export function listJob(query: Record<string, any>) {
  * @returns object
  */
 export function getJob(jobId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/monitor/job/${jobId}`,
     method: 'get',
   });
@@ -45,7 +45,7 @@ export function getJob(jobId: string | number) {
  * @returns object
  */
 export function addJob(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/monitor/job',
     method: 'post',
     data: data,
@@ -58,7 +58,7 @@ export function addJob(data: Record<string, any>) {
  * @returns object
  */
 export function updateJob(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/monitor/job',
     method: 'put',
     data: data,
@@ -71,7 +71,7 @@ export function updateJob(data: Record<string, any>) {
  * @returns object
  */
 export function delJob(jobId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/monitor/job/${jobId}`,
     method: 'delete',
   });
@@ -87,7 +87,7 @@ export function changeJobStatus(
   jobId: string | number,
   status: string | number
 ) {
-  return request<ResultType>({
+  return request({
     url: '/monitor/job/changeStatus',
     method: 'put',
     data: {
@@ -103,7 +103,7 @@ export function changeJobStatus(
  * @returns object
  */
 export function runJob(jobId: string) {
-  return request<ResultType>({
+  return request({
     url: `/monitor/job/run/${jobId}`,
     method: 'put',
   });
@@ -114,7 +114,7 @@ export function runJob(jobId: string) {
  * @returns object
  */
 export function resetQueueJob() {
-  return request<ResultType>({
+  return request({
     url: '/monitor/job/resetQueueJob',
     method: 'put',
   });

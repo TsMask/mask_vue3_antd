@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 岗位列表导出
@@ -6,7 +6,7 @@ import { request, ResultType } from '@/plugins/http-fetch';
  * @returns bolb
  */
 export function exportPost(query: Record<string, any>) {
-  return request<Blob>({
+  return request({
     url: '/system/post/export',
     method: 'post',
     data: query,
@@ -20,7 +20,7 @@ export function exportPost(query: Record<string, any>) {
  * @returns object
  */
 export function listPost(query: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/post/list',
     method: 'get',
     params: query,
@@ -33,7 +33,7 @@ export function listPost(query: Record<string, any>) {
  * @returns object
  */
 export function getPost(postId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/post/${postId}`,
     method: 'get',
   });
@@ -45,7 +45,7 @@ export function getPost(postId: string | number) {
  * @returns object
  */
 export function addPost(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/post',
     method: 'post',
     data: data,
@@ -58,7 +58,7 @@ export function addPost(data: Record<string, any>) {
  * @returns object
  */
 export function updatePost(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/post',
     method: 'put',
     data: data,
@@ -71,7 +71,7 @@ export function updatePost(data: Record<string, any>) {
  * @returns object
  */
 export function delPost(postId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/post/${postId}`,
     method: 'delete',
   });

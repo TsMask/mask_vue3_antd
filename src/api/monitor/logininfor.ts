@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 登录日志列表导出
@@ -8,7 +8,7 @@ import { request, ResultType } from '@/plugins/http-fetch';
 export function exportLogininfor(
   query: Record<string, any>
 ) {
-  return request<Blob>({
+  return request({
     url: '/monitor/logininfor/export',
     method: 'post',
     data: query,
@@ -24,7 +24,7 @@ export function exportLogininfor(
 export function listLogininfor(
   query: Record<string, any>
 ) {
-  return request<ResultType>({
+  return request({
     url: '/monitor/logininfor/list',
     method: 'get',
     params: query,
@@ -37,7 +37,7 @@ export function listLogininfor(
  * @returns object
  */
 export function delLogininfor(infoId: string) {
-  return request<ResultType>({
+  return request({
     url: `/monitor/logininfor/${infoId}`,
     method: 'delete',
   });
@@ -48,7 +48,7 @@ export function delLogininfor(infoId: string) {
  * @returns object
  */
 export function cleanLogininfor() {
-  return request<ResultType>({
+  return request({
     url: '/monitor/logininfor/clean',
     method: 'delete',
   });
@@ -60,7 +60,7 @@ export function cleanLogininfor() {
  * @returns object
  */
 export function unlockLogininfor(userName: string) {
-  return request<ResultType>({
+  return request({
     url: `/monitor/logininfor/unlock/${userName}`,
     method: 'put',
   });

@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 字典数据列表导出
@@ -6,7 +6,7 @@ import { request, ResultType } from '@/plugins/http-fetch';
  * @returns bolb
  */
 export function exportData(query: Record<string, any>) {
-  return request<Blob>({
+  return request({
     url: '/system/dict/data/export',
     method: 'post',
     data: query,
@@ -20,7 +20,7 @@ export function exportData(query: Record<string, any>) {
  * @returns
  */
 export function listData(query: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/dict/data/list',
     method: 'get',
     params: query,
@@ -33,7 +33,7 @@ export function listData(query: Record<string, any>) {
  * @returns object
  */
 export function getData(dictCode: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/dict/data/${dictCode}`,
     method: 'get',
   });
@@ -45,7 +45,7 @@ export function getData(dictCode: string | number) {
  * @returns object
  */
 export function addData(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/dict/data',
     method: 'post',
     data: data,
@@ -58,7 +58,7 @@ export function addData(data: Record<string, any>) {
  * @returns object
  */
 export function updateData(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/dict/data',
     method: 'put',
     data: data,
@@ -71,7 +71,7 @@ export function updateData(data: Record<string, any>) {
  * @returns object
  */
 export function delData(dictCode: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/dict/data/${dictCode}`,
     method: 'delete',
   });
@@ -83,7 +83,7 @@ export function delData(dictCode: string | number) {
  * @returns object
  */
 export function getDictDataType(dictType: string) {
-  return request<ResultType>({
+  return request({
     url: `/system/dict/data/type/${dictType}`,
     method: 'get',
   });

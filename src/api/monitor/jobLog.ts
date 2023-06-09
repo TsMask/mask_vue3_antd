@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 定时任务调度日志列表导出
@@ -8,7 +8,7 @@ import { request, ResultType } from '@/plugins/http-fetch';
 export function exportJobLog(
   query: Record<string, any>
 ) {
-  return request<Blob>({
+  return request({
     url: '/monitor/jobLog/export',
     method: 'post',
     data: query,
@@ -22,7 +22,7 @@ export function exportJobLog(
  * @returns object
  */
 export function listJobLog(query: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/monitor/jobLog/list',
     method: 'get',
     params: query,
@@ -35,7 +35,7 @@ export function listJobLog(query: Record<string, any>) {
  * @returns object
  */
 export function delJobLog(jobLogId: string) {
-  return request<ResultType>({
+  return request({
     url: `/monitor/jobLog/${jobLogId}`,
     method: 'delete',
   });
@@ -46,7 +46,7 @@ export function delJobLog(jobLogId: string) {
  * @returns object
  */
 export function cleanJobLog() {
-  return request<ResultType>({
+  return request({
     url: '/monitor/jobLog/clean',
     method: 'delete',
   });

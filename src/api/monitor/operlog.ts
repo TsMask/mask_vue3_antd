@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 操作日志列表导出
@@ -8,7 +8,7 @@ import { request, ResultType } from '@/plugins/http-fetch';
 export function exportOperlog(
   query: Record<string, any>
 ) {
-  return request<Blob>({
+  return request({
     url: '/monitor/operlog/export',
     method: 'post',
     data: query,
@@ -24,7 +24,7 @@ export function exportOperlog(
 export function listOperlog(
   query: Record<string, any>
 ) {
-  return request<ResultType>({
+  return request({
     url: '/monitor/operlog/list',
     method: 'get',
     params: query,
@@ -37,7 +37,7 @@ export function listOperlog(
  * @returns object
  */
 export function delOperlog(operId: string) {
-  return request<ResultType>({
+  return request({
     url: `/monitor/operlog/${operId}`,
     method: 'delete',
   });
@@ -48,7 +48,7 @@ export function delOperlog(operId: string) {
  * @returns object
  */
 export function cleanOperlog() {
-  return request<ResultType>({
+  return request({
     url: '/monitor/operlog/clean',
     method: 'delete',
   });

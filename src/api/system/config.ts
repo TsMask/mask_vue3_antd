@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 参数配置列表导出
@@ -8,7 +8,7 @@ import { request, ResultType } from '@/plugins/http-fetch';
 export function exportConfig(
   query: Record<string, any>
 ) {
-  return request<Blob>({
+  return request({
     url: '/system/config/export',
     method: 'post',
     data: query,
@@ -22,7 +22,7 @@ export function exportConfig(
  * @returns object
  */
 export function listConfig(query: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/config/list',
     method: 'get',
     params: query,
@@ -35,7 +35,7 @@ export function listConfig(query: Record<string, any>) {
  * @returns object
  */
 export function getConfig(configId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/config/${configId}`,
     method: 'get',
   });
@@ -47,7 +47,7 @@ export function getConfig(configId: string | number) {
  * @returns object
  */
 export function getConfigKey(configKey: string) {
-  return request<ResultType>({
+  return request({
     url: `/system/config/configKey/${configKey}`,
     method: 'get',
   });
@@ -59,7 +59,7 @@ export function getConfigKey(configKey: string) {
  * @returns object
  */
 export function addConfig(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/config',
     method: 'post',
     data: data,
@@ -72,7 +72,7 @@ export function addConfig(data: Record<string, any>) {
  * @returns object
  */
 export function updateConfig(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/config',
     method: 'put',
     data: data,
@@ -85,7 +85,7 @@ export function updateConfig(data: Record<string, any>) {
  * @returns object
  */
 export function delConfig(configId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/config/${configId}`,
     method: 'delete',
   });
@@ -96,7 +96,7 @@ export function delConfig(configId: string | number) {
  * @returns object
  */
 export function refreshCache() {
-  return request<ResultType>({
+  return request({
     url: '/system/config/refreshCache',
     method: 'put',
   });

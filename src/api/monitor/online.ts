@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 查询在线用户列表
@@ -6,7 +6,7 @@ import { request, ResultType } from '@/plugins/http-fetch';
  * @returns object
  */
 export function listOnline(query: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/monitor/online/list',
     method: 'get',
     params: query,
@@ -19,7 +19,7 @@ export function listOnline(query: Record<string, any>) {
  * @returns object
  */
 export function forceLogout(tokenId: string) {
-  return request<ResultType>({
+  return request({
     url: `/monitor/online/${tokenId}`,
     method: 'delete',
   });

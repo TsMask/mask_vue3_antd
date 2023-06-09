@@ -1,4 +1,4 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 字典类型列表导出
@@ -6,7 +6,7 @@ import { request, ResultType } from '@/plugins/http-fetch';
  * @returns bolb
  */
 export function exportType(query: Record<string, any>) {
-  return request<Blob>({
+  return request({
     url: '/system/dict/type/export',
     method: 'post',
     data: query,
@@ -20,7 +20,7 @@ export function exportType(query: Record<string, any>) {
  * @returns
  */
 export function listType(query: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/dict/type/list',
     method: 'get',
     params: query,
@@ -33,7 +33,7 @@ export function listType(query: Record<string, any>) {
  * @returns object
  */
 export function getType(dictId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/dict/type/${dictId}`,
     method: 'get',
   });
@@ -45,7 +45,7 @@ export function getType(dictId: string | number) {
  * @returns object
  */
 export function addType(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/dict/type',
     method: 'post',
     data: data,
@@ -58,7 +58,7 @@ export function addType(data: Record<string, any>) {
  * @returns object
  */
 export function updateType(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/system/dict/type',
     method: 'put',
     data: data,
@@ -71,7 +71,7 @@ export function updateType(data: Record<string, any>) {
  * @returns object
  */
 export function delType(dictId: string | number) {
-  return request<ResultType>({
+  return request({
     url: `/system/dict/type/${dictId}`,
     method: 'delete',
   });
@@ -83,7 +83,7 @@ export function delType(dictId: string | number) {
  * @returns object
  */
 export function refreshCache() {
-  return request<ResultType>({
+  return request({
     url: '/system/dict/type/refreshCache',
     method: 'put',
   });
@@ -95,7 +95,7 @@ export function refreshCache() {
  * @returns object
  */
 export function getDictOptionselect() {
-  return request<ResultType>({
+  return request({
     url: '/system/dict/type/getDictOptionselect',
     method: 'get',
   });

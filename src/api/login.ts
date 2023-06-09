@@ -1,8 +1,8 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 // 登录方法
 export function login(data: Record<string, string>) {
-  return request<ResultType>({
+  return request({
     url: '/login',
     method: 'post',
     data: data,
@@ -16,7 +16,7 @@ export function login(data: Record<string, string>) {
  * @returns object
  */
 export function register(data: Record<string, any>) {
-  return request<ResultType>({
+  return request({
     url: '/register',
     method: 'post',
     data: data,
@@ -29,7 +29,7 @@ export function register(data: Record<string, any>) {
  * @returns object
  */
 export function getInfo() {
-  return request<ResultType>({
+  return request({
     url: '/getInfo',
     method: 'get',
   });
@@ -40,7 +40,7 @@ export function getInfo() {
  * @returns object
  */
 export function logout() {
-  return request<ResultType>({
+  return request({
     url: '/logout',
     method: 'post',
   });
@@ -51,7 +51,7 @@ export function logout() {
  * @returns object
  */
 export function getCaptchaImage() {
-  return request<ResultType>({
+  return request({
     url: '/captchaImage',
     method: 'get',
     whithToken: false,

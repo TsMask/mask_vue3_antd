@@ -1,11 +1,11 @@
-import { request, ResultType } from '@/plugins/http-fetch';
+import { request } from '@/plugins/http-fetch';
 
 /**
  * 查询缓存详细
  * @returns object
  */
 export function getCache() {
-  return request<ResultType>({
+  return request({
     url: '/monitor/cache',
     method: 'get',
   });
@@ -16,7 +16,7 @@ export function getCache() {
  * @returns object
  */
 export function listCacheName() {
-  return request<ResultType>({
+  return request({
     url: '/monitor/cache/getNames',
     method: 'get',
   });
@@ -28,7 +28,7 @@ export function listCacheName() {
  * @returns object
  */
 export function listCacheKey(cacheName: string) {
-  return request<ResultType>({
+  return request({
     url: `/monitor/cache/getKeys/${cacheName}`,
     method: 'get',
   });
@@ -41,7 +41,7 @@ export function listCacheKey(cacheName: string) {
  * @returns object
  */
 export function getCacheValue(cacheName: string, cacheKey: string) {
-  return request<ResultType>({
+  return request({
     url: `/monitor/cache/getValue/${cacheName}/${cacheKey}`,
     method: 'get',
   });
@@ -53,7 +53,7 @@ export function getCacheValue(cacheName: string, cacheKey: string) {
  * @returns object
  */
 export function clearCacheName(cacheName: string) {
-  return request<ResultType>({
+  return request({
     url: `/monitor/cache/clearCacheName/${cacheName}`,
     method: 'delete',
   });
@@ -66,7 +66,7 @@ export function clearCacheName(cacheName: string) {
  * @returns object
  */
 export function clearCacheKey(cacheName: string, cacheKey: string) {
-  return request<ResultType>({
+  return request({
     url: `/monitor/cache/clearCacheKey/${cacheName}/${cacheKey}`,
     method: 'delete',
   });
@@ -79,7 +79,7 @@ export function clearCacheKey(cacheName: string, cacheKey: string) {
  * @returns object
  */
 export function clearCacheSafe() {
-  return request<ResultType>({
+  return request({
     url: '/monitor/cache/clearCacheSafe',
     method: 'delete',
   });
