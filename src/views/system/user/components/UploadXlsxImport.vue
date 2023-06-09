@@ -82,7 +82,7 @@ function fnBeforeUpload(file: FileType) {
 /**上传请求发出 */
 function fnUpload(up: UploadRequestOption) {
   if (typeof props.uploadFileMethod !== 'function') return;
-  const hide = message.loading('正在上传...', 0);
+  const hide = message.loading('正在上传并解析数据...', 0);
   updateState.loading = true;
   let formData = new FormData();
   formData.append('file', up.file);

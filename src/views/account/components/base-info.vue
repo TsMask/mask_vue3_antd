@@ -87,7 +87,7 @@ function fnBeforeUpload(file: FileType) {
 function fnUpload(up: UploadRequestOption) {
   Modal.confirm({
     title: '提示',
-    content: `确认要头上传/变更用户头像吗?`,
+    content: `确认要上传/变更用户头像吗?`,
     onOk() {
       // 发送请求
       const hide = message.loading('请稍等...', 0);
