@@ -1,9 +1,29 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
-import { reactive, ref, onMounted } from 'vue';
-import { EChartsOption, init } from 'echarts';
+import * as echarts from 'echarts/core';
+import {
+  ToolboxComponent,
+  ToolboxComponentOption,
+  TooltipComponent,
+  TooltipComponentOption,
+  LegendComponent,
+  LegendComponentOption,
+} from 'echarts/components';
+import { PieChart, PieSeriesOption } from 'echarts/charts';
+import { LabelLayout } from 'echarts/features';
+import { CanvasRenderer } from 'echarts/renderers';
 import { getCache } from '@/api/monitor/cache';
+import { reactive, ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 const route = useRoute();
+
+echarts.use([
+  ToolboxComponent,
+  TooltipComponent,
+  LegendComponent,
+  PieChart,
+  CanvasRenderer,
+  LabelLayout,
+]);
 
 /**路由标题 */
 let title = ref<string>(route.meta.title ?? '标题');
@@ -58,8 +78,13 @@ let cache: CacheType = reactive({
 function commandStatsChart() {
   const commandStatsDom = document.getElementById('commandstats');
   if (!commandStatsDom) return;
-  const commandStatsEchart = init(commandStatsDom);
-  const option: EChartsOption = {
+  const commandStatsEchart = echarts.init(commandStatsDom);
+  const option: echarts.ComposeOption<
+    | ToolboxComponentOption
+    | TooltipComponentOption
+    | LegendComponentOption
+    | PieSeriesOption
+  > = {
     // 鼠标悬浮提示
     tooltip: {
       trigger: 'item',
