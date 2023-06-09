@@ -360,32 +360,20 @@ function fnExportList() {
     onOk() {
       const key = 'exportPost';
       message.loading({ content: '请稍等...', key });
-      exportPost(toRaw(queryParams)).then(resBlob => {
-        if (resBlob.type === 'application/json') {
-          resBlob
-            .text()
-            .then(txt => {
-              const txtRes = JSON.parse(txt);
-              message.error({
-                content: `${txtRes.msg}`,
-                key,
-                duration: 2,
-              });
-            })
-            .catch(_ => {
-              message.error({
-                content: '导出数据异常',
-                key,
-                duration: 2,
-              });
-            });
-        } else {
+      exportPost(toRaw(queryParams)).then(res => {
+        if (res.code === 200) {
           message.success({
             content: `已完成导出`,
             key,
             duration: 2,
           });
-          saveAs(resBlob, `post_${Date.now()}.xlsx`);
+          saveAs(res.data, `post_${Date.now()}.xlsx`);
+        } else {
+          message.error({
+            content: `${res.msg}`,
+            key,
+            duration: 2,
+          });
         }
       });
     },

@@ -307,32 +307,20 @@ function fnExportList() {
     onOk() {
       const key = 'exportJobLog';
       message.loading({ content: '请稍等...', key });
-      exportJobLog(toRaw(queryParams)).then(resBlob => {
-        if (resBlob.type === 'application/json') {
-          resBlob
-            .text()
-            .then(txt => {
-              const txtRes = JSON.parse(txt);
-              message.error({
-                content: `${txtRes.msg}`,
-                key,
-                duration: 2,
-              });
-            })
-            .catch(_ => {
-              message.error({
-                content: '导出数据异常',
-                key,
-                duration: 2,
-              });
-            });
-        } else {
+      exportJobLog(toRaw(queryParams)).then(res => {
+        if (res.code === 200) {
           message.success({
             content: `已完成导出`,
             key,
             duration: 2,
           });
-          saveAs(resBlob, `job_log_${Date.now()}.xlsx`);
+          saveAs(res.data, `job_log_${Date.now()}.xlsx`);
+        } else {
+          message.error({
+            content: `${res.msg}`,
+            key,
+            duration: 2,
+          });
         }
       });
     },

@@ -594,32 +594,20 @@ function fnExportList() {
     onOk() {
       const key = 'exportUser';
       message.loading({ content: '请稍等...', key });
-      exportUser(toRaw(queryParams)).then(resBlob => {
-        if (resBlob.type === 'application/json') {
-          resBlob
-            .text()
-            .then(txt => {
-              const txtRes = JSON.parse(txt);
-              message.error({
-                content: `${txtRes.msg}`,
-                key,
-                duration: 2,
-              });
-            })
-            .catch(_ => {
-              message.error({
-                content: '导出数据异常',
-                key,
-                duration: 2,
-              });
-            });
-        } else {
+      exportUser(toRaw(queryParams)).then(res => {
+        if (res.code === 200) {
           message.success({
             content: `已完成导出`,
             key,
             duration: 2,
           });
-          saveAs(resBlob, `user_${Date.now()}.xlsx`);
+          saveAs(res.data, `user_${Date.now()}.xlsx`);
+        } else {
+          message.error({
+            content: `${res.msg}`,
+            key,
+            duration: 2,
+          });
         }
       });
     },
@@ -662,35 +650,24 @@ function fnModalUploadXlsxImportOpen() {
 function fnModalUploadXlsxImportExportTemplate() {
   if (modalUploadXlsxImportState.templateDownload) return;
   modalUploadXlsxImportState.templateDownload = true;
-  const hide = message.loading('正在打开...', 0);
+  const hide = message.loading('正在下载...', 0);
   importTemplate()
-    .then(resBlob => {
-      hide();
-      if (resBlob.type === 'application/json') {
-        resBlob
-          .text()
-          .then(txt => {
-            const txtRes = JSON.parse(txt);
-            message.error({
-              content: `${txtRes.msg}`,
-              duration: 3,
-            });
-          })
-          .catch(_ => {
-            message.error({
-              content: '下载模板异常',
-              duration: 3,
-            });
-          });
-      } else {
+    .then(res => {
+      if (res.code === 200) {
         message.success({
-          content: `成功读取导入模板`,
-          duration: 3,
+          content: `成功读取并下载导入模板`,
+          duration: 2,
         });
-        saveAs(resBlob, `user_template_${Date.now()}.xlsx`);
+        saveAs(res.data, `user_template_${Date.now()}.xlsx`);
+      } else {
+        message.error({
+          content: `${res.msg}`,
+          duration: 2,
+        });
       }
     })
     .finally(() => {
+      hide();
       modalUploadXlsxImportState.templateDownload = false;
     });
 }
