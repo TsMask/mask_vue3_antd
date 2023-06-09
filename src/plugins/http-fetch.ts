@@ -107,7 +107,11 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
     Reflect.set(options.headers, TOKEN_KEY, TOKEN_KEY_PREFIX + token);
   }
   // 是否需要防止数据重复提交
-  if (options.repeatSubmit && ['post', 'put'].includes(options.method)) {
+  if (
+    options.repeatSubmit &&
+    options.dataType === 'json' &&
+    ['post', 'put'].includes(options.method)
+  ) {
     const requestObj: RepeatSubmitType = {
       url: options.url,
       data: JSON.stringify(options.data),
@@ -171,61 +175,76 @@ function interceptorResponse(res: ResultType): ResultType | Promise<any> {
 /**
  * 请求http
  *
- * 泛型T extends string | ResultType | Request | ArrayBuffer | Blob
  * @param options 请求参数
- * @returns 返回 Promise结果
+ *
+ * responseType改变响应结果类型
+ * @returns 返回 Promise<ResultType>
  */
-export function request<T>(options: OptionsType): Promise<T> {
+export async function request(options: OptionsType): Promise<ResultType> {
   options = Object.assign({}, FATCH_OPTIONS, options);
   // 检查请求拦截
   const beforeReq = beforeRequest(options);
   if (beforeReq instanceof Promise) {
-    return beforeReq;
+    return await beforeReq;
   }
   options = beforeReq;
 
-  return new Promise((resolve, reject) => {
-    // 判断用户传递的URL是否http或/开头
-    if (!options.url.startsWith('http')) {
-      const uri = options.url.startsWith('/') ? options.url : `/${options.url}`;
-      options.url = FATCH_CONFIG.baseUrl + uri;
+  // 判断用户传递的URL是否http或/开头
+  if (!options.url.startsWith('http')) {
+    const uri = options.url.startsWith('/') ? options.url : `/${options.url}`;
+    options.url = FATCH_CONFIG.baseUrl + uri;
+  }
+
+  try {
+    const res = await fetch(options.url, options);
+    // console.log('请求结果：', res);
+    if (!res.ok) {
+      return {
+        code: res.status,
+        msg: res.statusText,
+      };
     }
-
-    fetch(options.url, options)
-      .then(res => {
-        //console.log('请求结果：', res);
-        if (!res.ok) {
-          return reject({
-            code: res.status,
-            msg: res.statusText,
-          });
+    // 根据响应数据类型返回
+    switch (options.responseType) {
+      case 'text': // 文本数据
+        const str = await res.text();
+        return {
+          code: 200,
+          msg: str,
+        };
+      case 'json': // json格式数据
+        const result = await res.json();
+        // 请求后的拦截
+        const beforeRes = interceptorResponse(result);
+        if (beforeRes instanceof Promise) {
+          return await beforeRes;
         }
-
-        // 根据响应数据类型返回
-        switch (options.responseType) {
-          case 'json': // json格式数据
-            res.json().then((data: ResultType) => {
-              // 请求后的拦截
-              const beforeRes = interceptorResponse(data);
-              if (beforeRes instanceof Promise) {
-                return beforeRes;
-              } else {
-                return resolve(beforeRes as T);
-              }
-            });
-            break;
-          case 'text': // 文本数据
-            return resolve(res.text() as T);
-          case 'blob': // 二进制数据则直接返回
-            return resolve(res.blob() as T);
-          case 'arrayBuffer': // 二进制数据则直接返回
-            return resolve(res.arrayBuffer() as T);
-          default:
-            return reject('未知响应数据类型');
+        return result;
+      case 'blob': // 二进制数据则直接返回
+      case 'arrayBuffer':
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.startsWith('application/json')) {
+          const result = await res.json();
+          return result as ResultType;
         }
-      })
-      .catch(error => {
-        return reject(error);
-      });
-  });
+        const data =
+          options.responseType === 'blob'
+            ? await res.blob()
+            : await res.arrayBuffer();
+        return {
+          code: 200,
+          msg: '成功',
+          data: data,
+          status: res.status,
+          headers: res.headers,
+        };
+      default:
+        return {
+          code: 500,
+          msg: '未知响应数据类型',
+        };
+    }
+  } catch (error) {
+    throw error;
+  }
 }
