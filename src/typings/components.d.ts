@@ -82,7 +82,6 @@ declare module '@vue/runtime-core' {
     ExportOutlined: typeof import('@ant-design/icons-vue')['ExportOutlined']
     FieldTimeOutlined: typeof import('@ant-design/icons-vue')['FieldTimeOutlined']
     FormOutlined: typeof import('@ant-design/icons-vue')['FormOutlined']
-    FullscreenOutlined: typeof import('@ant-design/icons-vue')['FullscreenOutlined']
     GithubOutlined: typeof import('@ant-design/icons-vue')['GithubOutlined']
     Hour: typeof import('./../components/CronModal/components/Hour.vue')['default']
     IconFont: typeof import('./../components/IconFont/index.vue')['default']
