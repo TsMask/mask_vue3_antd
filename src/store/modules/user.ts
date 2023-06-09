@@ -145,15 +145,25 @@ const useUserStore = defineStore('user', {
         }
         useLayoutStore().changeWaterMark(waterMarkContent);
       }
+      // 网络错误时退出登录状态
+      if (res.code === 500) {
+        removeToken();
+        window.location.reload();
+      }
       return res;
     },
     // 退出系统
     async fnLogOut() {
-      await logout();
-      this.token = '';
-      this.roles = [];
-      this.permissions = [];
-      removeToken();
+      try {
+        await logout();
+      } catch (error) {
+        throw error;
+      } finally {
+        this.token = '';
+        this.roles = [];
+        this.permissions = [];
+        removeToken();
+      }
     },
   },
 });
