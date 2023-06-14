@@ -55,9 +55,9 @@ type OptionsType = {
 
 /**全局配置类型 */
 type ConfigType = {
-  /**请求的根域名 */
+  /**请求的根域名地址-不带/后缀 */
   baseUrl: string;
-  /**超时时间 */
+  /**超时时间，毫秒 */
   timeout: number;
 };
 
@@ -181,7 +181,15 @@ function interceptorResponse(res: ResultType): ResultType | Promise<any> {
  * @returns 返回 Promise<ResultType>
  */
 export async function request(options: OptionsType): Promise<ResultType> {
-  options = Object.assign({}, FATCH_OPTIONS, options);
+  // 请求超时控制请求终止
+  const controller = new AbortController();
+  const { signal } = controller;
+  const timeoutId = setTimeout(() => {
+    controller.abort(); // 终止请求
+  }, FATCH_CONFIG.timeout);
+
+  options = Object.assign({ signal }, FATCH_OPTIONS, options);
+
   // 检查请求拦截
   const beforeReq = beforeRequest(options);
   if (beforeReq instanceof Promise) {
@@ -244,7 +252,10 @@ export async function request(options: OptionsType): Promise<ResultType> {
           msg: '未知响应数据类型',
         };
     }
-  } catch (error) {
+  } catch (error: any) {
+    // 请求被终止时 if(error.name === 'AbortError') {}
     throw error;
+  } finally {
+    clearTimeout(timeoutId); // 请求成功，清除超时计时器
   }
 }
