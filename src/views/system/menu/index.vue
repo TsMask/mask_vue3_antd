@@ -865,7 +865,7 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="菜单名称"
-              name="deptName"
+              name="menuName"
               v-bind="modalStateFrom.validateInfos.menuName"
             >
               <a-input
@@ -1046,7 +1046,8 @@ onMounted(() => {
                   <div>
                     页面组件目录 views <br />
                     访问的组件路径,如：system/user/index <br />
-                    不带 .vue 文件后缀
+                    注意：不带 .vue 文件后缀 <br />
+                    路由地址是网络地址可填入链接
                   </div>
                 </template>
                 <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />
