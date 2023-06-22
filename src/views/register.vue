@@ -3,7 +3,7 @@ import { GlobalFooter } from '@ant-design-vue/pro-layout';
 import { Modal, message } from 'ant-design-vue/lib';
 import { reactive, onMounted, toRaw } from 'vue';
 import { getCaptchaImage, register } from '@/api/login';
-import { regExpPasswd, regExpUserName } from '@/utils/regular-utils.js';
+import { regExpPasswd, regExpUserName } from '@/utils/regular-utils';
 import { useRouter } from 'vue-router';
 const router = useRouter();
 const codeImgFall =
@@ -28,7 +28,7 @@ let state = reactive({
   /**验证码状态 */
   captcha: {
     /**验证码开关 */
-    enabled: true,
+    enabled: false,
     /**验证码图片地址 */
     codeImg: '',
     codeImgFall: codeImgFall,
