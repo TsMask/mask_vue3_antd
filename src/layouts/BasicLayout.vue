@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
-import RightContent from './components/RightContent.vue';
-import LayoutSetting from './components/LayoutSetting.vue';
-import Tabs from './components/Tabs.vue';
 import {
+  ProLayout,
   GlobalFooter,
   WaterMark,
   getMenuData,
   clearMenuItem,
 } from '@ant-design-vue/pro-layout';
+import RightContent from './components/RightContent.vue';
+import Tabs from './components/Tabs.vue';
+import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import { computed, reactive, watch } from 'vue';
 import useLayoutStore from '@/store/modules/layout';
 import useAppStore from '@/store/modules/app';
@@ -64,16 +64,15 @@ if (rootRoute) {
 
 const { menuData } = getMenuData(clearMenuItem(router.getRoutes()));
 
-/**面包屑数据对象 */
+/**面包屑数据对象，排除根节点和首页不显示 */
 const breadcrumb = computed(() => {
   const matched = router.currentRoute.value.matched.concat();
   return matched
-    .filter(r => r.name !== 'Root')
+    .filter(r => !['Root', 'Index'].includes(r.name as string))
     .map(item => {
       return {
         path: item.path,
-        name: item.name || '-',
-        title: item.meta.title || '-',
+        breadcrumbName: item.meta.title || '-',
       };
     });
 });
@@ -111,7 +110,7 @@ tabsStore.clear();
 
 <template>
   <WaterMark :content="waterMarkContent" :z-index="100">
-    <pro-layout
+    <ProLayout
       v-model:collapsed="layoutState.collapsed"
       v-model:selectedKeys="layoutState.selectedKeys"
       v-model:openKeys="layoutState.openKeys"
@@ -135,21 +134,24 @@ tabsStore.clear();
       <!--插槽-顶部右侧-->
       <template #rightContentRender>
         <RightContent />
-        <LayoutSetting />
       </template>
 
       <!--插槽-导航标签项-->
-      <template #tabRender="{ width, fixedHeader }">
-        <Tabs :width="width" :fixed-header="fixedHeader" />
+      <template #tabRender="{ width, fixedHeader, headerRender }">
+        <Tabs
+          :width="width"
+          :fixed-header="fixedHeader"
+          :header-render="headerRender"
+        />
       </template>
 
       <!--插槽-页面路由导航面包屑-->
       <template #breadcrumbRender="{ route, params, routes }">
         <span v-if="routes.indexOf(route) === routes.length - 1">
-          {{ route.title }}
+          {{ route.breadcrumbName }}
         </span>
         <RouterLink v-else :to="{ path: route.path, params }">
-          {{ route.title }}
+          {{ route.breadcrumbName }}
         </RouterLink>
       </template>
 
@@ -189,7 +191,7 @@ tabsStore.clear();
         >
         </GlobalFooter>
       </template>
-    </pro-layout>
+    </ProLayout>
   </WaterMark>
 </template>
 

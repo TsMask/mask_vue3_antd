@@ -17,6 +17,11 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  /**是否有顶部栏 */
+  headerRender: {
+    type: [Object, Function, Boolean],
+    default: undefined,
+  },
 });
 
 /**导航标签项列表长度 */
@@ -95,7 +100,7 @@ watch(router.currentRoute, v => tabsStore.tabOpen(v), { immediate: true });
     <a-tabs
       class="tabs"
       :class="{ 'tabs-fixed': fixedHeader }"
-      :style="{ width: width }"
+      :style="{ width: width, top: headerRender === false ? 0 : undefined }"
       hide-add
       tab-position="top"
       type="editable-card"
