@@ -253,7 +253,13 @@ export async function request(options: OptionsType): Promise<ResultType> {
         };
     }
   } catch (error: any) {
-    // 请求被终止时 if(error.name === 'AbortError') {}
+    // 请求被终止时 
+    if(error.name === 'AbortError') {
+      return {
+        code: 500,
+        msg: "网络连接超时！",
+      };
+    }
     throw error;
   } finally {
     clearTimeout(timeoutId); // 请求成功，清除超时计时器
