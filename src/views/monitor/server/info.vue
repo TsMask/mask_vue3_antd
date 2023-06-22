@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted } from 'vue';
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { ColumnsType } from 'ant-design-vue/lib/table';
 import { getServer } from '@/api/monitor/server';
 const route = useRoute();
@@ -96,7 +97,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container :title="title" :loading="loading">
+  <PageContainer :title="title" :loading="loading">
     <template #content>
       <a-typography-paragraph> 服务器与应用程序的信息 </a-typography-paragraph>
     </template>
@@ -309,7 +310,7 @@ onMounted(() => {
       >
       </a-table>
     </a-card>
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped></style>

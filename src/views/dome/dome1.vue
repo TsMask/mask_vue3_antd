@@ -1,5 +1,5 @@
 <template>
-  <page-container>
+  <PageContainer>
     <a-result
       status="404"
       :style="{
@@ -13,10 +13,11 @@
         <a-button type="primary" @click="handleClick">Back Home</a-button>
       </template>
     </a-result>
-  </page-container>
+  </PageContainer>
 </template>
 
 <script lang="ts" setup>
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { message } from 'ant-design-vue/lib';
 
 const handleClick = () => {

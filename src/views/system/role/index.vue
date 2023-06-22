@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { message, Modal, Form } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
@@ -18,10 +19,10 @@ import {
 import { roleMenuTreeSelect, menuTreeSelect } from '@/api/system/menu';
 import { roleDeptTreeSelect } from '@/api/system/dept';
 import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/date-utils.js';
+import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
 import { DataNode } from 'ant-design-vue/lib/tree';
-import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/parse-tree-utils.js';
+import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/parse-tree-utils';
 import { hasPermissions } from '@/plugins/auth-user';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
 const { getDict } = useDictStore();
@@ -704,7 +705,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container :title="title">
+  <PageContainer :title="title">
     <template #content>
       <a-typography-paragraph>
         给予用户角色标记，可分配给用户多个角色，分配数据权限需要关联部门数据表进行相关配置生效。
@@ -1120,27 +1121,28 @@ onMounted(() => {
           <a-space :size="12" align="center">
             <a-checkbox
               :checked="modalState.menuTree.expandedKeys.length > 0"
-              @change="e => fnModalExpandedKeys(e.target.checked, 'menu')"
+              @change="(e:any) => fnModalExpandedKeys(e.target.checked, 'menu')"
             >
               展开/折叠
             </a-checkbox>
             <a-checkbox
               :checked="modalState.from.menuIds.length > 0"
-              @change="e => fnModalCheckedKeys(e.target.checked, 'menu')"
+              @change="(e:any) => fnModalCheckedKeys(e.target.checked, 'menu')"
             >
-              全选/全不选、
+              全选/全不选
             </a-checkbox>
             <a-checkbox
               :checked="modalState.from.menuCheckStrictly === '1'"
-              @change="e => fnModalCheckStrictly(e.target.checked, 'menu')"
-              >、 父子联动
+              @change="(e:any) => fnModalCheckStrictly(e.target.checked, 'menu')"
+            >
+              父子联动
             </a-checkbox>
           </a-space>
           <a-tree
             checkable
             :selectable="false"
             @check="
-              (checked, info) => fnModalTreeChecked(checked, info, 'menu')
+              (checked:any, info:any) => fnModalTreeChecked(checked, info, 'menu')
             "
             v-model:expanded-keys="modalState.menuTree.expandedKeys"
             v-model:checked-keys="modalState.menuTree.checkedKeys"
@@ -1229,19 +1231,19 @@ onMounted(() => {
           <a-space :size="12" align="center">
             <a-checkbox
               :checked="modalState.deptTree.expandedKeys.length > 0"
-              @change="e => fnModalExpandedKeys(e.target.checked, 'dept')"
+              @change="(e:any) => fnModalExpandedKeys(e.target.checked, 'dept')"
             >
               展开/折叠
             </a-checkbox>
             <a-checkbox
               :checked="modalState.from.deptIds.length > 0"
-              @change="e => fnModalCheckedKeys(e.target.checked, 'dept')"
+              @change="(e:any) => fnModalCheckedKeys(e.target.checked, 'dept')"
             >
               全选/全不选
             </a-checkbox>
             <a-checkbox
               :checked="modalState.from.deptCheckStrictly === '1'"
-              @change="e => fnModalCheckStrictly(e.target.checked, 'dept')"
+              @change="(e:any) => fnModalCheckStrictly(e.target.checked, 'dept')"
             >
               父子联动
             </a-checkbox>
@@ -1250,7 +1252,7 @@ onMounted(() => {
             checkable
             :selectable="false"
             @check="
-              (checked, info) => fnModalTreeChecked(checked, info, 'dept')
+              (checked:any, info:any) => fnModalTreeChecked(checked, info, 'dept')
             "
             v-model:expanded-keys="modalState.deptTree.expandedKeys"
             v-model:checked-keys="modalState.deptTree.checkedKeys"
@@ -1264,7 +1266,7 @@ onMounted(() => {
         </a-form-item>
       </a-form>
     </a-modal>
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { message, Modal } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
@@ -12,7 +13,7 @@ import {
   cleanOperlog,
 } from '@/api/monitor/operlog';
 import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/date-utils.js';
+import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
 const { getDict } = useDictStore();
 const route = useRoute();
@@ -369,7 +370,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container :title="title">
+  <PageContainer :title="title">
     <template #content>
       <a-typography-paragraph>
         对接口请求进行日志收集，统计高频接口分析优化等操作。
@@ -657,7 +658,7 @@ onMounted(() => {
         <a-button key="cancel" @click="fnModalCancel">关闭</a-button>
       </template>
     </a-modal>
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import donate from '@/assets/donate.jpg';
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import useAppStore from '@/store/modules/app';
 import useUserStore from '@/store/modules/user';
 const userStore = useUserStore();
@@ -17,7 +18,7 @@ function fnTo(type: string) {
 </script>
 
 <template>
-  <page-container :title="systemName" sub-title="by TsMask">
+  <PageContainer :breadcrumb="false" :title="systemName" sub-title="by TsMask">
     <template #tags>
       <a-tag>当前版本：{{ systemVersion }}</a-tag>
       <a-tag color="magenta"><PayCircleOutlined /> 免费开源</a-tag>
@@ -106,7 +107,7 @@ function fnTo(type: string) {
         </a-card>
       </a-col>
     </a-row>
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped>

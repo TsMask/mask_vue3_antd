@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { message, Modal } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
@@ -13,7 +14,7 @@ import {
   unlockLogininfor,
 } from '@/api/monitor/logininfor';
 import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/date-utils.js';
+import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
 const { getDict } = useDictStore();
 const route = useRoute();
@@ -341,7 +342,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container :title="title">
+  <PageContainer :title="title">
     <template #content>
       <a-typography-paragraph>
         对登录进行日志收集，登录锁定的信息存入
@@ -533,7 +534,7 @@ onMounted(() => {
         </template>
       </a-table>
     </a-card>
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped>

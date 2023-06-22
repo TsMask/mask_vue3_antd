@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { message, Modal, Form } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
@@ -13,10 +14,10 @@ import {
   updateDept,
   listDeptExcludeChild,
 } from '@/api/system/dept';
-import { parseDateToStr } from '@/utils/date-utils.js';
-import { regExpMobile, regExpEmail } from '@/utils/regular-utils.js';
+import { parseDateToStr } from '@/utils/date-utils';
+import { regExpMobile, regExpEmail } from '@/utils/regular-utils';
 import useDictStore from '@/store/modules/dict';
-import { parseDataToTree } from '@/utils/parse-tree-utils.js';
+import { parseDataToTree } from '@/utils/parse-tree-utils';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -403,7 +404,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container :title="title">
+  <PageContainer :title="title">
     <template #content>
       <a-typography-paragraph> 给予用户部门标记 </a-typography-paragraph>
     </template>
@@ -792,7 +793,7 @@ onMounted(() => {
         </a-row>
       </a-form>
     </a-modal>
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped>

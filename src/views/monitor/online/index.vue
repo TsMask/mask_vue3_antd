@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted } from 'vue';
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { message, Modal } from 'ant-design-vue/lib';
 import { forceLogout, listOnline } from '@/api/monitor/online';
-import { parseDateToStr } from '@/utils/date-utils.js';
+import { parseDateToStr } from '@/utils/date-utils';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
 import { ColumnsType } from 'ant-design-vue/lib/table';
@@ -188,7 +189,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container :title="title">
+  <PageContainer :title="title">
     <template #content>
       <a-typography-paragraph>
         登录用户
@@ -324,7 +325,7 @@ onMounted(() => {
         </template>
       </a-table>
     </a-card>
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped>

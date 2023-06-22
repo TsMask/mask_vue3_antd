@@ -9,7 +9,7 @@ import {
   clearCacheKey,
   clearCacheSafe,
 } from '@/api/monitor/cache';
-
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { ColumnsType } from 'ant-design-vue/lib/table/Table';
 import { message } from 'ant-design-vue/lib';
 import { hasPermissions } from '@/plugins/auth-user';
@@ -270,7 +270,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container :title="title">
+  <PageContainer :title="title">
     <template #content>
       <a-typography-paragraph>
         系统在缓存
@@ -486,7 +486,7 @@ onMounted(() => {
         </a-card>
       </a-col>
     </a-row>
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped></style>

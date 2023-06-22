@@ -1,5 +1,5 @@
 <template>
-  <page-container title="Version" sub-title="show current project dependencies">
+  <PageContainer title="Version" sub-title="show current project dependencies">
     <template #content>
       <strong>Content Area</strong>
     </template>
@@ -19,11 +19,12 @@
         <a-tag>{{ i }}</a-tag>
       </p>
     </a-card>
-  </page-container>
+  </PageContainer>
 </template>
 
 <script lang="ts" setup>
 import { ref } from 'vue';
+import { PageContainer } from '@ant-design-vue/pro-layout';
 
 const list = ref<number>(50);
 </script>

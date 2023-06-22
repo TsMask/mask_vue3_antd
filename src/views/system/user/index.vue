@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { message, Modal, Form } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
@@ -20,14 +21,14 @@ import {
 } from '@/api/system/user';
 import { deptTreeSelect } from '@/api/system/dept';
 import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/date-utils.js';
+import { parseDateToStr } from '@/utils/date-utils';
 import {
   regExpPasswd,
   regExpMobile,
   regExpNick,
   regExpEmail,
   regExpUserName,
-} from '@/utils/regular-utils.js';
+} from '@/utils/regular-utils';
 import useDictStore from '@/store/modules/dict';
 import useUserStore from '@/store/modules/user';
 import { DataNode } from 'ant-design-vue/lib/tree';
@@ -725,7 +726,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container :title="title">
+  <PageContainer :title="title">
     <template #content>
       <a-typography-paragraph> 所有系统用户管理列表 </a-typography-paragraph>
     </template>
@@ -1389,7 +1390,7 @@ onMounted(() => {
       :download-template-method="fnModalUploadXlsxImportExportTemplate"
       @close="fnModalUploadXlsxImportClose"
     />
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped>

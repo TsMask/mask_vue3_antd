@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { message, Modal, Form } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
@@ -17,7 +18,7 @@ import {
   resetQueueJob,
 } from '@/api/monitor/job';
 import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/date-utils.js';
+import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
 import { hasPermissions } from '@/plugins/auth-user';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
@@ -553,7 +554,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container :title="title">
+  <PageContainer :title="title">
     <template #content>
       <a-typography-paragraph>
         使用
@@ -1067,7 +1068,7 @@ onMounted(() => {
       :cron="modalState.from.cronExpression"
       @ok="fnModalCron(false, $event)"
     ></CronModal>
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped>

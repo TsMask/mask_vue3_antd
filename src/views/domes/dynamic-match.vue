@@ -1,5 +1,5 @@
 <template>
-  <page-container :title="`${route.meta.title} ${route.params.id}`">
+  <PageContainer :title="`${route.meta.title} ${route.params.id}`">
     <template #content>
       <a-descriptions size="small" :column="2">
         <a-descriptions-item label="创建人">张三</a-descriptions-item>
@@ -43,10 +43,11 @@
         @change="handlePageChange"
       />
     </div>
-  </page-container>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 

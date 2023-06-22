@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { message, Modal, Form } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
@@ -15,7 +16,7 @@ import {
   refreshCache,
 } from '@/api/system/dict/type';
 import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/date-utils.js';
+import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
 const { getDict } = useDictStore();
@@ -452,7 +453,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container :title="title">
+  <PageContainer :title="title">
     <template #content>
       <a-typography-paragraph>
         数据字典类型，数据名称对应的代码值映射数据。
@@ -794,7 +795,7 @@ onMounted(() => {
         </a-form-item>
       </a-form>
     </a-modal>
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped>

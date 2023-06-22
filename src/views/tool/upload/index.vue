@@ -1,16 +1,17 @@
 <script lang="ts" setup>
+import { reactive } from 'vue';
+import { PageContainer } from '@ant-design-vue/pro-layout';
+import { Modal } from 'ant-design-vue/lib/components';
+import message from 'ant-design-vue/lib/message';
+import { FileType, UploadFile } from 'ant-design-vue/lib/upload/interface';
+import { UploadRequestOption } from 'ant-design-vue/lib/vc-upload/interface';
+import saveAs from 'file-saver';
 import {
   downloadFile,
   downloadFileChunk,
   uploadFile,
   uploadFileChunk,
 } from '@/api/tool/file';
-import { Modal } from 'ant-design-vue/lib/components';
-import message from 'ant-design-vue/lib/message';
-import { FileType, UploadFile } from 'ant-design-vue/lib/upload/interface';
-import { UploadRequestOption } from 'ant-design-vue/lib/vc-upload/interface';
-import saveAs from 'file-saver';
-import { reactive } from 'vue';
 
 let state = reactive<{
   /**上传状态 */
@@ -161,7 +162,7 @@ function fnUploadChunk(up: UploadRequestOption) {
 </script>
 
 <template>
-  <page-container title="上传示例">
+  <PageContainer title="上传示例">
     <a-row :gutter="16">
       <a-col :lg="12" :md="12" :xs="24">
         <a-card title="普通文件" style="margin-bottom: 16px">
@@ -228,7 +229,7 @@ function fnUploadChunk(up: UploadRequestOption) {
         </a-card>
       </a-col>
     </a-row>
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped></style>

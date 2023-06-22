@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { Form, message, Modal } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
@@ -15,7 +16,7 @@ import {
 } from '@/api/system/dict/data';
 import { getDictOptionselect, getType } from '@/api/system/dict/type';
 import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/date-utils.js';
+import { parseDateToStr } from '@/utils/date-utils';
 import useTabsStore from '@/store/modules/tabs';
 import useDictStore from '@/store/modules/dict';
 const tabsStore = useTabsStore();
@@ -466,7 +467,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container>
+  <PageContainer>
     <a-card
       v-show="tableState.seached"
       :bordered="false"
@@ -863,7 +864,7 @@ onMounted(() => {
         </a-form-item>
       </a-form>
     </a-modal>
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped>

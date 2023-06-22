@@ -11,6 +11,7 @@ import {
 import { PieChart, PieSeriesOption } from 'echarts/charts';
 import { LabelLayout } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { getCache } from '@/api/monitor/cache';
 import { reactive, ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
@@ -151,7 +152,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container :title="title" :loading="loading">
+  <PageContainer :title="title" :loading="loading">
     <template #content>
       <a-typography-paragraph>
         缓存
@@ -215,7 +216,7 @@ onMounted(() => {
     <a-card title="命令统计" :bordered="false">
       <div id="commandstats" style="height: 400px; width: 100%"></div>
     </a-card>
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped></style>
