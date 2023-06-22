@@ -1159,7 +1159,7 @@ onMounted(() => {
       @ok="fnModalOk"
       @cancel="fnModalCancel"
     >
-      <a-form name="modalStateFrom" layout="horizontal">
+      <a-form name="modalStateFromByEdit" layout="horizontal">
         <a-row :gutter="16" v-if="!modalState.from.userId">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
@@ -1346,7 +1346,7 @@ onMounted(() => {
       @ok="fnModalOkResetPwd"
       @cancel="fnModalCancel"
     >
-      <a-form name="modalStateFrom" layout="horizontal">
+      <a-form name="modalStateFromByResetPwd" layout="horizontal">
         <a-form-item
           label="登录账号"
           name="userName"

@@ -1039,7 +1039,7 @@ onMounted(() => {
       @ok="fnModalOk"
       @cancel="fnModalCancel"
     >
-      <a-form name="modalStateFrom" layout="horizontal">
+      <a-form name="modalStateFromByEdit" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
@@ -1120,18 +1120,21 @@ onMounted(() => {
         <a-form-item label="菜单权限" name="menuCheckStrictly">
           <a-space :size="12" align="center">
             <a-checkbox
+              id="menu_1"
               :checked="modalState.menuTree.expandedKeys.length > 0"
               @change="(e:any) => fnModalExpandedKeys(e.target.checked, 'menu')"
             >
               展开/折叠
             </a-checkbox>
             <a-checkbox
+              id="menu_2"
               :checked="modalState.from.menuIds.length > 0"
               @change="(e:any) => fnModalCheckedKeys(e.target.checked, 'menu')"
             >
               全选/全不选
             </a-checkbox>
             <a-checkbox
+              id="menu_3"
               :checked="modalState.from.menuCheckStrictly === '1'"
               @change="(e:any) => fnModalCheckStrictly(e.target.checked, 'menu')"
             >
@@ -1168,7 +1171,7 @@ onMounted(() => {
       @ok="fnModalOkDataScope"
       @cancel="fnModalCancel"
     >
-      <a-form name="modalStateFrom" layout="horizontal">
+      <a-form name="modalStateFromByDataScope" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色编号" name="roleId">
@@ -1230,18 +1233,21 @@ onMounted(() => {
         >
           <a-space :size="12" align="center">
             <a-checkbox
+              id="dept_1"
               :checked="modalState.deptTree.expandedKeys.length > 0"
               @change="(e:any) => fnModalExpandedKeys(e.target.checked, 'dept')"
             >
               展开/折叠
             </a-checkbox>
             <a-checkbox
+              id="dept_2"
               :checked="modalState.from.deptIds.length > 0"
               @change="(e:any) => fnModalCheckedKeys(e.target.checked, 'dept')"
             >
               全选/全不选
             </a-checkbox>
             <a-checkbox
+              id="dept_1"
               :checked="modalState.from.deptCheckStrictly === '1'"
               @change="(e:any) => fnModalCheckStrictly(e.target.checked, 'dept')"
             >
