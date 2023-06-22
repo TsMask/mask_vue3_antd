@@ -2,7 +2,7 @@
 import { Modal, message } from 'ant-design-vue/lib';
 import { reactive } from 'vue';
 import { updateUserPwd } from '@/api/profile';
-import { regExpPasswd } from '@/utils/regular-utils.js';
+import { regExpPasswd } from '@/utils/regular-utils';
 import useUserStore from '@/store/modules/user';
 import { useRouter } from 'vue-router';
 const { userName, fnLogOut } = useUserStore();

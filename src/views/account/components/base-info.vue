@@ -1,16 +1,12 @@
 <script lang="ts" setup>
 import { Modal, message } from 'ant-design-vue/lib';
-import { onMounted, reactive, ref, toRaw } from 'vue';
-import { updateUserProfile, uploadAvatar } from '@/api/profile';
-import {
-  regExpEmail,
-  regExpMobile,
-  regExpNick,
-} from '@/utils/regular-utils.js';
-import useUserStore from '@/store/modules/user';
-import useDictStore from '@/store/modules/dict';
 import { FileType } from 'ant-design-vue/lib/upload/interface';
 import { UploadRequestOption } from 'ant-design-vue/lib/vc-upload/interface';
+import { onMounted, reactive, ref, toRaw } from 'vue';
+import { updateUserProfile, uploadAvatar } from '@/api/profile';
+import { regExpEmail, regExpMobile, regExpNick } from '@/utils/regular-utils';
+import useUserStore from '@/store/modules/user';
+import useDictStore from '@/store/modules/dict';
 const uerStore = useUserStore();
 const { getDict } = useDictStore();
 
@@ -135,7 +131,7 @@ onMounted(() => {
     @finish="fnFinish"
   >
     <a-row :gutter="16">
-      <a-col :lg="12" :md="12" :xs="24">
+      <a-col :lg="12" :md="12" :xs="24" style="margin-bottom: 30px;">
         <a-form-item
           label="用户昵称"
           name="nickName"

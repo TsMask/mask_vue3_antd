@@ -20,7 +20,6 @@ declare module '@vue/runtime-core' {
     ADescriptions: typeof import('ant-design-vue/lib')['Descriptions']
     ADescriptionsItem: typeof import('ant-design-vue/lib')['DescriptionsItem']
     ADivider: typeof import('ant-design-vue/lib')['Divider']
-    ADrawer: typeof import('ant-design-vue/lib')['Drawer']
     ADropdown: typeof import('ant-design-vue/lib')['Dropdown']
     AEmpty: typeof import('ant-design-vue/lib')['Empty']
     AForm: typeof import('ant-design-vue/lib')['Form']

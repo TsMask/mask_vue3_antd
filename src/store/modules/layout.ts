@@ -21,17 +21,18 @@ type LayoutStore = {
     /**自动分割菜单 */
     splitMenus: boolean;
     /**内容区域-顶栏 */
-    headerRender: boolean | undefined;
+    headerRender: any | boolean | undefined;
     /**内容区域-页脚 */
-    footerRender: boolean | undefined;
+    footerRender: any | boolean | undefined;
     /**内容区域-菜单头 */
-    menuHeaderRender: boolean | undefined;
-    /**内容区域-菜单 */
-    menu: undefined;
+    menuHeaderRender: any | boolean | undefined;
   };
   /**水印内容 */
   waterMarkContent: string;
 };
+
+/**判断是否关闭内容区域 */
+const proRender = (render: any) => (render === false ? false : undefined);
 
 /**本地缓存-布局配置设置 */
 const proConfigLocal: LayoutStore['proConfig'] = localGetJSON(
@@ -55,11 +56,9 @@ const useLayoutStore = defineStore('layout', {
       fixedHeader: Boolean(proConfigLocal.fixedHeader),
       fixSiderbar: Boolean(proConfigLocal.fixSiderbar),
       splitMenus: Boolean(proConfigLocal.splitMenus),
-      headerRender: proConfigLocal.headerRender === false ? false : undefined,
-      footerRender: proConfigLocal.footerRender === false ? false : undefined,
-      menuHeaderRender:
-        proConfigLocal.menuHeaderRender === false ? false : undefined,
-      menu: undefined,
+      headerRender: proRender(proConfigLocal.headerRender),
+      footerRender: proRender(proConfigLocal.footerRender),
+      menuHeaderRender: proRender(proConfigLocal.menuHeaderRender),
     },
     waterMarkContent: import.meta.env.VITE_APP_SYSTEM_NAME,
   }),

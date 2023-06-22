@@ -1,15 +1,16 @@
 <script lang="ts" setup>
+import { PageContainer } from '@ant-design-vue/pro-layout';
 import { message } from 'ant-design-vue/lib';
 import { getUserProfile } from '@/api/profile';
 import { reactive, ref, onMounted } from 'vue';
-import { parseDateToStr } from '@/utils/date-utils.js';
+import { parseDateToStr } from '@/utils/date-utils';
 import useUserStore from '@/store/modules/user';
 
 /**加载状态 */
 let loading = ref<boolean>(true);
 
 /**Tab标签激活 */
-let activeKey = ref<string>('empty');
+let activeKey = ref<string>('list');
 
 /**个人信息数据状态 */
 let state = reactive<{
@@ -54,13 +55,13 @@ let listData = ref([
 function fnGetProfile() {
   getUserProfile().then(res => {
     if (res.code === 200 && res.data) {
-      const {user,roleGroup,postGroup} = res.data;
+      const { user, roleGroup, postGroup } = res.data;
       state.user = user;
       state.roleGroup = roleGroup;
       state.postGroup = postGroup;
       // 头像解析
       state.user.avatar = useUserStore().fnAvatar(user.avatar);
-      loading.value = false
+      loading.value = false;
     } else {
       message.error(res.msg, 3);
     }
@@ -74,7 +75,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container :loading="loading">
+  <PageContainer :loading="loading">
     <a-row :gutter="16">
       <a-col :lg="6" :md="6" :xs="24">
         <a-card :body-style="{ padding: '0px' }" style="margin-bottom: 16px">
@@ -171,7 +172,7 @@ onMounted(() => {
         </a-card>
       </a-col>
     </a-row>
-  </page-container>
+  </PageContainer>
 </template>
 
 <style lang="less" scoped>

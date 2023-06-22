@@ -2,7 +2,7 @@
 import { decode } from 'js-base64';
 import { useRoute } from 'vue-router';
 import { reactive, ref } from 'vue';
-import { validHttp } from '@/utils/regular-utils.js';
+import { validHttp } from '@/utils/regular-utils';
 const route = useRoute();
 const height = ref<string>(document.documentElement.clientHeight - 94.5 + 'px');
 
