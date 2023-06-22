@@ -11,7 +11,11 @@ const uerStore = useUserStore();
 const { getDict } = useDictStore();
 
 /**用户性别字典 */
-let sysUserSex = ref<DictType[]>([]);
+let sysUserSex = ref<DictType[]>([
+  { label: '未知', value: '0', elTagType: '', elTagClass: '' },
+  { label: '男', value: '1', elTagType: '', elTagClass: '' },
+  { label: '女', value: '2', elTagType: '', elTagClass: '' },
+]);
 
 /**表单数据状态 */
 let stateForm = reactive({
@@ -109,12 +113,6 @@ onMounted(() => {
   getDict('sys_user_sex').then(res => {
     if (res.length > 0) {
       sysUserSex.value = res;
-    } else {
-      sysUserSex.value = [
-        { label: '未知', value: '0', elTagType: '', elTagClass: '' },
-        { label: '男', value: '1', elTagType: '', elTagClass: '' },
-        { label: '女', value: '2', elTagType: '', elTagClass: '' },
-      ];
     }
   });
   // 初始表单值
@@ -131,7 +129,7 @@ onMounted(() => {
     @finish="fnFinish"
   >
     <a-row :gutter="16">
-      <a-col :lg="12" :md="12" :xs="24" style="margin-bottom: 30px;">
+      <a-col :lg="12" :md="12" :xs="24" style="margin-bottom: 30px">
         <a-form-item
           label="用户昵称"
           name="nickName"
