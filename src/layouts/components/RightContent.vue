@@ -1,17 +1,15 @@
 <script setup lang="ts">
-import useLayoutStore from '@/store/modules/layout';
-import useUserStore from '@/store/modules/user';
-import { useRouter } from 'vue-router';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
-const layoutStore = useLayoutStore();
+import { useRouter } from 'vue-router';
+import useUserStore from '@/store/modules/user';
 const userStore = useUserStore();
 const router = useRouter();
 
 /**头像展开项点击 */
 function fnClick({ key }: MenuInfo) {
   switch (key) {
-    case 'layoutSetting':
-      layoutStore.changeVisibleLayoutSetting();
+    case 'settings':
+      router.push({ name: 'Settings' });
       break;
     case 'profile':
       router.push({ name: 'Profile' });
@@ -57,9 +55,9 @@ function fnClick({ key }: MenuInfo) {
 
     <a-tooltip>
       <template #title>开源仓库</template>
-      <a-button type="link" href="https://gitee.com/TsMask">
+      <a-button type="link" href="https://gitee.com/TsMask" target="_blank">
         <template #icon>
-          <github-outlined :style="{ fontSize: '20px' }" />
+          <GithubOutlined :style="{ fontSize: '20px' }" />
         </template>
       </a-button>
     </a-tooltip>
@@ -84,11 +82,11 @@ function fnClick({ key }: MenuInfo) {
             </template>
             <span>个人中心</span>
           </a-menu-item>
-          <a-menu-item key="layoutSetting">
+          <a-menu-item key="settings">
             <template #icon>
               <SettingOutlined />
             </template>
-            <span>布局设置</span>
+            <span>个人设置</span>
           </a-menu-item>
           <a-menu-divider />
           <a-menu-item key="logout">
