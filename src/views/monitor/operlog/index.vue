@@ -148,6 +148,15 @@ let tableColumns: ColumnsType = [
     },
   },
   {
+    title: '消耗时间',
+    dataIndex: 'costTime',
+    key: 'costTime',
+    align: 'center',
+    customRender(opt) {
+      return `${opt.value} ms`;
+    },
+  },
+  {
     title: '操作',
     key: 'operId',
     align: 'center',
@@ -624,6 +633,7 @@ onMounted(() => {
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="请求地址" name="operUrl">
+              {{ modalState.from.requestMethod }} -
               {{ modalState.from.operUrl }}
             </a-form-item>
           </a-col>
@@ -637,8 +647,8 @@ onMounted(() => {
         </a-row>
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="请求方式" name="requestMethod">
-              {{ modalState.from.requestMethod }}
+            <a-form-item label="请求耗时" name="costTime">
+              {{ modalState.from.costTime }} ms
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
@@ -648,10 +658,20 @@ onMounted(() => {
           </a-col>
         </a-row>
         <a-form-item label="请求参数" name="operParam">
-          {{ modalState.from.operParam }}
+          <a-textarea
+            v-model:value="modalState.from.operParam"
+            :auto-size="{ minRows: 2, maxRows: 6 }"
+            placeholder="请求参数"
+            :disabled="true"
+          />
         </a-form-item>
         <a-form-item label="操作信息" name="operMsg">
-          {{ modalState.from.operMsg }}
+          <a-textarea
+            v-model:value="modalState.from.operMsg"
+            :auto-size="{ minRows: 2, maxRows: 6 }"
+            placeholder="操作信息"
+            :disabled="true"
+          />
         </a-form-item>
       </a-form>
       <template #footer>
