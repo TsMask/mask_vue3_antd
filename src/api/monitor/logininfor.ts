@@ -56,7 +56,7 @@ export function cleanLogininfor() {
 
 /**
  * 解锁用户登录状态
- * @param userName 登录用户名-账号
+ * @param userName 登录账号
  * @returns object
  */
 export function unlockLogininfor(userName: string) {

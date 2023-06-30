@@ -10,7 +10,7 @@ import { validHttp } from '@/utils/regular-utils';
 type UserInfo = {
   /**授权凭证 */
   token: string;
-  /**用户名称 */
+  /**登录账号 */
   userName: string;
   /**用户角色 字符串数组 */
   roles: string[];
@@ -119,7 +119,7 @@ const useUserStore = defineStore('user', {
       const res = await getInfo();
       if (res.code === 200 && res.data) {
         const { user, roles, permissions } = res.data;
-        // 用户名称账号
+        // 登录账号
         this.userName = user.userName;
         // 用户头像
         this.avatar = user.avatar;
