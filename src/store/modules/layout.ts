@@ -26,6 +26,8 @@ type LayoutStore = {
     footerRender: any | boolean | undefined;
     /**内容区域-菜单头 */
     menuHeaderRender: any | boolean | undefined;
+    /**内容区域-导航标签项 */
+    tabRender: any | boolean | undefined;
   };
   /**水印内容 */
   waterMarkContent: string;
@@ -59,6 +61,7 @@ const useLayoutStore = defineStore('layout', {
       headerRender: proRender(proConfigLocal.headerRender),
       footerRender: proRender(proConfigLocal.footerRender),
       menuHeaderRender: proRender(proConfigLocal.menuHeaderRender),
+      tabRender: proRender(proConfigLocal.tabRender),
     },
     waterMarkContent: import.meta.env.VITE_APP_SYSTEM_NAME,
   }),

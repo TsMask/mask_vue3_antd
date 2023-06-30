@@ -133,7 +133,7 @@ function fnColorChange(e: Event) {
     </a-list-item>
     <a-list-item>
       菜单头
-      <template #actions> 左侧菜单栏顶部区域 </template>
+      <template #actions> 是否显示左侧菜单栏顶部LOGO区域 </template>
       <template #extra>
         <a-switch
           checked-children="显示"
@@ -141,6 +141,20 @@ function fnColorChange(e: Event) {
           :checked="proConfig.menuHeaderRender === undefined"
           @change="
             (checked:any) => changeConf('menuHeaderRender', checked === true && undefined)
+          "
+        ></a-switch>
+      </template>
+    </a-list-item>
+    <a-list-item>
+      导航标签项
+      <template #actions> 是否显示顶部Tab导航标签项 </template>
+      <template #extra>
+        <a-switch
+          checked-children="显示"
+          un-checked-children="隐藏"
+          :checked="proConfig.tabRender === undefined"
+          @change="
+            (checked:any) => changeConf('tabRender', checked === true && undefined)
           "
         ></a-switch>
       </template>
