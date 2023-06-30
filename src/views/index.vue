@@ -7,13 +7,15 @@ const userStore = useUserStore();
 const { systemName, systemVersion } = useAppStore();
 
 /**跳转 */
-function fnTo(type: string) {
+function goTarget(type: string) {
+  let url = '';
   if (type === 'code') {
-    window.open('https://gitee.com/TsMask/', '__blank');
+    url = 'https://gitee.com/TsMask/';
   }
   if (type === 'issues') {
-    window.open('https://gitee.com/TsMask/mask_antd_vue3/issues', '__blank');
+    url = 'https://gitee.com/TsMask/mask_element_vue3/issues';
   }
+  window.open(url, '__blank');
 }
 </script>
 
@@ -24,8 +26,8 @@ function fnTo(type: string) {
       <a-tag color="magenta"><PayCircleOutlined /> 免费开源</a-tag>
     </template>
     <template #extra>
-      <a-button type="primary" @click="fnTo('code')">开源仓库</a-button>
-      <a-button type="default" @click="fnTo('issues')">提些建议</a-button>
+      <a-button type="primary" @click="goTarget('code')">开源仓库</a-button>
+      <a-button type="default" @click="goTarget('issues')">提些建议</a-button>
     </template>
     <template #content>
       <a-space :size="16" align="center">
