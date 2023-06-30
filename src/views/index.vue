@@ -4,7 +4,7 @@ import { PageContainer } from '@ant-design-vue/pro-layout';
 import useAppStore from '@/store/modules/app';
 import useUserStore from '@/store/modules/user';
 const userStore = useUserStore();
-const { systemName, systemVersion } = useAppStore();
+const { appName, appVersion } = useAppStore();
 
 /**跳转 */
 function goTarget(type: string) {
@@ -20,9 +20,9 @@ function goTarget(type: string) {
 </script>
 
 <template>
-  <PageContainer :breadcrumb="false" :title="systemName" sub-title="by TsMask">
+  <PageContainer :breadcrumb="false" :title="appName" sub-title="by TsMask">
     <template #tags>
-      <a-tag>当前版本：{{ systemVersion }}</a-tag>
+      <a-tag>当前版本：{{ appVersion }}</a-tag>
       <a-tag color="magenta"><PayCircleOutlined /> 免费开源</a-tag>
     </template>
     <template #extra>

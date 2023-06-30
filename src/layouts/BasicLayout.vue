@@ -17,7 +17,7 @@ import useTabsStore from '@/store/modules/tabs';
 import { useRouter } from 'vue-router';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
 const { proConfig, waterMarkContent } = useLayoutStore();
-const { systemName } = useAppStore();
+const { appName } = useAppStore();
 const routerStore = useRouterStore();
 const tabsStore = useTabsStore();
 const router = useRouter();
@@ -124,7 +124,7 @@ tabsStore.clear();
       <template #menuHeaderRender>
         <RouterLink :to="{ name: 'Index' }" :replace="true">
           <img class="logo" src="@/assets/logo.png" />
-          <h1>{{ systemName }}</h1>
+          <h1>{{ appName }}</h1>
         </RouterLink>
       </template>
 

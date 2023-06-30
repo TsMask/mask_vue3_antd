@@ -63,7 +63,7 @@ const useLayoutStore = defineStore('layout', {
       menuHeaderRender: proRender(proConfigLocal.menuHeaderRender),
       tabRender: proRender(proConfigLocal.tabRender),
     },
-    waterMarkContent: import.meta.env.VITE_APP_SYSTEM_NAME,
+    waterMarkContent: import.meta.env.VITE_APP_NAME,
   }),
   actions: {
     /**改变显示状态 */
