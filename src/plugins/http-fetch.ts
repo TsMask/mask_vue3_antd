@@ -2,6 +2,10 @@ import { getToken, removeToken } from '@/plugins/auth-token';
 import { sessionGetJSON, sessionSetJSON } from '@/utils/cache-session-utils';
 import { TOKEN_KEY, TOKEN_KEY_PREFIX } from '@/constants/token-constants';
 import { CACHE_SESSION_FATCH } from '@/constants/cache-keys-constants';
+import {
+  APP_REQUEST_HEADER_CODE,
+  APP_REQUEST_HEADER_VERSION,
+} from '@/constants/app-constants';
 
 /**响应结果类型 */
 export type ResultType = {
@@ -71,7 +75,12 @@ const FATCH_CONFIG: ConfigType = {
 const FATCH_OPTIONS: OptionsType = {
   url: '',
   method: 'get',
-  headers: {},
+  headers: {
+    [APP_REQUEST_HEADER_CODE]: import.meta.env.VITE_APP_CODE,
+    [APP_REQUEST_HEADER_VERSION]: import.meta.env.VITE_APP_VERSION,
+    // 使用mock.apifox.cn时开启
+    // apifoxToken: 'xBhhq0RbnbKByxColuCtxUKF8gEhS7lW',
+  },
   dataType: 'json',
   responseType: 'json',
   cache: 'no-cache',
@@ -93,13 +102,6 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
       'application/json;charset=utf-8'
     );
   }
-
-  // 使用mock.apifox.cn时开启
-  // Reflect.set(
-  //   options.headers,
-  //   'apifoxToken',
-  //   'xBhhq0RbnbKByxColuCtxUKF8gEhS7lW'
-  // );
 
   // 是否需要设置 token
   const token = getToken();
@@ -253,11 +255,11 @@ export async function request(options: OptionsType): Promise<ResultType> {
         };
     }
   } catch (error: any) {
-    // 请求被终止时 
-    if(error.name === 'AbortError') {
+    // 请求被终止时
+    if (error.name === 'AbortError') {
       return {
         code: 500,
-        msg: "网络连接超时！",
+        msg: '网络连接超时！',
       };
     }
     throw error;
