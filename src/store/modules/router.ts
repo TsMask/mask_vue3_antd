@@ -100,9 +100,13 @@ function buildRouters(recordRaws: RecordRaws[]): RouteRecordRaw[] {
     }
 
     // 对元数据特殊参数进行处理
+    let metaIcon = item.meta.icon as string;
+    if (!metaIcon.startsWith('icon-')) {
+      metaIcon = '';
+    }
     item.meta = Object.assign(item.meta, {
       hideInMenu: item.meta.hide,
-      icon: item.meta.icon === '#' ? '' : item.meta.icon,
+      icon: metaIcon,
     });
 
     // 构建路由
@@ -133,7 +137,6 @@ const views = import.meta.glob('./../../views/**/*.{vue,tsx}');
  * @returns 路由懒加载函数
  */
 function findView(dirName: string) {
-  let view = () => {};
   for (const dir in views) {
     let viewDirName = '';
     const component = dir.match(/views\/(.+)\.(vue|tsx)/);
@@ -141,11 +144,10 @@ function findView(dirName: string) {
       viewDirName = component[1];
     }
     if (viewDirName === dirName) {
-      view = () => views[dir]();
-      break;
+      return () => views[dir]();
     }
   }
-  return view;
+  return () => import('@/views/error/404.vue');
 }
 
 export default useRouterStore;
