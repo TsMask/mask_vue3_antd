@@ -55,9 +55,18 @@ function fnClick({ key }: MenuInfo) {
 
     <a-tooltip>
       <template #title>开源仓库</template>
-      <a-button type="link" href="https://gitee.com/TsMask" target="_blank">
+      <a-button type="text" href="https://gitee.com/TsMask" target="_blank">
         <template #icon>
           <GithubOutlined :style="{ fontSize: '20px' }" />
+        </template>
+      </a-button>
+    </a-tooltip>
+
+    <a-tooltip>
+      <template #title>文档手册</template>
+      <a-button type="text" href="https://juejin.cn/column/7188761626017792056" target="_blank">
+        <template #icon>
+          <QuestionCircleOutlined :style="{ fontSize: '20px' }" />
         </template>
       </a-button>
     </a-tooltip>
