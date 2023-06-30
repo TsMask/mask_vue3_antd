@@ -413,7 +413,7 @@ function fnRecordRunOne(row: Record<string, string>) {
           });
         } else {
           message.error({
-            content: `${res.msg} 执行失败`,
+            content: `${res.msg}`,
             key,
             duration: 2,
           });

@@ -331,8 +331,11 @@ function fnExportList() {
 /**关闭跳转 */
 function fnClose() {
   const to = tabsStore.tabClose(route.path);
-  if (!to) return;
-  router.push(to);
+  if (to) {
+    router.push(to);
+  } else {
+    router.back();
+  }
 }
 
 /**查询调度日志列表 */

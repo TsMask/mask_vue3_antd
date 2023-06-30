@@ -30,7 +30,7 @@ let dict: {
 
 /**查询参数 */
 let queryParams = reactive({
-  /**用户名称 */
+  /**登录账号 */
   userName: '',
   /**手机号码 */
   phonenumber: '',
@@ -94,7 +94,7 @@ let tableColumns: ColumnsType = [
     align: 'center',
   },
   {
-    title: '用户名称',
+    title: '登录账号',
     dataIndex: 'userName',
     align: 'center',
   },
@@ -266,8 +266,11 @@ function fnRecordDelete(userId: string | number) {
 /**关闭跳转 */
 function fnClose() {
   const to = tabsStore.tabClose(route.path);
-  if (!to) return;
-  router.push(to);
+  if (to) {
+    router.push(to);
+  } else {
+    router.back();
+  }
 }
 
 /**查询角色已授权用户列表 */
@@ -319,12 +322,12 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="用户名称" name="userName">
+            <a-form-item label="登录账号" name="userName">
               <a-input
                 v-model:value="queryParams.userName"
                 allow-clear
                 :maxlength="30"
-                placeholder="请输入用户名称"
+                placeholder="请输入登录账号"
               ></a-input>
             </a-form-item>
           </a-col>

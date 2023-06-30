@@ -276,6 +276,7 @@ function fnModalVisibleByVive(row: Record<string, string>) {
 function fnModalVisibleByEdit(dictCode?: string | number) {
   if (!dictCode) {
     modalStateFrom.resetFields();
+    modalState.from.dictType = queryParams.dictType;
     modalState.title = '添加字典数据';
     modalState.visibleByEdit = true;
   } else {
@@ -412,8 +413,11 @@ function fnExportList() {
 /**关闭跳转 */
 function fnClose() {
   const to = tabsStore.tabClose(route.path);
-  if (!to) return;
-  router.push(to);
+  if (to) {
+    router.push(to);
+  } else {
+    router.back();
+  }
 }
 
 /**查询字典数据列表 */
@@ -781,16 +785,17 @@ onMounted(() => {
                 default-value="sys_oper_type"
                 placeholder="字典类型"
                 :options="dict.sysDictType"
+                :disabled="true"
               >
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典状态" name="status">
+            <a-form-item label="数据状态" name="status">
               <a-select
                 v-model:value="modalState.from.status"
                 default-value="0"
-                placeholder="字典状态"
+                placeholder="数据状态"
                 :options="dict.sysNormalDisable"
               >
               </a-select>
