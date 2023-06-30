@@ -37,7 +37,7 @@ let queryRangePicker = ref<[string, string]>(['', '']);
 let queryParams = reactive({
   /**登录地址 */
   ipaddr: '',
-  /**用户名称 */
+  /**登录账号 */
   userName: '',
   /**登录状态 */
   status: undefined,
@@ -82,7 +82,7 @@ type TabeStateType = {
   data: object[];
   /**勾选记录 */
   selectedRowKeys: (string | number)[];
-  /**勾选单个的用户名称 */
+  /**勾选单个的登录账号 */
   selectedUserName: string;
 };
 
@@ -105,7 +105,7 @@ let tableColumns: ColumnsType = [
     align: 'center',
   },
   {
-    title: '用户名称',
+    title: '登录账号',
     dataIndex: 'userName',
     align: 'center',
   },
@@ -195,7 +195,7 @@ function fnTableSelectedRows(
   rows: Record<string, string>[]
 ) {
   tableState.selectedRowKeys = rows.map(item => item.infoId);
-  // 针对单个用户名称解锁
+  // 针对单个登录账号解锁
   if (rows.length === 1) {
     tableState.selectedUserName = rows[0].userName;
   } else {
@@ -256,7 +256,7 @@ function fnCleanList() {
   });
 }
 
-/**用户名称账号解锁 */
+/**登录账号解锁 */
 function fnUnlock() {
   const username = tableState.selectedUserName;
   Modal.confirm({
@@ -347,7 +347,7 @@ onMounted(() => {
       <a-typography-paragraph>
         对登录进行日志收集，登录锁定的信息存入
         <a-typography-text code>Redis</a-typography-text>
-        可对用户名称账号进行解锁。
+        可对登录账号进行解锁。
       </a-typography-paragraph>
     </template>
 
@@ -370,12 +370,12 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="用户名称" name="userName">
+            <a-form-item label="登录账号" name="userName">
               <a-input
                 v-model:value="queryParams.userName"
                 allow-clear
                 :maxlength="30"
-                placeholder="请输入用户名称"
+                placeholder="请输入登录账号"
               ></a-input>
             </a-form-item>
           </a-col>

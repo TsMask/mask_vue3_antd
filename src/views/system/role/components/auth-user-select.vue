@@ -33,7 +33,7 @@ let dict: {
 
 /**查询参数 */
 let queryParams = reactive({
-  /**用户名称 */
+  /**登录账号 */
   userName: '',
   /**手机号码 */
   phonenumber: '',
@@ -91,7 +91,7 @@ let tableColumns: ColumnsType = [
     align: 'center',
   },
   {
-    title: '用户名称',
+    title: '登录账号',
     dataIndex: 'userName',
     align: 'center',
   },
@@ -103,11 +103,6 @@ let tableColumns: ColumnsType = [
   {
     title: '手机号码',
     dataIndex: 'phonenumber',
-    align: 'center',
-  },
-  {
-    title: '电子邮箱',
-    dataIndex: 'email',
     align: 'center',
   },
   {
@@ -229,12 +224,12 @@ watch(
     <a-form :model="queryParams" name="queryParams" layout="horizontal">
       <a-row :gutter="16">
         <a-col :lg="8" :md="12" :xs="24">
-          <a-form-item label="用户名称" name="userName">
+          <a-form-item label="登录账号" name="userName">
             <a-input
               v-model:value="queryParams.userName"
               allow-clear
               :maxlength="30"
-              placeholder="请输入用户名称"
+              placeholder="请输入登录账号"
             ></a-input>
           </a-form-item>
         </a-col>
@@ -283,7 +278,7 @@ watch(
       :loading="tableState.loading"
       :data-source="tableState.data"
       :size="tableState.size"
-      :scroll="{ x: true }"
+      :scroll="{ scrollToFirstRowOnChange: true, y: 400, x: true }"
       :pagination="tablePagination"
       :row-selection="{
         type: 'checkbox',

@@ -17,7 +17,7 @@ let title = ref<string>(route.meta.title ?? '标题');
 let queryParams = reactive({
   /**登录主机 */
   ipaddr: '',
-  /**用户名称 */
+  /**登录账号 */
   userName: '',
 });
 
@@ -62,7 +62,7 @@ let tableColumns: ColumnsType = [
     align: 'center',
   },
   {
-    title: '用户名称',
+    title: '登录账号',
     dataIndex: 'userName',
     align: 'center',
   },
@@ -167,7 +167,7 @@ function fnGetList() {
 function fnForceLogout(row: Record<string, string>) {
   Modal.confirm({
     title: '提示',
-    content: `确认强退用户名称为 ${row.userName} 的用户?`,
+    content: `确认强退登录账号为 ${row.userName} 的用户?`,
     onOk() {
       const key = 'forceLogout';
       message.loading({ content: '请稍等...', key });
@@ -209,12 +209,12 @@ onMounted(() => {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="用户名称" name="userName">
+            <a-form-item label="登录账号" name="userName">
               <a-input
                 v-model:value="queryParams.userName"
                 allow-clear
                 :maxlength="30"
-                placeholder="请输入用户名称"
+                placeholder="请输入登录账号"
               ></a-input>
             </a-form-item>
           </a-col>
