@@ -335,9 +335,19 @@ function fnModalVisibleByVive(userId: string | number) {
     modalState.confirmLoading = false;
     hide();
     if (res.code === 200 && res.data) {
-      const { user, roleIds, postIds, roles, posts } = res.data;
+      const roles = res.data.roles.map((m: Record<string, any>) => {
+        const disabled = m.status === '0';
+        Reflect.set(m, 'disabled', disabled);
+        return m;
+      });
+      const posts = res.data.posts.map((m: Record<string, any>) => {
+        const disabled = m.status === '0';
+        Reflect.set(m, 'disabled', disabled);
+        return m;
+      });
       modalState.options.roles = roles;
       modalState.options.posts = posts;
+      const { user, roleIds, postIds } = res.data;
       modalState.from = Object.assign(modalState.from, user);
       modalState.from.roleIds = roleIds;
       modalState.from.postIds = postIds;
@@ -372,11 +382,21 @@ function fnModalVisibleByEdit(userId?: string | number) {
         modalState.confirmLoading = false;
         hide();
         if (res.code === 200 && res.data) {
-          const { user, roleIds, postIds, roles, posts } = res.data;
+          const roles = res.data.roles.map((m: Record<string, any>) => {
+            const disabled = m.status === '0';
+            Reflect.set(m, 'disabled', disabled);
+            return m;
+          });
+          const posts = res.data.posts.map((m: Record<string, any>) => {
+            const disabled = m.status === '0';
+            Reflect.set(m, 'disabled', disabled);
+            return m;
+          });
           options.roles = roles;
           options.posts = posts;
           modalState.options.roles = roles;
           modalState.options.posts = posts;
+          const { user, roleIds, postIds } = res.data;
           modalState.from = Object.assign(modalState.from, user);
           modalState.from.roleIds = roleIds;
           modalState.from.postIds = postIds;
@@ -395,9 +415,19 @@ function fnModalVisibleByEdit(userId?: string | number) {
       modalState.confirmLoading = false;
       hide();
       if (res.code === 200 && res.data) {
-        const { user, roleIds, postIds, roles, posts } = res.data;
+        const roles = res.data.roles.map((m: Record<string, any>) => {
+          const disabled = m.status === '0';
+          Reflect.set(m, 'disabled', disabled);
+          return m;
+        });
+        const posts = res.data.posts.map((m: Record<string, any>) => {
+          const disabled = m.status === '0';
+          Reflect.set(m, 'disabled', disabled);
+          return m;
+        });
         modalState.options.roles = roles;
         modalState.options.posts = posts;
+        const { user, roleIds, postIds } = res.data;
         modalState.from = Object.assign(modalState.from, user);
         modalState.from.roleIds = roleIds;
         modalState.from.postIds = postIds;
@@ -934,9 +964,8 @@ onMounted(() => {
           </template>
           <template v-if="column.key === 'status'">
             <a-switch
-              v-if="
-                record.userId !== '1' && hasPermissions(['system:user:edit'])
-              "
+              v-if="record.userId !== '1'"
+              v-perms:has="['system:user:edit']"
               v-model:checked="record.status"
               checked-value="1"
               checked-children="正常"
