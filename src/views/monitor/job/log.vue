@@ -444,12 +444,12 @@ onMounted(() => {
               <a-space :size="8">
                 <a-button type="primary" @click.prevent="fnGetList">
                   <template #icon><SearchOutlined /></template>
-                  搜索</a-button
-                >
+                  搜索
+                </a-button>
                 <a-button type="default" @click.prevent="fnQueryReset">
                   <template #icon><ClearOutlined /></template>
-                  重置</a-button
-                >
+                  重置
+                </a-button>
               </a-space>
             </a-form-item>
           </a-col>
@@ -639,10 +639,20 @@ onMounted(() => {
           </a-col>
         </a-row>
         <a-form-item label="传入参数" name="targetParams">
-          {{ modalState.from.targetParams }}
+          <a-textarea
+            v-model:value="modalState.from.targetParams"
+            :auto-size="{ minRows: 2, maxRows: 6 }"
+            placeholder="传入参数"
+            :disabled="true"
+          />
         </a-form-item>
         <a-form-item label="日志信息" name="jobMsg">
-          {{ modalState.from.jobMsg }}
+          <a-textarea
+            v-model:value="modalState.from.jobMsg"
+            :auto-size="{ minRows: 2, maxRows: 6 }"
+            placeholder="日志信息"
+            :disabled="true"
+          />
         </a-form-item>
       </a-form>
       <template #footer>
