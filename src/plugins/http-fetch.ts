@@ -208,12 +208,6 @@ export async function request(options: OptionsType): Promise<ResultType> {
   try {
     const res = await fetch(options.url, options);
     // console.log('请求结果：', res);
-    if (!res.ok) {
-      return {
-        code: res.status,
-        msg: res.statusText,
-      };
-    }
     // 根据响应数据类型返回
     switch (options.responseType) {
       case 'text': // 文本数据
