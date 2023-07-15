@@ -35,6 +35,7 @@ npm install --registry https://registry.npmmirror.com
 ### 开发 development
 
 ```bash
+# 检查配置参数 .env.development 和 vite.config.ts
 npm install                 # 安装项目所需依赖
 npm run dev                 # 开发模式启动项目
 Local http://localhost:6269 # 启动成功后得到服务访问地址
@@ -43,6 +44,7 @@ Local http://localhost:6269 # 启动成功后得到服务访问地址
 ### 部署 production
 
 ```bash
+# 检查配置参数 .env.development
 npm install        # 安装项目所需依赖
 npm run build      # 构建生产项目代码
 ```
