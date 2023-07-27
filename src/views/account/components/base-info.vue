@@ -245,9 +245,4 @@ onMounted(() => {
   </a-form>
 </template>
 
-<style lang="less" scoped>
-.avatar {
-  width: 100px;
-  height: 100px;
-}
-</style>
+<style lang="less" scoped></style>
