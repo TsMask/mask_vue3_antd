@@ -100,12 +100,11 @@ function buildRouters(recordRaws: RecordRaws[]): RouteRecordRaw[] {
     }
 
     // 对元数据特殊参数进行处理
-    let metaIcon = item.meta.icon as string;
+    let metaIcon = (item.meta?.icon as string) || '';
     if (!metaIcon.startsWith('icon-')) {
       metaIcon = '';
     }
     item.meta = Object.assign(item.meta, {
-      hideInMenu: item.meta.hide,
       icon: metaIcon,
     });
 
