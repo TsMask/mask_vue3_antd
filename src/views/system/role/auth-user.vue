@@ -7,7 +7,7 @@ import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
 import { ColumnsType } from 'ant-design-vue/lib/table';
 import AuthUserSelect from './components/auth-user-select.vue';
-import { authUserAllocatedList, authUserSelect } from '@/api/system/role';
+import { authUserAllocatedList, authUserChecked } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
 import useTabsStore from '@/store/modules/tabs';
 import useDictStore from '@/store/modules/dict';
@@ -209,7 +209,7 @@ function fnModalOk(userIds: string[] | number[]) {
     return;
   }
   const hide = message.loading('请稍等...', 0);
-  authUserSelect({ select: true, userIds: userIds, roleId: roleId }).then(
+  authUserChecked({ checked: true, userIds: userIds, roleId: roleId }).then(
     res => {
       if (res.code === 200) {
         hide();
@@ -242,7 +242,7 @@ function fnRecordDelete(userId: string | number) {
     content: `确认取消用户编号为 【${userId}】 的数据项授权?`,
     onOk() {
       const hide = message.loading('请稍等...', 0);
-      authUserSelect({ select: false, userIds: userId, roleId: roleId }).then(
+      authUserChecked({ checked: false, userIds: userId, roleId: roleId }).then(
         res => {
           if (res.code === 200) {
             hide();

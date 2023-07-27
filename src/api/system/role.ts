@@ -125,9 +125,9 @@ export function authUserAllocatedList(query: Record<string, any>) {
  * @param data 角色对象
  * @returns object
  */
-export function authUserSelect(data: Record<string, any>) {
+export function authUserChecked(data: Record<string, any>) {
   return request({
-    url: '/system/role/authUser/select',
+    url: '/system/role/authUser/checked',
     method: 'put',
     data: data,
   });
