@@ -1,9 +1,10 @@
 # 基于 Ant-Design-Vue + Vue3 的管理系统
 
+[![star](https://gitee.com/TsMask/mask_antd_vue3/badge/star.svg?theme=dark)](https://gitee.com/TsMask/mask_antd_vue3/stargazers)
 ![Build Vite](https://img.shields.io/badge/Build-Vite-green.svg)
 ![Build Vue3](https://img.shields.io/badge/Build-Vue3-green.svg)
 ![Build MaskApi](https://img.shields.io/badge/Build-MaskApi-orange.svg)
-![Release V0.1.9](https://img.shields.io/badge/Release-V0.1.9-orange.svg)
+![Release V0.2.0](https://img.shields.io/badge/Release-V0.2.0-orange.svg)
 ![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 ## 简介
