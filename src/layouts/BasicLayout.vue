@@ -67,6 +67,13 @@ const { menuData } = getMenuData(clearMenuItem(router.getRoutes()));
 /**面包屑数据对象，排除根节点和首页不显示 */
 const breadcrumb = computed(() => {
   const matched = router.currentRoute.value.matched.concat();
+  // 菜单中隐藏子节点不显示面包屑
+  if (matched.length == 2) {
+    const hideChildInMenu = matched[0].meta?.hideChildInMenu || false;
+    if (hideChildInMenu) {
+      return [];
+    }
+  }
   return matched
     .filter(r => !['Root', 'Index'].includes(r.name as string))
     .map(item => {
@@ -85,7 +92,7 @@ const breadcrumb = computed(() => {
  * @param name 路由名称
  */
 function fnComponentSetName(component: any, to: any) {
-  if (component.type) {
+  if (component && component.type) {
     // 通过路由取最后匹配的，确认是缓存的才处理
     const matched = to.matched.concat();
     const lastRoute = matched[matched.length - 1];
