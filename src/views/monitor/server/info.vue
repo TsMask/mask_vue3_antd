@@ -150,17 +150,30 @@ onMounted(() => {
         :column="{ lg: 2, md: 2, xs: 1 }"
         :bordered="true"
       >
+        <a-descriptions-item
+          label="GO版本"
+          :span="2"
+          v-if="server.system && server.system.go"
+        >
+          {{ server.system.go }}
+        </a-descriptions-item>
+        <a-descriptions-item
+          label="Node版本"
+          v-if="server.system && server.system.node"
+        >
+          {{ server.system.node }}
+        </a-descriptions-item>
+        <a-descriptions-item
+          label="V8版本"
+          v-if="server.system && server.system.v8"
+        >
+          {{ server.system.v8 }}
+        </a-descriptions-item>
         <a-descriptions-item label="进程PID号">
           {{ server.system.processId }}
         </a-descriptions-item>
         <a-descriptions-item label="运行平台">
           {{ server.system.platform }}
-        </a-descriptions-item>
-        <a-descriptions-item label="Node版本">
-          {{ server.system.node }}
-        </a-descriptions-item>
-        <a-descriptions-item label="V8版本">
-          {{ server.system.v8 }}
         </a-descriptions-item>
         <a-descriptions-item label="系统架构">
           {{ server.system.arch }}
@@ -174,13 +187,13 @@ onMounted(() => {
         <a-descriptions-item label="主机名称">
           {{ server.system.hostname }}
         </a-descriptions-item>
-        <a-descriptions-item label="主机用户目录">
+        <a-descriptions-item label="主机用户目录" :span="2">
           {{ server.system.homeDir }}
         </a-descriptions-item>
-        <a-descriptions-item label="项目路径">
+        <a-descriptions-item label="项目路径" :span="2">
           {{ server.system.cmd }}
         </a-descriptions-item>
-        <a-descriptions-item label="执行命令">
+        <a-descriptions-item label="执行命令" :span="2">
           {{ server.system.execCommand }}
         </a-descriptions-item>
       </a-descriptions>
@@ -270,7 +283,7 @@ onMounted(() => {
         <a-descriptions-item label="时区名称">
           {{ server.time.timezoneName }}
         </a-descriptions-item>
-        <a-descriptions-item label="主机启动时间">
+        <a-descriptions-item label="程序启动时间">
           {{ server.time.uptime }}
         </a-descriptions-item>
       </a-descriptions>
