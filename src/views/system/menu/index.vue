@@ -900,10 +900,7 @@ onMounted(() => {
             <a-radio
               :key="MENU_TYPE_MENU"
               :value="MENU_TYPE_MENU"
-              :disabled="
-                modalState.from.parentId === '0' ||
-                modalState.from.parentType === MENU_TYPE_MENU
-              "
+              :disabled="modalState.from.parentType === MENU_TYPE_MENU"
             >
               菜单
             </a-radio>
