@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { decode } from 'js-base64';
+import { isValid, decode } from 'js-base64';
 import { useRoute } from 'vue-router';
 import { reactive, ref } from 'vue';
 import { validHttp } from '@/utils/regular-utils';
@@ -16,14 +16,18 @@ if (route.name) {
   const name = route.name.toString();
   const pathArr = route.matched.concat().map(i => i.path);
   const pathLen = pathArr.length;
-  const path = pathArr[pathLen - 1].replace(pathArr[pathLen - 2], '');
-  const url = decode(path.substring(1));
-  if (validHttp(url)) {
-    iframe.src = url;
-  } else {
-    let endS = name.substring(4, 5).endsWith('s');
-    iframe.src = `${endS ? 'https://' : 'http://'}${url}`;
+  let path = pathArr[pathLen - 1].replace(pathArr[pathLen - 2], '');
+  path = path.substring(1);
+  if (isValid(path)) {
+    const url = decode(path);
+    if (validHttp(url)) {
+      iframe.src = url;
+    } else {
+      let endS = name.substring(4, 5).endsWith('s');
+      iframe.src = `${endS ? 'https://' : 'http://'}${url}`;
+    }
   }
+
   iframe.id = name;
 }
 </script>
