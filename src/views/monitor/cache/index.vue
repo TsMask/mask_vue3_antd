@@ -479,7 +479,13 @@ onMounted(() => {
             </a-descriptions-item>
             <a-descriptions-item label="缓存内容">
               <a-typography-paragraph>
-                <pre>{{ cacheKeyInfo.data.cacheValue }}</pre>
+                <a-textarea
+                  :value="cacheKeyInfo.data.cacheValue"
+                  :auto-size="{ minRows: 4, maxRows: 10 }"
+                  :maxlength="4000"
+                  :disabled="true"
+                  placeholder="显示缓存内容"
+                />
               </a-typography-paragraph>
             </a-descriptions-item>
           </a-descriptions>
