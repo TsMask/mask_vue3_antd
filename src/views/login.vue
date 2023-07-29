@@ -76,15 +76,15 @@ function fnFinish() {
         router.push({ path: redirectPath });
       } else {
         message.error(`${res.msg}`, 3);
-        // 刷新验证码
-        if (state.captcha.enabled) {
-          state.from.code = '';
-          fnGetCaptcha();
-        }
       }
     })
     .finally(() => {
       state.fromClick = false;
+      // 刷新验证码
+      if (state.captcha.enabled) {
+        state.from.code = '';
+        fnGetCaptcha();
+      }
     });
 }
 

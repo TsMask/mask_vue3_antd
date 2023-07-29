@@ -59,7 +59,6 @@ function fnFinish() {
   const hide = message.loading('请稍等...', 0);
   register(toRaw(state.form))
     .then(res => {
-      hide();
       if (res.code === 200) {
         Modal.success({
           title: '提示',
@@ -71,15 +70,16 @@ function fnFinish() {
         });
       } else {
         message.error(`${res.msg}`, 3);
-        // 刷新验证码
-        if (state.captcha.enabled) {
-          state.form.code = '';
-          fnGetCaptcha();
-        }
       }
     })
     .finally(() => {
+      hide();
       state.formClick = false;
+      // 刷新验证码
+      if (state.captcha.enabled) {
+        state.form.code = '';
+        fnGetCaptcha();
+      }
     });
 }
 
