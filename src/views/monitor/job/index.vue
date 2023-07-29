@@ -967,7 +967,7 @@ onMounted(() => {
                   <a-tooltip placement="topLeft">
                     <template #title>
                       <div>
-                        Processor调用示例：test <br />
+                        Processor调用示例：simple <br />
                         定义任务处理器示例：src\modules\monitor\processor <br />
                         参数说明：支持预设传入参数，在处理器中进行序列化处理参数
                       </div>
