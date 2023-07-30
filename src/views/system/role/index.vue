@@ -261,7 +261,7 @@ let modalState: ModalStateType = reactive({
     dataScope: '5',
     deptCheckStrictly: '1',
     menuCheckStrictly: '1',
-    createTime: '0',
+    createTime: 0,
   },
   confirmLoading: false,
   menuTree: {
@@ -500,14 +500,16 @@ function fnModalCheckStrictly(checked: boolean, type: 'menu' | 'dept') {
 function fnModalOkDataScope() {
   if (modalState.confirmLoading) return;
   modalState.confirmLoading = true;
-  const key = 'dataScope';
-  message.loading({ content: '请稍等...', key });
-  dataScope(toRaw(modalState.from))
+  const hide = message.loading('请稍等...', 0);
+  const fromInfo = toRaw(modalState.from);
+  if (fromInfo.dataScope !== '2') {
+    fromInfo.deptIds = [];
+  }
+  dataScope(fromInfo)
     .then(res => {
       if (res.code === 200) {
         message.success({
           content: `${modalState.title}成功`,
-          key,
           duration: 2,
         });
         modalState.visibleByDataScope = false;
@@ -515,12 +517,12 @@ function fnModalOkDataScope() {
       } else {
         message.error({
           content: `${res.msg}`,
-          key,
           duration: 2,
         });
       }
     })
     .finally(() => {
+      hide();
       modalState.confirmLoading = false;
     });
 }
@@ -586,19 +588,17 @@ function fnRecordStatus(row: Record<string, string>) {
     title: '提示',
     content: `确定要${text} ${row.roleName} 角色吗?`,
     onOk() {
-      const key = 'changeRoleStatus';
-      message.loading({ content: '请稍等...', key });
+      const hide = message.loading('请稍等...', 0);
       changeRoleStatus(row.roleId, row.status).then(res => {
+        hide();
         if (res.code === 200) {
           message.success({
             content: `${row.roleName} ${text}成功`,
-            key: key,
             duration: 2,
           });
         } else {
           message.error({
             content: `${row.roleName} ${text}失败`,
-            key: key,
             duration: 2,
           });
         }
@@ -623,20 +623,18 @@ function fnRecordDelete(roleId: string = '0') {
     title: '提示',
     content: `确认删除角色编号为 【${roleId}】 的数据项?`,
     onOk() {
-      const key = 'delRole';
-      message.loading({ content: '请稍等...', key });
+      const hide = message.loading('请稍等...', 0);
       delRole(roleId).then(res => {
+        hide();
         if (res.code === 200) {
           message.success({
             content: `删除成功`,
-            key,
             duration: 2,
           });
           fnGetList();
         } else {
           message.error({
             content: `${res.msg}`,
-            key: key,
             duration: 2,
           });
         }
@@ -651,20 +649,17 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const key = 'exportRole';
-      message.loading({ content: '请稍等...', key });
+      const hide = message.loading('请稍等...', 0);
       exportRole(toRaw(queryParams)).then(res => {
         if (res.code === 200) {
           message.success({
             content: `已完成导出`,
-            key,
             duration: 2,
           });
           saveAs(res.data, `role_${Date.now()}.xlsx`);
         } else {
           message.error({
             content: `${res.msg}`,
-            key,
             duration: 2,
           });
         }

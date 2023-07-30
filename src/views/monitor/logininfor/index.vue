@@ -288,20 +288,18 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const key = 'exportLogininfor';
-      message.loading({ content: '请稍等...', key });
+      const hide = message.loading('正在打开...', 0);
       exportLogininfor(toRaw(queryParams)).then(res => {
+        hide();
         if (res.code === 200) {
           message.success({
             content: `已完成导出`,
-            key,
             duration: 2,
           });
           saveAs(res.data, `logininfor_${Date.now()}.xlsx`);
         } else {
           message.error({
             content: `${res.msg}`,
-            key,
             duration: 2,
           });
         }
