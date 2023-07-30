@@ -198,7 +198,7 @@ let modalState: ModalStateType = reactive({
     postSort: 0,
     status: '0',
     remark: '',
-    createTime: '0',
+    createTime: 0,
   },
   confirmLoading: false,
 });

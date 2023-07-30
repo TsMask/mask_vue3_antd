@@ -233,7 +233,7 @@ let modalState: ModalStateType = reactive({
     isCache: '0',
     visible: '0',
     status: '0',
-    createTime: '0',
+    createTime: 0,
     remark: '',
     parentType: '', // 标记禁止菜单类型添加目录和菜单
   },

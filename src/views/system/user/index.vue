@@ -259,7 +259,7 @@ let modalState: ModalStateType = reactive({
     password: '',
     deptId: '100',
     email: '',
-    loginDate: '',
+    loginDate: 0,
     loginIp: '',
     nickName: '',
     phonenumber: '',
@@ -268,7 +268,7 @@ let modalState: ModalStateType = reactive({
     sex: '1',
     status: '0',
     remark: '',
-    createTime: '0',
+    createTime: 0,
   },
   confirmLoading: false,
   options: {

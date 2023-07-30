@@ -240,7 +240,7 @@ let modalState: ModalStateType = reactive({
     tagType: '',
     remark: '',
     status: '0',
-    createTime: '',
+    createTime: 0,
     createBy: undefined,
   },
   confirmLoading: false,
