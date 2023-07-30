@@ -209,24 +209,26 @@ function fnModalOk(userIds: string[] | number[]) {
     return;
   }
   const hide = message.loading('请稍等...', 0);
-  authUserChecked({ checked: true, userIds: userIds, roleId: roleId }).then(
-    res => {
-      if (res.code === 200) {
-        hide();
-        modalState.visibleBySelectUser = false;
-        message.success({
-          content: `授权用户添加成功`,
-          duration: 3,
-        });
-        fnGetList();
-      } else {
-        message.error({
-          content: `${res.msg}`,
-          duration: 3,
-        });
-      }
+  authUserChecked({
+    checked: true,
+    userIds: userIds.join(','),
+    roleId: roleId,
+  }).then(res => {
+    hide();
+    if (res.code === 200) {
+      modalState.visibleBySelectUser = false;
+      message.success({
+        content: `授权用户添加成功`,
+        duration: 3,
+      });
+      fnGetList();
+    } else {
+      message.error({
+        content: `${res.msg}`,
+        duration: 3,
+      });
     }
-  );
+  });
 }
 
 /**
@@ -244,8 +246,8 @@ function fnRecordDelete(userId: string | number) {
       const hide = message.loading('请稍等...', 0);
       authUserChecked({ checked: false, userIds: userId, roleId: roleId }).then(
         res => {
+          hide();
           if (res.code === 200) {
-            hide();
             message.success({
               content: `取消授权成功`,
               duration: 3,
