@@ -15,14 +15,21 @@
 - 图标来源 [@ant-design/icons-vue](https://ant.design/components/icon)
 - 菜单图标使用自定义iconfont `font_8d5l8fzk5b87iudi.js`图标文件
 
-## 项目拓展
+## 项目文档
 
-- `Apifox` 提供mock服务和程序接口文档 => [接口预览](https://mask-api-midwayjs.apifox.cn/)
-- `Element-Vue3` 前端代码仓库地址 => [mask_element_vue3](https://gitee.com/TsMask/mask_element_vue3)
-- `Antd-Vue3` 前端代码仓库地址 => [mask_antd_vue3](https://gitee.com/TsMask/mask_antd_vue3)
-- `Midwayjs-Node` 后端代码仓库地址 => [mask_api_midwayjs](https://gitee.com/TsMask/mask_api_midwayjs)
+- 项目代码进行服务器部署的网站 => [在线预览](http://124.223.91.248:8102/#/)
+- `Apifox` 提供mock服务和程序接口文档 => [接口文档](https://mask-api-midwayjs.apifox.cn/)
+- `Mask管理系统` 文档专栏，相关使用和开发升级文档。 => [专栏](https://juejin.cn/column/7188761626017792056/)
 
-[Antd在线预览](http://124.223.91.248:8102/mask-antd/#/index) or [Element在线预览](http://124.223.91.248:8102/mask-el/#/index)
+### 前端
+
+- `Vue3-Element` 仓库地址 => [mask_element_vue3](https://gitee.com/TsMask/mask_element_vue3)
+- `Vue3-Antd` 仓库地址 => [mask_antd_vue3](https://gitee.com/TsMask/mask_antd_vue3)
+
+### 后端
+
+- `Node-Midwayjs` 仓库地址 => [mask_api_midwayjs](https://gitee.com/TsMask/mask_api_midwayjs)
+- `Go-Gin` 仓库地址 => [mask_api_gin](https://gitee.com/TsMask/mask_api_gin)
 
 ## 程序命令
 
