@@ -149,6 +149,7 @@ function fnUploadChunk(up: UploadRequestOption) {
           }
         } else {
           message.error(res.msg, 3);
+          state.fileList.splice(state.fileList.length - 1, 1);
         }
       });
     },
