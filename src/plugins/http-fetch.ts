@@ -208,6 +208,13 @@ export async function request(options: OptionsType): Promise<ResultType> {
   try {
     const res = await fetch(options.url, options);
     // console.log('请求结果：', res);
+    if (res.status === 500) {
+      return {
+        code: 500,
+        msg: '服务器连接出错！',
+      };
+    }
+
     // 根据响应数据类型返回
     switch (options.responseType) {
       case 'text': // 文本数据
