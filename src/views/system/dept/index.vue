@@ -259,10 +259,8 @@ function fnModalVisibleByEdit(
     const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
     // 获取部门信息同时查询部门列表（排除节点）
-    Promise.all([getDept(deptId), listDeptExcludeChild(deptId)]).then(
-      resArr => {
-        modalState.confirmLoading = false;
-        hide();
+    Promise.all([getDept(deptId), listDeptExcludeChild(deptId)])
+      .then(resArr => {
         if (resArr[0].code === 200 && resArr[0].data) {
           modalState.from = Object.assign(modalState.from, resArr[0].data);
           if (resArr[1].code === 200 && Array.isArray(resArr[1].data)) {
@@ -279,8 +277,11 @@ function fnModalVisibleByEdit(
         } else {
           message.error(`获取部门信息失败`, 2);
         }
-      }
-    );
+      })
+      .finally(() => {
+        modalState.confirmLoading = false;
+        hide();
+      });
   }
 }
 
@@ -295,19 +296,17 @@ function fnModalOk() {
       modalState.confirmLoading = true;
       const from = toRaw(modalState.from);
       const dept = from.deptId ? updateDept(from) : addDept(from);
-      const key = 'dept';
-      message.loading({ content: '请稍等...', key });
+      const hide = message.loading('请稍等...', 0);
       dept
         .then(res => {
           if (res.code === 200) {
             message.success({
               content: `${modalState.title}成功`,
-              key,
               duration: 2,
             });
             modalState.visibleByEdit = false;
             // 新增时清空上级部门树重新获取
-            if(!from.deptId){
+            if (!from.deptId) {
               treeDataAll = [];
             }
             modalStateFrom.resetFields();
@@ -315,12 +314,12 @@ function fnModalOk() {
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
               duration: 2,
             });
           }
         })
         .finally(() => {
+          hide();
           modalState.confirmLoading = false;
         });
     })
@@ -348,20 +347,18 @@ function fnRecordDelete(deptId: string | number) {
     title: '提示',
     content: `确认删除部门编号为 【${deptId}】 的数据项?`,
     onOk() {
-      const key = 'delDept';
-      message.loading({ content: '请稍等...', key });
+      const hide = message.loading('请稍等...', 0);
       delDept(deptId).then(res => {
+        hide();
         if (res.code === 200) {
           message.success({
             content: `删除成功`,
-            key,
             duration: 2,
           });
           fnGetList();
         } else {
           message.error({
             content: `${res.msg}`,
-            key: key,
             duration: 2,
           });
         }
