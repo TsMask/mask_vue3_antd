@@ -166,10 +166,12 @@ tabsStore.clear();
       <RouterView v-slot="{ Component, route }">
         <transition name="slide-left" mode="out-in">
           <KeepAlive :include="tabsStore.getCaches">
-            <component
-              :is="fnComponentSetName(Component, route)"
-              :key="route.path"
-            />
+            <div :key="route.path">
+              <component
+                :is="fnComponentSetName(Component, route)"
+                :key="route.path"
+              />
+            </div>
           </KeepAlive>
         </transition>
       </RouterView>
