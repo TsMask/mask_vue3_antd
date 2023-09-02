@@ -149,6 +149,15 @@ let tableColumns: ColumnsType = [
     },
   },
   {
+    title: '消耗时间',
+    dataIndex: 'costTime',
+    key: 'costTime',
+    align: 'center',
+    customRender(opt) {
+      return `${opt.value} ms`;
+    },
+  },
+  {
     title: '操作',
     key: 'jobLogId',
     align: 'center',

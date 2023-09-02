@@ -557,11 +557,16 @@ onMounted(() => {
   <PageContainer :title="title">
     <template #content>
       <a-typography-paragraph>
+        <a-typography-text code>Nodejs</a-typography-text>
         使用
         <a-typography-text code>Bull</a-typography-text>
         基于
         <a-typography-text code>Redis</a-typography-text>
         的任务队列。
+        <a-typography-text code>Golang</a-typography-text>
+        使用
+        <a-typography-text code>Cron</a-typography-text>
+        定时任务管理。
       </a-typography-paragraph>
     </template>
 
