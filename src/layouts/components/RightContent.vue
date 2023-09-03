@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
 import { useRouter } from 'vue-router';
+import useI18n from '@/hooks/useI18n';
 import useUserStore from '@/store/modules/user';
+const { t, changeLocale } = useI18n();
 const userStore = useUserStore();
 const router = useRouter();
 
@@ -18,6 +20,11 @@ function fnClick({ key }: MenuInfo) {
       userStore.fnLogOut().finally(() => router.push({ name: 'Login' }));
       break;
   }
+}
+
+/**改变多语言 */
+function fnChangeLocale(e: any) {
+  changeLocale(e.key);
 }
 </script>
 
@@ -64,12 +71,29 @@ function fnClick({ key }: MenuInfo) {
 
     <a-tooltip>
       <template #title>文档手册</template>
-      <a-button type="text" href="https://juejin.cn/column/7188761626017792056" target="_blank">
+      <a-button
+        type="text"
+        href="https://juejin.cn/column/7188761626017792056"
+        target="_blank"
+      >
         <template #icon>
           <QuestionCircleOutlined :style="{ fontSize: '20px' }" />
         </template>
       </a-button>
     </a-tooltip>
+
+    <a-dropdown :trigger="['click', 'hover']">
+      <a-button size="small" type="default">
+        {{ t('i18n') }}
+        <DownOutlined />
+      </a-button>
+      <template #overlay>
+        <a-menu @click="fnChangeLocale">
+          <a-menu-item key="zhCN">中文</a-menu-item>
+          <a-menu-item key="enUS">English</a-menu-item>
+        </a-menu>
+      </template>
+    </a-dropdown>
 
     <a-dropdown placement="bottomRight" :trigger="['click', 'hover']">
       <div class="user">

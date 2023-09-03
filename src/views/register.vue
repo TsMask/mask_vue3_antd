@@ -5,6 +5,8 @@ import { reactive, onMounted, toRaw } from 'vue';
 import { getCaptchaImage, register } from '@/api/login';
 import { regExpPasswd, regExpUserName } from '@/utils/regular-utils';
 import { useRouter } from 'vue-router';
+import useI18n from '@/hooks/useI18n';
+const { t } = useI18n();
 const router = useRouter();
 const codeImgFall =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
@@ -44,26 +46,28 @@ function fnEqualToPassword(
   callback: (error?: string) => void
 ) {
   if (!value) {
-    return Promise.reject('请正确输入确认密码');
+    return Promise.reject(t('views.register.passwordErr'));
   }
   if (state.form.password === value) {
     return Promise.resolve();
   }
-  return Promise.reject('两次输入的密码不一致');
+  return Promise.reject(t('views.register.passwordConfirmErr'));
 }
 
 /**表单验证通过 */
 function fnFinish() {
   state.formClick = true;
   // 发送请求
-  const hide = message.loading('请稍等...', 0);
+  const hide = message.loading(t('common.loading'), 0);
   register(toRaw(state.form))
     .then(res => {
       if (res.code === 200) {
         Modal.success({
-          title: '提示',
-          content: `恭喜您，${state.form.username} 账号注册成功！`,
-          okText: '前往登录',
+          title: t('common.tipTitle'),
+          content: t('views.register.tipContent', {
+            username: state.form.username,
+          }),
+          okText: t('views.register.tipBtn'),
           onOk() {
             router.push({ name: 'Login' });
           },
@@ -91,6 +95,10 @@ function fnGetCaptcha() {
   state.captchaClick = true;
   getCaptchaImage().then(res => {
     state.captchaClick = false;
+    if (res.code != 200) {
+      message.warning(`${res.msg}`, 3);
+      return;
+    }
     state.captcha.enabled = Boolean(res.captchaEnabled);
     if (state.captcha.enabled) {
       state.captcha.codeImg = res.img;
@@ -110,10 +118,10 @@ onMounted(() => {
       <div class="header">
         <a href="/" target="_self"
           ><img src="@/assets/logo.png" class="logo" alt="logo" />
-          <span class="title">Mask Antd Vue3</span>
+          <span class="title">{{ t('common.title') }}</span>
         </a>
       </div>
-      <div class="desc">基于 ant-design-vue + vue3 的管理系统</div>
+      <div class="desc">{{ t('common.desc') }}</div>
     </div>
 
     <div class="main">
@@ -124,15 +132,14 @@ onMounted(() => {
             {
               required: true,
               pattern: regExpUserName,
-              message:
-                '账号不能以数字开头，可包含大写小写字母，数字，且不少于5位',
+              message: t('valid.userNameReg'),
             },
           ]"
         >
           <a-input
             v-model:value="state.form.username"
             size="large"
-            placeholder="登录账号"
+            :placeholder="t('valid.userNameHit')"
             :maxlength="30"
           >
             <template #prefix>
@@ -146,14 +153,14 @@ onMounted(() => {
             {
               required: true,
               pattern: regExpPasswd,
-              message: '密码至少包含大小写字母、数字、特殊符号，且不少于6位',
+              message: t('valid.passwordReg'),
             },
           ]"
         >
           <a-input-password
             v-model:value="state.form.password"
             size="large"
-            placeholder="登录密码"
+            :placeholder="t('valid.passwordHit')"
             :maxlength="26"
           >
             <template #prefix>
@@ -175,7 +182,7 @@ onMounted(() => {
           <a-input-password
             v-model:value="state.form.confirmPassword"
             size="large"
-            placeholder="确认登录密码"
+            :placeholder="t('valid.passwordConfirmHit')"
             :maxlength="26"
           >
             <template #prefix>
@@ -188,12 +195,14 @@ onMounted(() => {
           <a-col :span="16">
             <a-form-item
               name="code"
-              :rules="[{ required: true, min: 1, message: '请输入正确验证码' }]"
+              :rules="[
+                { required: true, min: 1, message: t('valid.codePlease') },
+              ]"
             >
               <a-input
                 v-model:value="state.form.code"
                 size="large"
-                placeholder="验证码"
+                :placeholder="t('valid.codeHit')"
                 :maxlength="6"
               >
                 <template #prefix>
@@ -204,8 +213,10 @@ onMounted(() => {
           </a-col>
           <a-col :span="8">
             <a-image
-              alt="验证码"
-              class="captcha-img"
+              :alt="t('valid.codeHit')"
+              style="cursor: pointer; border-radius: 2px"
+              width="120px"
+              height="40px"
               :preview="false"
               :src="state.captcha.codeImg"
               :fallback="state.captcha.codeImgFall"
@@ -221,7 +232,7 @@ onMounted(() => {
           html-type="submit"
           :loading="state.formClick"
         >
-          注册
+          {{ t('views.register.registerBtn') }}
         </a-button>
         <a-button
           block
@@ -230,7 +241,7 @@ onMounted(() => {
           style="margin-top: 16px"
           @click="() => router.push({ name: 'Login' })"
         >
-          使用已有账号登录
+          {{ t('views.register.loginBtn') }}
         </a-button>
       </a-form>
     </div>
@@ -238,9 +249,9 @@ onMounted(() => {
     <GlobalFooter
       class="footer"
       :links="[
-        { blankTarget: false, title: '帮助', href: '/' },
-        { blankTarget: false, title: '隐私', href: '/' },
-        { blankTarget: false, title: '条款', href: '/' },
+        { blankTarget: false, title: t('globalFooter.help'), href: '/' },
+        { blankTarget: false, title: t('globalFooter.privacy'), href: '/' },
+        { blankTarget: false, title: t('globalFooter.term'), href: '/' },
       ]"
       copyright="Copyright © 2023 Gitee For TsMask"
     >
@@ -303,14 +314,6 @@ onMounted(() => {
   .prefix-icon {
     color: #8c8c8c;
     font-size: 16px;
-  }
-
-  .captcha-img {
-    width: 120px;
-    height: 40px;
-    overflow: hidden;
-    cursor: pointer;
-    border-radius: 2px;
   }
 }
 

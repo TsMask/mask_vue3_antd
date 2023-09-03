@@ -6,3 +6,6 @@ export const CACHE_LOCAL_PROCONFIG = 'cache:local:proConfig';
 
 /**本地缓存-主题色 */
 export const CACHE_LOCAL_PRIMARY_COLOR = 'cache:local:primaryColor';
+
+/**本地缓存-多语言 */
+export const CACHE_LOCAL_I18N = 'cache:local:i18n';

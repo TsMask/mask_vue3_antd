@@ -2,14 +2,41 @@
 import { ConfigProvider } from 'ant-design-vue/lib';
 import { usePrimaryColor } from '@/hooks/useTheme';
 import zhCN from 'ant-design-vue/lib/locale/zh_CN';
+import enUS from 'ant-design-vue/lib/locale/en_US';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
+import { ref, watch } from 'vue';
+import useI18n from '@/hooks/useI18n';
+const { currentLocale } = useI18n();
+
 dayjs.locale('zh-cn'); // 默认中文
 usePrimaryColor(); // 载入用户自定义主题色
+
+let locale = ref(zhCN); // 国际化初始中文
+
+// 国际化切换语言
+function fnChangeLocale(v: string) {
+  switch (v) {
+    case 'zhCN':
+      locale.value = zhCN;
+      dayjs.locale(zhCN.locale);
+      break;
+    case 'enUS':
+      locale.value = enUS;
+      dayjs.locale(enUS.locale);
+      break;
+  }
+}
+
+// 加载多语言并进行监听
+fnChangeLocale(currentLocale.value);
+watch(currentLocale, val => {
+  fnChangeLocale(val);
+});
 </script>
 
 <template>
-  <ConfigProvider :locale="zhCN">
+  <ConfigProvider :locale="locale">
     <RouterView />
   </ConfigProvider>
 </template>

@@ -4,8 +4,10 @@ import { message } from 'ant-design-vue/lib';
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import useUserStore from '@/store/modules/user';
 import { getCaptchaImage } from '@/api/login';
+import useI18n from '@/hooks/useI18n';
 import { regExpMobile, validMobile } from '@/utils/regular-utils';
 import { useRouter, useRoute } from 'vue-router';
+const { t, changeLocale } = useI18n();
 const router = useRouter();
 const route = useRoute();
 const codeImgFall =
@@ -72,7 +74,7 @@ function fnFinish() {
     .fnLogin(form)
     .then(res => {
       if (res.code === 200) {
-        message.success('登录成功', 3);
+        message.success(t('views.login.loginSuccess'), 3);
         router.push({ path: redirectPath });
       } else {
         message.error(`${res.msg}`, 3);
@@ -96,6 +98,10 @@ function fnGetCaptcha() {
   state.captchaClick = true;
   getCaptchaImage().then(res => {
     state.captchaClick = false;
+    if (res.code != 200) {
+      message.warning(`${res.msg}`, 3);
+      return;
+    }
     state.captcha.enabled = Boolean(res.captchaEnabled);
     if (state.captcha.enabled) {
       state.captcha.codeImg = res.img;
@@ -119,14 +125,14 @@ let smsState = reactive({
 function fnGetSmsCaptcha() {
   if (smsState.click) return;
   if (!validMobile(state.from.phonenumber)) {
-    message.warning('请确认手机号码是否有效', 3);
+    message.warning(t('valid.phoneReg'), 3);
     return;
   }
   smsState.click = true;
 
   setTimeout(() => {
     // start 得到发送结果启动定时
-    message.success('发送成功，请注意查看短信', 3);
+    message.success(t('valid.codeSmsSend'), 3);
     state.from.uuid = '短信校验id';
     smsInterval = setInterval(() => {
       if (smsState.time <= 0) {
@@ -139,6 +145,11 @@ function fnGetSmsCaptcha() {
     }, 1000);
     // end
   }, 1000);
+}
+
+/**改变多语言 */
+function fnChangeLocale(e: any) {
+  changeLocale(e.key);
 }
 
 onMounted(() => {
@@ -158,10 +169,10 @@ onBeforeUnmount(() => {
       <div class="header">
         <a href="/" target="_self"
           ><img src="@/assets/logo.png" class="logo" alt="logo" />
-          <span class="title">Mask Antd Vue3</span>
+          <span class="title">{{ t('common.title') }}</span>
         </a>
       </div>
-      <div class="desc">基于 ant-design-vue + vue3 的管理系统</div>
+      <div class="desc">{{ t('common.desc') }}</div>
     </div>
 
     <div class="main">
@@ -173,7 +184,7 @@ onBeforeUnmount(() => {
           :centered="true"
           :destroy-inactive-tab-pane="true"
         >
-          <a-tab-pane key="username" tab="账号密码登录">
+          <a-tab-pane key="username" :tab="t('views.login.tabPane1')">
             <a-form-item
               name="username"
               :rules="[
@@ -181,14 +192,14 @@ onBeforeUnmount(() => {
                   required: true,
                   min: 2,
                   max: 30,
-                  message: '请输入正确登录账号',
+                  message: t('valid.userNamePlease'),
                 },
               ]"
             >
               <a-input
                 v-model:value="state.from.username"
                 size="large"
-                placeholder="登录账号"
+                :placeholder="t('valid.userNameHit')"
                 :maxlength="30"
               >
                 <template #prefix>
@@ -204,14 +215,14 @@ onBeforeUnmount(() => {
                   required: true,
                   min: 6,
                   max: 26,
-                  message: '请输入正确登录密码',
+                  message: t('valid.passwordPlease'),
                 },
               ]"
             >
               <a-input-password
                 v-model:value="state.from.password"
                 size="large"
-                placeholder="登录密码"
+                :placeholder="t('valid.passwordHit')"
                 :maxlength="26"
               >
                 <template #prefix>
@@ -225,13 +236,17 @@ onBeforeUnmount(() => {
                 <a-form-item
                   name="code"
                   :rules="[
-                    { required: true, min: 1, message: '请输入正确验证码' },
+                    {
+                      required: true,
+                      min: 1,
+                      message: t('valid.codePlease'),
+                    },
                   ]"
                 >
                   <a-input
                     v-model:value="state.from.code"
                     size="large"
-                    placeholder="验证码"
+                    :placeholder="t('valid.codeHit')"
                     :maxlength="6"
                   >
                     <template #prefix>
@@ -242,8 +257,10 @@ onBeforeUnmount(() => {
               </a-col>
               <a-col :span="8">
                 <a-image
-                  alt="验证码"
-                  class="captcha-img"
+                  :alt="t('valid.codeHit')"
+                  style="cursor: pointer; border-radius: 2px"
+                  width="120px"
+                  height="40px"
                   :preview="false"
                   :src="state.captcha.codeImg"
                   :fallback="state.captcha.codeImgFall"
@@ -252,38 +269,40 @@ onBeforeUnmount(() => {
               </a-col>
             </a-row>
 
-            <a-row :gutter="8" align="middle" style="margin-bottom: 16px">
-              <a-col :span="6">
+            <a-row
+              :gutter="8"
+              justify="space-between"
+              align="middle"
+              style="margin-bottom: 16px"
+            >
+              <a-col :span="12">
                 <a-button
                   type="link"
                   target="_self"
-                  title="注册账号"
+                  :title="t('views.login.registerBtn')"
                   @click="() => router.push({ name: 'Register' })"
                 >
-                  注册账号
+                  {{ t('views.login.registerBtn') }}
                 </a-button>
-              </a-col>
-              <a-col :span="6" :offset="12" v-if="false">
-                <a-button type="link">忘记密码</a-button>
               </a-col>
             </a-row>
           </a-tab-pane>
 
-          <a-tab-pane key="phonenumber" tab="手机号登录">
+          <a-tab-pane key="phonenumber" :tab="t('views.login.tabPane2')">
             <a-form-item
               name="phonenumber"
               :rules="[
                 {
                   required: true,
                   pattern: regExpMobile,
-                  message: '请输入正确的手机号码',
+                  message: t('valid.phonePlease'),
                 },
               ]"
             >
               <a-input
                 v-model:value="state.from.phonenumber"
                 size="large"
-                placeholder="手机号码"
+                :placeholder="t('valid.phoneHit')"
                 :maxlength="11"
               >
                 <template #prefix>
@@ -294,13 +313,17 @@ onBeforeUnmount(() => {
             <a-form-item
               name="code"
               :rules="[
-                { required: true, min: 4, message: '请输入正确的验证码' },
+                {
+                  required: true,
+                  min: 4,
+                  message: t('valid.codePlease'),
+                },
               ]"
             >
               <a-input
                 v-model:value="state.from.code"
                 size="large"
-                placeholder="验证码"
+                :placeholder="t('valid.codeHit')"
                 :maxlength="6"
               >
                 <template #prefix>
@@ -313,7 +336,11 @@ onBeforeUnmount(() => {
                     :disabled="smsState.click"
                     @click="fnGetSmsCaptcha"
                   >
-                    {{ smsState.click ? `${smsState.time} s` : '获取验证码' }}
+                    {{
+                      smsState.click
+                        ? `${smsState.time} s`
+                        : t('valid.codeText')
+                    }}
                   </a-button>
                 </template>
               </a-input>
@@ -328,13 +355,18 @@ onBeforeUnmount(() => {
           html-type="submit"
           :loading="state.fromClick"
         >
-          登录
+          {{ t('views.login.loginBtn') }}
         </a-button>
 
-        <a-row :gutter="8" align="middle" style="margin-top: 18px">
-          <a-col :span="24">
-            <span>其他登录方式：</span>
-            <a-tooltip title="微信扫一扫登录">
+        <a-row
+          :gutter="8"
+          justify="space-between"
+          align="middle"
+          style="margin-top: 18px"
+        >
+          <a-col :span="18">
+            <span>{{ t('views.login.loginMethod') }}</span>
+            <a-tooltip :title="t('views.login.loginMethodWX')">
               <a-button shape="circle" size="middle" type="link">
                 <template #icon>
                   <WechatOutlined
@@ -343,13 +375,27 @@ onBeforeUnmount(() => {
                 </template>
               </a-button>
             </a-tooltip>
-            <a-tooltip title="QQ扫码登录">
+            <a-tooltip :title="t('views.login.loginMethodQQ')">
               <a-button shape="circle" size="middle" type="link">
                 <template #icon>
                   <QqOutlined :style="{ color: '#40a9ff', fontSize: '18px' }" />
                 </template>
               </a-button>
             </a-tooltip>
+          </a-col>
+          <a-col :span="6">
+            <a-dropdown :trigger="['click', 'hover']">
+              <a-button size="small" type="default">
+                {{ t('i18n') }}
+                <DownOutlined />
+              </a-button>
+              <template #overlay>
+                <a-menu @click="fnChangeLocale">
+                  <a-menu-item key="zhCN">中文</a-menu-item>
+                  <a-menu-item key="enUS">English</a-menu-item>
+                </a-menu>
+              </template>
+            </a-dropdown>
           </a-col>
         </a-row>
       </a-form>
@@ -358,9 +404,9 @@ onBeforeUnmount(() => {
     <GlobalFooter
       class="footer"
       :links="[
-        { blankTarget: false, title: '帮助', href: '/' },
-        { blankTarget: false, title: '隐私', href: '/' },
-        { blankTarget: false, title: '条款', href: '/' },
+        { blankTarget: false, title: t('globalFooter.help'), href: '/' },
+        { blankTarget: false, title: t('globalFooter.privacy'), href: '/' },
+        { blankTarget: false, title: t('globalFooter.term'), href: '/' },
       ]"
       copyright="Copyright © 2023 Gitee For TsMask"
     >
@@ -423,14 +469,6 @@ onBeforeUnmount(() => {
   .prefix-icon {
     color: #8c8c8c;
     font-size: 16px;
-  }
-
-  .captcha-img {
-    width: 120px;
-    height: 40px;
-    overflow: hidden;
-    cursor: pointer;
-    border-radius: 2px;
   }
 }
 
