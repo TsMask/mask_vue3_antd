@@ -17,11 +17,11 @@ let locale = ref(zhCN); // 国际化初始中文
 // 国际化切换语言
 function fnChangeLocale(v: string) {
   switch (v) {
-    case 'zhCN':
+    case 'zh_CN':
       locale.value = zhCN;
       dayjs.locale(zhCN.locale);
       break;
-    case 'enUS':
+    case 'en_US':
       locale.value = enUS;
       dayjs.locale(enUS.locale);
       break;

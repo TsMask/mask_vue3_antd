@@ -89,8 +89,8 @@ function fnChangeLocale(e: any) {
       </a-button>
       <template #overlay>
         <a-menu @click="fnChangeLocale">
-          <a-menu-item key="zhCN">中文</a-menu-item>
-          <a-menu-item key="enUS">English</a-menu-item>
+          <a-menu-item key="zh_CN">中文</a-menu-item>
+          <a-menu-item key="en_US">English</a-menu-item>
         </a-menu>
       </template>
     </a-dropdown>
