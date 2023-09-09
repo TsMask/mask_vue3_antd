@@ -205,7 +205,9 @@ onMounted(() => {
           <a-col :span="8">
             <a-image
               alt="验证码"
-              class="captcha-img"
+              style="cursor: pointer; border-radius: 2px"
+              width="120px"
+              height="40px"
               :preview="false"
               :src="state.captcha.codeImg"
               :fallback="state.captcha.codeImgFall"
@@ -303,14 +305,6 @@ onMounted(() => {
   .prefix-icon {
     color: #8c8c8c;
     font-size: 16px;
-  }
-
-  .captcha-img {
-    width: 120px;
-    height: 40px;
-    overflow: hidden;
-    cursor: pointer;
-    border-radius: 2px;
   }
 }
 
