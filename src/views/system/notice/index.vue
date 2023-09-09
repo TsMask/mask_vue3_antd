@@ -15,6 +15,7 @@ import {
 } from '@/api/system/notice';
 import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -123,7 +124,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'createTime',
     align: 'center',
     customRender(opt) {
-      if(+opt.value <= 0) return ''
+      if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
     },
   },
@@ -168,7 +169,7 @@ function fnTableSize({ key }: MenuInfo) {
 }
 
 /**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number) {
+function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
@@ -246,7 +247,7 @@ function fnModalVisibleByVive(noticeId: string | number) {
   getNotice(noticeId).then(res => {
     modalState.confirmLoading = false;
     hide();
-    if (res.code === 200) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '公告信息';
       modalState.visibleByView = true;
@@ -272,7 +273,7 @@ function fnModalVisibleByEdit(noticeId?: string | number) {
     getNotice(noticeId).then(res => {
       modalState.confirmLoading = false;
       hide();
-      if (res.code === 200) {
+      if (res.code === RESULT_CODE_SUCCESS) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改公告';
         modalState.visibleByEdit = true;
@@ -298,7 +299,7 @@ function fnModalOk() {
       message.loading({ content: '请稍等...', key });
       notice
         .then(res => {
-          if (res.code === 200) {
+          if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
               key,
@@ -349,7 +350,7 @@ function fnRecordDelete(noticeId: string = '0') {
       const key = 'delNotice';
       message.loading({ content: '请稍等...', key });
       delNotice(noticeId).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `删除成功`,
             key,
@@ -373,7 +374,7 @@ function fnGetList() {
   if (tableState.loading) return;
   tableState.loading = true;
   listNotice(toRaw(queryParams)).then(res => {
-    if (res.code === 200 && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];

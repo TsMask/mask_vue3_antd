@@ -5,6 +5,7 @@ import { reactive, onMounted, toRaw } from 'vue';
 import { getCaptchaImage, register } from '@/api/login';
 import { regExpPasswd, regExpUserName } from '@/utils/regular-utils';
 import { useRouter } from 'vue-router';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const router = useRouter();
 const codeImgFall =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
@@ -59,7 +60,7 @@ function fnFinish() {
   const hide = message.loading('请稍等...', 0);
   register(toRaw(state.form))
     .then(res => {
-      if (res.code === 200) {
+      if (res.code === RESULT_CODE_SUCCESS) {
         Modal.success({
           title: '提示',
           content: `恭喜您，${state.form.username} 账号注册成功！`,

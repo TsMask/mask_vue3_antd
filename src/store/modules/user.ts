@@ -5,6 +5,7 @@ import { getToken, setToken, removeToken } from '@/plugins/auth-token';
 import { defineStore } from 'pinia';
 import { TOKEN_RESPONSE_FIELD } from '@/constants/token-constants';
 import { validHttp } from '@/utils/regular-utils';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 
 /**用户信息类型 */
 type UserInfo = {
@@ -107,7 +108,7 @@ const useUserStore = defineStore('user', {
     // 登录
     async fnLogin(loginBody: Record<string, string>) {
       const res = await login(loginBody);
-      if (res.code === 200 && res.data) {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
         const token = res.data[TOKEN_RESPONSE_FIELD];
         setToken(token);
         this.token = token;
@@ -117,7 +118,7 @@ const useUserStore = defineStore('user', {
     // 获取用户信息
     async fnGetInfo() {
       const res = await getInfo();
-      if (res.code === 200 && res.data) {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
         const { user, roles, permissions } = res.data;
         // 登录账号
         this.userName = user.userName;

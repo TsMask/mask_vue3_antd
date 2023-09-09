@@ -18,6 +18,7 @@ import { parseDateToStr } from '@/utils/date-utils';
 import { regExpMobile, regExpEmail } from '@/utils/regular-utils';
 import useDictStore from '@/store/modules/dict';
 import { parseDataToTree } from '@/utils/parse-tree-utils';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -126,7 +127,7 @@ function fnTableSize({ key }: MenuInfo) {
 }
 
 /**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number) {
+function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
@@ -220,7 +221,7 @@ function fnModalVisibleByVive(deptId: string | number) {
   getDept(deptId).then(res => {
     modalState.confirmLoading = false;
     hide();
-    if (res.code === 200 && res.data) {
+    if (res.code === RESULT_CODE_SUCCESS && res.data) {
       if (res.data.parentId === '0') {
         modalState.treeData = [
           { deptId: '0', parentId: '0', deptName: '根节点' },
@@ -261,9 +262,12 @@ function fnModalVisibleByEdit(
     // 获取部门信息同时查询部门列表（排除节点）
     Promise.all([getDept(deptId), listDeptExcludeChild(deptId)])
       .then(resArr => {
-        if (resArr[0].code === 200 && resArr[0].data) {
+        if (resArr[0].code === RESULT_CODE_SUCCESS && resArr[0].data) {
           modalState.from = Object.assign(modalState.from, resArr[0].data);
-          if (resArr[1].code === 200 && Array.isArray(resArr[1].data)) {
+          if (
+            resArr[1].code === RESULT_CODE_SUCCESS &&
+            Array.isArray(resArr[1].data)
+          ) {
             if (resArr[1].data.length === 0) {
               modalState.treeData = [
                 { deptId: '0', parentId: '0', deptName: '根节点' },
@@ -299,7 +303,7 @@ function fnModalOk() {
       const hide = message.loading('请稍等...', 0);
       dept
         .then(res => {
-          if (res.code === 200) {
+          if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
               duration: 2,
@@ -350,7 +354,7 @@ function fnRecordDelete(deptId: string | number) {
       const hide = message.loading('请稍等...', 0);
       delDept(deptId).then(res => {
         hide();
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `删除成功`,
             duration: 2,
@@ -372,7 +376,7 @@ function fnGetList() {
   if (tableState.loading) return;
   tableState.loading = true;
   listDept(toRaw(queryParams)).then(res => {
-    if (res.code === 200 && Array.isArray(res.data)) {
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
       const treeData = parseDataToTree(res.data, 'deptId');
       // 初始上级部门和展开编号key
       if (treeDataAll.length <= 0) {

@@ -22,6 +22,7 @@ import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
 import { hasPermissions } from '@/plugins/auth-user';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
@@ -169,7 +170,7 @@ function fnTableSize({ key }: MenuInfo) {
 }
 
 /**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number) {
+function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
@@ -260,7 +261,7 @@ function fnModalVisibleByVive(jobId: string | number) {
   getJob(jobId).then(res => {
     modalState.confirmLoading = false;
     hide();
-    if (res.code === 200 && res.data) {
+    if (res.code === RESULT_CODE_SUCCESS && res.data) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '任务信息';
       modalState.visibleByView = true;
@@ -286,7 +287,7 @@ function fnModalVisibleByEdit(jobId?: string | number) {
     getJob(jobId).then(res => {
       modalState.confirmLoading = false;
       hide();
-      if (res.code === 200 && res.data) {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改任务';
         modalState.visibleByEdit = true;
@@ -312,7 +313,7 @@ function fnModalOk() {
       message.loading({ content: '请稍等...', key });
       job
         .then(res => {
-          if (res.code === 200) {
+          if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
               key,
@@ -371,7 +372,7 @@ function fnRecordStatus(row: Record<string, string>) {
       const key = 'changeJobStatus';
       message.loading({ content: '请稍等...', key });
       changeJobStatus(row.jobId, row.status).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `${row.jobName} ${text}成功`,
             key,
@@ -405,7 +406,7 @@ function fnRecordRunOne(row: Record<string, string>) {
       const key = 'runJob';
       message.loading({ content: '请稍等...', key });
       runJob(row.jobId).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `${row.jobName} 执行成功`,
             key,
@@ -438,7 +439,7 @@ function fnRecordDelete(jobId: string = '0') {
       const key = 'delJob';
       message.loading({ content: '请稍等...', key });
       delJob(jobId).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `删除成功`,
             key,
@@ -468,7 +469,7 @@ function fnResetQueueJob() {
       const key = 'resetQueueJob';
       message.loading({ content: '请稍等...', key });
       resetQueueJob().then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `重置成功`,
             key,
@@ -495,7 +496,7 @@ function fnExportList() {
       const key = 'exportJob';
       message.loading({ content: '请稍等...', key });
       exportJob(toRaw(queryParams)).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `已完成导出`,
             key,
@@ -523,7 +524,7 @@ function fnJobLogView(jobId: string | number = '0') {
 function fnGetList() {
   tableState.loading = true;
   listJob(toRaw(queryParams)).then(res => {
-    if (res.code === 200) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];

@@ -14,6 +14,7 @@ import {
   MENU_COMPONENT_LAYOUT_BLANK,
   MENU_COMPONENT_LAYOUT_LINK,
 } from '@/constants/menu-constants';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 
 /**路由构建参数类型 */
 type RouterStore = {
@@ -46,7 +47,7 @@ const useRouterStore = defineStore('router', {
      */
     async generateRoutes() {
       const res = await getRouters();
-      if (res.code === 200 && Array.isArray(res.data)) {
+      if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
         const buildRoutes = buildRouters(res.data.concat());
         this.buildRouterData = buildRoutes;
         return buildRoutes;

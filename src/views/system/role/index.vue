@@ -25,6 +25,7 @@ import { DataNode } from 'ant-design-vue/lib/tree';
 import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/parse-tree-utils';
 import { hasPermissions } from '@/plugins/auth-user';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
@@ -182,7 +183,7 @@ function fnTableSize({ key }: MenuInfo) {
 }
 
 /**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number) {
+function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
@@ -343,7 +344,7 @@ function fnModalVisibleByEdit(roleId?: string | number) {
       menuTreeSelect().then(res => {
         modalState.confirmLoading = false;
         hide();
-        if (res.code === 200 && Array.isArray(res.data)) {
+        if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
           menuTree.checkedKeys = parseTreeKeys(res.data, 'id');
           menuTree.expandedKeys = parseTreeNodeKeys(res.data, 'id');
           menuTree.treeData = res.data;
@@ -361,9 +362,9 @@ function fnModalVisibleByEdit(roleId?: string | number) {
     Promise.all([getRole(roleId), roleMenuTreeSelect(roleId)]).then(resArr => {
       modalState.confirmLoading = false;
       hide();
-      if (resArr[0].code === 200 && resArr[0].data) {
+      if (resArr[0].code === RESULT_CODE_SUCCESS && resArr[0].data) {
         modalState.from = Object.assign(modalState.from, resArr[0].data);
-        if (resArr[1].code === 200 && resArr[1].data) {
+        if (resArr[1].code === RESULT_CODE_SUCCESS && resArr[1].data) {
           const { menus, checkedKeys } = resArr[1].data;
           menuTree.checkedKeys = parseTreeKeys(menus, 'id');
           menuTree.expandedKeys = parseTreeNodeKeys(menus, 'id');
@@ -396,7 +397,7 @@ function fnModalOk() {
       message.loading({ content: '请稍等...', key });
       role
         .then(res => {
-          if (res.code === 200) {
+          if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
               key,
@@ -507,7 +508,7 @@ function fnModalOkDataScope() {
   }
   dataScope(fromInfo)
     .then(res => {
-      if (res.code === 200) {
+      if (res.code === RESULT_CODE_SUCCESS) {
         message.success({
           content: `${modalState.title}成功`,
           duration: 2,
@@ -542,9 +543,9 @@ function fnRecordDataScope(roleId: string | number) {
   // 查询角色详细同时根据角色ID查询部门树结构
   Promise.all([getRole(roleId), roleDeptTreeSelect(roleId)])
     .then(resArr => {
-      if (resArr[0].code === 200 && resArr[0].data) {
+      if (resArr[0].code === RESULT_CODE_SUCCESS && resArr[0].data) {
         modalState.from = Object.assign(modalState.from, resArr[0].data);
-        if (resArr[1].code === 200 && resArr[1].data) {
+        if (resArr[1].code === RESULT_CODE_SUCCESS && resArr[1].data) {
           const { depts, checkedKeys } = resArr[1].data;
           deptTree.checkedKeys = parseTreeKeys(depts, 'id');
           deptTree.expandedKeys = parseTreeNodeKeys(depts, 'id');
@@ -591,7 +592,7 @@ function fnRecordStatus(row: Record<string, string>) {
       const hide = message.loading('请稍等...', 0);
       changeRoleStatus(row.roleId, row.status).then(res => {
         hide();
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `${row.roleName} ${text}成功`,
             duration: 2,
@@ -623,18 +624,20 @@ function fnRecordDelete(roleId: string = '0') {
     title: '提示',
     content: `确认删除角色编号为 【${roleId}】 的数据项?`,
     onOk() {
-      const hide = message.loading('请稍等...', 0);
+      const key = 'delRole';
+      message.loading({ content: '请稍等...', key });
       delRole(roleId).then(res => {
-        hide();
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `删除成功`,
+            key,
             duration: 2,
           });
           fnGetList();
         } else {
           message.error({
             content: `${res.msg}`,
+            key,
             duration: 2,
           });
         }
@@ -649,17 +652,20 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const hide = message.loading('请稍等...', 0);
+      const key = 'exportRole';
+      message.loading({ content: '请稍等...', key });
       exportRole(toRaw(queryParams)).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `已完成导出`,
+            key,
             duration: 2,
           });
           saveAs(res.data, `role_${Date.now()}.xlsx`);
         } else {
           message.error({
             content: `${res.msg}`,
+            key,
             duration: 2,
           });
         }
@@ -675,7 +681,7 @@ function fnGetList() {
   queryParams.beginTime = queryRangePicker.value[0];
   queryParams.endTime = queryRangePicker.value[1];
   listRole(toRaw(queryParams)).then(res => {
-    if (res.code === 200 && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];

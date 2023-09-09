@@ -18,6 +18,7 @@ import {
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -174,7 +175,7 @@ function fnTableSize({ key }: MenuInfo) {
 }
 
 /**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number) {
+function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
@@ -239,7 +240,7 @@ function fnModalVisibleByVive(configId: string | number) {
     return;
   }
   getConfig(configId).then(res => {
-    if (res.code === 200 && res.data) {
+    if (res.code === RESULT_CODE_SUCCESS && res.data) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '参数配置信息';
       modalState.visibleByView = true;
@@ -265,7 +266,7 @@ function fnModalVisibleByEdit(configId?: string | number) {
     getConfig(configId).then(res => {
       modalState.confirmLoading = false;
       hide();
-      if (res.code === 200 && res.data) {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改参数配置';
         modalState.visibleByEdit = true;
@@ -291,7 +292,7 @@ function fnModalOk() {
       message.loading({ content: '请稍等...', key });
       config
         .then(res => {
-          if (res.code === 200) {
+          if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
               key,
@@ -342,7 +343,7 @@ function fnRecordDelete(configId: string = '0') {
       const key = 'delConfig';
       message.loading({ content: '请稍等...', key });
       delConfig(configId).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `删除成功`,
             key,
@@ -370,7 +371,7 @@ function fnExportList() {
       const key = 'exportConfig';
       message.loading({ content: '请稍等...', key });
       exportConfig(toRaw(queryParams)).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `已完成导出`,
             key,
@@ -400,7 +401,7 @@ function fnRefreshCache() {
       const key = 'refreshCache';
       message.loading({ content: '请稍等...', key });
       refreshCache().then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `刷新缓存成功`,
             key,
@@ -425,7 +426,7 @@ function fnGetList() {
   queryParams.beginTime = queryRangePicker.value[0];
   queryParams.endTime = queryRangePicker.value[1];
   listConfig(toRaw(queryParams)).then(res => {
-    if (res.code === 200 && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];

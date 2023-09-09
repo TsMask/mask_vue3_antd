@@ -11,6 +11,7 @@ import { authUserAllocatedList, authUserChecked } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
 import useTabsStore from '@/store/modules/tabs';
 import useDictStore from '@/store/modules/dict';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const tabsStore = useTabsStore();
 const { getDict } = useDictStore();
 const route = useRoute();
@@ -169,7 +170,7 @@ function fnTableSize({ key }: MenuInfo) {
 }
 
 /**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number) {
+function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
@@ -208,23 +209,25 @@ function fnModalOk(userIds: string[] | number[]) {
     message.error(`请选择要分配的用户`, 2);
     return;
   }
-  const hide = message.loading('请稍等...', 0);
+  const key = 'authUserChecked';
+  message.loading({ content: '请稍等...', key });
   authUserChecked({
     checked: true,
     userIds: userIds.join(','),
     roleId: roleId,
   }).then(res => {
-    hide();
-    if (res.code === 200) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       modalState.visibleBySelectUser = false;
       message.success({
         content: `授权用户添加成功`,
+        key,
         duration: 3,
       });
       fnGetList();
     } else {
       message.error({
         content: `${res.msg}`,
+        key,
         duration: 3,
       });
     }
@@ -243,19 +246,21 @@ function fnRecordDelete(userId: string | number) {
     title: '提示',
     content: `确认取消用户编号为 【${userId}】 的数据项授权?`,
     onOk() {
-      const hide = message.loading('请稍等...', 0);
+      const key = 'authUserChecked';
+      message.loading({ content: '请稍等...', key });
       authUserChecked({ checked: false, userIds: userId, roleId: roleId }).then(
         res => {
-          hide();
-          if (res.code === 200) {
+          if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `取消授权成功`,
+              key,
               duration: 3,
             });
             fnGetList();
           } else {
             message.error({
               content: `${res.msg}`,
+              key,
               duration: 3,
             });
           }
@@ -280,7 +285,7 @@ function fnGetList() {
   if (tableState.loading) return;
   tableState.loading = true;
   authUserAllocatedList(toRaw(queryParams)).then(res => {
-    if (res.code === 200 && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];

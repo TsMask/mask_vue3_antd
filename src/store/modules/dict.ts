@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { getDictDataType } from '@/api/system/dict/data';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 
 /**字典参数类型 */
 type DictStore = {
@@ -42,7 +43,7 @@ const useDictStore = defineStore('dict', {
       let disct = this.dicts.get(key);
       if (disct === undefined || disct.length === 0) {
         const res = await getDictDataType(key);
-        if (res.code === 200 && Array.isArray(res.data)) {
+        if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
           const dictData: DictType[] = res.data.map(d => ({
             label: d.dictLabel,
             value: d.dictValue,

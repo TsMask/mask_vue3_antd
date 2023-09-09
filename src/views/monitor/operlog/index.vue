@@ -15,6 +15,7 @@ import {
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -197,7 +198,7 @@ function fnTableSize({ key }: MenuInfo) {
 }
 
 /**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number) {
+function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
@@ -266,7 +267,7 @@ function fnRecordDelete() {
       const key = 'delOperlog';
       message.loading({ content: '请稍等...', key });
       delOperlog(ids).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: '删除成功',
             key,
@@ -294,7 +295,7 @@ function fnCleanList() {
       const key = 'cleanOperlog';
       message.loading({ content: '请稍等...', key });
       cleanOperlog().then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: '清空成功',
             key,
@@ -322,7 +323,7 @@ function fnExportList() {
       const key = 'exportOperlog';
       message.loading({ content: '请稍等...', key });
       exportOperlog(toRaw(queryParams)).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `已完成导出`,
             key,
@@ -348,7 +349,7 @@ function fnGetList() {
   queryParams.beginTime = queryRangePicker.value[0];
   queryParams.endTime = queryRangePicker.value[1];
   listOperlog(toRaw(queryParams)).then(res => {
-    if (res.code === 200 && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];

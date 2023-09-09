@@ -17,6 +17,7 @@ import {
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -163,7 +164,7 @@ function fnTableSize({ key }: MenuInfo) {
 }
 
 /**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number) {
+function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
@@ -231,7 +232,7 @@ function fnModalVisibleByVive(postId: string | number) {
   getPost(postId).then(res => {
     modalState.confirmLoading = false;
     hide();
-    if (res.code === 200 && res.data) {
+    if (res.code === RESULT_CODE_SUCCESS && res.data) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '岗位信息';
       modalState.visibleByView = true;
@@ -257,7 +258,7 @@ function fnModalVisibleByEdit(postId?: string | number) {
     getPost(postId).then(res => {
       modalState.confirmLoading = false;
       hide();
-      if (res.code === 200 && res.data) {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改岗位信息';
         modalState.visibleByEdit = true;
@@ -283,7 +284,7 @@ function fnModalOk() {
       message.loading({ content: '请稍等...', key });
       post
         .then(res => {
-          if (res.code === 200) {
+          if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
               key,
@@ -334,7 +335,7 @@ function fnRecordDelete(postId: string = '0') {
       const key = 'delPost';
       message.loading({ content: '请稍等...', key });
       delPost(postId).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `删除成功`,
             key,
@@ -362,7 +363,7 @@ function fnExportList() {
       const key = 'exportPost';
       message.loading({ content: '请稍等...', key });
       exportPost(toRaw(queryParams)).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `已完成导出`,
             key,
@@ -386,7 +387,7 @@ function fnGetList() {
   if (tableState.loading) return;
   tableState.loading = true;
   listPost(toRaw(queryParams)).then(res => {
-    if (res.code === 200 && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];

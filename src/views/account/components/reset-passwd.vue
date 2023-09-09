@@ -5,6 +5,7 @@ import { updateUserPwd } from '@/api/profile';
 import { regExpPasswd } from '@/utils/regular-utils';
 import useUserStore from '@/store/modules/user';
 import { useRouter } from 'vue-router';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { userName, fnLogOut } = useUserStore();
 const router = useRouter();
 
@@ -48,8 +49,7 @@ function fnFinish() {
       const hide = message.loading('请稍等...', 0);
       updateUserPwd(state.form.oldPassword, state.form.confirmPassword)
         .then(res => {
-          hide();
-          if (res.code === 200) {
+          if (res.code === RESULT_CODE_SUCCESS) {
             Modal.success({
               title: '提示',
               content: `恭喜您，${userName} 账号密码修改成功！`,
@@ -63,6 +63,7 @@ function fnFinish() {
           }
         })
         .finally(() => {
+          hide();
           state.formClick = false;
         });
     },

@@ -5,6 +5,7 @@ import { getUserProfile } from '@/api/profile';
 import { reactive, ref, onMounted } from 'vue';
 import { parseDateToStr } from '@/utils/date-utils';
 import useUserStore from '@/store/modules/user';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 
 /**加载状态 */
 let loading = ref<boolean>(true);
@@ -54,7 +55,7 @@ let listData = ref([
 /**查询用户个人信息 */
 function fnGetProfile() {
   getUserProfile().then(res => {
-    if (res.code === 200 && res.data) {
+    if (res.code === RESULT_CODE_SUCCESS && res.data) {
       const { user, roleGroup, postGroup } = res.data;
       state.user = user;
       state.roleGroup = roleGroup;

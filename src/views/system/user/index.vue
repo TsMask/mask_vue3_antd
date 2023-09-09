@@ -32,7 +32,7 @@ import {
 import useDictStore from '@/store/modules/dict';
 import useUserStore from '@/store/modules/user';
 import { DataNode } from 'ant-design-vue/lib/tree';
-import { hasPermissions } from '@/plugins/auth-user';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -207,7 +207,7 @@ function fnTableSize({ key }: MenuInfo) {
 }
 
 /**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number) {
+function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
@@ -334,7 +334,7 @@ function fnModalVisibleByVive(userId: string | number) {
   getUser(userId).then(res => {
     modalState.confirmLoading = false;
     hide();
-    if (res.code === 200 && res.data) {
+    if (res.code === RESULT_CODE_SUCCESS && res.data) {
       const roles = res.data.roles.map((m: Record<string, any>) => {
         const disabled = m.status === '0';
         Reflect.set(m, 'disabled', disabled);
@@ -381,7 +381,7 @@ function fnModalVisibleByEdit(userId?: string | number) {
       getUser().then(res => {
         modalState.confirmLoading = false;
         hide();
-        if (res.code === 200 && res.data) {
+        if (res.code === RESULT_CODE_SUCCESS && res.data) {
           const roles = res.data.roles.map((m: Record<string, any>) => {
             const disabled = m.status === '0';
             Reflect.set(m, 'disabled', disabled);
@@ -414,7 +414,7 @@ function fnModalVisibleByEdit(userId?: string | number) {
     getUser(userId).then(res => {
       modalState.confirmLoading = false;
       hide();
-      if (res.code === 200 && res.data) {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
         const roles = res.data.roles.map((m: Record<string, any>) => {
           const disabled = m.status === '0';
           Reflect.set(m, 'disabled', disabled);
@@ -459,7 +459,7 @@ function fnModalOk() {
       message.loading({ content: '请稍等...', key });
       user
         .then(res => {
-          if (res.code === 200) {
+          if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
               key,
@@ -511,7 +511,7 @@ function fnModalOkResetPwd() {
       message.loading({ content: '请稍等...', key });
       resetUserPwd(modalState.from.userId, modalState.from.password)
         .then(res => {
-          if (res.code === 200) {
+          if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
               key,
@@ -561,7 +561,7 @@ function fnRecordStatus(row: Record<string, string>) {
       const key = 'changeUserStatus';
       message.loading({ content: '请稍等...', key });
       changeUserStatus(row.userId, row.status).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `${row.userName} ${text}成功`,
             key: key,
@@ -598,7 +598,7 @@ function fnRecordDelete(userId: string = '0') {
       const key = 'delUser';
       message.loading({ content: '请稍等...', key });
       delUser(userId).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `删除成功`,
             key,
@@ -626,7 +626,7 @@ function fnExportList() {
       const key = 'exportUser';
       message.loading({ content: '请稍等...', key });
       exportUser(toRaw(queryParams)).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `已完成导出`,
             key,
@@ -684,7 +684,7 @@ function fnModalUploadXlsxImportExportTemplate() {
   const hide = message.loading('正在下载...', 0);
   importTemplate()
     .then(res => {
-      if (res.code === 200) {
+      if (res.code === RESULT_CODE_SUCCESS) {
         message.success({
           content: `成功读取并下载导入模板`,
           duration: 2,
@@ -710,7 +710,7 @@ function fnGetList() {
   queryParams.beginTime = queryRangePicker.value[0];
   queryParams.endTime = queryRangePicker.value[1];
   listUser(toRaw(queryParams)).then(res => {
-    if (res.code === 200 && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
@@ -729,7 +729,7 @@ let deptTreeData = ref<DataNode[]>([]);
 function fnGetDeptTree() {
   if (deptTreeData.value.length > 0) return;
   deptTreeSelect().then(res => {
-    if (res.code === 200 && Array.isArray(res.data)) {
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
       deptTreeData.value = res.data;
     }
   });

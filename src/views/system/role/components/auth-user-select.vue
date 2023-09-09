@@ -6,6 +6,7 @@ import { ColumnsType } from 'ant-design-vue/lib/table';
 import { authUserAllocatedList } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const emit = defineEmits(['ok', 'cancel', 'update:visible']);
 const props = defineProps({
@@ -160,7 +161,7 @@ function fnGetList() {
   if (tableState.loading) return;
   tableState.loading = true;
   authUserAllocatedList(toRaw(queryParams)).then(res => {
-    if (res.code === 200 && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];

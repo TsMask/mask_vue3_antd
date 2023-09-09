@@ -16,6 +16,7 @@ import {
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -185,7 +186,7 @@ function fnTableSize({ key }: MenuInfo) {
 }
 
 /**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number) {
+function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
@@ -210,17 +211,19 @@ function fnRecordDelete() {
     title: '提示',
     content: `确认删除访问编号为 【${ids}】 的数据项吗?`,
     onOk() {
-      const hide = message.loading('请稍等...', 0);
+      const key = 'delLogininfor';
+      message.loading({ content: '请稍等...', key });
       delLogininfor(ids).then(res => {
-        hide();
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `删除成功`,
+            key,
             duration: 3,
           });
         } else {
           message.error({
             content: `${res.msg}`,
+            key,
             duration: 3,
           });
         }
@@ -236,17 +239,19 @@ function fnCleanList() {
     title: '提示',
     content: `确认清空所有登录日志数据项?`,
     onOk() {
-      const hide = message.loading('请稍等...', 0);
+      const key = 'cleanLogininfor';
+      message.loading({ content: '请稍等...', key });
       cleanLogininfor().then(res => {
-        hide();
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `清空成功`,
+            key,
             duration: 3,
           });
         } else {
           message.error({
             content: `${res.msg}`,
+            key,
             duration: 3,
           });
         }
@@ -266,7 +271,7 @@ function fnUnlock() {
       const hide = message.loading('请稍等...', 0);
       unlockLogininfor(username).then(res => {
         hide();
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `${username} 解锁成功`,
             duration: 3,
@@ -288,18 +293,20 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const hide = message.loading('正在打开...', 0);
+      const key = 'exportLogininfor';
+      message.loading({ content: '请稍等...', key });
       exportLogininfor(toRaw(queryParams)).then(res => {
-        hide();
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `已完成导出`,
+            key,
             duration: 2,
           });
           saveAs(res.data, `logininfor_${Date.now()}.xlsx`);
         } else {
           message.error({
             content: `${res.msg}`,
+            key,
             duration: 2,
           });
         }
@@ -315,7 +322,7 @@ function fnGetList() {
   queryParams.beginTime = queryRangePicker.value[0];
   queryParams.endTime = queryRangePicker.value[1];
   listLogininfor(toRaw(queryParams)).then(res => {
-    if (res.code === 200 && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];

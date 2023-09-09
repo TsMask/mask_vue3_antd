@@ -13,6 +13,7 @@ import { PageContainer } from '@ant-design-vue/pro-layout';
 import { ColumnsType } from 'ant-design-vue/lib/table/Table';
 import { message } from 'ant-design-vue/lib';
 import { hasPermissions } from '@/plugins/auth-user';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const route = useRoute();
 
 /**路由标题 */
@@ -43,7 +44,7 @@ function fnCacheKeyInfo(cacheKey: string) {
   cacheKeyInfo.loading = true;
   getCacheValue(cacheKeyTable.cacheName, cacheKey).then(res => {
     isClick.value = false;
-    if (res.code === 200) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       cacheKeyInfo.data = Object.assign(cacheKeyInfo.data, res.data);
       cacheKeyInfo.loading = false;
     }
@@ -106,7 +107,7 @@ function fnCacheKeyClear(cacheKey: string) {
   clearCacheKey(cacheKeyTable.cacheName, cacheKey).then(res => {
     hide();
     isClick.value = false;
-    if (res.code === 200) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       message.success({
         content: `已删除缓存键名 ${cacheKey}`,
         duration: 3,
@@ -139,7 +140,7 @@ function fnCacheKeyList(cacheName: string = 'load') {
   cacheKeyTable.loading = true;
   listCacheKey(cacheName).then(res => {
     isClick.value = false;
-    if (res.code === 200 && res.data) {
+    if (res.code === RESULT_CODE_SUCCESS && res.data) {
       cacheKeyTable.cacheName = cacheName;
       cacheKeyTable.data = res.data;
       cacheKeyTable.loading = false;
@@ -204,7 +205,7 @@ function fnClearCacheSafe() {
   clearCacheSafe().then(res => {
     hide();
     isClick.value = false;
-    if (res.code === 200) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       message.success({
         content: '已完成安全清理缓存',
         duration: 3,
@@ -231,7 +232,7 @@ function fnCacheNameClear(cacheName: string) {
   clearCacheName(cacheName).then(res => {
     hide();
     isClick.value = false;
-    if (res.code === 200) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       message.success({
         content: `已清理缓存名称 ${cacheName}`,
         duration: 3,
@@ -257,7 +258,7 @@ function fnCacheNameList() {
   cacheNameTable.loading = true;
   listCacheName().then(res => {
     isClick.value = false;
-    if (res.code === 200 && res.data) {
+    if (res.code === RESULT_CODE_SUCCESS && res.data) {
       cacheNameTable.data = res.data;
       cacheNameTable.loading = false;
     }

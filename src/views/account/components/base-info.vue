@@ -7,6 +7,7 @@ import { updateUserProfile, uploadAvatar } from '@/api/profile';
 import { regExpEmail, regExpMobile, regExpNick } from '@/utils/regular-utils';
 import useUserStore from '@/store/modules/user';
 import useDictStore from '@/store/modules/dict';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const uerStore = useUserStore();
 const { getDict } = useDictStore();
 
@@ -49,7 +50,7 @@ function fnFinish() {
       updateUserProfile(form).then(res => {
         hide();
         stateForm.formClick = false;
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           Modal.success({
             title: '提示',
             content: `用户基本信息修改成功！`,
@@ -97,7 +98,7 @@ function fnUpload(up: UploadRequestOption) {
       uploadAvatar(formData).then(res => {
         upState.value = false;
         hide();
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success('头像上传/变更成功', 3);
           uerStore.setAvatar(res.data);
         } else {

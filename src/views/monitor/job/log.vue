@@ -17,6 +17,7 @@ import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import useTabsStore from '@/store/modules/tabs';
 import useDictStore from '@/store/modules/dict';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const tabsStore = useTabsStore();
 const { getDict } = useDictStore();
 const route = useRoute();
@@ -198,7 +199,7 @@ function fnTableSize({ key }: MenuInfo) {
 }
 
 /**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number) {
+function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
@@ -262,7 +263,7 @@ function fnRecordDelete() {
       const key = 'delJobLog';
       message.loading({ content: '请稍等...', key });
       delJobLog(ids).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `删除成功`,
             key,
@@ -290,7 +291,7 @@ function fnCleanList() {
       const key = 'cleanJobLog';
       message.loading({ content: '请稍等...', key });
       cleanJobLog().then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `清空成功`,
             key,
@@ -318,7 +319,7 @@ function fnExportList() {
       const key = 'exportJobLog';
       message.loading({ content: '请稍等...', key });
       exportJobLog(toRaw(queryParams)).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `已完成导出`,
             key,
@@ -353,7 +354,7 @@ function fnGetList() {
   queryParams.beginTime = queryRangePicker.value[0];
   queryParams.endTime = queryRangePicker.value[1];
   listJobLog(toRaw(queryParams)).then(res => {
-    if (res.code === 200) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
@@ -381,7 +382,7 @@ onMounted(() => {
   // 指定任务id数据列表
   if (jobId && jobId !== '0') {
     getJob(jobId).then(res => {
-      if (res.code === 200) {
+      if (res.code === RESULT_CODE_SUCCESS) {
         queryParams.jobName = res.data.jobName;
         queryParams.jobGroup = res.data.jobGroup;
         fnGetList();

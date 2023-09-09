@@ -1,3 +1,4 @@
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 import { request } from '@/plugins/http-fetch';
 import { encode } from 'js-base64';
 
@@ -37,7 +38,7 @@ export async function downloadFileChunk(
   async function sendRequest() {
     const range = `bytes=${start}-${end}`;
     const res = await downloadFile(filePath, range);
-    if (res.code === 200 && res.status === 206) {
+    if (res.code === RESULT_CODE_SUCCESS && res.status === 206) {
       // 总大小
       const contentRange = res.headers.get('content-range') || '0/0';
       totalSize = parseInt(contentRange.split('/')[1]);

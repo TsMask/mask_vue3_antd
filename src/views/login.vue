@@ -6,6 +6,7 @@ import useUserStore from '@/store/modules/user';
 import { getCaptchaImage } from '@/api/login';
 import { regExpMobile, validMobile } from '@/utils/regular-utils';
 import { useRouter, useRoute } from 'vue-router';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const router = useRouter();
 const route = useRoute();
 const codeImgFall =
@@ -71,7 +72,7 @@ function fnFinish() {
   useUserStore()
     .fnLogin(form)
     .then(res => {
-      if (res.code === 200) {
+      if (res.code === RESULT_CODE_SUCCESS) {
         message.success('登录成功', 3);
         router.push({ path: redirectPath });
       } else {

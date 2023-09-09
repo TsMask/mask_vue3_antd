@@ -4,6 +4,7 @@ import { reactive, ref, onMounted } from 'vue';
 import { PageContainer } from '@ant-design-vue/pro-layout';
 import { ColumnsType } from 'ant-design-vue/lib/table';
 import { getServer } from '@/api/monitor/server';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const route = useRoute();
 
 /**路由标题 */
@@ -72,7 +73,7 @@ let server: ServerType = reactive({
 
 onMounted(() => {
   getServer().then(res => {
-    if (res.code === 200 && res.data) {
+    if (res.code === RESULT_CODE_SUCCESS && res.data) {
       // CPU信息
       let cpu = res.data.cpu;
       cpu.coreUsed = cpu.coreUsed.map((item: string) => item).join(' / ');

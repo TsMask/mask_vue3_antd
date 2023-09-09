@@ -15,6 +15,7 @@ import { PageContainer } from '@ant-design-vue/pro-layout';
 import { getCache } from '@/api/monitor/cache';
 import { reactive, ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const route = useRoute();
 
 echarts.use([
@@ -136,7 +137,7 @@ function commandStatsChart() {
 onMounted(() => {
   getCache()
     .then(res => {
-      if (res.code === 200 && res.data) {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
         cache.info = res.data.info;
         cache.dbSize = res.data.dbSize;
         cache.commandStats = res.data.commandStats;

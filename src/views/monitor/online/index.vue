@@ -8,6 +8,7 @@ import { parseDateToStr } from '@/utils/date-utils';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
 import { ColumnsType } from 'ant-design-vue/lib/table';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const route = useRoute();
 
 /**路由标题 */
@@ -138,7 +139,7 @@ function fnTableSize({ key }: MenuInfo) {
 }
 
 /**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number) {
+function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
@@ -156,7 +157,7 @@ function fnGetList() {
   if (tableState.loading) return;
   tableState.loading = true;
   listOnline(queryParams).then(res => {
-    if (res.code === 200 && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       tableState.data = res.rows;
     }
     tableState.loading = false;

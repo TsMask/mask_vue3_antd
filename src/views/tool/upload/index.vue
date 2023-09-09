@@ -12,6 +12,7 @@ import {
   uploadFile,
   uploadFileChunk,
 } from '@/api/tool/file';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 
 let state = reactive<{
   /**上传状态 */
@@ -43,7 +44,7 @@ function fnDownload() {
   const filePath = state.downloadFilePath;
   if (!filePath) return;
   downloadFile(filePath).then(res => {
-    if (res.code === 200) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       message.success({
         content: `已完成下载`,
         key,
@@ -115,7 +116,7 @@ function fnUpload(up: UploadRequestOption) {
       uploadFile(formData).then(res => {
         state.loading = false;
         hide();
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success('文件上传成功', 3);
           state.uploadFilePath = res.data.url;
           state.downloadFilePath = res.data.fileName;
@@ -139,7 +140,7 @@ function fnUploadChunk(up: UploadRequestOption) {
       const hide = message.loading('请稍等...', 0);
       uploadFileChunk(fileData, 4, 'default').then(res => {
         hide();
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success('文件上传成功', 3);
           if (item) {
             item.url = res.data.url;

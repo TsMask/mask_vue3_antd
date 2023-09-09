@@ -27,6 +27,7 @@ import {
   MENU_TYPE_BUTTON,
 } from '@/constants/menu-constants';
 import useDictStore from '@/store/modules/dict';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -160,7 +161,7 @@ function fnTableSize({ key }: MenuInfo) {
 }
 
 /**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number) {
+function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
@@ -275,7 +276,7 @@ function fnModalVisibleByVive(menuId: string | number) {
   getMenu(menuId).then(res => {
     modalState.confirmLoading = false;
     hide();
-    if (res.code === 200 && res.data) {
+    if (res.code === RESULT_CODE_SUCCESS && res.data) {
       modalState.from = Object.assign(modalState.from, res.data);
       modalState.title = '菜单信息';
       modalState.visibleByView = true;
@@ -311,7 +312,7 @@ function fnModalVisibleByEdit(
     getMenu(menuId).then(res => {
       modalState.confirmLoading = false;
       hide();
-      if (res.code === 200 && res.data) {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改菜单信息';
         modalState.visibleByEdit = true;
@@ -349,7 +350,7 @@ function fnModalOk() {
       message.loading({ content: '请稍等...', key });
       menu
         .then(res => {
-          if (res.code === 200) {
+          if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
               key,
@@ -398,7 +399,7 @@ function fnRecordDelete(menuId: string | number) {
       const key = 'delMenu';
       message.loading({ content: '请稍等...', key });
       delMenu(menuId).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `删除成功`,
             key,
@@ -422,7 +423,7 @@ function fnGetList() {
   if (tableState.loading) return;
   tableState.loading = true;
   listMenu(toRaw(queryParams)).then(res => {
-    if (res.code === 200 && Array.isArray(res.data)) {
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
       menuListData = JSON.parse(JSON.stringify(res.data));
       // 初始上级菜单和展开编号key
       if (treeDataAll.length <= 0) {

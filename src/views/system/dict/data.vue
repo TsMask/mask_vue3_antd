@@ -19,6 +19,7 @@ import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import useTabsStore from '@/store/modules/tabs';
 import useDictStore from '@/store/modules/dict';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const tabsStore = useTabsStore();
 const { parseDataDict, getDict } = useDictStore();
 const route = useRoute();
@@ -202,7 +203,7 @@ function fnTableSize({ key }: MenuInfo) {
 }
 
 /**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number) {
+function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
 }
 
@@ -286,7 +287,7 @@ function fnModalVisibleByEdit(dictCode?: string | number) {
     getData(dictCode).then(res => {
       modalState.confirmLoading = false;
       hide();
-      if (res.code === 200) {
+      if (res.code === RESULT_CODE_SUCCESS) {
         modalState.from = Object.assign(modalState.from, res.data);
         modalState.title = '修改字典数据';
         modalState.visibleByEdit = true;
@@ -312,7 +313,7 @@ function fnModalOk() {
       message.loading({ content: '请稍等...', key });
       dictData
         .then(res => {
-          if (res.code === 200) {
+          if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
               key,
@@ -363,7 +364,7 @@ function fnRecordDelete(dictCode: string = '0') {
       const key = 'delData';
       message.loading({ content: '请稍等...', key });
       delData(dictCode).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `删除成功`,
             key,
@@ -391,7 +392,7 @@ function fnExportList() {
       const key = 'exportData';
       message.loading({ content: '请稍等...', key });
       exportData(toRaw(queryParams)).then(res => {
-        if (res.code === 200) {
+        if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `已完成导出`,
             key,
@@ -425,7 +426,7 @@ function fnGetList() {
   if (tableState.loading) return;
   tableState.loading = true;
   listData(toRaw(queryParams)).then(res => {
-    if (res.code === 200 && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
@@ -456,7 +457,7 @@ onMounted(() => {
   // 指定字典id列表数据
   if (dictId && dictId !== '0') {
     getType(dictId).then(res => {
-      if (res.code === 200 && res.data) {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
         queryParams.dictType = res.data.dictType;
         fnGetList();
       } else {
