@@ -6,6 +6,14 @@ import {
   APP_REQUEST_HEADER_CODE,
   APP_REQUEST_HEADER_VERSION,
 } from '@/constants/app-constants';
+import {
+  RESULT_CODE_ERROR,
+  RESULT_CODE_SUCCESS,
+  RESULT_MSG_NOT_TYPE,
+  RESULT_MSG_SERVER_ERROR,
+  RESULT_MSG_SUCCESS,
+  RESULT_MSG_TIMEOUT,
+} from '@/constants/result-constants';
 
 /**响应结果类型 */
 export type ResultType = {
@@ -210,8 +218,8 @@ export async function request(options: OptionsType): Promise<ResultType> {
     // console.log('请求结果：', res);
     if (res.status === 500) {
       return {
-        code: 500,
-        msg: '服务器连接出错！',
+        code: RESULT_CODE_ERROR,
+        msg: RESULT_MSG_SERVER_ERROR,
       };
     }
 
@@ -220,7 +228,7 @@ export async function request(options: OptionsType): Promise<ResultType> {
       case 'text': // 文本数据
         const str = await res.text();
         return {
-          code: 200,
+          code: RESULT_CODE_SUCCESS,
           msg: str,
         };
       case 'json': // json格式数据
@@ -243,24 +251,24 @@ export async function request(options: OptionsType): Promise<ResultType> {
             ? await res.blob()
             : await res.arrayBuffer();
         return {
-          code: 200,
-          msg: '成功',
+          code: RESULT_CODE_SUCCESS,
+          msg: RESULT_MSG_SUCCESS,
           data: data,
           status: res.status,
           headers: res.headers,
         };
       default:
         return {
-          code: 500,
-          msg: '未知响应数据类型',
+          code: RESULT_CODE_ERROR,
+          msg: RESULT_MSG_NOT_TYPE,
         };
     }
   } catch (error: any) {
     // 请求被终止时
     if (error.name === 'AbortError') {
       return {
-        code: 500,
-        msg: '网络连接超时！',
+        code: RESULT_CODE_ERROR,
+        msg: RESULT_MSG_TIMEOUT,
       };
     }
     throw error;
