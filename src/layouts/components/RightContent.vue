@@ -2,8 +2,16 @@
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
 import { useRouter } from 'vue-router';
 import useUserStore from '@/store/modules/user';
+import useAppStore from '@/store/modules/app';
+import { SizeType } from 'ant-design-vue/lib/config-provider';
 const userStore = useUserStore();
+const appStore = useAppStore();
 const router = useRouter();
+
+/**组件尺寸点击选择 */
+function fnComponentSize({ key }: MenuInfo) {
+  appStore.setComponentSize(key as SizeType);
+}
 
 /**头像展开项点击 */
 function fnClick({ key }: MenuInfo) {
@@ -64,11 +72,34 @@ function fnClick({ key }: MenuInfo) {
 
     <a-tooltip>
       <template #title>文档手册</template>
-      <a-button type="text" href="https://juejin.cn/column/7188761626017792056" target="_blank">
+      <a-button
+        type="text"
+        href="https://juejin.cn/column/7188761626017792056"
+        target="_blank"
+      >
         <template #icon>
           <QuestionCircleOutlined :style="{ fontSize: '20px' }" />
         </template>
       </a-button>
+    </a-tooltip>
+
+    <a-tooltip>
+      <template #title>组件尺寸</template>
+      <a-dropdown placement="bottomCenter" trigger="click">
+        <a-button type="text">
+          <template #icon><FontSizeOutlined /></template>
+        </a-button>
+        <template #overlay>
+          <a-menu
+            :selected-keys="[appStore.componentSize as string]"
+            @click="fnComponentSize"
+          >
+            <a-menu-item key="large">大号</a-menu-item>
+            <a-menu-item key="middle">中号</a-menu-item>
+            <a-menu-item key="small">小号</a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
     </a-tooltip>
 
     <a-dropdown placement="bottomRight" :trigger="['click', 'hover']">
