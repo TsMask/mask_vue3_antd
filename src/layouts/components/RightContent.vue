@@ -88,8 +88,8 @@ function fnClick({ key }: MenuInfo) {
       <template #title>全屏显示</template>
       <a-button type="text" @click="toggle">
         <template #icon>
-          <FullscreenOutlined v-if="isFullscreen()" />
-          <FullscreenExitOutlined v-else />
+          <FullscreenExitOutlined v-if="isFullscreen()" />
+          <FullscreenOutlined v-else />
         </template>
       </a-button>
     </a-tooltip>
