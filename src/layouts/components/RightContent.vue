@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
+import { SizeType } from 'ant-design-vue/lib/config-provider';
+import { toggle, isFullscreen } from '@/utils/fullscreen-utils';
 import { useRouter } from 'vue-router';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
-import { SizeType } from 'ant-design-vue/lib/config-provider';
 const userStore = useUserStore();
 const appStore = useAppStore();
 const router = useRouter();
@@ -38,8 +39,8 @@ function fnClick({ key }: MenuInfo) {
     >
       <a-button type="text">
         <template #icon>
-          <a-badge :count="123" :overflow-count="99">
-            <BellOutlined :style="{ fontSize: '20px' }" />
+          <a-badge :count="9999" :overflow-count="99">
+            <BellOutlined />
           </a-badge>
         </template>
       </a-button>
@@ -65,7 +66,7 @@ function fnClick({ key }: MenuInfo) {
       <template #title>开源仓库</template>
       <a-button type="text" href="https://gitee.com/TsMask" target="_blank">
         <template #icon>
-          <GithubOutlined :style="{ fontSize: '20px' }" />
+          <GithubOutlined />
         </template>
       </a-button>
     </a-tooltip>
@@ -78,14 +79,24 @@ function fnClick({ key }: MenuInfo) {
         target="_blank"
       >
         <template #icon>
-          <QuestionCircleOutlined :style="{ fontSize: '20px' }" />
+          <QuestionCircleOutlined />
+        </template>
+      </a-button>
+    </a-tooltip>
+
+    <a-tooltip>
+      <template #title>全屏显示</template>
+      <a-button type="text" @click="toggle">
+        <template #icon>
+          <FullscreenOutlined v-if="isFullscreen()" />
+          <FullscreenExitOutlined v-else />
         </template>
       </a-button>
     </a-tooltip>
 
     <a-tooltip>
       <template #title>组件尺寸</template>
-      <a-dropdown placement="bottomCenter" trigger="click">
+      <a-dropdown placement="bottom" trigger="click">
         <a-button type="text">
           <template #icon><FontSizeOutlined /></template>
         </a-button>
