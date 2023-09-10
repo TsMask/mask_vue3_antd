@@ -566,6 +566,7 @@ onMounted(() => {
         :pagination="tablePagination"
         :row-selection="{
           type: 'checkbox',
+          selectedRowKeys: tableState.selectedRowKeys,
           onChange: fnTableSelectedRowKeys,
         }"
       >

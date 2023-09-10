@@ -955,6 +955,7 @@ onMounted(() => {
         :scroll="{ x: true }"
         :row-selection="{
           type: 'checkbox',
+          selectedRowKeys: tableState.selectedRowKeys,
           onChange: fnTableSelectedRowKeys,
         }"
       >
