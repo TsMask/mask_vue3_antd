@@ -31,3 +31,4 @@ selenium-debug.log
 
 package-lock.json
 yarn.lock
+components.d.ts
