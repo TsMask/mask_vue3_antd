@@ -73,7 +73,7 @@ function fnFinish() {
     .fnLogin(form)
     .then(res => {
       if (res.code === RESULT_CODE_SUCCESS) {
-        message.success('登录成功', 3);
+        message.success('登录成功', 1);
         router.push({ path: redirectPath });
       } else {
         message.error(`${res.msg}`, 3);
