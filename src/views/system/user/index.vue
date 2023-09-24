@@ -6,7 +6,7 @@ import { message, Modal, Form } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
 import { ColumnsType } from 'ant-design-vue/lib/table';
-import UploadXlsxImport from './components/UploadXlsxImport.vue';
+import UploadModal from '@/components/UploadModal/index.vue';
 import {
   importData,
   importTemplate,
@@ -646,41 +646,67 @@ function fnExportList() {
 }
 
 /**对话框表格信息导入对象信息状态类型 */
-type ModalUploadXlsxImportStateType = {
+type ModalUploadImportStateType = {
   /**是否显示 */
   visible: boolean;
   /**标题 */
   title: string;
+  /**是否上传中 */
+  loading: boolean;
+  /**是否更新已经存在的数据 */
+  updateSupport: boolean;
+  /**上传结果信息 */
+  msg: string;
   /**导入模板下载触发 */
   templateDownload: boolean;
 };
 
 /**对话框表格信息导入对象信息状态 */
-let modalUploadXlsxImportState: ModalUploadXlsxImportStateType = reactive({
+let uploadImportState: ModalUploadImportStateType = reactive({
   visible: false,
   title: '用户导入',
+  loading: false,
+  updateSupport: false,
+  msg: '',
   templateDownload: false,
 });
 
-/**
- * 对话框表格信息导入确认执行函数
- * @param isUpload 是否已上传文件
- */
-function fnModalUploadXlsxImportClose(isUpload: boolean) {
-  if (isUpload) {
-    fnGetList();
-  }
-}
-
 /**对话框表格信息导入弹出窗口 */
-function fnModalUploadXlsxImportOpen() {
-  modalUploadXlsxImportState.visible = true;
+function fnModalUploadImportOpen() {
+  uploadImportState.updateSupport = false;
+  uploadImportState.msg = '';
+  uploadImportState.visible = true;
 }
 
-/**列表导入模板 */
-function fnModalUploadXlsxImportExportTemplate() {
-  if (modalUploadXlsxImportState.templateDownload) return;
-  modalUploadXlsxImportState.templateDownload = true;
+/**对话框表格信息导入关闭窗口 */
+function fnModalUploadImportClose() {
+  uploadImportState.visible = false;
+}
+
+/**对话框表格信息导入上传 */
+function fnModalUploadImportUpload(file: File) {
+  const hide = message.loading('正在上传并解析数据...', 0);
+  uploadImportState.loading = true;
+  let formData = new FormData();
+  formData.append('file', file);
+  formData.append('updateSupport', `${uploadImportState.updateSupport}`);
+  importData(formData)
+    .then(res => {
+      uploadImportState.msg = res.msg?.replaceAll(/<br\/>+/g, '\r');
+    })
+    .catch((err: { code: number; msg: string }) => {
+      message.error(`上传失败 ${err.msg}`);
+    })
+    .finally(() => {
+      hide();
+      uploadImportState.loading = false;
+    });
+}
+
+/**对话框表格信息导入模板 */
+function fnModalUploadImportExportTemplate() {
+  if (uploadImportState.templateDownload) return;
+  uploadImportState.templateDownload = true;
   const hide = message.loading('正在下载...', 0);
   importTemplate()
     .then(res => {
@@ -699,7 +725,7 @@ function fnModalUploadXlsxImportExportTemplate() {
     })
     .finally(() => {
       hide();
-      modalUploadXlsxImportState.templateDownload = false;
+      uploadImportState.templateDownload = false;
     });
 }
 
@@ -877,7 +903,7 @@ onMounted(() => {
           </a-button>
           <a-button
             type="dashed"
-            @click.prevent="fnModalUploadXlsxImportOpen()"
+            @click.prevent="fnModalUploadImportOpen()"
             v-perms:has="['system:user:import']"
           >
             <template #icon><ImportOutlined /></template>
@@ -1412,14 +1438,40 @@ onMounted(() => {
     </a-modal>
 
     <!-- 上传导入表格数据文件框 -->
-    <UploadXlsxImport
-      :title="modalUploadXlsxImportState.title"
-      v-model:visible="modalUploadXlsxImportState.visible"
-      :show-update-support="true"
-      :upload-file-method="importData"
-      :download-template-method="fnModalUploadXlsxImportExportTemplate"
-      @close="fnModalUploadXlsxImportClose"
-    />
+    <UploadModal
+      :title="uploadImportState.title"
+      :loading="uploadImportState.loading"
+      @upload="fnModalUploadImportUpload"
+      @close="fnModalUploadImportClose"
+      v-model:visible="uploadImportState.visible"
+      :ext="['.xls', '.xlsx']"
+      :size="10"
+    >
+      <template #default>
+        <a-row :gutter="18" justify="space-between" align="middle">
+          <a-col :span="12">
+            <a-checkbox v-model:checked="uploadImportState.updateSupport">
+              是否更新已经存在的数据
+            </a-checkbox>
+          </a-col>
+          <a-col :span="6">
+            <a-button
+              type="link"
+              title="下载模板"
+              @click.prevent="fnModalUploadImportExportTemplate"
+            >
+              下载模板
+            </a-button>
+          </a-col>
+        </a-row>
+        <a-textarea
+          :disabled="true"
+          :hidden="!uploadImportState.msg"
+          :value="uploadImportState.msg"
+          :auto-size="{ minRows: 2, maxRows: 8 }"
+        />
+      </template>
+    </UploadModal>
   </PageContainer>
 </template>
 
