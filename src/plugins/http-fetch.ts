@@ -39,6 +39,10 @@ type RepeatSubmitType = {
 
 /**请求参数类型 */
 type OptionsType = {
+  /**请求的根域名地址-不带/后缀 */
+  baseUrl?: string;
+  /**超时时间，毫秒 */
+  timeout?: number;
   /**请求地址 */
   url: string;
   /**请求方法 */
@@ -63,24 +67,14 @@ type OptionsType = {
   repeatSubmit?: boolean;
   /**携带授权Token请求头 */
   whithToken?: boolean;
-};
-
-/**全局配置类型 */
-type ConfigType = {
-  /**请求的根域名地址-不带/后缀 */
-  baseUrl: string;
-  /**超时时间，毫秒 */
-  timeout: number;
-};
-
-/**默认配置 */
-const FATCH_CONFIG: ConfigType = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL,
-  timeout: 10 * 1000,
+  /**控制请求终止，设置timeout无效 */
+  signal?: AbortSignal;
 };
 
 /**默认请求参数 */
 const FATCH_OPTIONS: OptionsType = {
+  baseUrl: import.meta.env.VITE_API_BASE_URL,
+  timeout: 10 * 1000,
   url: '',
   method: 'get',
   headers: {
@@ -191,14 +185,17 @@ function interceptorResponse(res: ResultType): ResultType | Promise<any> {
  * @returns 返回 Promise<ResultType>
  */
 export async function request(options: OptionsType): Promise<ResultType> {
-  // 请求超时控制请求终止
-  const controller = new AbortController();
-  const { signal } = controller;
-  const timeoutId = setTimeout(() => {
-    controller.abort(); // 终止请求
-  }, FATCH_CONFIG.timeout);
+  options = Object.assign({}, FATCH_OPTIONS, options);
 
-  options = Object.assign({ signal }, FATCH_OPTIONS, options);
+  // 请求超时控制请求终止
+  let timeoutId: any = 0;
+  if (!options.signal) {
+    const controller = new AbortController();
+    options.signal = controller.signal;
+    timeoutId = setTimeout(() => {
+      controller.abort(); // 终止请求
+    }, options.timeout);
+  }
 
   // 检查请求拦截
   const beforeReq = beforeRequest(options);
@@ -210,7 +207,7 @@ export async function request(options: OptionsType): Promise<ResultType> {
   // 判断用户传递的URL是否http或/开头
   if (!options.url.startsWith('http')) {
     const uri = options.url.startsWith('/') ? options.url : `/${options.url}`;
-    options.url = FATCH_CONFIG.baseUrl + uri;
+    options.url = options.baseUrl + uri;
   }
 
   try {
@@ -273,6 +270,6 @@ export async function request(options: OptionsType): Promise<ResultType> {
     }
     throw error;
   } finally {
-    clearTimeout(timeoutId); // 请求成功，清除超时计时器
+    clearTimeout(timeoutId); // 清除超时计时器
   }
 }
