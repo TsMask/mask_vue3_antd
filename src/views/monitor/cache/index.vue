@@ -338,7 +338,7 @@ onMounted(() => {
                   :value="selectedKeys[0]"
                   style="width: 188px; margin-bottom: 8px; display: block"
                   @change="
-                    e => setSelectedKeys(e.target.value ? [e.target.value] : [])
+                    (e:any)=> setSelectedKeys(e.target.value ? [e.target.value] : [])
                   "
                   @pressEnter="confirm()"
                 />
@@ -419,7 +419,7 @@ onMounted(() => {
                   :value="selectedKeys[0]"
                   style="width: 188px; margin-bottom: 8px; display: block"
                   @change="
-                    e => setSelectedKeys(e.target.value ? [e.target.value] : [])
+                    (e:any) => setSelectedKeys(e.target.value ? [e.target.value] : [])
                   "
                   @pressEnter="confirm()"
                 />

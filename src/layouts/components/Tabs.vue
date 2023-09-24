@@ -107,8 +107,8 @@ watch(router.currentRoute, v => tabsStore.tabOpen(v), { immediate: true });
       :tab-bar-gutter="8"
       :tab-bar-style="{ margin: '0', height: '28px', lineHeight: '28px' }"
       v-model:activeKey="tabsStore.activePath"
-      @tab-click="path => fnTabClick(path as string)"
-      @edit="path => fnTabClose(path as string)"
+      @tab-click="(path:any) => fnTabClick(path as string)"
+      @edit="(path:any) => fnTabClose(path as string)"
     >
       <a-tab-pane
         v-for="tab in tabsStore.getTabs"
@@ -143,7 +143,7 @@ watch(router.currentRoute, v => tabsStore.tabOpen(v), { immediate: true });
                 <template #icon><DownOutlined /></template>
               </a-button>
               <template #overlay>
-                <a-menu @click="({ key }) => fnTabMenu(key)">
+                <a-menu @click="({ key }:any) => fnTabMenu(key)">
                   <a-menu-item key="current">关闭当前</a-menu-item>
                   <a-menu-item key="other">关闭其他 </a-menu-item>
                   <a-menu-item key="all">关闭全部</a-menu-item>
