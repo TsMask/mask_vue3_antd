@@ -423,6 +423,9 @@ function fnRefreshCache() {
 function fnGetList() {
   if (tableState.loading) return;
   tableState.loading = true;
+  if (!queryRangePicker.value) {
+    queryRangePicker.value = ['', ''];
+  }
   queryParams.beginTime = queryRangePicker.value[0];
   queryParams.endTime = queryRangePicker.value[1];
   listConfig(toRaw(queryParams)).then(res => {

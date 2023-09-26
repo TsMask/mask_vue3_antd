@@ -351,6 +351,9 @@ function fnClose() {
 /**查询调度日志列表 */
 function fnGetList() {
   tableState.loading = true;
+  if (!queryRangePicker.value) {
+    queryRangePicker.value = ['', ''];
+  }
   queryParams.beginTime = queryRangePicker.value[0];
   queryParams.endTime = queryRangePicker.value[1];
   listJobLog(toRaw(queryParams)).then(res => {
