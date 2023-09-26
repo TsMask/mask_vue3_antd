@@ -170,15 +170,25 @@ function fnForceLogout(row: Record<string, string>) {
     title: '提示',
     content: `确认强退登录账号为 ${row.userName} 的用户?`,
     onOk() {
-      const hide = message.loading('正在打开...', 0);
-      forceLogout(row.tokenId).finally(() => {
-        hide();
-        message.error({
-          content: `已强退用户 ${row.userName}`,
-          duration: 2,
+      const hide = message.loading('请稍等...', 0);
+      forceLogout(row.tokenId)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `已强退用户 ${row.userName}`,
+              duration: 3,
+            });
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+          fnGetList();
         });
-      });
-      fnGetList();
     },
   });
 }
@@ -280,7 +290,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip>
             <template #title>密度</template>
-            <a-dropdown trigger="click">
+            <a-dropdown trigger="click" placement="bottomRight">
               <a-button type="text">
                 <template #icon><ColumnHeightOutlined /></template>
               </a-button>
@@ -315,6 +325,7 @@ onMounted(() => {
           <template v-if="column.key === 'tokenId'">
             <a-button
               type="link"
+              danger
               @click.prevent="fnForceLogout(record)"
               v-perms:has="['monitor:online:forceLogout']"
             >
