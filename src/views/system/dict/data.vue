@@ -449,7 +449,7 @@ onMounted(() => {
     }
     if (resArr[1].status === 'fulfilled') {
       const dicts = resArr[1].value;
-      if (dicts.code === 200) {
+      if (dicts.code === RESULT_CODE_SUCCESS) {
         dict.sysDictType = dicts.data;
       }
     }

@@ -306,9 +306,9 @@ function fnModalVisibleByVive(roleId: string | number) {
   Promise.all([getRole(roleId), roleMenuTreeSelect(roleId)]).then(resArr => {
     modalState.confirmLoading = false;
     hide();
-    if (resArr[0].code === 200 && resArr[0].data) {
+    if (resArr[0].code === RESULT_CODE_SUCCESS && resArr[0].data) {
       modalState.from = Object.assign(modalState.from, resArr[0].data);
-      if (resArr[1].code === 200 && resArr[1].data) {
+      if (resArr[1].code === RESULT_CODE_SUCCESS && resArr[1].data) {
         const { menus, checkedKeys } = resArr[1].data;
         menuTree.checkedKeys = parseTreeKeys(menus, 'id');
         menuTree.expandedKeys = parseTreeNodeKeys(menus, 'id');
