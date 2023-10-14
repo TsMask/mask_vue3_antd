@@ -8,7 +8,7 @@ import { regExpEmail, regExpMobile, regExpNick } from '@/utils/regular-utils';
 import useUserStore from '@/store/modules/user';
 import useDictStore from '@/store/modules/dict';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
-const uerStore = useUserStore();
+const userStore = useUserStore();
 const { getDict } = useDictStore();
 
 /**用户性别字典 */
@@ -33,7 +33,7 @@ let stateForm = reactive({
 
 /**表单数据状态初始化 */
 function fnInitstateForm() {
-  stateForm.form = Object.assign(stateForm.form, uerStore.getBaseInfo);
+  stateForm.form = Object.assign(stateForm.form, userStore.getBaseInfo);
   stateForm.formClick = false;
 }
 
@@ -56,7 +56,7 @@ function fnFinish() {
             content: `用户基本信息修改成功！`,
             okText: '我知道了',
             onOk() {
-              uerStore.setBaseInfo(form);
+              userStore.setBaseInfo(form);
             },
           });
         } else {
@@ -100,7 +100,7 @@ function fnUpload(up: UploadRequestOption) {
         hide();
         if (res.code === RESULT_CODE_SUCCESS) {
           message.success('头像上传/变更成功', 3);
-          uerStore.setAvatar(res.data);
+          userStore.setAvatar(res.data);
         } else {
           message.error(res.msg, 3);
         }
@@ -226,7 +226,12 @@ onMounted(() => {
       </a-col>
       <a-col :lg="12" :md="12" :xs="24">
         <a-space direction="vertical" :size="16">
-          <a-image :width="128" :height="128" :src="uerStore.getAvatar" />
+          <a-avatar
+            shape="circle"
+            :size="128"
+            :src="userStore.getAvatar"
+            :alt="userStore.userName"
+          ></a-avatar>
           <span>请选择等比大小图片作为头像，如200x200、400x400</span>
           <a-upload
             name="file"
