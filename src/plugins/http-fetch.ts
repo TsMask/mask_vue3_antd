@@ -10,6 +10,7 @@ import {
   RESULT_CODE_ERROR,
   RESULT_CODE_SUCCESS,
   RESULT_MSG_NOT_TYPE,
+  RESULT_MSG_RESUBMIT,
   RESULT_MSG_SERVER_ERROR,
   RESULT_MSG_SUCCESS,
   RESULT_MSG_TIMEOUT,
@@ -18,7 +19,7 @@ import {
 /**响应结果类型 */
 export type ResultType = {
   /**响应码 */
-  code: number | 200 | 500;
+  code: number;
   /**信息 */
   msg: string;
   /**数据 */
@@ -118,21 +119,23 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
   ) {
     const requestObj: RepeatSubmitType = {
       url: options.url,
-      data: JSON.stringify(options.data),
+      data: JSON.stringify(options.data) || '',
       time: Date.now(),
     };
     const sessionObj: RepeatSubmitType = sessionGetJSON(CACHE_SESSION_FATCH);
     if (sessionObj) {
       const { url, data, time } = sessionObj;
-      const interval = 1000; // 间隔时间(ms)，小于此时间视为重复提交
+      const interval = 3 * 1000; // 间隔时间(ms)，小于此时间视为重复提交
       if (
         requestObj.url === url &&
         requestObj.data === data &&
         requestObj.time - time < interval
       ) {
-        const message = '数据正在处理，请勿重复提交';
-        console.warn(`[${url}]: ${message}`);
-        return Promise.reject(message);
+        console.warn(`[${url}]: ${RESULT_MSG_RESUBMIT}`);
+        return Promise.resolve({
+          code: RESULT_CODE_ERROR,
+          msg: RESULT_MSG_RESUBMIT,
+        });
       } else {
         sessionSetJSON(CACHE_SESSION_FATCH, requestObj);
       }

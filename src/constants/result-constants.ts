@@ -18,3 +18,6 @@ export const RESULT_MSG_NOT_TYPE = 'Unknown response data type!';
 
 /**响应-服务器连接出错 */
 export const RESULT_MSG_SERVER_ERROR = 'Server connection error!';
+
+/**响应-数据正在处理，请勿重复提交 */
+export const RESULT_MSG_RESUBMIT = 'Processing, please do not resubmit!';
