@@ -530,9 +530,9 @@ onMounted(() => {
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>密度</template>
-            <a-dropdown trigger="click">
+            <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
                 <template #icon><ColumnHeightOutlined /></template>
               </a-button>
