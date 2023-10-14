@@ -82,7 +82,7 @@ const FATCH_OPTIONS: OptionsType = {
     [APP_REQUEST_HEADER_CODE]: import.meta.env.VITE_APP_CODE,
     [APP_REQUEST_HEADER_VERSION]: import.meta.env.VITE_APP_VERSION,
     // 使用mock.apifox.cn时开启
-    // apifoxToken: '8zCzh3vipdEwd1ukv9lQEuTekdWIH7xN',
+    apifoxToken: '8zCzh3vipdEwd1ukv9lQEuTekdWIH7xN',
   },
   dataType: 'json',
   responseType: 'json',

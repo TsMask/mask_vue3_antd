@@ -20,7 +20,8 @@ export default defineConfig(({ mode }) => {
       proxy: {
         // https://cn.vitejs.dev/config/#server-proxy
         [env.VITE_API_BASE_URL]: {
-          target: 'http://192.168.56.1:6275',
+          target: 'https://mock.apifox.cn/m1/1551143-0-default',
+          // target: 'http://192.168.56.1:6275',
           changeOrigin: true,
           rewrite: p => p.replace(/^\/dev-api/, ''),
         },
