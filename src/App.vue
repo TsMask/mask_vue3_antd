@@ -8,6 +8,12 @@ import 'dayjs/locale/zh-cn';
 dayjs.locale('zh-cn'); // 默认中文
 usePrimaryColor(); // 载入用户自定义主题色
 const appStore = useAppStore();
+// 输出应用版本号
+console.info(
+  `%c ${appStore.appName} %c ${appStore.appCode} - ${appStore.appVersion} `,
+  'color: #fadfa3; background: #030307; padding: 4px 0;',
+  'color: #030307; background: #fadfa3; padding: 4px 0;'
+);
 </script>
 
 <template>
