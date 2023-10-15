@@ -317,11 +317,12 @@ onMounted(() => {
             :columns="cacheNameTableColumns"
             :data-source="cacheNameTable.data"
             :loading="cacheNameTable.loading"
+            :scroll="{ y: 1200 }"
+            :pagination="false"
             :row-selection="{
               type: 'radio',
               onChange: (selectedRowKeys: (string|number)[]) => fnCacheKeyList(selectedRowKeys[0] as string),
             }"
-            :pagination="false"
           >
             <template
               #customFilterDropdown="{
@@ -398,11 +399,12 @@ onMounted(() => {
             :columns="cacheKeyTableColumns"
             :data-source="cacheKeyTable.data"
             :loading="cacheKeyTable.loading"
+            :scroll="{ y: 1200 }"
+            :pagination="false"
             :row-selection="{
               type: 'radio',
               onChange: (selectedRowKeys: (string|number)[]) => fnCacheKeyInfo(selectedRowKeys[0] as string),
             }"
-            :pagination="false"
           >
             <template
               #customFilterDropdown="{
