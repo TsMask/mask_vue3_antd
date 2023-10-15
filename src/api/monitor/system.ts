@@ -1,9 +1,9 @@
 import { request } from '@/plugins/http-fetch';
 
-/**获取服务信息 */
-export function getServer() {
+/**服务器服务信息 */
+export function getSystemInfo() {
   return request({
-    url: '/monitor/server',
+    url: '/monitor/system-info',
     method: 'get',
   });
 }

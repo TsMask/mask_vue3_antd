@@ -3,7 +3,7 @@ import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted } from 'vue';
 import { PageContainer } from '@ant-design-vue/pro-layout';
 import { ColumnsType } from 'ant-design-vue/lib/table';
-import { getServer } from '@/api/monitor/server';
+import { getSystemInfo } from '@/api/monitor/system';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const route = useRoute();
 
@@ -72,7 +72,7 @@ let server: ServerType = reactive({
 });
 
 onMounted(() => {
-  getServer().then(res => {
+  getSystemInfo().then(res => {
     if (res.code === RESULT_CODE_SUCCESS && res.data) {
       // CPU信息
       let cpu = res.data.cpu;
