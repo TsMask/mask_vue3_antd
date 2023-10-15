@@ -7,11 +7,11 @@ import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
 import { ColumnsType } from 'ant-design-vue/lib/table';
 import {
-  exportOperlog,
-  listOperlog,
-  delOperlog,
-  cleanOperlog,
-} from '@/api/monitor/operlog';
+  exportSysLogOperate,
+  listSysLogOperate,
+  delSysLogOperate,
+  cleanSysLogOperate,
+} from '@/api/system/log/operate';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
@@ -233,7 +233,7 @@ let modalState: ModalStateType = reactive({
     operParam: '',
     operTime: 0,
     operUrl: '',
-    operatorType: 1,
+    operType: 1,
     requestMethod: 'PUT',
     status: 1,
     title: '',
@@ -264,9 +264,9 @@ function fnRecordDelete() {
     title: '提示',
     content: `确认删除访问编号为 【${ids}】 的数据项吗?`,
     onOk() {
-      const key = 'delOperlog';
+      const key = 'delSysLogOperate';
       message.loading({ content: '请稍等...', key });
-      delOperlog(ids).then(res => {
+      delSysLogOperate(ids).then(res => {
         if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: '删除成功',
@@ -292,9 +292,9 @@ function fnCleanList() {
     title: '提示',
     content: `确认清空所有登录日志数据项?`,
     onOk() {
-      const key = 'cleanOperlog';
+      const key = 'cleanSysLogOperate';
       message.loading({ content: '请稍等...', key });
-      cleanOperlog().then(res => {
+      cleanSysLogOperate().then(res => {
         if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: '清空成功',
@@ -320,16 +320,16 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const key = 'exportOperlog';
+      const key = 'exportSysLogOperate';
       message.loading({ content: '请稍等...', key });
-      exportOperlog(toRaw(queryParams)).then(res => {
+      exportSysLogOperate(toRaw(queryParams)).then(res => {
         if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `已完成导出`,
             key,
             duration: 2,
           });
-          saveAs(res.data, `operlog_${Date.now()}.xlsx`);
+          saveAs(res.data, `sys_log_operate_${Date.now()}.xlsx`);
         } else {
           message.error({
             content: `${res.msg}`,
@@ -351,7 +351,7 @@ function fnGetList() {
   }
   queryParams.beginTime = queryRangePicker.value[0];
   queryParams.endTime = queryRangePicker.value[1];
-  listOperlog(toRaw(queryParams)).then(res => {
+  listSysLogOperate(toRaw(queryParams)).then(res => {
     if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
@@ -417,11 +417,11 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="操作类型" name="businessType">
+            <a-form-item label="业务类型" name="businessType">
               <a-select
                 v-model:value="queryParams.businessType"
                 allow-clear
-                placeholder="请选择操作类型"
+                placeholder="请选择业务类型"
                 :options="dict.sysBusinessType"
               >
               </a-select>
@@ -477,7 +477,7 @@ onMounted(() => {
             danger
             :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="fnRecordDelete()"
-            v-perms:has="['monitor:operlog:remove']"
+            v-perms:has="['system:log:operate:remove']"
           >
             <template #icon><DeleteOutlined /></template>
             删除
@@ -486,7 +486,7 @@ onMounted(() => {
             type="dashed"
             danger
             @click.prevent="fnCleanList()"
-            v-perms:has="['monitor:operlog:remove']"
+            v-perms:has="['system:log:operate:remove']"
           >
             <template #icon><DeleteOutlined /></template>
             清空
@@ -494,7 +494,7 @@ onMounted(() => {
           <a-button
             type="dashed"
             @click.prevent="fnExportList()"
-            v-perms:has="['monitor:operlog:export']"
+            v-perms:has="['system:log:operate:export']"
           >
             <template #icon><ExportOutlined /></template>
             导出
@@ -584,7 +584,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="fnModalVisibleByVive(record)"
-                  v-perms:has="['monitor:operlog:query']"
+                  v-perms:has="['system:log:operate:query']"
                 >
                   <template #icon><ProfileOutlined /></template>
                   详情

@@ -5,11 +5,11 @@ import { request } from '@/plugins/http-fetch';
  * @param query 查询参数
  * @returns bolb
  */
-export function exportOperlog(
+export function exportSysLogOperate(
   query: Record<string, any>
 ) {
   return request({
-    url: '/monitor/operlog/export',
+    url: '/system/log/operate/export',
     method: 'post',
     data: query,
     responseType: 'blob',
@@ -21,11 +21,11 @@ export function exportOperlog(
  * @param query 查询参数
  * @returns object
  */
-export function listOperlog(
+export function listSysLogOperate(
   query: Record<string, any>
 ) {
   return request({
-    url: '/monitor/operlog/list',
+    url: '/system/log/operate/list',
     method: 'get',
     params: query,
   });
@@ -36,9 +36,9 @@ export function listOperlog(
  * @param operId 操作日志ID
  * @returns object
  */
-export function delOperlog(operId: string) {
+export function delSysLogOperate(operId: string) {
   return request({
-    url: `/monitor/operlog/${operId}`,
+    url: `/system/log/operate/${operId}`,
     method: 'delete',
   });
 }
@@ -47,9 +47,9 @@ export function delOperlog(operId: string) {
  * 清空操作日志
  * @returns object
  */
-export function cleanOperlog() {
+export function cleanSysLogOperate() {
   return request({
-    url: '/monitor/operlog/clean',
+    url: '/system/log/operate/clean',
     method: 'delete',
   });
 }

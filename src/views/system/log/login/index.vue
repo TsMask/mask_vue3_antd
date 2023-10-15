@@ -7,12 +7,12 @@ import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
 import { ColumnsType } from 'ant-design-vue/lib/table';
 import {
-  exportLogininfor,
-  listLogininfor,
-  delLogininfor,
-  cleanLogininfor,
-  unlockLogininfor,
-} from '@/api/monitor/logininfor';
+  exportSysLogLogin,
+  listSysLogLogin,
+  delSysLogLogin,
+  cleanSysLogLogin,
+  unlock,
+} from '@/api/system/log/login';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
@@ -102,7 +102,7 @@ let tableState: TabeStateType = reactive({
 let tableColumns: ColumnsType = [
   {
     title: '日志编号',
-    dataIndex: 'infoId',
+    dataIndex: 'loginId',
     align: 'center',
   },
   {
@@ -195,7 +195,7 @@ function fnTableSelectedRows(
   _: (string | number)[],
   rows: Record<string, string>[]
 ) {
-  tableState.selectedRowKeys = rows.map(item => item.infoId);
+  tableState.selectedRowKeys = rows.map(item => item.loginId);
   // 针对单个登录账号解锁
   if (rows.length === 1) {
     tableState.selectedUserName = rows[0].userName;
@@ -211,9 +211,9 @@ function fnRecordDelete() {
     title: '提示',
     content: `确认删除访问编号为 【${ids}】 的数据项吗?`,
     onOk() {
-      const key = 'delLogininfor';
+      const key = 'delSysLogLogin';
       message.loading({ content: '请稍等...', key });
-      delLogininfor(ids).then(res => {
+      delSysLogLogin(ids).then(res => {
         if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `删除成功`,
@@ -239,9 +239,9 @@ function fnCleanList() {
     title: '提示',
     content: `确认清空所有登录日志数据项?`,
     onOk() {
-      const key = 'cleanLogininfor';
+      const key = 'cleanSysLogLogin';
       message.loading({ content: '请稍等...', key });
-      cleanLogininfor().then(res => {
+      cleanSysLogLogin().then(res => {
         if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `清空成功`,
@@ -269,7 +269,7 @@ function fnUnlock() {
     content: `确认解锁用户 【${username}】 数据项?`,
     onOk() {
       const hide = message.loading('请稍等...', 0);
-      unlockLogininfor(username).then(res => {
+      unlock(username).then(res => {
         hide();
         if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
@@ -293,16 +293,16 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const key = 'exportLogininfor';
+      const key = 'exportSysLogLogin';
       message.loading({ content: '请稍等...', key });
-      exportLogininfor(toRaw(queryParams)).then(res => {
+      exportSysLogLogin(toRaw(queryParams)).then(res => {
         if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `已完成导出`,
             key,
             duration: 2,
           });
-          saveAs(res.data, `logininfor_${Date.now()}.xlsx`);
+          saveAs(res.data, `sys_log_login_${Date.now()}.xlsx`);
         } else {
           message.error({
             content: `${res.msg}`,
@@ -324,7 +324,7 @@ function fnGetList() {
   }
   queryParams.beginTime = queryRangePicker.value[0];
   queryParams.endTime = queryRangePicker.value[1];
-  listLogininfor(toRaw(queryParams)).then(res => {
+  listSysLogLogin(toRaw(queryParams)).then(res => {
     if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
@@ -436,7 +436,7 @@ onMounted(() => {
             type="primary"
             :disabled="!tableState.selectedUserName"
             @click.prevent="fnUnlock()"
-            v-perms:has="['monitor:logininfor:unlock']"
+            v-perms:has="['system:log:login:unlock']"
           >
             <template #icon><UnlockOutlined /></template>
             解锁
@@ -446,7 +446,7 @@ onMounted(() => {
             danger
             :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="fnRecordDelete()"
-            v-perms:has="['monitor:logininfor:remove']"
+            v-perms:has="['system:log:login:remove']"
           >
             <template #icon><DeleteOutlined /></template>
             删除
@@ -455,7 +455,7 @@ onMounted(() => {
             type="dashed"
             danger
             @click.prevent="fnCleanList()"
-            v-perms:has="['monitor:logininfor:remove']"
+            v-perms:has="['system:log:login:remove']"
           >
             <template #icon><DeleteOutlined /></template>
             清空
@@ -463,7 +463,7 @@ onMounted(() => {
           <a-button
             type="dashed"
             @click.prevent="fnExportList()"
-            v-perms:has="['monitor:logininfor:export']"
+            v-perms:has="['system:log:login:export']"
           >
             <template #icon><ExportOutlined /></template>
             导出
@@ -522,7 +522,7 @@ onMounted(() => {
       <!-- 表格列表 -->
       <a-table
         class="table"
-        row-key="infoId"
+        row-key="loginId"
         :columns="tableColumns"
         :loading="tableState.loading"
         :data-source="tableState.data"

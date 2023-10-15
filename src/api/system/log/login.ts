@@ -5,11 +5,11 @@ import { request } from '@/plugins/http-fetch';
  * @param query 查询参数
  * @returns bolb
  */
-export function exportLogininfor(
+export function exportSysLogLogin(
   query: Record<string, any>
 ) {
   return request({
-    url: '/monitor/logininfor/export',
+    url: '/system/log/login/export',
     method: 'post',
     data: query,
     responseType: 'blob',
@@ -21,11 +21,11 @@ export function exportLogininfor(
  * @param query 查询参数
  * @returns object
  */
-export function listLogininfor(
+export function listSysLogLogin(
   query: Record<string, any>
 ) {
   return request({
-    url: '/monitor/logininfor/list',
+    url: '/system/log/login/list',
     method: 'get',
     params: query,
   });
@@ -33,12 +33,12 @@ export function listLogininfor(
 
 /**
  * 删除登录日志
- * @param infoId 登录日志Id
+ * @param loginIds 登录Id
  * @returns object
  */
-export function delLogininfor(infoId: string) {
+export function delSysLogLogin(loginIds: string) {
   return request({
-    url: `/monitor/logininfor/${infoId}`,
+    url: `/system/log/login/${loginIds}`,
     method: 'delete',
   });
 }
@@ -47,9 +47,9 @@ export function delLogininfor(infoId: string) {
  * 清空登录日志
  * @returns object
  */
-export function cleanLogininfor() {
+export function cleanSysLogLogin() {
   return request({
-    url: '/monitor/logininfor/clean',
+    url: '/system/log/login/clean',
     method: 'delete',
   });
 }
@@ -59,9 +59,9 @@ export function cleanLogininfor() {
  * @param userName 登录账号
  * @returns object
  */
-export function unlockLogininfor(userName: string) {
+export function unlock(userName: string) {
   return request({
-    url: `/monitor/logininfor/unlock/${userName}`,
+    url: `/system/log/login/unlock/${userName}`,
     method: 'put',
   });
 }
