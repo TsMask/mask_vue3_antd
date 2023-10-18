@@ -845,11 +845,13 @@ onMounted(() => {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="数据排序" name="dictSort">
-              <a-input
+              <a-input-number
                 v-model:value="modalState.from.dictSort"
-                allow-clear
+                :min="0"
+                :max="9999"
+                :step="1"
                 placeholder="请输入数据排序"
-              ></a-input>
+              ></a-input-number>
             </a-form-item>
           </a-col>
         </a-row>
