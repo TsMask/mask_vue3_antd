@@ -130,7 +130,7 @@ tabsStore.clear();
       <!--插槽-菜单头-->
       <template #menuHeaderRender>
         <RouterLink :to="{ name: 'Index' }" :replace="true">
-          <img class="logo" src="@/assets/logo.png" />
+          <img class="app-logo" src="@/assets/logo.png" />
           <h1>{{ appName }}</h1>
         </RouterLink>
       </template>
@@ -203,7 +203,7 @@ tabsStore.clear();
 </template>
 
 <style lang="less" scoped>
-.logo {
+.app-logo {
   height: 32px;
   vertical-align: middle;
   border-style: none;
