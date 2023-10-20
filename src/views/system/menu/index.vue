@@ -48,7 +48,7 @@ let dict: {
 /**查询参数 */
 let queryParams = reactive({
   /**菜单名称 */
-  menuName: undefined,
+  menuName: '',
   /**状态 */
   status: undefined,
 });
