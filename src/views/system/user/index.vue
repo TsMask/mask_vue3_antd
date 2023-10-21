@@ -223,12 +223,6 @@ type OptionsType = {
   roles: Record<string, any>[];
 };
 
-/**初始用户选择列表 */
-let options: OptionsType = {
-  posts: [],
-  roles: [],
-};
-
 /**对话框对象信息状态类型 */
 type ModalStateType = {
   /**详情框是否显示 */
@@ -368,45 +362,36 @@ function fnModalVisibleByVive(userId: string | number) {
 function fnModalVisibleByEdit(userId?: string | number) {
   if (!userId) {
     modalStateFrom.resetFields();
-    if (options.roles.length > 0) {
-      modalState.options.roles = options.roles;
-      modalState.options.posts = options.posts;
-      modalState.title = '添加用户信息';
-      modalState.visibleByEdit = true;
-    } else {
-      if (modalState.confirmLoading) return;
-      const hide = message.loading('正在打开...', 0);
-      modalState.confirmLoading = true;
-      // 查询用户详细获取岗位和角色列表
-      getUser().then(res => {
-        modalState.confirmLoading = false;
-        hide();
-        if (res.code === RESULT_CODE_SUCCESS && res.data) {
-          const roles = res.data.roles.map((m: Record<string, any>) => {
-            const disabled = m.status === '0';
-            Reflect.set(m, 'disabled', disabled);
-            return m;
-          });
-          const posts = res.data.posts.map((m: Record<string, any>) => {
-            const disabled = m.status === '0';
-            Reflect.set(m, 'disabled', disabled);
-            return m;
-          });
-          options.roles = roles;
-          options.posts = posts;
-          modalState.options.roles = roles;
-          modalState.options.posts = posts;
-          const { user, roleIds, postIds } = res.data;
-          modalState.from = Object.assign(modalState.from, user);
-          modalState.from.roleIds = roleIds;
-          modalState.from.postIds = postIds;
-          modalState.title = '添加用户信息';
-          modalState.visibleByEdit = true;
-        } else {
-          message.error('获取用户信息失败', 2);
-        }
-      });
-    }
+    if (modalState.confirmLoading) return;
+    const hide = message.loading('正在打开...', 0);
+    modalState.confirmLoading = true;
+    // 查询用户详细获取岗位和角色列表
+    getUser().then(res => {
+      modalState.confirmLoading = false;
+      hide();
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
+        const roles = res.data.roles.map((m: Record<string, any>) => {
+          const disabled = m.status === '0';
+          Reflect.set(m, 'disabled', disabled);
+          return m;
+        });
+        const posts = res.data.posts.map((m: Record<string, any>) => {
+          const disabled = m.status === '0';
+          Reflect.set(m, 'disabled', disabled);
+          return m;
+        });
+        modalState.options.roles = roles;
+        modalState.options.posts = posts;
+        const { user, roleIds, postIds } = res.data;
+        modalState.from = Object.assign(modalState.from, user);
+        modalState.from.roleIds = roleIds;
+        modalState.from.postIds = postIds;
+        modalState.title = '添加用户信息';
+        modalState.visibleByEdit = true;
+      } else {
+        message.error('获取用户信息失败', 2);
+      }
+    });
   } else {
     if (modalState.confirmLoading) return;
     const hide = message.loading('正在打开...', 0);
