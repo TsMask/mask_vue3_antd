@@ -36,9 +36,12 @@ let dict: {
   sysJobGroup: DictType[];
   /**任务状态 */
   sysJobStatus: DictType[];
+  /**任务记录日志 */
+  sysJobSaveLog: DictType[];
 } = reactive({
   sysJobGroup: [],
   sysJobStatus: [],
+  sysJobSaveLog: [],
 });
 
 /**查询参数 */
@@ -130,6 +133,12 @@ let tableColumns: ColumnsType = [
     align: 'center',
   },
   {
+    title: '记录日志',
+    dataIndex: 'saveLog',
+    key: 'saveLog',
+    align: 'center',
+  },
+  {
     title: '操作',
     key: 'jobId',
     align: 'center',
@@ -209,6 +218,7 @@ let modalState: ModalStateType = reactive({
     concurrent: '0',
     jobGroup: 'DEFAULT',
     status: '0',
+    saveLog: '0',
     targetParams: '',
     remark: '',
   },
@@ -541,12 +551,16 @@ onMounted(() => {
   Promise.allSettled([
     getDict('sys_job_group'),
     getDict('sys_job_status'),
+    getDict('sys_job_save_log'),
   ]).then(resArr => {
     if (resArr[0].status === 'fulfilled') {
       dict.sysJobGroup = resArr[0].value;
     }
     if (resArr[1].status === 'fulfilled') {
       dict.sysJobStatus = resArr[1].value;
+    }
+    if (resArr[2].status === 'fulfilled') {
+      dict.sysJobSaveLog = resArr[2].value;
     }
   });
   // 获取列表数据
