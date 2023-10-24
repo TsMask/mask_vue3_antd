@@ -1,11 +1,11 @@
 {
-  "name": "mask_antd_vue3",
+  "name": "mask_vue3_antd",
   "type": "module",
   "description": "🎉 基于 ant-design-vue + vue3 的管理系统",
   "author": "TsMask",
   "repository": {
     "type": "git",
-    "url": "https://gitee.com/TsMask/mask_antd_vue3"
+    "url": "https://gitee.com/TsMask/mask_vue3_antd"
   },
   "license": "MIT",
   "engines": {
@@ -17,29 +17,29 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ant-design-vue/pro-layout": "^3.2.4",
+    "@ant-design-vue/pro-layout": "^3.2.5",
     "@ant-design/icons-vue": "^7.0.1",
     "ant-design-vue": "^3.2.20",
-    "dayjs": "^1.11.8",
+    "dayjs": "^1.11.10",
     "echarts": "^5.4.2",
     "file-saver": "^2.0.5",
     "js-base64": "^3.7.5",
     "js-cookie": "^3.0.5",
     "nprogress": "^0.2.0",
     "pinia": "^2.1.7",
-    "vue": "^3.3.4",
+    "vue": "^3.3.6",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
-    "@types/file-saver": "^2.0.5",
-    "@types/js-cookie": "^3.0.4",
+    "@types/file-saver": "^2.0.6",
+    "@types/js-cookie": "^3.0.5",
     "@types/node": "^18.0.0",
     "@types/nprogress": "^0.2.0",
     "@vitejs/plugin-vue": "^4.4.0",
     "less": "^4.2.0",
     "typescript": "^5.2.2",
     "unplugin-vue-components": "^0.25.2",
-    "vite": "^4.4.11",
+    "vite": "^4.5.0",
     "vite-plugin-compression": "^0.5.1",
     "vue-tsc": "^1.8.19"
   }
