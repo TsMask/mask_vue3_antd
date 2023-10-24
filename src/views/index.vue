@@ -13,7 +13,7 @@ function goTarget(type: string) {
     url = 'https://gitee.com/TsMask/';
   }
   if (type === 'issues') {
-    url = 'https://gitee.com/TsMask/mask_antd_vue3/issues';
+    url = 'https://gitee.com/TsMask/mask_vue3_antd/issues';
   }
   window.open(url, '__blank');
 }

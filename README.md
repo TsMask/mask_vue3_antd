@@ -1,6 +1,6 @@
-# 基于 Ant-Design-Vue + Vue3 的管理系统
+# 基于 Vue3 + Ant-Design-Vue 的管理系统
 
-[![star](https://gitee.com/TsMask/mask_antd_vue3/badge/star.svg?theme=dark)](https://gitee.com/TsMask/mask_antd_vue3/stargazers)
+[![star](https://gitee.com/TsMask/mask_vue3_antd/badge/star.svg?theme=dark)](https://gitee.com/TsMask/mask_vue3_antd/stargazers)
 ![Build Vite](https://img.shields.io/badge/Build-Vite-green.svg)
 ![Build Vue3](https://img.shields.io/badge/Build-Vue3-green.svg)
 ![Build MaskApi](https://img.shields.io/badge/Build-MaskApi-orange.svg)
@@ -24,7 +24,7 @@
 ### 前端
 
 - `Vue3-Element` 仓库地址 => [mask_element_vue3](https://gitee.com/TsMask/mask_element_vue3)
-- `Vue3-Antd` 仓库地址 => [mask_antd_vue3](https://gitee.com/TsMask/mask_antd_vue3)
+- `Vue3-Antd` 仓库地址 => [mask_vue3_antd](https://gitee.com/TsMask/mask_vue3_antd)
 
 ### 后端
 
