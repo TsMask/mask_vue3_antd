@@ -4,7 +4,7 @@
 ![Build Vite](https://img.shields.io/badge/Build-Vite-green.svg)
 ![Build Vue3](https://img.shields.io/badge/Build-Vue3-green.svg)
 ![Build MaskApi](https://img.shields.io/badge/Build-MaskApi-orange.svg)
-![Release V0.2.5](https://img.shields.io/badge/Release-V0.2.5-orange.svg)
+![Release V0.2.6](https://img.shields.io/badge/Release-V0.2.6-orange.svg)
 ![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 ## 简介
