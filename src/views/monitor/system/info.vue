@@ -71,6 +71,32 @@ let server: ServerType = reactive({
   time: {},
 });
 
+/**运行时长（秒）转换 */
+function loadUpTime(uptime: string | number) {
+  if (typeof uptime === 'string') {
+    return uptime;
+  }
+  if (uptime <= 0) {
+    return '-';
+  }
+  let days = Math.floor(uptime / 86400);
+  let hours = Math.floor((uptime % 86400) / 3600);
+  let minutes = Math.floor((uptime % 3600) / 60);
+  let seconds = uptime % 60;
+  let strArr: string[] = [];
+  if (days !== 0) {
+    strArr.push(`${days}天`);
+  }
+  if (hours !== 0) {
+    strArr.push(`${hours}小时`);
+  }
+  if (minutes !== 0) {
+    strArr.push(`${minutes}分钟`);
+  }
+  strArr.push(`${seconds}秒`);
+  return strArr.join(' ');
+}
+
 onMounted(() => {
   getSystemInfo().then(res => {
     if (res.code === RESULT_CODE_SUCCESS && res.data) {
@@ -148,53 +174,53 @@ onMounted(() => {
         size="middle"
         layout="horizontal"
         :label-style="{ width: '140px' }"
-        :column="{ lg: 2, md: 2, xs: 1 }"
+        :column="{ lg: 3, md: 3, xs: 1 }"
         :bordered="true"
       >
-        <a-descriptions-item
-          label="GO版本"
-          :span="2"
-          v-if="server.system && server.system.go"
-        >
-          {{ server.system.go }}
-        </a-descriptions-item>
-        <a-descriptions-item
-          label="Node版本"
-          v-if="server.system && server.system.node"
-        >
-          {{ server.system.node }}
-        </a-descriptions-item>
-        <a-descriptions-item
-          label="V8版本"
-          v-if="server.system && server.system.v8"
-        >
-          {{ server.system.v8 }}
-        </a-descriptions-item>
-        <a-descriptions-item label="进程PID号">
-          {{ server.system.processId }}
-        </a-descriptions-item>
-        <a-descriptions-item label="运行平台">
+        <a-descriptions-item label="系统平台">
           {{ server.system.platform }}
         </a-descriptions-item>
+        <a-descriptions-item label="平台架构">
+          {{ server.system.platformVersion }}
+        </a-descriptions-item>
+        <a-descriptions-item label="系统OS">
+          {{ server.system.os }}
+        </a-descriptions-item>
+
         <a-descriptions-item label="系统架构">
-          {{ server.system.arch }}
+          {{ server.system.arch }} {{ server.system.archVersion }}
         </a-descriptions-item>
-        <a-descriptions-item label="系统平台">
-          {{ server.system.uname }}
+        <a-descriptions-item label="架构版本">
+          {{ server.system.archVersion }}
         </a-descriptions-item>
-        <a-descriptions-item label="系统发行版本">
-          {{ server.system.release }}
+        <a-descriptions-item label="系统运行">
+          {{ loadUpTime(server.system.bootTime) }}
         </a-descriptions-item>
+
+        <a-descriptions-item label="程序版本">
+          {{ server.system.runVersion }}
+        </a-descriptions-item>
+        <a-descriptions-item label="程序架构">
+          {{ server.system.runArch }}
+        </a-descriptions-item>
+        <a-descriptions-item label="程序运行">
+          {{ loadUpTime(server.system.runTime) }}
+        </a-descriptions-item>
+
         <a-descriptions-item label="主机名称">
           {{ server.system.hostname }}
         </a-descriptions-item>
-        <a-descriptions-item label="主机用户目录" :span="2">
+        <a-descriptions-item label="主机用户目录">
           {{ server.system.homeDir }}
         </a-descriptions-item>
-        <a-descriptions-item label="项目路径" :span="2">
+        <a-descriptions-item label="程序PID">
+          {{ server.system.processId }}
+        </a-descriptions-item>
+
+        <a-descriptions-item label="项目路径" :span="3">
           {{ server.system.cmd }}
         </a-descriptions-item>
-        <a-descriptions-item label="执行命令" :span="2">
+        <a-descriptions-item label="执行命令" :span="3">
           {{ server.system.execCommand }}
         </a-descriptions-item>
       </a-descriptions>
@@ -272,20 +298,17 @@ onMounted(() => {
         size="middle"
         layout="horizontal"
         :label-style="{ width: '140px' }"
-        :column="{ lg: 2, md: 2, xs: 1 }"
+        :column="{ lg: 3, md: 3, xs: 1 }"
         :bordered="true"
       >
-        <a-descriptions-item label="时区">
-          {{ server.time.timezone }}
-        </a-descriptions-item>
         <a-descriptions-item label="时间">
           {{ server.time.current }}
         </a-descriptions-item>
+        <a-descriptions-item label="时区">
+          {{ server.time.timezone }}
+        </a-descriptions-item>
         <a-descriptions-item label="时区名称">
           {{ server.time.timezoneName }}
-        </a-descriptions-item>
-        <a-descriptions-item label="程序启动时间">
-          {{ server.time.uptime }}
         </a-descriptions-item>
       </a-descriptions>
     </a-card>
