@@ -180,7 +180,7 @@ onMounted(() => {
         <a-descriptions-item label="系统平台">
           {{ server.system.platform }}
         </a-descriptions-item>
-        <a-descriptions-item label="平台架构">
+        <a-descriptions-item label="平台版本">
           {{ server.system.platformVersion }}
         </a-descriptions-item>
         <a-descriptions-item label="系统OS">
@@ -188,7 +188,7 @@ onMounted(() => {
         </a-descriptions-item>
 
         <a-descriptions-item label="系统架构">
-          {{ server.system.arch }} {{ server.system.archVersion }}
+          {{ server.system.arch }}
         </a-descriptions-item>
         <a-descriptions-item label="架构版本">
           {{ server.system.archVersion }}
@@ -197,7 +197,7 @@ onMounted(() => {
           {{ loadUpTime(server.system.bootTime) }}
         </a-descriptions-item>
 
-        <a-descriptions-item label="程序版本">
+        <a-descriptions-item label="程序环境">
           {{ server.system.runVersion }}
         </a-descriptions-item>
         <a-descriptions-item label="程序架构">
