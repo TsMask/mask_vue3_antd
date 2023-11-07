@@ -305,9 +305,7 @@ function fnModalOk() {
               key,
               duration: 2,
             });
-            modalState.visibleByEdit = false;
-            modalStateFrom.resetFields();
-            fnGetList();
+            fnGetList(1);
           } else {
             message.error({
               content: `${res.msg}`,
@@ -317,6 +315,7 @@ function fnModalOk() {
           }
         })
         .finally(() => {
+          fnModalCancel();
           modalState.confirmLoading = false;
         });
     })
@@ -369,10 +368,13 @@ function fnRecordDelete(noticeId: string = '0') {
   });
 }
 
-/**查询公告列表 */
-function fnGetList() {
+/**查询公告列表, pageNum初始页数 */
+function fnGetList(pageNum?: number) {
   if (tableState.loading) return;
   tableState.loading = true;
+  if (pageNum) {
+    queryParams.pageNum = pageNum;
+  }
   listNotice(toRaw(queryParams)).then(res => {
     if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       // 取消勾选
@@ -463,14 +465,14 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fnGetList">
+                <a-button type="primary" @click.prevent="fnGetList(1)">
                   <template #icon><SearchOutlined /></template>
-                  搜索</a-button
-                >
+                  搜索
+                </a-button>
                 <a-button type="default" @click.prevent="fnQueryReset">
                   <template #icon><ClearOutlined /></template>
-                  重置</a-button
-                >
+                  重置
+                </a-button>
               </a-space>
             </a-form-item>
           </a-col>
@@ -526,7 +528,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip>
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fnGetList">
+            <a-button type="text" @click.prevent="fnGetList()">
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>

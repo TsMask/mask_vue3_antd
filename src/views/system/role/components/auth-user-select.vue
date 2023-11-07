@@ -102,11 +102,6 @@ let tableColumns: ColumnsType = [
     align: 'center',
   },
   {
-    title: '手机号码',
-    dataIndex: 'phonenumber',
-    align: 'center',
-  },
-  {
     title: '用户状态',
     dataIndex: 'status',
     key: 'status',
@@ -156,10 +151,13 @@ function fnTableSelectedRowKeys(keys: (string | number)[]) {
   tableState.selectedRowKeys = keys;
 }
 
-/**查询角色未授权用户列表 */
-function fnGetList() {
+/**查询角色未授权用户列表, pageNum初始页数 */
+function fnGetList(pageNum?: number) {
   if (tableState.loading) return;
   tableState.loading = true;
+  if (pageNum) {
+    queryParams.pageNum = pageNum;
+  }
   authUserAllocatedList(toRaw(queryParams)).then(res => {
     if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
       // 取消勾选
@@ -199,7 +197,7 @@ function init() {
     }
   });
   // 获取列表数据
-  fnGetList();
+  fnGetList(1);
 }
 
 /**监听是否显示，初始数据 */
@@ -296,8 +294,4 @@ watch(
   </a-modal>
 </template>
 
-<style lang="less" scoped>
-.table :deep(.ant-pagination) {
-  padding: 0 24px;
-}
-</style>
+<style lang="less" scoped></style>

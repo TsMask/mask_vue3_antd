@@ -23,6 +23,7 @@ import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
+const routePath = route.path;
 
 /**路由标题 */
 let title = ref<string>(route.meta.title ?? '标题');
@@ -296,9 +297,7 @@ function fnModalOk() {
               key,
               duration: 2,
             });
-            modalState.visibleByEdit = false;
-            modalStateFrom.resetFields();
-            fnGetList();
+            fnGetList(1);
           } else {
             message.error({
               content: `${res.msg}`,
@@ -308,6 +307,7 @@ function fnModalOk() {
           }
         })
         .finally(() => {
+          fnModalCancel();
           modalState.confirmLoading = false;
         });
     })
@@ -419,13 +419,16 @@ function fnRefreshCache() {
 
 /**跳转字典数据页面 */
 function fnDataView(dictId: string | number = '0') {
-  router.push(`/system/dict${MENU_PATH_INLINE}/data/${dictId}`);
+  router.push(`${routePath}${MENU_PATH_INLINE}/data/${dictId}`);
 }
 
-/**查询参数配置列表 */
-function fnGetList() {
+/**查询参数配置列表, pageNum初始页数 */
+function fnGetList(pageNum?: number) {
   if (tableState.loading) return;
   tableState.loading = true;
+  if (pageNum) {
+    queryParams.pageNum = pageNum;
+  }
   if (!queryRangePicker.value) {
     queryRangePicker.value = ['', ''];
   }
@@ -516,7 +519,7 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fnGetList">
+                <a-button type="primary" @click.prevent="fnGetList(1)">
                   <template #icon><SearchOutlined /></template>
                   搜索</a-button
                 >
@@ -604,7 +607,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip>
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fnGetList">
+            <a-button type="text" @click.prevent="fnGetList()">
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>

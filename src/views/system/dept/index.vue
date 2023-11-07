@@ -308,12 +308,10 @@ function fnModalOk() {
               content: `${modalState.title}成功`,
               duration: 2,
             });
-            modalState.visibleByEdit = false;
             // 新增时清空上级部门树重新获取
             if (!from.deptId) {
               treeDataAll = [];
             }
-            modalStateFrom.resetFields();
             fnGetList();
           } else {
             message.error({
@@ -323,6 +321,7 @@ function fnModalOk() {
           }
         })
         .finally(() => {
+          fnModalCancel();
           hide();
           modalState.confirmLoading = false;
         });
@@ -441,14 +440,14 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fnGetList">
+                <a-button type="primary" @click.prevent="fnGetList()">
                   <template #icon><SearchOutlined /></template>
-                  搜索</a-button
-                >
+                  搜索
+                </a-button>
                 <a-button type="default" @click.prevent="fnQueryReset">
                   <template #icon><ClearOutlined /></template>
-                  重置</a-button
-                >
+                  重置
+                </a-button>
               </a-space>
             </a-form-item>
           </a-col>
@@ -504,7 +503,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip>
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fnGetList">
+            <a-button type="text" @click.prevent="fnGetList()">
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
