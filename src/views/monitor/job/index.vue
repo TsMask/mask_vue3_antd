@@ -611,7 +611,7 @@ onMounted(() => {
               <a-select
                 v-model:value="queryParams.jobGroup"
                 allow-clear
-                placeholder="请选择菜单状态"
+                placeholder="请选择任务组名"
                 :options="dict.sysJobGroup"
               >
               </a-select>
@@ -903,7 +903,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="记录日志" name="status">
+            <a-form-item label="记录日志" name="saveLog">
               <DictTag
                 :options="dict.sysJobSaveLog"
                 :value="modalState.from.saveLog"
@@ -958,7 +958,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="6" :xs="24">
-            <a-form-item label="执行策略" name="misfirePolicy">
+            <a-form-item label="出错策略" name="misfirePolicy">
               <a-select
                 :disabled="true"
                 v-model:value="modalState.from.misfirePolicy"

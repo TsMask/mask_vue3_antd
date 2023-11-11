@@ -423,7 +423,7 @@ onMounted(() => {
               <a-select
                 v-model:value="queryParams.jobGroup"
                 allow-clear
-                placeholder="请选择菜单状态"
+                placeholder="请选择任务组名"
                 :options="dict.sysJobGroup"
               >
               </a-select>
