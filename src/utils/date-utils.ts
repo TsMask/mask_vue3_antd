@@ -1,9 +1,9 @@
 // 依赖来源 https://github.com/iamkun/dayjs
 import dayjs from 'dayjs';
 
-// 导入本地化语言并设为默认使用
-import('dayjs/locale/zh-cn');
-dayjs.locale('zh-cn');
+// 导入本地化语言并设为默认使用，全局有引入就行
+// import('dayjs/locale/zh-cn');
+// dayjs.locale('zh-cn');
 
 /**年 列如：2022 */
 export const YYYY = 'YYYY';
