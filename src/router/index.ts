@@ -217,6 +217,15 @@ const router = createRouter({
   },
 });
 
+/**无Token可访问页面地址白名单 */
+const WHITE_LIST: string[] = [
+  '/login',
+  '/auth-redirect',
+  '/404',
+  '/403',
+  '/register',
+];
+
 /**全局路由-后置守卫 */
 router.afterEach((to, from, failure) => {
   NProgress.done();
@@ -225,9 +234,6 @@ router.afterEach((to, from, failure) => {
     useAppStore().setTitle(to.meta.title);
   }
 });
-
-/**无Token可访问页面地址白名单 */
-const WHITE_LIST: string[] = ['/login', '/auth-redirect', '/bind', '/register'];
 
 /**全局路由-前置守卫 */
 router.beforeEach((to, from, next) => {
