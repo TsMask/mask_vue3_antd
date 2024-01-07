@@ -87,28 +87,33 @@ let tableColumns: ColumnsType = [
   {
     title: '部门名称',
     dataIndex: 'deptName',
-    align: 'center',
+    align: 'left',
+    width: 200,
   },
   {
     title: '部门编号',
     dataIndex: 'deptId',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '部门排序',
     dataIndex: 'orderNum',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '岗位状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
+    width: 100,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     align: 'center',
+    width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
@@ -117,7 +122,7 @@ let tableColumns: ColumnsType = [
   {
     title: '操作',
     key: 'deptId',
-    align: 'center',
+    align: 'left',
   },
 ];
 
@@ -187,7 +192,7 @@ const modalStateFrom = Form.useForm(
   reactive({
     parentId: [{ required: true, message: '上级部门不能为空' }],
     deptName: [
-      { required: true, min: 1, max: 30, message: '请正确输入部门名称' },
+      { required: true, min: 1, max: 50, message: '请正确输入部门名称' },
     ],
     email: [
       {
@@ -537,7 +542,10 @@ onMounted(() => {
         :size="tableState.size"
         :row-class-name="fnTableStriped"
         :pagination="false"
-        :scroll="{ x: true }"
+        :scroll="{
+          x: tableColumns.length * 120,
+          scrollToFirstRowOnChange: true,
+        }"
         children-column-name="children"
         :expanded-row-keys="tableState.expandedRowKeys"
         @expandedRowsChange="fnTableExpandedRowsChange"
@@ -603,32 +611,37 @@ onMounted(() => {
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
-      <a-form layout="horizontal">
-        <a-row :gutter="16">
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="上级部门" name="parentId">
-              <a-tree-select
-                :value="modalState.from.parentId"
-                placeholder="上级部门"
-                disabled
-                :tree-data="modalState.treeData"
-                :field-names="{
-                  children: 'children',
-                  label: 'deptName',
-                  value: 'deptId',
-                }"
-                tree-node-label-prop="deptName"
-              >
-                <template #suffixIcon></template>
-              </a-tree-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="显示排序" name="orderNum">
-              {{ modalState.from.orderNum }}
-            </a-form-item>
-          </a-col>
-        </a-row>
+      <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
+        <a-form-item
+          label="部门编号"
+          name="deptId"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
+          {{ modalState.from.deptId }}
+        </a-form-item>
+        <a-form-item
+          label="上级部门"
+          name="parentId"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
+          <a-tree-select
+            :value="modalState.from.parentId"
+            placeholder="上级部门"
+            disabled
+            :tree-data="modalState.treeData"
+            :field-names="{
+              children: 'children',
+              label: 'deptName',
+              value: 'deptId',
+            }"
+            tree-node-label-prop="deptName"
+          >
+            <template #suffixIcon></template>
+          </a-tree-select>
+        </a-form-item>
+
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="部门状态" name="status">
@@ -639,17 +652,22 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="部门编号" name="deptId">
-              {{ modalState.from.deptId }}
+            <a-form-item label="显示排序" name="orderNum">
+              {{ modalState.from.orderNum }}
             </a-form-item>
           </a-col>
         </a-row>
+
+        <a-form-item
+          label="部门名称"
+          name="deptName"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
+          {{ modalState.from.deptName }}
+        </a-form-item>
+
         <a-row :gutter="16">
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="部门名称" name="deptName">
-              {{ modalState.from.deptName }}
-            </a-form-item>
-          </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="负责人" name="leader">
               {{ modalState.from.leader }}
@@ -685,11 +703,18 @@ onMounted(() => {
       @ok="fnModalOk"
       @cancel="fnModalCancel"
     >
-      <a-form name="modalStateFrom" layout="horizontal">
+      <a-form
+        name="modalStateFrom"
+        layout="horizontal"
+        :label-col="{ span: 6 }"
+        :label-wrap="true"
+      >
         <a-form-item
           label="上级部门"
           name="parentId"
           v-bind="modalStateFrom.validateInfos.parentId"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
         >
           <a-tree-select
             v-model:value="modalState.from.parentId"
@@ -714,14 +739,41 @@ onMounted(() => {
           label="部门名称"
           name="deptName"
           v-bind="modalStateFrom.validateInfos.deptName"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
         >
           <a-input
             v-model:value="modalState.from.deptName"
             allow-clear
-            :maxlength="30"
+            :maxlength="50"
             placeholder="请输入部门名称"
           ></a-input>
         </a-form-item>
+
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="岗位状态" name="status">
+              <a-select
+                v-model:value="modalState.from.status"
+                default-value="0"
+                placeholder="岗位状态"
+                :options="dict.sysNormalDisable"
+              >
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="显示顺序" name="orderNum">
+              <a-input-number
+                v-model:value="modalState.from.orderNum"
+                :min="0"
+                :max="9999"
+                :step="1"
+                placeholder="排序值"
+              ></a-input-number>
+            </a-form-item>
+          </a-col>
+        </a-row>
 
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
@@ -734,29 +786,8 @@ onMounted(() => {
                 v-model:value="modalState.from.leader"
                 allow-clear
                 placeholder="请输入负责人名称"
+                :maxlength="50"
               ></a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
-            <a-form-item label="岗位状态" name="status">
-              <a-select
-                v-model:value="modalState.from.status"
-                default-value="0"
-                placeholder="岗位状态"
-                :options="dict.sysNormalDisable"
-              >
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
-            <a-form-item label="显示顺序" name="orderNum">
-              <a-input-number
-                v-model:value="modalState.from.orderNum"
-                :min="0"
-                :max="9999"
-                :step="1"
-                placeholder="排序值"
-              ></a-input-number>
             </a-form-item>
           </a-col>
         </a-row>

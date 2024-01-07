@@ -92,38 +92,45 @@ let tableColumns: ColumnsType = [
   {
     title: '用户编号',
     dataIndex: 'userId',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '登录账号',
     dataIndex: 'userName',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '用户昵称',
     dataIndex: 'nickName',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '手机号码',
     dataIndex: 'phonenumber',
-    align: 'center',
+    align: 'left',
+    width: 120,
   },
   {
     title: '电子邮箱',
     dataIndex: 'email',
-    align: 'center',
+    align: 'left',
+    width: 120,
   },
   {
     title: '用户状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
+    width: 100,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     align: 'center',
+    width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
@@ -132,7 +139,7 @@ let tableColumns: ColumnsType = [
   {
     title: '操作',
     key: 'userId',
-    align: 'center',
+    align: 'left',
   },
 ];
 
@@ -466,7 +473,10 @@ onMounted(() => {
         :data-source="tableState.data"
         :size="tableState.size"
         :row-class-name="fnTableStriped"
-        :scroll="{ x: true }"
+        :scroll="{
+          x: tableColumns.length * 120,
+          scrollToFirstRowOnChange: true,
+        }"
         :pagination="tablePagination"
         :row-selection="{
           type: 'checkbox',

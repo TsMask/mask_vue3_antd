@@ -116,34 +116,40 @@ let tableColumns: ColumnsType = [
   {
     title: '日志编号',
     dataIndex: 'jobLogId',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '任务名称',
     dataIndex: 'jobName',
-    align: 'center',
+    align: 'left',
+    width: 200,
   },
   {
     title: '任务组名',
     dataIndex: 'jobGroup',
     key: 'jobGroup',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '调用目标',
     dataIndex: 'invokeTarget',
-    align: 'center',
+    align: 'left',
+    width: 150,
   },
   {
     title: '执行状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
+    width: 100,
   },
   {
     title: '记录时间',
     dataIndex: 'createTime',
     align: 'center',
+    width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
@@ -153,7 +159,8 @@ let tableColumns: ColumnsType = [
     title: '消耗时间',
     dataIndex: 'costTime',
     key: 'costTime',
-    align: 'center',
+    align: 'right',
+    width: 100,
     customRender(opt) {
       return `${opt.value} ms`;
     },
@@ -161,7 +168,7 @@ let tableColumns: ColumnsType = [
   {
     title: '操作',
     key: 'jobLogId',
-    align: 'center',
+    align: 'left',
   },
 ];
 
@@ -565,7 +572,10 @@ onMounted(() => {
         :data-source="tableState.data"
         :size="tableState.size"
         :row-class-name="fnTableStriped"
-        :scroll="{ x: true }"
+        :scroll="{
+          x: tableColumns.length * 120,
+          scrollToFirstRowOnChange: true,
+        }"
         :pagination="tablePagination"
         :row-selection="{
           type: 'checkbox',
@@ -608,7 +618,7 @@ onMounted(() => {
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
-      <a-form layout="horizontal">
+      <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="日志编号" name="jobLogId">
@@ -652,7 +662,12 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="传入参数" name="targetParams">
+        <a-form-item
+          label="传入参数"
+          name="targetParams"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-textarea
             v-model:value="modalState.from.targetParams"
             :auto-size="{ minRows: 2, maxRows: 6 }"
@@ -660,7 +675,12 @@ onMounted(() => {
             :disabled="true"
           />
         </a-form-item>
-        <a-form-item label="日志信息" name="jobMsg">
+        <a-form-item
+          label="日志信息"
+          name="jobMsg"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-textarea
             v-model:value="modalState.from.jobMsg"
             :auto-size="{ minRows: 2, maxRows: 6 }"

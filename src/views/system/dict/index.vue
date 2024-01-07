@@ -105,28 +105,33 @@ let tableColumns: ColumnsType = [
   {
     title: '字典编号',
     dataIndex: 'dictId',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '字典名称',
     dataIndex: 'dictName',
-    align: 'center',
+    align: 'left',
+    width: 200,
   },
   {
     title: '字典类型',
     dataIndex: 'dictType',
-    align: 'center',
+    align: 'left',
+    width: 200,
   },
   {
     title: '字典状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
+    width: 100,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     align: 'center',
+    width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
@@ -135,7 +140,7 @@ let tableColumns: ColumnsType = [
   {
     title: '操作',
     key: 'dictId',
-    align: 'center',
+    align: 'left',
   },
 ];
 
@@ -642,7 +647,10 @@ onMounted(() => {
         :size="tableState.size"
         :row-class-name="fnTableStriped"
         :pagination="tablePagination"
-        :scroll="{ x: true }"
+        :scroll="{
+          x: tableColumns.length * 120,
+          scrollToFirstRowOnChange: true,
+        }"
         :row-selection="{
           type: 'checkbox',
           selectedRowKeys: tableState.selectedRowKeys,
@@ -708,7 +716,7 @@ onMounted(() => {
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
-      <a-form layout="horizontal">
+      <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="字典编号" name="dictId">
@@ -724,14 +732,24 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-
-        <a-form-item label="字典名称" name="dictName">
-          {{ modalState.from.dictName }}
-        </a-form-item>
-        <a-form-item label="字典类型" name="dictType">
-          {{ modalState.from.dictType }}
-        </a-form-item>
-        <a-form-item label="字典说明" name="remark">
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="字典名称" name="dictName">
+              {{ modalState.from.dictName }}
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="字典类型" name="dictType">
+              {{ modalState.from.dictType }}
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-form-item
+          label="字典说明"
+          name="remark"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           {{ modalState.from.remark }}
         </a-form-item>
       </a-form>
@@ -751,46 +769,47 @@ onMounted(() => {
       @ok="fnModalOk"
       @cancel="fnModalCancel"
     >
-      <a-form name="modalStateFrom" layout="horizontal">
-        <a-row :gutter="16">
-          <a-col :lg="18" :md="18" :xs="24">
-            <a-form-item
-              label="字典名称"
-              name="dictName"
-              v-bind="modalStateFrom.validateInfos.dictName"
-            >
-              <a-input
-                v-model:value="modalState.from.dictName"
-                allow-clear
-                placeholder="请输入字典名称"
-              ></a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
-            <a-form-item label="字典状态" name="status">
-              <a-select
-                v-model:value="modalState.from.status"
-                default-value="0"
-                placeholder="字典状态"
-                :options="dict.sysNormalDisable"
-              >
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="18" :md="18" :xs="24">
-            <a-form-item
-              label="字典类型"
-              name="dictType"
-              v-bind="modalStateFrom.validateInfos.dictType"
-            >
-              <a-input
-                v-model:value="modalState.from.dictType"
-                allow-clear
-                placeholder="请输入字典类型"
-              ></a-input>
-            </a-form-item>
-          </a-col>
-        </a-row>
+      <a-form
+        name="modalStateFrom"
+        layout="horizontal"
+        :label-col="{ span: 3 }"
+        :label-wrap="true"
+      >
+        <a-form-item
+          label="字典名称"
+          name="dictName"
+          v-bind="modalStateFrom.validateInfos.dictName"
+        >
+          <a-input
+            v-model:value="modalState.from.dictName"
+            allow-clear
+            placeholder="请输入字典名称"
+            :maxlength="50"
+          ></a-input>
+        </a-form-item>
+
+        <a-form-item
+          label="字典类型"
+          name="dictType"
+          v-bind="modalStateFrom.validateInfos.dictType"
+        >
+          <a-input
+            v-model:value="modalState.from.dictType"
+            allow-clear
+            placeholder="请输入字典类型"
+            :maxlength="50"
+          ></a-input>
+        </a-form-item>
+
+        <a-form-item label="字典状态" name="status">
+          <a-select
+            v-model:value="modalState.from.status"
+            default-value="0"
+            placeholder="字典状态"
+            :options="dict.sysNormalDisable"
+          >
+          </a-select>
+        </a-form-item>
 
         <a-form-item label="字典说明" name="remark">
           <a-textarea

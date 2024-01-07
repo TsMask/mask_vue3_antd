@@ -91,33 +91,39 @@ let tableColumns: ColumnsType = [
   {
     title: '岗位编号',
     dataIndex: 'postId',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '岗位编码',
     dataIndex: 'postCode',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '岗位名称',
     dataIndex: 'postName',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '岗位排序',
     dataIndex: 'postSort',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '岗位状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
+    width: 100,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     align: 'center',
+    width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
@@ -126,7 +132,7 @@ let tableColumns: ColumnsType = [
   {
     title: '操作',
     key: 'postId',
-    align: 'center',
+    align: 'left',
   },
 ];
 
@@ -565,7 +571,10 @@ onMounted(() => {
         :size="tableState.size"
         :row-class-name="fnTableStriped"
         :pagination="tablePagination"
-        :scroll="{ x: true }"
+        :scroll="{
+          x: tableColumns.length * 120,
+          scrollToFirstRowOnChange: true,
+        }"
         :row-selection="{
           type: 'checkbox',
           selectedRowKeys: tableState.selectedRowKeys,
@@ -621,7 +630,7 @@ onMounted(() => {
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
-      <a-form layout="horizontal">
+      <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="岗位编号" name="postId">
@@ -663,7 +672,12 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="岗位说明" name="remark">
+        <a-form-item
+          label="岗位说明"
+          name="remark"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           {{ modalState.from.remark }}
         </a-form-item>
       </a-form>
@@ -683,7 +697,12 @@ onMounted(() => {
       @ok="fnModalOk"
       @cancel="fnModalCancel"
     >
-      <a-form name="modalStateFrom" layout="horizontal">
+      <a-form
+        name="modalStateFrom"
+        layout="horizontal"
+        :label-col="{ span: 6 }"
+        :label-wrap="true"
+      >
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
@@ -695,6 +714,7 @@ onMounted(() => {
                 v-model:value="modalState.from.postCode"
                 allow-clear
                 placeholder="请输入岗位编码"
+                :maxlength="50"
               ></a-input>
             </a-form-item>
           </a-col>
@@ -722,6 +742,7 @@ onMounted(() => {
                 v-model:value="modalState.from.postName"
                 allow-clear
                 placeholder="请输入岗位名称"
+                :maxlength="50"
               ></a-input>
             </a-form-item>
           </a-col>
@@ -738,7 +759,12 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-form-item label="岗位说明" name="remark">
+        <a-form-item
+          label="岗位说明"
+          name="remark"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-textarea
             v-model:value="modalState.from.remark"
             :auto-size="{ minRows: 4, maxRows: 6 }"

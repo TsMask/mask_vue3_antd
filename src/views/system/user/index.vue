@@ -122,39 +122,46 @@ let tableColumns: ColumnsType = [
   {
     title: '用户编号',
     dataIndex: 'userId',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '登录账号',
     dataIndex: 'userName',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '用户昵称',
     dataIndex: 'nickName',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '手机号码',
     dataIndex: 'phonenumber',
-    align: 'center',
+    align: 'left',
+    width: 120,
   },
   {
     title: '部门名称',
     dataIndex: 'deptId',
     key: 'deptId',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '登录地址',
     dataIndex: 'loginIp',
     key: 'loginIp',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '登录时间',
     dataIndex: 'loginDate',
     align: 'center',
+    width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
@@ -165,11 +172,12 @@ let tableColumns: ColumnsType = [
     dataIndex: 'status',
     key: 'status',
     align: 'center',
+    width: 100,
   },
   {
     title: '操作',
     key: 'userId',
-    align: 'center',
+    align: 'left',
   },
 ];
 
@@ -460,7 +468,7 @@ function fnModalOk() {
           }
         })
         .finally(() => {
-          fnModalCancel()
+          fnModalCancel();
           modalState.confirmLoading = false;
         });
     })
@@ -968,7 +976,10 @@ onMounted(() => {
         :size="tableState.size"
         :row-class-name="fnTableStriped"
         :pagination="tablePagination"
-        :scroll="{ x: true }"
+        :scroll="{
+          x: tableColumns.length * 120,
+          scrollToFirstRowOnChange: true,
+        }"
         :row-selection="{
           type: 'checkbox',
           selectedRowKeys: tableState.selectedRowKeys,
@@ -981,13 +992,13 @@ onMounted(() => {
           </template>
           <template v-if="column.key === 'status'">
             <a-switch
-              v-if="record.userId !== '1'"
+              v-if="dict.sysNormalDisable.length > 0 && record.userId !== '1'"
               v-perms:has="['system:user:edit']"
               v-model:checked="record.status"
               checked-value="1"
-              checked-children="正常"
+              :checked-children="dict.sysNormalDisable[0].label"
               un-checked-value="0"
-              un-checked-children="暂停"
+              :un-checked-children="dict.sysNormalDisable[1].label"
               size="small"
               @change="fnRecordStatus(record)"
             />
@@ -1052,7 +1063,7 @@ onMounted(() => {
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
-      <a-form layout="horizontal">
+      <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户编号" name="userId">
@@ -1098,13 +1109,17 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
+
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户昵称" name="nickName">
               {{ modalState.from.nickName }}
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+        </a-row>
+
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户性别" name="sex">
               <DictTag
                 :options="dict.sysUserSex"
@@ -1112,7 +1127,7 @@ onMounted(() => {
               />
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户状态" name="status">
               <DictTag
                 :options="dict.sysNormalDisable"
@@ -1135,7 +1150,12 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-form-item label="归属部门" name="deptId">
+        <a-form-item
+          label="归属部门"
+          name="deptId"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-tree-select
             :value="modalState.from.deptId"
             placeholder="归属部门"
@@ -1185,7 +1205,12 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-form-item label="用户说明" name="remark">
+        <a-form-item
+          label="用户说明"
+          name="remark"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           {{ modalState.from.remark }}
         </a-form-item>
       </a-form>
@@ -1205,7 +1230,12 @@ onMounted(() => {
       @ok="fnModalOk"
       @cancel="fnModalCancel"
     >
-      <a-form name="modalStateFromByEdit" layout="horizontal">
+      <a-form
+        name="modalStateFromByEdit"
+        layout="horizontal"
+        :label-col="{ span: 6 }"
+        :label-wrap="true"
+      >
         <a-row :gutter="16" v-if="!modalState.from.userId">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
@@ -1259,7 +1289,10 @@ onMounted(() => {
               ></a-input>
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+        </a-row>
+
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户性别" name="sex">
               <a-select
                 v-model:value="modalState.from.sex"
@@ -1270,7 +1303,7 @@ onMounted(() => {
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户状态" name="status">
               <a-select
                 v-model:value="modalState.from.status"
@@ -1314,7 +1347,12 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-form-item label="归属部门" name="deptId">
+        <a-form-item
+          label="归属部门"
+          name="deptId"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-tree-select
             v-model:value="modalState.from.deptId"
             placeholder="归属部门"
@@ -1369,7 +1407,12 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-form-item label="用户说明" name="remark">
+        <a-form-item
+          label="用户说明"
+          name="remark"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-textarea
             v-model:value="modalState.from.remark"
             :auto-size="{ minRows: 4, maxRows: 6 }"

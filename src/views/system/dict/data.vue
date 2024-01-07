@@ -130,33 +130,39 @@ let tableColumns: ColumnsType = [
   {
     title: '数据代码',
     dataIndex: 'dictCode',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '数据标签',
     dataIndex: 'dictLabel',
-    align: 'center',
+    align: 'left',
+    width: 200,
   },
   {
     title: '数据键值',
     dataIndex: 'dictValue',
-    align: 'center',
+    align: 'left',
+    width: 200,
   },
   {
     title: '数据排序',
     dataIndex: 'dictSort',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '数据状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
+    width: 100,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     align: 'center',
+    width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
@@ -165,7 +171,7 @@ let tableColumns: ColumnsType = [
   {
     title: '操作',
     key: 'dictCode',
-    align: 'center',
+    align: 'left',
   },
 ];
 
@@ -627,7 +633,10 @@ onMounted(() => {
         :data-source="tableState.data"
         :size="tableState.size"
         :row-class-name="fnTableStriped"
-        :scroll="{ x: true }"
+        :scroll="{
+          x: tableColumns.length * 120,
+          scrollToFirstRowOnChange: true,
+        }"
         :pagination="tablePagination"
         :row-selection="{
           type: 'checkbox',
@@ -684,15 +693,11 @@ onMounted(() => {
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
-      <a-form layout="horizontal">
+      <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典名称" name="dictType">
-              {{
-                dict.sysDictType.find(
-                  item => item.value === modalState.from.dictType
-                )?.label
-              }}
+            <a-form-item label="数据代码" name="dictCode">
+              {{ modalState.from.dictCode }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
@@ -705,8 +710,12 @@ onMounted(() => {
         </a-row>
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据代码" name="dictCode">
-              {{ modalState.from.dictCode }}
+            <a-form-item label="字典类型" name="dictType">
+              {{
+                dict.sysDictType.find(
+                  item => item.value === modalState.from.dictType
+                )?.label
+              }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
@@ -740,12 +749,17 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="样式属性" name="tagClass">
-              {{ modalState.from.tagClass }}
+            <a-form-item label="数据排序" name="dictSort">
+              {{ modalState.from.dictSort }}
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="样式属性" name="tagClass">
+              {{ modalState.from.tagClass }}
+            </a-form-item>
+          </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="回显预览" name="tagType">
               <DictTag
@@ -754,13 +768,13 @@ onMounted(() => {
               />
             </a-form-item>
           </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据排序" name="dictSort">
-              {{ modalState.from.dictSort }}
-            </a-form-item>
-          </a-col>
         </a-row>
-        <a-form-item label="数据说明" name="remark">
+        <a-form-item
+          label="数据说明"
+          name="remark"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           {{ modalState.from.remark }}
         </a-form-item>
       </a-form>
@@ -780,7 +794,12 @@ onMounted(() => {
       @ok="fnModalOk"
       @cancel="fnModalCancel"
     >
-      <a-form name="modalStateFrom" layout="horizontal">
+      <a-form
+        name="modalStateFrom"
+        layout="horizontal"
+        :label-col="{ span: 6 }"
+        :label-wrap="true"
+      >
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="字典类型" name="dictType">
@@ -817,6 +836,7 @@ onMounted(() => {
                 v-model:value="modalState.from.dictLabel"
                 allow-clear
                 placeholder="请输入数据标签"
+                :maxlength="50"
               ></a-input>
             </a-form-item>
           </a-col>
@@ -830,6 +850,7 @@ onMounted(() => {
                 v-model:value="modalState.from.dictValue"
                 allow-clear
                 placeholder="请输入数据键值"
+                :maxlength="50"
               ></a-input>
             </a-form-item>
           </a-col>
@@ -857,14 +878,25 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="样式属性" name="tagClass">
+        <a-form-item
+          label="样式属性"
+          name="tagClass"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-input
             v-model:value="modalState.from.tagClass"
             allow-clear
             placeholder="请输入样式属性"
+            :maxlength="50"
           ></a-input>
         </a-form-item>
-        <a-form-item label="数据说明" name="remark">
+        <a-form-item
+          label="数据说明"
+          name="remark"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-textarea
             v-model:value="modalState.from.remark"
             :auto-size="{ minRows: 4, maxRows: 6 }"

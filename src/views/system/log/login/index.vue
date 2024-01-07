@@ -103,52 +103,60 @@ let tableColumns: ColumnsType = [
   {
     title: '日志编号',
     dataIndex: 'loginId',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '登录账号',
     dataIndex: 'userName',
-    align: 'center',
+    align: 'left',
+    width: 150,
   },
   {
     title: '登录地址',
     dataIndex: 'ipaddr',
-    align: 'center',
+    align: 'left',
+    width: 150,
   },
   {
     title: '登录地点',
     dataIndex: 'loginLocation',
-    align: 'center',
+    align: 'left',
+    width: 150,
   },
   {
     title: '操作系统',
     dataIndex: 'os',
-    align: 'center',
+    align: 'left',
+    width: 150,
   },
   {
     title: '浏览器',
     dataIndex: 'browser',
-    align: 'center',
+    align: 'left',
+    width: 200,
   },
   {
     title: '登录状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
-  },
-  {
-    title: '登录信息',
-    dataIndex: 'msg',
-    align: 'center',
-  },
+    width: 100,
+  }, 
   {
     title: '登录时间',
     dataIndex: 'loginTime',
     align: 'center',
+    width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
     },
+  },
+  {
+    title: '登录信息',
+    dataIndex: 'msg',
+    align: 'left', 
   },
 ];
 
@@ -531,7 +539,10 @@ onMounted(() => {
         :data-source="tableState.data"
         :size="tableState.size"
         :row-class-name="fnTableStriped"
-        :scroll="{ x: true }"
+        :scroll="{
+          x: tableColumns.length * 120,
+          scrollToFirstRowOnChange: true,
+        }"
         :pagination="tablePagination"
         :row-selection="{
           type: 'checkbox',

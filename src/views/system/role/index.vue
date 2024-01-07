@@ -111,33 +111,39 @@ let tableColumns: ColumnsType = [
   {
     title: '角色编号',
     dataIndex: 'roleId',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '角色名称',
     dataIndex: 'roleName',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '角色键值',
     dataIndex: 'roleKey',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '角色顺序',
     dataIndex: 'roleSort',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '角色状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
+    width: 100,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     align: 'center',
+    width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
@@ -146,7 +152,7 @@ let tableColumns: ColumnsType = [
   {
     title: '操作',
     key: 'roleId',
-    align: 'center',
+    align: 'left',
   },
 ];
 
@@ -877,7 +883,10 @@ onMounted(() => {
         :size="tableState.size"
         :row-class-name="fnTableStriped"
         :pagination="tablePagination"
-        :scroll="{ x: true }"
+        :scroll="{
+          x: tableColumns.length * 120,
+          scrollToFirstRowOnChange: true,
+        }"
         :row-selection="{
           type: 'checkbox',
           selectedRowKeys: tableState.selectedRowKeys,
@@ -888,13 +897,15 @@ onMounted(() => {
           <template v-if="column.key === 'status'">
             <a-switch
               v-if="
-                record.roleId !== '1' && hasPermissions(['system:role:edit'])
+                dict.sysNormalDisable.length > 0 &&
+                record.roleId !== '1' &&
+                hasPermissions(['system:role:edit'])
               "
               v-model:checked="record.status"
               checked-value="1"
-              checked-children="正常"
+              :checked-children="dict.sysNormalDisable[0].label"
               un-checked-value="0"
-              un-checked-children="暂停"
+              :un-checked-children="dict.sysNormalDisable[1].label"
               size="small"
               @change="fnRecordStatus(record)"
             />
@@ -969,7 +980,7 @@ onMounted(() => {
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
-      <a-form layout="horizontal">
+      <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色编号" name="roleId">
@@ -1011,11 +1022,21 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="角色说明" name="remark">
+        <a-form-item
+          label="角色说明"
+          name="remark"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           {{ modalState.from.remark }}
         </a-form-item>
 
-        <a-form-item label="菜单权限" name="menuCheckStrictly">
+        <a-form-item
+          label="菜单权限"
+          name="menuCheckStrictly"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-tree
             disabled
             checkable
@@ -1047,7 +1068,12 @@ onMounted(() => {
       @ok="fnModalOk"
       @cancel="fnModalCancel"
     >
-      <a-form name="modalStateFromByEdit" layout="horizontal">
+      <a-form
+        name="modalStateFromByEdit"
+        layout="horizontal"
+        :label-col="{ span: 6 }"
+        :label-wrap="true"
+      >
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
@@ -1059,6 +1085,7 @@ onMounted(() => {
                 v-model:value="modalState.from.roleName"
                 allow-clear
                 placeholder="请输入角色名称"
+                :maxlength="50"
               ></a-input>
             </a-form-item>
           </a-col>
@@ -1086,6 +1113,7 @@ onMounted(() => {
                 v-model:value="modalState.from.roleKey"
                 allow-clear
                 placeholder="请输入角色键值"
+                :maxlength="50"
               >
                 <template #prefix>
                   <a-tooltip placement="topLeft">
@@ -1115,7 +1143,12 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-form-item label="角色说明" name="remark">
+        <a-form-item
+          label="角色说明"
+          name="remark"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-textarea
             v-model:value="modalState.from.remark"
             :auto-size="{ minRows: 4, maxRows: 6 }"
@@ -1125,7 +1158,12 @@ onMounted(() => {
           />
         </a-form-item>
 
-        <a-form-item label="菜单权限" name="menuCheckStrictly">
+        <a-form-item
+          label="菜单权限"
+          name="menuCheckStrictly"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-space :size="12" align="center">
             <a-checkbox
               id="menu_1"

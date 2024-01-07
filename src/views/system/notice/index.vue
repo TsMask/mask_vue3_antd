@@ -95,34 +95,40 @@ let tableColumns: ColumnsType = [
   {
     title: '公告编号',
     dataIndex: 'noticeId',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '公告标题',
     dataIndex: 'noticeTitle',
-    align: 'center',
+    align: 'left',
+    width: 300,
   },
   {
     title: '公告类型',
     dataIndex: 'noticeType',
     key: 'noticeType',
     align: 'center',
+    width: 100,
   },
   {
     title: '状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
+    width: 100,
   },
   {
     title: '创建者',
     dataIndex: 'createBy',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     align: 'center',
+    width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
@@ -131,7 +137,7 @@ let tableColumns: ColumnsType = [
   {
     title: '操作',
     key: 'noticeId',
-    align: 'center',
+    align: 'left',
   },
 ];
 
@@ -563,7 +569,10 @@ onMounted(() => {
         :size="tableState.size"
         :row-class-name="fnTableStriped"
         :pagination="tablePagination"
-        :scroll="{ x: true }"
+        :scroll="{
+          x: tableColumns.length * 120,
+          scrollToFirstRowOnChange: true,
+        }"
         :row-selection="{
           type: 'checkbox',
           selectedRowKeys: tableState.selectedRowKeys,
@@ -622,14 +631,18 @@ onMounted(() => {
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
-      <a-form layout="horizontal">
+      <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
+        <a-form-item
+          label="公告标题"
+          name="noticeTitle"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
+          {{ modalState.from.noticeTitle }}
+        </a-form-item>
+
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="公告标题" name="noticeTitle">
-              {{ modalState.from.noticeTitle }}
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
             <a-form-item label="公告类型" name="noticeType">
               <DictTag
                 :options="dict.sysNoticeType"
@@ -637,7 +650,7 @@ onMounted(() => {
               />
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="公告状态" name="status">
               <DictTag
                 :options="dict.sysNoticeStatus"
@@ -646,7 +659,12 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="公告内容" name="noticeContent">
+        <a-form-item
+          label="公告内容"
+          name="noticeContent"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           {{ modalState.from.noticeContent }}
         </a-form-item>
       </a-form>
@@ -666,22 +684,29 @@ onMounted(() => {
       @ok="fnModalOk"
       @cancel="fnModalCancel"
     >
-      <a-form name="modalStateFrom" layout="horizontal">
+      <a-form
+        name="modalStateFrom"
+        layout="horizontal"
+        :label-col="{ span: 6 }"
+        :label-wrap="true"
+      >
+        <a-form-item
+          label="公告标题"
+          name="noticeTitle"
+          v-bind="modalStateFrom.validateInfos.noticeTitle"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
+          <a-input
+            v-model:value="modalState.from.noticeTitle"
+            allow-clear
+            placeholder="请输入公告标题"
+            :maxlength="50"
+          ></a-input>
+        </a-form-item>
+
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="公告标题"
-              name="noticeTitle"
-              v-bind="modalStateFrom.validateInfos.noticeTitle"
-            >
-              <a-input
-                v-model:value="modalState.from.noticeTitle"
-                allow-clear
-                placeholder="请输入公告标题"
-              ></a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
             <a-form-item
               label="公告类型"
               name="noticeType"
@@ -696,7 +721,7 @@ onMounted(() => {
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="公告状态" name="status">
               <a-select
                 v-model:value="modalState.from.status"
@@ -713,6 +738,8 @@ onMounted(() => {
           label="公告内容"
           name="noticeContent"
           v-bind="modalStateFrom.validateInfos.noticeContent"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
         >
           <a-textarea
             v-model:value="modalState.from.noticeContent"

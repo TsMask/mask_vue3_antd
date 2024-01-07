@@ -104,45 +104,52 @@ let tableColumns: ColumnsType = [
   {
     title: '任务编号',
     dataIndex: 'jobId',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '任务名称',
     dataIndex: 'jobName',
-    align: 'center',
+    align: 'left',
+    width: 200,
   },
   {
     title: '任务组名',
     dataIndex: 'jobGroup',
     key: 'jobGroup',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '调用目标',
     dataIndex: 'invokeTarget',
-    align: 'center',
+    align: 'left',
+    width: 150,
   },
   {
     title: 'cron表达式',
     dataIndex: 'cronExpression',
-    align: 'center',
+    align: 'left',
+    width: 150,
   },
   {
     title: '状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
+    width: 100,
   },
   {
     title: '记录日志',
     dataIndex: 'saveLog',
     key: 'saveLog',
     align: 'center',
+    width: 100,
   },
   {
     title: '操作',
     key: 'jobId',
-    align: 'center',
+    align: 'left',
   },
 ];
 
@@ -235,16 +242,16 @@ const modalStateFrom = Form.useForm(
       {
         required: true,
         min: 2,
-        max: 20,
-        message: '请正确输入任务名称，限2-20个字符',
+        max: 40,
+        message: '请正确输入任务名称，限2-40个字符',
       },
     ],
     invokeTarget: [
       {
         required: true,
         min: 2,
-        max: 20,
-        message: '请正确输入调用目标，限2-20个字符',
+        max: 40,
+        message: '请正确输入调用目标，限2-40个字符',
       },
     ],
     cronExpression: [
@@ -374,7 +381,10 @@ function fnModalCron(opt: boolean, cronStr?: string) {
  * @param row 任务信息对象
  */
 function fnRecordStatus(row: Record<string, string>) {
-  const text = row.status === '1' ? '开启' : '关闭';
+  const text =
+    row.status === '1'
+      ? dict.sysJobStatus[0].label
+      : dict.sysJobStatus[1].label;
   Modal.confirm({
     title: '提示',
     content: `确定要${text} ${row.jobName} 任务吗?`,
@@ -754,7 +764,10 @@ onMounted(() => {
         :size="tableState.size"
         :row-class-name="fnTableStriped"
         :pagination="tablePagination"
-        :scroll="{ x: true }"
+        :scroll="{
+          x: tableColumns.length * 120,
+          scrollToFirstRowOnChange: true,
+        }"
         :row-selection="{
           type: 'checkbox',
           selectedRowKeys: tableState.selectedRowKeys,
@@ -767,12 +780,15 @@ onMounted(() => {
           </template>
           <template v-if="column.key === 'status'">
             <a-switch
-              v-if="hasPermissions(['monitor:job:changeStatus'])"
+              v-if="
+                dict.sysJobStatus.length > 0 &&
+                hasPermissions(['monitor:job:changeStatus'])
+              "
               v-model:checked="record.status"
               checked-value="1"
-              checked-children="正常"
+              :checked-children="dict.sysJobStatus[0].label"
               un-checked-value="0"
-              un-checked-children="暂停"
+              :un-checked-children="dict.sysJobStatus[1].label"
               size="small"
               @change="fnRecordStatus(record)"
             />
@@ -850,7 +866,7 @@ onMounted(() => {
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
-      <a-form layout="horizontal">
+      <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务名称" name="jobName">
@@ -879,7 +895,7 @@ onMounted(() => {
               {{ modalState.from.invokeTarget }}
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务组名" name="jobGroup">
               <DictTag
                 :options="dict.sysJobGroup"
@@ -887,9 +903,20 @@ onMounted(() => {
               />
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+        </a-row>
+
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务状态" name="status">
               {{ ['暂停', '正常'][+modalState.from.status] }}
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="记录日志" name="saveLog">
+              <DictTag
+                :options="dict.sysJobSaveLog"
+                :value="modalState.from.saveLog"
+              />
             </a-form-item>
           </a-col>
         </a-row>
@@ -903,26 +930,29 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="记录日志" name="saveLog">
-              <DictTag
-                :options="dict.sysJobSaveLog"
-                :value="modalState.from.saveLog"
-              />
+            <a-form-item label="创建时间" name="createTime">
+              <span v-if="+modalState.from.createTime > 0">
+                {{ parseDateToStr(+modalState.from.createTime) }}
+              </span>
             </a-form-item>
           </a-col>
         </a-row>
 
-        <a-form-item label="创建时间" name="createTime">
-          <span v-if="+modalState.from.createTime > 0">
-            {{ parseDateToStr(+modalState.from.createTime) }}
-          </span>
-        </a-form-item>
-
-        <a-form-item label="传入参数" name="targetParams">
+        <a-form-item
+          label="传入参数"
+          name="targetParams"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           {{ modalState.from.targetParams }}
         </a-form-item>
 
-        <a-form-item label="备注说明" name="remark">
+        <a-form-item
+          label="备注说明"
+          name="remark"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           {{ modalState.from.remark }}
         </a-form-item>
       </a-form>
@@ -942,7 +972,12 @@ onMounted(() => {
       @ok="fnModalOk"
       @cancel="fnModalCancel"
     >
-      <a-form name="modalStateFrom" layout="horizontal">
+      <a-form
+        name="modalStateFrom"
+        layout="horizontal"
+        :label-col="{ span: 6 }"
+        :label-wrap="true"
+      >
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
@@ -954,6 +989,7 @@ onMounted(() => {
                 v-model:value="modalState.from.jobName"
                 allow-clear
                 placeholder="请输入任务名称"
+                :maxlength="40"
               ></a-input>
             </a-form-item>
           </a-col>
@@ -997,6 +1033,7 @@ onMounted(() => {
                 v-model:value="modalState.from.invokeTarget"
                 allow-clear
                 placeholder="请输入调用目标"
+                :maxlength="40"
               >
                 <template #prefix>
                   <a-tooltip placement="topLeft">
@@ -1013,7 +1050,7 @@ onMounted(() => {
               </a-input>
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务组名" name="jobGroup">
               <a-select
                 v-model:value="modalState.from.jobGroup"
@@ -1024,7 +1061,10 @@ onMounted(() => {
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+        </a-row>
+
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务状态" name="status">
               <a-select
                 v-model:value="modalState.from.status"
@@ -1035,46 +1075,7 @@ onMounted(() => {
               </a-select>
             </a-form-item>
           </a-col>
-        </a-row>
-
-        <a-row :gutter="16">
-          <a-col :lg="18" :md="18" :xs="24">
-            <a-form-item
-              label="cron表达式"
-              name="cronExpression"
-              :label-col="{ span: 4 }"
-              v-bind="modalStateFrom.validateInfos.cronExpression"
-            >
-              <a-input
-                v-model:value="modalState.from.cronExpression"
-                allow-clear
-                placeholder="请输入或生成cron执行表达式"
-              >
-                <template #prefix>
-                  <a-tooltip placement="topLeft">
-                    <template #title>
-                      <div>
-                        表达式示例：0/20 * * * * ? <br />
-                        示例说明：每20秒执行任务
-                      </div>
-                    </template>
-                    <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />
-                  </a-tooltip>
-                </template>
-                <template #addonAfter>
-                  <a-button
-                    type="text"
-                    size="small"
-                    @click.prevent="fnModalCron(true)"
-                  >
-                    <template #icon><FieldTimeOutlined /></template>
-                    生成表达式
-                  </a-button>
-                </template>
-              </a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="记录日志" name="saveLog">
               <a-select
                 v-model:value="modalState.from.saveLog"
@@ -1088,23 +1089,65 @@ onMounted(() => {
         </a-row>
 
         <a-form-item
+          label="cron表达式"
+          name="cronExpression"
+          v-bind="modalStateFrom.validateInfos.cronExpression"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
+          <a-input
+            v-model:value="modalState.from.cronExpression"
+            allow-clear
+            placeholder="请输入或生成cron执行表达式"
+          >
+            <template #prefix>
+              <a-tooltip placement="topLeft">
+                <template #title>
+                  <div>
+                    表达式示例：0/20 * * * * ? <br />
+                    示例说明：每20秒执行任务
+                  </div>
+                </template>
+                <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />
+              </a-tooltip>
+            </template>
+            <template #addonAfter>
+              <a-button
+                type="text"
+                size="small"
+                @click.prevent="fnModalCron(true)"
+              >
+                <template #icon><FieldTimeOutlined /></template>
+                生成表达式
+              </a-button>
+            </template>
+          </a-input>
+        </a-form-item>
+
+        <a-form-item
           label="传入参数"
           name="targetParams"
-          :label-col="{ span: 4 }"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
         >
           <a-textarea
             v-model:value="modalState.from.targetParams"
             :auto-size="{ minRows: 2, maxRows: 6 }"
-            :maxlength="400"
+            :maxlength="480"
             placeholder="调用目标传入参数，仅支持json字符串"
           />
         </a-form-item>
 
-        <a-form-item label="备注说明" name="remark" :label-col="{ span: 4 }">
+        <a-form-item
+          label="备注说明"
+          name="remark"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-textarea
             v-model:value="modalState.from.remark"
             :auto-size="{ minRows: 2, maxRows: 6 }"
-            :maxlength="400"
+            :maxlength="480"
             :show-count="true"
             placeholder="可输入任务说明"
           />

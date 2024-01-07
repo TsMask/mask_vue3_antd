@@ -105,44 +105,52 @@ let tableColumns: ColumnsType = [
   {
     title: '日志编号',
     dataIndex: 'operId',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '模块名称',
     dataIndex: 'title',
-    align: 'center',
+    align: 'left',
+    width: 200,
   },
   {
     title: '业务类型',
     dataIndex: 'businessType',
     key: 'businessType',
     align: 'center',
+    width: 100,
   },
   {
     title: '操作人员',
     dataIndex: 'operName',
-    align: 'center',
+    align: 'left',
+    width: 100,
+  },
+  {
+    title: '请求主机',
+    dataIndex: 'operIp',
+    align: 'left',
+    width: 120,
   },
   {
     title: '请求方式',
     dataIndex: 'requestMethod',
     align: 'center',
-  },
-  {
-    title: '请求主机',
-    dataIndex: 'operIp',
-    align: 'center',
+    width: 100,
   },
   {
     title: '操作状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
+    width: 100,
   },
   {
     title: '操作日期',
     dataIndex: 'operTime',
     align: 'center',
+    width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
@@ -152,7 +160,8 @@ let tableColumns: ColumnsType = [
     title: '消耗时间',
     dataIndex: 'costTime',
     key: 'costTime',
-    align: 'center',
+    align: 'right',
+    width: 100,
     customRender(opt) {
       return `${opt.value} ms`;
     },
@@ -160,7 +169,7 @@ let tableColumns: ColumnsType = [
   {
     title: '操作',
     key: 'operId',
-    align: 'center',
+    align: 'left',
   },
 ];
 
@@ -562,7 +571,10 @@ onMounted(() => {
         :data-source="tableState.data"
         :size="tableState.size"
         :row-class-name="fnTableStriped"
-        :scroll="{ x: true }"
+        :scroll="{
+          x: tableColumns.length * 120,
+          scrollToFirstRowOnChange: true,
+        }"
         :pagination="tablePagination"
         :row-selection="{
           type: 'checkbox',
@@ -606,7 +618,7 @@ onMounted(() => {
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
-      <a-form layout="horizontal">
+      <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="日志编号" name="operId">
@@ -665,7 +677,12 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="请求参数" name="operParam">
+        <a-form-item
+          label="请求参数"
+          name="operParam"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-textarea
             v-model:value="modalState.from.operParam"
             :auto-size="{ minRows: 2, maxRows: 6 }"
@@ -673,7 +690,12 @@ onMounted(() => {
             :disabled="true"
           />
         </a-form-item>
-        <a-form-item label="操作信息" name="operMsg">
+        <a-form-item
+          label="操作信息"
+          name="operMsg"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-textarea
             v-model:value="modalState.from.operMsg"
             :auto-size="{ minRows: 2, maxRows: 6 }"

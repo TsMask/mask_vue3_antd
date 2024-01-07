@@ -99,50 +99,59 @@ let tableColumns: ColumnsType = [
   {
     title: '菜单名称',
     dataIndex: 'menuName',
-    align: 'center',
+    align: 'left',
+    width: 200,
   },
   {
     title: '菜单编号',
     dataIndex: 'menuId',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '菜单排序',
     dataIndex: 'menuSort',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '菜单图标',
     dataIndex: 'icon',
     key: 'icon',
     align: 'center',
+    width: 100,
   },
   {
     title: '权限标识',
     dataIndex: 'perms',
-    align: 'center',
+    align: 'left',
+    width: 200,
   },
   {
     title: '组件路径',
     dataIndex: 'component',
-    align: 'center',
+    align: 'left',
+    width: 200,
   },
   {
     title: '显示状态',
     dataIndex: 'visible',
     key: 'visible',
     align: 'center',
+    width: 100,
   },
   {
     title: '菜单状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
+    width: 100,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     align: 'center',
+    width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
@@ -151,7 +160,7 @@ let tableColumns: ColumnsType = [
   {
     title: '操作',
     key: 'menuId',
-    align: 'center',
+    align: 'left',
   },
 ];
 
@@ -602,7 +611,10 @@ onMounted(() => {
         :size="tableState.size"
         :row-class-name="fnTableStriped"
         :pagination="false"
-        :scroll="{ x: true }"
+        :scroll="{
+          x: tableColumns.length * 120,
+          scrollToFirstRowOnChange: true,
+        }"
         children-column-name="children"
         :expanded-row-keys="tableState.expandedRowKeys"
         @expandedRowsChange="fnTableExpandedRowsChange"
@@ -680,66 +692,84 @@ onMounted(() => {
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
-      <a-form layout="horizontal">
+      <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="上级菜单" name="parentId">
-              <a-tree-select
-                :value="modalState.from.parentId"
-                placeholder="上级菜单"
-                disabled
-                :tree-data="modalState.treeData"
-                :field-names="{
-                  children: 'children',
-                  label: 'menuName',
-                  value: 'menuId',
-                }"
-                tree-node-label-prop="menuName"
-              >
-                <template #suffixIcon></template>
-              </a-tree-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
             <a-form-item label="菜单编号" name="menuId">
               {{ modalState.from.menuId }}
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
-            <a-form-item label="菜单排序" name="menuSort">
-              {{ modalState.from.menuSort }}
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="创建时间" name="createTime">
+              <span v-if="+modalState.from.createTime > 0">
+                {{ parseDateToStr(+modalState.from.createTime) }}
+              </span>
             </a-form-item>
           </a-col>
         </a-row>
+        <a-form-item
+          label="上级菜单"
+          name="parentId"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
+          <a-tree-select
+            :value="modalState.from.parentId"
+            placeholder="上级菜单"
+            disabled
+            :tree-data="modalState.treeData"
+            :field-names="{
+              children: 'children',
+              label: 'menuName',
+              value: 'menuId',
+            }"
+            tree-node-label-prop="menuName"
+          >
+            <template #suffixIcon></template>
+          </a-tree-select>
+        </a-form-item>
+
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单名称" name="menuName">
               {{ modalState.from.menuName }}
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
-            <a-form-item label="菜单类型" name="menuType">
-              <a-tag
-                v-if="modalState.from.menuType === MENU_TYPE_DIR"
-                color="purple"
-              >
-                目录
-              </a-tag>
-              <a-tag
-                v-if="modalState.from.menuType === MENU_TYPE_MENU"
-                color="cyan"
-              >
-                菜单
-              </a-tag>
-              <a-tag
-                v-if="modalState.from.menuType === MENU_TYPE_BUTTON"
-                color="orange"
-              >
-                按钮
-              </a-tag>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="菜单排序" name="menuSort">
+              {{ modalState.from.menuSort }}
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+        </a-row>
+
+        <a-form-item
+          label="菜单类型"
+          name="menuType"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
+          <a-tag
+            v-if="modalState.from.menuType === MENU_TYPE_DIR"
+            color="purple"
+          >
+            目录
+          </a-tag>
+          <a-tag
+            v-if="modalState.from.menuType === MENU_TYPE_MENU"
+            color="cyan"
+          >
+            菜单
+          </a-tag>
+          <a-tag
+            v-if="modalState.from.menuType === MENU_TYPE_BUTTON"
+            color="orange"
+          >
+            按钮
+          </a-tag>
+        </a-form-item>
+
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单图标" name="icon">
               <IconFont
                 :type="modalState.from.icon || '#'"
@@ -747,9 +777,6 @@ onMounted(() => {
               ></IconFont>
             </a-form-item>
           </a-col>
-        </a-row>
-
-        <a-row :gutter="16">
           <a-col
             :lg="12"
             :md="12"
@@ -760,44 +787,34 @@ onMounted(() => {
               {{ modalState.from.path }}
             </a-form-item>
           </a-col>
-          <a-col
-            :lg="12"
-            :md="12"
-            :xs="24"
-            v-if="modalState.from.menuType === MENU_TYPE_MENU"
-          >
-            <a-form-item label="组件路径" name="component">
-              {{ modalState.from.component }}
-            </a-form-item>
-          </a-col>
         </a-row>
 
         <a-row
           :gutter="16"
           v-if="modalState.from.menuType !== MENU_TYPE_BUTTON"
         >
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="内部地址" name="isFrame">
               <a-tag color="default">
                 {{ ['否', '是'][+modalState.from.isFrame] }}
               </a-tag>
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="页面缓存" name="isCache">
               <a-tag color="default">
                 {{ ['不缓存', '缓存'][+modalState.from.isCache] }}
               </a-tag>
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="显示状态" name="visible">
               <a-tag color="default">
                 {{ ['隐藏', '显示'][+modalState.from.visible] }}
               </a-tag>
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单状态" name="status">
               <DictTag
                 :options="dict.sysNormalDisable"
@@ -808,14 +825,31 @@ onMounted(() => {
         </a-row>
 
         <a-form-item
+          label="组件路径"
+          name="component"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+          v-if="modalState.from.menuType === MENU_TYPE_MENU"
+        >
+          {{ modalState.from.component }}
+        </a-form-item>
+
+        <a-form-item
           label="权限标识"
           name="perms"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
           v-if="modalState.from.menuType !== MENU_TYPE_DIR"
         >
           {{ modalState.from.perms }}
         </a-form-item>
 
-        <a-form-item label="菜单说明" name="remark">
+        <a-form-item
+          label="菜单说明"
+          name="remark"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           {{ modalState.from.remark }}
         </a-form-item>
       </a-form>
@@ -835,11 +869,18 @@ onMounted(() => {
       @ok="fnModalOk"
       @cancel="fnModalCancel"
     >
-      <a-form name="modalStateFrom" layout="horizontal">
+      <a-form
+        name="modalStateFrom"
+        layout="horizontal"
+        :label-col="{ span: 6 }"
+        :label-wrap="true"
+      >
         <a-form-item
           label="上级菜单"
           name="parentId"
           v-bind="modalStateFrom.validateInfos.parentId"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
         >
           <a-tree-select
             v-model:value="modalState.from.parentId"
@@ -872,6 +913,7 @@ onMounted(() => {
                 v-model:value="modalState.from.menuName"
                 allow-clear
                 placeholder="请输入菜单名称"
+                :maxlength="50"
               ></a-input>
             </a-form-item>
           </a-col>
@@ -888,7 +930,12 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-form-item label="菜单类型" name="menuType">
+        <a-form-item
+          label="菜单类型"
+          name="menuType"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-radio-group v-model:value="modalState.from.menuType">
             <a-radio
               :key="MENU_TYPE_DIR"
@@ -946,6 +993,7 @@ onMounted(() => {
                 v-model:value="modalState.from.path"
                 allow-clear
                 placeholder="请输入路由地址"
+                :maxlength="200"
               >
                 <template #prefix>
                   <a-tooltip placement="topLeft">
@@ -971,13 +1019,7 @@ onMounted(() => {
               </a-input>
             </a-form-item>
           </a-col>
-        </a-row>
-
-        <a-row
-          :gutter="16"
-          v-if="modalState.from.menuType !== MENU_TYPE_BUTTON"
-        >
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="内部地址" name="isFrame">
               <a-select
                 v-model:value="modalState.from.isFrame"
@@ -989,7 +1031,7 @@ onMounted(() => {
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="页面缓存" name="isCache">
               <a-select
                 v-model:value="modalState.from.isCache"
@@ -1001,7 +1043,7 @@ onMounted(() => {
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="显示状态" name="visible">
               <a-select
                 v-model:value="modalState.from.visible"
@@ -1013,7 +1055,7 @@ onMounted(() => {
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :lg="6" :md="6" :xs="24">
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单状态" name="status">
               <a-select
                 v-model:value="modalState.from.status"
@@ -1030,12 +1072,15 @@ onMounted(() => {
           label="组件路径"
           name="component"
           v-bind="modalStateFrom.validateInfos.component"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
           v-if="modalState.from.menuType === MENU_TYPE_MENU"
         >
           <a-input
             v-model:value="modalState.from.component"
             allow-clear
             placeholder="请输入组件路径"
+            :maxlength="200"
           >
             <template #prefix>
               <a-tooltip placement="topLeft">
@@ -1056,13 +1101,16 @@ onMounted(() => {
         <a-form-item
           label="权限标识"
           name="perms"
-          v-if="modalState.from.menuType !== MENU_TYPE_DIR"
           v-bind="modalStateFrom.validateInfos.perms"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+          v-if="modalState.from.menuType !== MENU_TYPE_DIR"
         >
           <a-input
             v-model:value="modalState.from.perms"
             allow-clear
             placeholder="请输入权限标识"
+            :maxlength="100"
           >
             <template #prefix>
               <a-tooltip placement="topLeft">
@@ -1082,7 +1130,12 @@ onMounted(() => {
           </a-input>
         </a-form-item>
 
-        <a-form-item label="菜单说明" name="remark">
+        <a-form-item
+          label="菜单说明"
+          name="remark"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
           <a-textarea
             v-model:value="modalState.from.remark"
             :auto-size="{ minRows: 4, maxRows: 6 }"

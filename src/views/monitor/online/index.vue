@@ -51,60 +51,68 @@ let tableColumns: ColumnsType = [
     title: '序号',
     dataIndex: 'num',
     width: '50px',
-    align: 'center',
+    align: 'left',
     customRender(opt) {
       const idxNum = (tablePagination.current - 1) * tablePagination.pageSize;
       return idxNum + opt.index + 1;
     },
   },
   {
-    title: '会话编号',
-    dataIndex: 'tokenId',
-    align: 'center',
-  },
-  {
     title: '登录账号',
     dataIndex: 'userName',
-    align: 'center',
+    align: 'left',
+    width: 150,
   },
   {
     title: '所属部门',
     dataIndex: 'deptName',
-    align: 'center',
+    align: 'left',
+    width: 150,
   },
   {
     title: '登录主机',
     dataIndex: 'ipaddr',
-    align: 'center',
+    align: 'left',
+    width: 150,
   },
   {
     title: '登录地点',
     dataIndex: 'loginLocation',
-    align: 'center',
+    align: 'left',
+    width: 150,
   },
   {
     title: '操作系统',
     dataIndex: 'os',
-    align: 'center',
+    align: 'left',
+    width: 150,
   },
   {
     title: '浏览器',
     dataIndex: 'browser',
-    align: 'center',
+    align: 'left',
+    width: 200,
   },
   {
     title: '登录时间',
     dataIndex: 'loginTime',
     align: 'center',
+    width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
     },
   },
   {
+    title: '会话编号',
+    dataIndex: 'tokenId',
+    align: 'left',
+    width: 250,
+  },
+  {
     title: '操作',
     key: 'tokenId',
-    align: 'center',
+    align: 'left',
   },
 ];
 
@@ -319,7 +327,10 @@ onMounted(() => {
         :size="tableState.size"
         :row-class-name="fnTableStriped"
         :pagination="tablePagination"
-        :scroll="{ x: true }"
+        :scroll="{
+          x: tableColumns.length * 120,
+          scrollToFirstRowOnChange: true,
+        }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'tokenId'">

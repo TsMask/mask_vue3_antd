@@ -89,28 +89,33 @@ let tableColumns: ColumnsType = [
   {
     title: '用户编号',
     dataIndex: 'userId',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '登录账号',
     dataIndex: 'userName',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '用户昵称',
     dataIndex: 'nickName',
-    align: 'center',
+    align: 'left',
+    width: 100,
   },
   {
     title: '用户状态',
     dataIndex: 'status',
     key: 'status',
     align: 'center',
+    width: 100,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     align: 'center',
+    width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
@@ -232,7 +237,7 @@ watch(
             ></a-input>
           </a-form-item>
         </a-col>
-        <a-col :lg="8" :md="12" :xs="24">
+        <a-col :lg="10" :md="12" :xs="24">
           <a-form-item label="手机号码" name="phonenumber">
             <a-input
               v-model:value="queryParams.phonenumber"
@@ -242,7 +247,7 @@ watch(
             ></a-input>
           </a-form-item>
         </a-col>
-        <a-col :lg="8" :md="12" :xs="24">
+        <a-col :lg="6" :md="12" :xs="24">
           <a-form-item label="用户状态" name="status">
             <a-select
               v-model:value="queryParams.status"
@@ -277,7 +282,11 @@ watch(
       :loading="tableState.loading"
       :data-source="tableState.data"
       :size="tableState.size"
-      :scroll="{ scrollToFirstRowOnChange: true, y: 400, x: true }"
+      :scroll="{
+        x: tableColumns.length * 120,
+        scrollToFirstRowOnChange: true,
+        y: 400,
+      }"
       :pagination="tablePagination"
       :row-selection="{
         type: 'checkbox',
