@@ -304,7 +304,8 @@ function fnModalOk() {
               key,
               duration: 2,
             });
-            fnGetList();
+            fnGetList(1);
+            fnModalCancel();
           } else {
             message.error({
               content: `${res.msg}`,
@@ -314,7 +315,6 @@ function fnModalOk() {
           }
         })
         .finally(() => {
-          fnModalCancel();
           modalState.confirmLoading = false;
         });
     })

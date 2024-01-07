@@ -317,7 +317,8 @@ function fnModalOk() {
             if (!from.deptId) {
               treeDataAll = [];
             }
-            fnGetList();
+            fnGetList(1);
+            fnModalCancel();
           } else {
             message.error({
               content: `${res.msg}`,
@@ -326,7 +327,6 @@ function fnModalOk() {
           }
         })
         .finally(() => {
-          fnModalCancel();
           hide();
           modalState.confirmLoading = false;
         });

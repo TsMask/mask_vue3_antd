@@ -230,7 +230,7 @@ function fnModalOk(userIds: string[] | number[]) {
         key,
         duration: 3,
       });
-      fnGetList();
+      fnGetList(1);
     } else {
       message.error({
         content: `${res.msg}`,
@@ -263,7 +263,7 @@ function fnRecordDelete(userId: string | number) {
               key,
               duration: 3,
             });
-            fnGetList();
+            fnGetList(1);
           } else {
             message.error({
               content: `${res.msg}`,
