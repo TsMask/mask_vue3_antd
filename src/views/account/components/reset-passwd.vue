@@ -76,7 +76,7 @@ function fnFinish() {
     :model="state.form"
     name="stateForm"
     layout="vertical"
-    :wrapper-col="{ span: 9 }"
+    :wrapper-col="{ lg: 8, md: 24, xs:24 }"
     @finish="fnFinish"
   >
     <a-form-item
@@ -143,7 +143,7 @@ function fnFinish() {
       </a-input-password>
     </a-form-item>
 
-    <a-form-item :wrapper-col="{ span: 3 }">
+    <a-form-item :wrapper-col="{ lg: 3, md: 24, xs:24  }">
       <a-button
         block
         type="primary"

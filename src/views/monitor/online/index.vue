@@ -50,7 +50,7 @@ let tableColumns: ColumnsType = [
   {
     title: '序号',
     dataIndex: 'num',
-    width: '50px',
+    width: 50,
     align: 'left',
     customRender(opt) {
       const idxNum = (tablePagination.current - 1) * tablePagination.pageSize;
@@ -73,19 +73,19 @@ let tableColumns: ColumnsType = [
     title: '登录主机',
     dataIndex: 'ipaddr',
     align: 'left',
-    width: 150,
+    width: 120,
   },
   {
     title: '登录地点',
     dataIndex: 'loginLocation',
     align: 'left',
-    width: 150,
+    width: 120,
   },
   {
     title: '操作系统',
     dataIndex: 'os',
     align: 'left',
-    width: 150,
+    width: 120,
   },
   {
     title: '浏览器',
@@ -328,7 +328,7 @@ onMounted(() => {
         :row-class-name="fnTableStriped"
         :pagination="tablePagination"
         :scroll="{
-          x: tableColumns.length * 120,
+          x: tableColumns.length * 150,
           scrollToFirstRowOnChange: true,
         }"
       >

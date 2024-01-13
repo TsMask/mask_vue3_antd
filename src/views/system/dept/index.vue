@@ -317,7 +317,7 @@ function fnModalOk() {
             if (!from.deptId) {
               treeDataAll = [];
             }
-            fnGetList(1);
+            fnGetList();
             fnModalCancel();
           } else {
             message.error({

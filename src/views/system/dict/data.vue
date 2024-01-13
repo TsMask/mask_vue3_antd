@@ -775,7 +775,12 @@ onMounted(() => {
           :label-col="{ span: 3 }"
           :label-wrap="true"
         >
-          {{ modalState.from.remark }}
+          <a-textarea
+            :value="modalState.from.remark"
+            :auto-size="{ minRows: 2, maxRows: 6 }"
+            :disabled="true"
+            style="color: rgba(0, 0, 0, 0.85)"
+          />
         </a-form-item>
       </a-form>
       <template #footer>

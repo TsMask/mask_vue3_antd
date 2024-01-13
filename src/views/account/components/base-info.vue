@@ -126,7 +126,7 @@ onMounted(() => {
     :model="stateForm.form"
     name="stateForm"
     layout="vertical"
-    :wrapper-col="{ span: 18 }"
+    :wrapper-col="{ lg: 12, md: 20, xs:24 }"
     @finish="fnFinish"
   >
     <a-row :gutter="16">

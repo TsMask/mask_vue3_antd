@@ -12,7 +12,6 @@ import {
   delJobLog,
   cleanJobLog,
 } from '@/api/monitor/jobLog';
-import { getJob } from '@/api/monitor/job';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import useTabsStore from '@/store/modules/tabs';
@@ -22,9 +21,6 @@ const tabsStore = useTabsStore();
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
-
-// 获取地址栏参数
-const jobId = route.params && (route.params.jobId as string);
 
 /**字典数据 */
 let dict: {
@@ -42,10 +38,8 @@ let queryRangePicker = ref<[string, string]>(['', '']);
 
 /**查询参数 */
 let queryParams = reactive({
-  /**任务名称 */
-  jobName: '',
-  /**任务组名 */
-  jobGroup: undefined,
+  /**任务ID */
+  jobId: '',
   /**执行状态 */
   status: undefined,
   /**记录开始时间 */
@@ -60,25 +54,13 @@ let queryParams = reactive({
 
 /**查询参数重置 */
 function fnQueryReset() {
-  if (jobId && jobId !== '0') {
-    queryParams = Object.assign(queryParams, {
-      status: undefined,
-      beginTime: '',
-      endTime: '',
-      pageNum: 1,
-      pageSize: 20,
-    });
-  } else {
-    queryParams = Object.assign(queryParams, {
-      jobName: '',
-      jobGroup: undefined,
-      status: undefined,
-      beginTime: '',
-      endTime: '',
-      pageNum: 1,
-      pageSize: 20,
-    });
-  }
+  queryParams = Object.assign(queryParams, {
+    status: undefined,
+    beginTime: '',
+    endTime: '',
+    pageNum: 1,
+    pageSize: 20,
+  });
   queryRangePicker.value = ['', ''];
   tablePagination.current = 1;
   tablePagination.pageSize = 20;
@@ -389,16 +371,11 @@ onMounted(() => {
       dict.sysCommonStatus = resArr[1].value;
     }
   });
-  // 指定任务id数据列表
-  if (jobId && jobId !== '0') {
-    getJob(jobId).then(res => {
-      if (res.code === RESULT_CODE_SUCCESS) {
-        queryParams.jobName = res.data.jobName;
-        queryParams.jobGroup = res.data.jobGroup;
-        fnGetList();
-      }
-    });
-  } else {
+
+  // 获取地址栏参数 指定任务id数据列表
+  const jobId = route.params && (route.params.jobId as string);
+  if (jobId) {
+    queryParams.jobId = jobId;
     // 获取列表数据
     fnGetList();
   }
@@ -415,27 +392,6 @@ onMounted(() => {
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="任务名称" name="jobName">
-              <a-input
-                v-model:value="queryParams.jobName"
-                :allow-clear="jobId === '0'"
-                :disabled="jobId !== '0'"
-                placeholder="请输入任务名称"
-              ></a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="任务组名" name="jobGroup">
-              <a-select
-                v-model:value="queryParams.jobGroup"
-                allow-clear
-                placeholder="请选择任务组名"
-                :options="dict.sysJobGroup"
-              >
-              </a-select>
-            </a-form-item>
-          </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="执行状态" name="status">
               <a-select
@@ -573,7 +529,7 @@ onMounted(() => {
         :size="tableState.size"
         :row-class-name="fnTableStriped"
         :scroll="{
-          x: tableColumns.length * 120,
+          x: tableColumns.length * 140,
           scrollToFirstRowOnChange: true,
         }"
         :pagination="tablePagination"
@@ -588,8 +544,15 @@ onMounted(() => {
             <DictTag :options="dict.sysJobGroup" :value="record.jobGroup" />
           </template>
           <template v-if="column.key === 'status'">
-            <a-tag :color="+record.status ? 'success' : 'error'">
-              {{ ['失败', '正常'][+record.status] }}
+            <a-tag
+              v-if="dict.sysCommonStatus.length > 0"
+              :color="+record.status ? 'success' : 'error'"
+            >
+              {{
+                +modalState.from.status
+                  ? dict.sysCommonStatus[0].label
+                  : dict.sysCommonStatus[1].label
+              }}
             </a-tag>
           </template>
           <template v-if="column.key === 'jobLogId'">
@@ -627,8 +590,15 @@ onMounted(() => {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="执行状态" name="status">
-              <a-tag :color="+modalState.from.status ? 'success' : 'error'">
-                {{ ['失败', '正常'][+modalState.from.status] }}
+              <a-tag
+                v-if="dict.sysCommonStatus.length > 0"
+                :color="+modalState.from.status ? 'success' : 'error'"
+              >
+                {{
+                  +modalState.from.status
+                    ? dict.sysCommonStatus[0].label
+                    : dict.sysCommonStatus[1].label
+                }}
               </a-tag>
             </a-form-item>
           </a-col>
@@ -669,10 +639,10 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            v-model:value="modalState.from.targetParams"
+            :value="modalState.from.targetParams"
             :auto-size="{ minRows: 2, maxRows: 6 }"
-            placeholder="传入参数"
             :disabled="true"
+            style="color: rgba(0, 0, 0, 0.85)"
           />
         </a-form-item>
         <a-form-item
@@ -682,10 +652,10 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            v-model:value="modalState.from.jobMsg"
+            :value="modalState.from.jobMsg"
             :auto-size="{ minRows: 2, maxRows: 6 }"
-            placeholder="日志信息"
             :disabled="true"
+            style="color: rgba(0, 0, 0, 0.85)"
           />
         </a-form-item>
       </a-form>

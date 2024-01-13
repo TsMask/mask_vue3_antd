@@ -56,7 +56,7 @@ let cacheKeyTableColumns: ColumnsType = [
   {
     title: '序号',
     dataIndex: 'num',
-    width: '50px',
+    width: 50,
     align: 'center',
     customRender(opt) {
       return opt.index + 1;
@@ -66,6 +66,7 @@ let cacheKeyTableColumns: ColumnsType = [
     title: '缓存键名',
     dataIndex: 'cacheKey',
     align: 'left',
+    width: 150,
     ellipsis: true,
     // 渲染值处理
     customRender(opt) {
@@ -84,13 +85,13 @@ let cacheKeyTableColumns: ColumnsType = [
     title: '操作',
     key: 'option',
     align: 'center',
-    width: '50px',
+    width: 50,
   },
 ];
 
 /**键名列表表格数据 */
 let cacheKeyTable = reactive({
-  loading: true,
+  loading: false,
   data: [],
   /**当前键名列表的缓存名称 */
   cacheName: '',
@@ -159,7 +160,7 @@ let cacheNameTableColumns: ColumnsType = [
   {
     title: '序号',
     dataIndex: 'num',
-    width: '50px',
+    width: 50,
     align: 'center',
     customRender(opt) {
       return opt.index + 1;
@@ -169,6 +170,7 @@ let cacheNameTableColumns: ColumnsType = [
     title: '缓存名称',
     dataIndex: 'cacheName',
     align: 'left',
+    width: 150,
     ellipsis: true,
     // 渲染值处理
     customRender(opt) {
@@ -187,13 +189,14 @@ let cacheNameTableColumns: ColumnsType = [
     title: '备注',
     dataIndex: 'remark',
     align: 'left',
+    width: 150,
     ellipsis: true,
   },
   {
     title: '操作',
     key: 'option',
     align: 'center',
-    width: '50px',
+    width: 50,
   },
 ];
 
@@ -317,7 +320,7 @@ onMounted(() => {
             :columns="cacheNameTableColumns"
             :data-source="cacheNameTable.data"
             :loading="cacheNameTable.loading"
-            :scroll="{ y: 1200 }"
+            :scroll="{ y: 'calc(100vh - 380px)' }"
             :pagination="false"
             :row-selection="{
               type: 'radio',
@@ -399,7 +402,7 @@ onMounted(() => {
             :columns="cacheKeyTableColumns"
             :data-source="cacheKeyTable.data"
             :loading="cacheKeyTable.loading"
-            :scroll="{ y: 1200 }"
+            :scroll="{ y: 'calc(100vh - 380px)' }"
             :pagination="false"
             :row-selection="{
               type: 'radio',
@@ -484,9 +487,10 @@ onMounted(() => {
               <a-typography-paragraph>
                 <a-textarea
                   :value="cacheKeyInfo.data.cacheValue"
-                  :auto-size="{ minRows: 4, maxRows: 10 }"
+                  :auto-size="{ minRows: 4, maxRows: 18 }"
                   :maxlength="4000"
                   :disabled="true"
+                  style="color: rgba(0,0,0,.85);"
                   placeholder="显示缓存内容"
                 />
               </a-typography-paragraph>
