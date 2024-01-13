@@ -46,6 +46,26 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    build: {
+      sourcemap: false,
+      chunkSizeWarningLimit: 500, // 调整区块大小警告限制（以kB为单位）
+      rollupOptions: {
+        // 输出格式 [name]表示文件名 [hash]表示文件内容hash值 [ext]表示拓展名
+        output: {
+          // 用于从入口点创建的块
+          entryFileNames: '[name].[hash].js',
+          // 用于命名代码拆分的块
+          chunkFileNames: 'js/[name].[hash].js',
+          // 用于输出静态资源的块
+          assetFileNames: 'assets/[name].[hash].[ext]',
+          manualChunks: id => {
+            if (id.indexOf('node_modules') !== -1) {
+              return 'vendor/index';
+            }
+          },
+        },
+      },
+    },
     optimizeDeps: {
       include: ['@ant-design/icons-vue', 'ant-design-vue'],
     },
