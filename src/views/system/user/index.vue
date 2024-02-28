@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
-import { PageContainer } from '@ant-design-vue/pro-layout';
+import { PageContainer } from 'antdv-pro-layout';
 import { message, Modal, Form } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
@@ -234,11 +234,11 @@ type OptionsType = {
 /**对话框对象信息状态类型 */
 type ModalStateType = {
   /**详情框是否显示 */
-  visibleByView: boolean;
+  openByView: boolean;
   /**新增框或修改框是否显示 */
-  visibleByEdit: boolean;
+  openByEdit: boolean;
   /**重置密码框是否显示 */
-  visibleByResetPwd: boolean;
+  openByResetPwd: boolean;
   /**标题 */
   title: string;
   /**表单数据 */
@@ -251,9 +251,9 @@ type ModalStateType = {
 
 /**对话框对象信息状态 */
 let modalState: ModalStateType = reactive({
-  visibleByView: false,
-  visibleByEdit: false,
-  visibleByResetPwd: false,
+  openByView: false,
+  openByEdit: false,
+  openByResetPwd: false,
   title: '用户',
   from: {
     userId: undefined,
@@ -325,7 +325,7 @@ const modalStateFrom = Form.useForm(
  * 对话框弹出显示为 查看
  * @param userId 用户编号ID
  */
-function fnModalVisibleByVive(userId: string | number) {
+function fnModalOpenByVive(userId: string | number) {
   if (!userId) {
     message.error(`用户记录存在错误`, 2);
     return;
@@ -356,7 +356,7 @@ function fnModalVisibleByVive(userId: string | number) {
       // 头像解析
       modalState.from.avatar = useUserStore().fnAvatar(modalState.from.avatar);
       modalState.title = '用户信息';
-      modalState.visibleByView = true;
+      modalState.openByView = true;
     } else {
       message.error('获取用户信息失败', 2);
     }
@@ -367,7 +367,7 @@ function fnModalVisibleByVive(userId: string | number) {
  * 对话框弹出显示为 新增或者修改
  * @param userId 用户编号ID, 不传为新增
  */
-function fnModalVisibleByEdit(userId?: string | number) {
+function fnModalOpenByEdit(userId?: string | number) {
   if (!userId) {
     modalStateFrom.resetFields();
     if (modalState.confirmLoading) return;
@@ -395,7 +395,7 @@ function fnModalVisibleByEdit(userId?: string | number) {
         modalState.from.roleIds = roleIds;
         modalState.from.postIds = postIds;
         modalState.title = '添加用户信息';
-        modalState.visibleByEdit = true;
+        modalState.openByEdit = true;
       } else {
         message.error('获取用户信息失败', 2);
       }
@@ -425,7 +425,7 @@ function fnModalVisibleByEdit(userId?: string | number) {
         modalState.from.roleIds = roleIds;
         modalState.from.postIds = postIds;
         modalState.title = '修改用户信息';
-        modalState.visibleByEdit = true;
+        modalState.openByEdit = true;
       } else {
         message.error(`获取用户信息失败`, 2);
       }
@@ -482,9 +482,9 @@ function fnModalOk() {
  * 进行表达规则校验
  */
 function fnModalCancel() {
-  modalState.visibleByEdit = false;
-  modalState.visibleByView = false;
-  modalState.visibleByResetPwd = false;
+  modalState.openByEdit = false;
+  modalState.openByView = false;
+  modalState.openByResetPwd = false;
   modalStateFrom.resetFields();
   modalState.options.roles = [];
   modalState.options.posts = [];
@@ -509,7 +509,7 @@ function fnModalOkResetPwd() {
               key,
               duration: 2,
             });
-            modalState.visibleByResetPwd = false;
+            modalState.openByResetPwd = false;
             modalStateFrom.resetFields();
           } else {
             message.error({
@@ -537,7 +537,7 @@ function fnRecordResetPwd(row: Record<string, string>) {
   modalState.from.userId = row.userId;
   modalState.from.userName = row.userName;
   modalState.title = '重置密码';
-  modalState.visibleByResetPwd = true;
+  modalState.openByResetPwd = true;
 }
 
 /**
@@ -639,8 +639,8 @@ function fnExportList() {
 
 /**对话框表格信息导入对象信息状态类型 */
 type ModalUploadImportStateType = {
-  /**是否显示 */
-  visible: boolean;
+  /**是否打开显示 */
+  open: boolean;
   /**标题 */
   title: string;
   /**是否上传中 */
@@ -655,7 +655,7 @@ type ModalUploadImportStateType = {
 
 /**对话框表格信息导入对象信息状态 */
 let uploadImportState: ModalUploadImportStateType = reactive({
-  visible: false,
+  open: false,
   title: '用户导入',
   loading: false,
   updateSupport: false,
@@ -667,12 +667,12 @@ let uploadImportState: ModalUploadImportStateType = reactive({
 function fnModalUploadImportOpen() {
   uploadImportState.updateSupport = false;
   uploadImportState.msg = '';
-  uploadImportState.visible = true;
+  uploadImportState.open = true;
 }
 
 /**对话框表格信息导入关闭窗口 */
 function fnModalUploadImportClose() {
-  uploadImportState.visible = false;
+  uploadImportState.open = false;
 }
 
 /**对话框表格信息导入上传 */
@@ -883,7 +883,7 @@ onMounted(() => {
         <a-space :size="8" align="center">
           <a-button
             type="primary"
-            @click.prevent="fnModalVisibleByEdit()"
+            @click.prevent="fnModalOpenByEdit()"
             v-perms:has="['system:user:add']"
           >
             <template #icon><PlusOutlined /></template>
@@ -1014,7 +1014,7 @@ onMounted(() => {
                 <template #title>查看详情</template>
                 <a-button
                   type="link"
-                  @click.prevent="fnModalVisibleByVive(record.userId)"
+                  @click.prevent="fnModalOpenByVive(record.userId)"
                   v-perms:has="['system:user:query']"
                 >
                   <template #icon><ProfileOutlined /></template>
@@ -1024,7 +1024,7 @@ onMounted(() => {
                 <template #title>编辑</template>
                 <a-button
                   type="link"
-                  @click.prevent="fnModalVisibleByEdit(record.userId)"
+                  @click.prevent="fnModalOpenByEdit(record.userId)"
                   v-perms:has="['system:user:edit']"
                 >
                   <template #icon><FormOutlined /></template>
@@ -1059,7 +1059,7 @@ onMounted(() => {
     <!-- 详情框 -->
     <a-modal
       width="800px"
-      :visible="modalState.visibleByView"
+      :open="modalState.openByView"
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
@@ -1229,7 +1229,7 @@ onMounted(() => {
       width="800px"
       :keyboard="false"
       :mask-closable="false"
-      :visible="modalState.visibleByEdit"
+      :open="modalState.openByEdit"
       :title="modalState.title"
       :confirm-loading="modalState.confirmLoading"
       @ok="fnModalOk"
@@ -1434,7 +1434,7 @@ onMounted(() => {
       width="500px"
       :keyboard="false"
       :mask-closable="false"
-      :visible="modalState.visibleByResetPwd"
+      :open="modalState.openByResetPwd"
       :title="modalState.title"
       :confirm-loading="modalState.confirmLoading"
       @ok="fnModalOkResetPwd"
@@ -1481,7 +1481,7 @@ onMounted(() => {
       :loading="uploadImportState.loading"
       @upload="fnModalUploadImportUpload"
       @close="fnModalUploadImportClose"
-      v-model:visible="uploadImportState.visible"
+      v-model:open="uploadImportState.open"
       :ext="['.xls', '.xlsx']"
       :size="10"
     >

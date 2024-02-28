@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { GlobalFooter } from '@ant-design-vue/pro-layout';
+import { GlobalFooter } from 'antdv-pro-layout';
 import { message } from 'ant-design-vue/lib';
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import useUserStore from '@/store/modules/user';
@@ -244,7 +244,7 @@ onBeforeUnmount(() => {
               <a-col :span="8">
                 <a-image
                   alt="验证码"
-                  style="cursor: pointer; border-radius: 2px"
+                  style="cursor: pointer; border-radius: 6px"
                   width="120px"
                   height="40px"
                   :preview="false"

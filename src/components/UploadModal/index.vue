@@ -2,7 +2,7 @@
 import { message } from 'ant-design-vue/lib';
 import { FileType } from 'ant-design-vue/lib/upload/interface';
 import { UploadRequestOption } from 'ant-design-vue/lib/vc-upload/interface';
-const emit = defineEmits(['upload', 'close', 'update:visible']);
+const emit = defineEmits(['upload', 'close', 'update:open']);
 const props = defineProps({
   /**窗口标题 */
   title: {
@@ -15,7 +15,7 @@ const props = defineProps({
     default: false,
   },
   /**是否弹出显示，必传 */
-  visible: {
+  open: {
     type: Boolean,
     required: true,
   },
@@ -71,7 +71,7 @@ function fnUpload(up: UploadRequestOption) {
   <a-modal
     width="500px"
     :title="props.title"
-    :visible="props.visible"
+    :open="props.open"
     :keyboard="false"
     :mask-closable="false"
     :confirm-loading="props.loading"

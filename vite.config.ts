@@ -34,18 +34,6 @@ export default defineConfig(({ mode }) => {
       },
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
     },
-    css: {
-      preprocessorOptions: {
-        less: {
-          // DO NOT REMOVE THIS LINE
-          javascriptEnabled: true,
-          modifyVars: {
-            // hack: `true; @import 'ant-design-vue/dist/antd.variable.less'`,
-            // '@primary-color': '#eb2f96', // 全局主色
-          },
-        },
-      },
-    },
     build: {
       sourcemap: false,
       chunkSizeWarningLimit: 500, // 调整区块大小警告限制（以kB为单位）

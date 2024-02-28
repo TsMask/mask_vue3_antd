@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted } from 'vue';
-import { PageContainer } from '@ant-design-vue/pro-layout';
+import { PageContainer } from 'antdv-pro-layout';
 import { ColumnsType } from 'ant-design-vue/lib/table';
 import { getSystemInfo } from '@/api/monitor/system';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';

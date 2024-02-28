@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import donate from '@/assets/donate.jpg';
-import { PageContainer } from '@ant-design-vue/pro-layout';
+import { PageContainer } from 'antdv-pro-layout';
 import useAppStore from '@/store/modules/app';
 import useUserStore from '@/store/modules/user';
 const userStore = useUserStore();

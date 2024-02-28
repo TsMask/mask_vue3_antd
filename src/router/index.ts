@@ -19,7 +19,7 @@ import useRouterStore from '@/store/modules/router';
 // NProgress Configuration
 NProgress.configure({ showSpinner: false });
 
-// import { MetaRecord, MenuDataItem } from '@ant-design-vue/pro-layout';
+// import { MetaRecord, MenuDataItem } from 'antdv-pro-layout';
 // mate数据类型 MetaRecord
 // 根据/路径构建菜单列表，列表项类型 MenuDataItem
 // https://github.com/vueComponent/pro-components/blob/a19279f3a28190bf11e8c36f316c92dbd3387a6d/packages/pro-layout/src/typings.ts#L16

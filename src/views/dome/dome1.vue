@@ -17,7 +17,7 @@
 </template>
 
 <script lang="ts" setup>
-import { PageContainer } from '@ant-design-vue/pro-layout';
+import { PageContainer } from 'antdv-pro-layout';
 import { message } from 'ant-design-vue/lib';
 
 const handleClick = () => {

@@ -17,7 +17,15 @@ console.info(
 </script>
 
 <template>
-  <ConfigProvider :locale="zhCN" :component-size="appStore.componentSize">
+  <ConfigProvider
+    :theme="{
+      token: {
+        // colorPrimary: '#00b96b',
+      },
+    }"
+    :locale="zhCN"
+    :component-size="appStore.componentSize"
+  >
     <RouterView />
   </ConfigProvider>
 </template>

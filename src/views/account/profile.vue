@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { PageContainer } from '@ant-design-vue/pro-layout';
+import { PageContainer } from 'antdv-pro-layout';
 import { message } from 'ant-design-vue/lib';
 import { getUserProfile } from '@/api/profile';
 import { reactive, ref, onMounted } from 'vue';

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
-import { PageContainer } from '@ant-design-vue/pro-layout';
+import { PageContainer } from 'antdv-pro-layout';
 import BaseInfo from './components/base-info.vue';
 import ResetPasswd from './components/reset-passwd.vue';
 import StyleLayout from './components/style-layout.vue';

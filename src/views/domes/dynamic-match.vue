@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { PageContainer } from '@ant-design-vue/pro-layout';
+import { PageContainer } from 'antdv-pro-layout';
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 

@@ -24,7 +24,7 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue';
-import { PageContainer } from '@ant-design-vue/pro-layout';
+import { PageContainer } from 'antdv-pro-layout';
 
 const list = ref<number>(50);
 </script>

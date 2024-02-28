@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { reactive } from 'vue';
-import { PageContainer } from '@ant-design-vue/pro-layout';
+import { PageContainer } from 'antdv-pro-layout';
 import { Modal } from 'ant-design-vue/lib/components';
 import message from 'ant-design-vue/lib/message';
 import { FileType, UploadFile } from 'ant-design-vue/lib/upload/interface';

@@ -11,7 +11,7 @@ import {
 import { PieChart, PieSeriesOption } from 'echarts/charts';
 import { LabelLayout } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
-import { PageContainer } from '@ant-design-vue/pro-layout';
+import { PageContainer } from 'antdv-pro-layout';
 import { getCache } from '@/api/monitor/cache';
 import { reactive, ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';

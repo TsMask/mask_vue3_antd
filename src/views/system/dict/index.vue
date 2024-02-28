@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
-import { PageContainer } from '@ant-design-vue/pro-layout';
+import { PageContainer } from 'antdv-pro-layout';
 import { message, Modal, Form } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';

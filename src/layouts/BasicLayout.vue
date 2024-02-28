@@ -5,7 +5,7 @@ import {
   WaterMark,
   getMenuData,
   clearMenuItem,
-} from '@ant-design-vue/pro-layout';
+} from 'antdv-pro-layout';
 import RightContent from './components/RightContent.vue';
 import Tabs from './components/Tabs.vue';
 import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { GlobalFooter } from '@ant-design-vue/pro-layout';
+import { GlobalFooter } from 'antdv-pro-layout';
 import { Modal, message } from 'ant-design-vue/lib';
 import { reactive, onMounted, toRaw } from 'vue';
 import { getCaptchaImage, register } from '@/api/login';
