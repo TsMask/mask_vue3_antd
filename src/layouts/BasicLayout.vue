@@ -2,7 +2,6 @@
 import {
   ProLayout,
   GlobalFooter,
-  WaterMark,
   getMenuData,
   clearMenuItem,
 } from 'antdv-pro-layout';
@@ -116,7 +115,7 @@ tabsStore.clear();
 </script>
 
 <template>
-  <WaterMark :content="waterMarkContent" :z-index="100">
+  <a-watermark :content="waterMarkContent" :z-index="100">
     <ProLayout
       v-model:collapsed="layoutState.collapsed"
       v-model:selectedKeys="layoutState.selectedKeys"
@@ -199,7 +198,7 @@ tabsStore.clear();
         </GlobalFooter>
       </template>
     </ProLayout>
-  </WaterMark>
+  </a-watermark>
 </template>
 
 <style lang="less" scoped>
