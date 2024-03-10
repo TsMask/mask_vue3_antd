@@ -20,7 +20,7 @@ function goTarget(type: string) {
 </script>
 
 <template>
-  <PageContainer :breadcrumb="false" :title="appName" sub-title="by TsMask">
+  <PageContainer :breadcrumb="{}" :title="appName" sub-title="by TsMask">
     <template #tags>
       <a-tag>当前版本：{{ appVersion }}</a-tag>
       <a-tag color="magenta"><PayCircleOutlined /> 免费开源</a-tag>
