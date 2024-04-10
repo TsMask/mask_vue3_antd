@@ -20,7 +20,7 @@
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",
     "ant-design-vue": "^4.1.2",
-    "antdv-pro-layout": "^4.0.4",
+    "antdv-pro-layout": "^4.0.5",
     "dayjs": "^1.11.10",
     "echarts": "^5.5.0",
     "file-saver": "^2.0.5",
@@ -38,10 +38,10 @@
     "@types/nprogress": "^0.2.3",
     "@vitejs/plugin-vue": "^5.0.4",
     "less": "^4.2.0",
-    "typescript": "^5.4.2",
+    "typescript": "^5.4.5",
     "unplugin-vue-components": "^0.26.0",
-    "vite": "^5.1.5",
+    "vite": "^5.2.8",
     "vite-plugin-compression": "^0.5.1",
-    "vue-tsc": "^2.0.6"
+    "vue-tsc": "^2.0.12"
   }
 }
