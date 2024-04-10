@@ -31,32 +31,23 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 26px;
+        padding: 12px;
       }
       .ant-spin {
-        position: absolute;
-        display: none;
-        -webkit-box-sizing: border-box;
         box-sizing: border-box;
         margin: 0;
         padding: 0;
-        color: rgba(0, 0, 0, 0.65);
-        color: #1890ff;
-        font-size: 14px;
-        font-variant: tabular-nums;
-        line-height: 1.5;
-        text-align: center;
+        color: #1677ff;
+        font-size: 12px;
+        line-height: 1.6;
         list-style: none;
+        font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif,'Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol','Noto Color Emoji';
+        position: absolute;
+        display: none;
+        text-align: center;
+        vertical-align: middle;
         opacity: 0;
-        -webkit-transition: -webkit-transform 0.3s
-          cubic-bezier(0.78, 0.14, 0.15, 0.86);
-        transition: -webkit-transform 0.3s
-          cubic-bezier(0.78, 0.14, 0.15, 0.86);
         transition: transform 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86);
-        transition: transform 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86),
-          -webkit-transform 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86);
-        -webkit-font-feature-settings: "tnum";
-        font-feature-settings: "tnum";
       }
       .ant-spin-spinning {
         position: static;
@@ -66,70 +57,58 @@
       .ant-spin-dot {
         position: relative;
         display: inline-block;
-        width: 20px;
-        height: 20px;
-        font-size: 20px;
+        font-size: 17.5px;
+        width: 1em;
+        height: 1em;
       }
       .ant-spin-dot-item {
         position: absolute;
         display: block;
-        width: 9px;
-        height: 9px;
-        background-color: #1890ff;
+        width: 7.75px;
+        height: 7.75px;
+        background-color: #1677ff;
         border-radius: 100%;
-        -webkit-transform: scale(0.75);
-        -ms-transform: scale(0.75);
         transform: scale(0.75);
-        -webkit-transform-origin: 50% 50%;
-        -ms-transform-origin: 50% 50%;
         transform-origin: 50% 50%;
         opacity: 0.3;
-        -webkit-animation: antspinmove 1s infinite linear alternate;
-        animation: antSpinMove 1s infinite linear alternate;
+        animation-name: antSpinMove;
+        animation-duration: 1s;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
+        animation-direction: alternate;
       }
       .ant-spin-dot-item:nth-child(1) {
         top: 0;
-        left: 0;
+        inset-inline-start: 0;
       }
       .ant-spin-dot-item:nth-child(2) {
         top: 0;
-        right: 0;
-        -webkit-animation-delay: 0.4s;
+        inset-inline-end: 0;
         animation-delay: 0.4s;
       }
       .ant-spin-dot-item:nth-child(3) {
-        right: 0;
+        inset-inline-end: 0;
         bottom: 0;
-        -webkit-animation-delay: 0.8s;
         animation-delay: 0.8s;
       }
       .ant-spin-dot-item:nth-child(4) {
         bottom: 0;
-        left: 0;
-        -webkit-animation-delay: 1.2s;
+        inset-inline-start: 0;
         animation-delay: 1.2s;
       }
       .ant-spin-dot-spin {
-        -webkit-transform: rotate(45deg);
-        -ms-transform: rotate(45deg);
         transform: rotate(45deg);
-        -webkit-animation: antrotate 1.2s infinite linear;
-        animation: antRotate 1.2s infinite linear;
+        animation-name: antRotate;
+        animation-duration: 1.2s;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
       }
       .ant-spin-lg .ant-spin-dot {
-        width: 32px;
-        height: 32px;
-        font-size: 32px;
+        font-size: 28px;
       }
       .ant-spin-lg .ant-spin-dot i {
-        width: 14px;
-        height: 14px;
-      }
-      @media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
-        .ant-spin-blur {
-          background: #fff;
-          opacity: 0.5;
-        }
+        width: 12px;
+        height: 12px;
       }
       @-webkit-keyframes antSpinMove {
         to {
@@ -143,13 +122,11 @@
       }
       @-webkit-keyframes antRotate {
         to {
-          -webkit-transform: rotate(405deg);
           transform: rotate(405deg);
         }
       }
       @keyframes antRotate {
         to {
-          -webkit-transform: rotate(405deg);
           transform: rotate(405deg);
         }
       }
@@ -160,7 +137,7 @@
       titleSub: '初次加载资源可能需要较多时间',
       msg: '请耐心等待',
     };
-    document.title = "管理系统";
+    document.title = 'loading...';
 
     const divStr = `
     <div style="
