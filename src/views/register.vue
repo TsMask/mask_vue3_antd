@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { GlobalFooter } from 'antdv-pro-layout';
-import { Modal, message } from 'ant-design-vue/lib';
+import { Modal, message } from 'ant-design-vue';
 import { reactive, onMounted, toRaw } from 'vue';
 import { getCaptchaImage, register } from '@/api/login';
 import { regExpPasswd, regExpUserName } from '@/utils/regular-utils';
@@ -117,8 +117,8 @@ onMounted(() => {
       <div class="desc">基于 ant-design-vue + vue3 的管理系统</div>
     </div>
 
-    <div class="main">
-      <a-form :model="state.form" name="tabForm" @finish="fnFinish">
+    <a-card :bordered="true" class="main">
+      <a-form :model="state.form" name="stateForm" @finish="fnFinish">
         <a-form-item
           name="username"
           :rules="[
@@ -185,28 +185,26 @@ onMounted(() => {
           </a-input-password>
         </a-form-item>
 
-        <a-row :gutter="8" v-if="state.captcha.enabled">
-          <a-col :span="16">
-            <a-form-item
-              name="code"
-              :rules="[{ required: true, min: 1, message: '请输入正确验证码' }]"
+        <a-form-item
+          v-if="state.captcha.enabled"
+          name="code"
+          :rules="[{ required: true, min: 1, message: '请输入正确验证码' }]"
+        >
+          <a-input-group compact>
+            <a-input
+              v-model:value="state.form.code"
+              size="large"
+              placeholder="验证码"
+              :maxlength="6"
+              style="width: calc(100% - 120px)"
             >
-              <a-input
-                v-model:value="state.form.code"
-                size="large"
-                placeholder="验证码"
-                :maxlength="6"
-              >
-                <template #prefix>
-                  <RobotOutlined class="prefix-icon" />
-                </template>
-              </a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
+              <template #prefix>
+                <RobotOutlined class="prefix-icon" />
+              </template>
+            </a-input>
             <a-image
               alt="验证码"
-              style="cursor: pointer; border-radius: 2px"
+              style="cursor: pointer; border-radius: inherit"
               width="120px"
               height="40px"
               :preview="false"
@@ -214,8 +212,8 @@ onMounted(() => {
               :fallback="state.captcha.codeImgFall"
               @click="fnGetCaptcha"
             />
-          </a-col>
-        </a-row>
+          </a-input-group>
+        </a-form-item>
 
         <a-button
           block
@@ -236,7 +234,7 @@ onMounted(() => {
           使用已有账号登录
         </a-button>
       </a-form>
-    </div>
+    </a-card>
 
     <GlobalFooter
       class="footer"

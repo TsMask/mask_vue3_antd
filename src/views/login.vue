@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { GlobalFooter } from 'antdv-pro-layout';
-import { message } from 'ant-design-vue/lib';
+import { message } from 'ant-design-vue';
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import useUserStore from '@/store/modules/user';
 import { getCaptchaImage } from '@/api/login';
@@ -165,7 +165,7 @@ onBeforeUnmount(() => {
       <div class="desc">基于 ant-design-vue + vue3 的管理系统</div>
     </div>
 
-    <div class="main">
+    <a-card :bordered="true" class="main">
       <a-form :model="state.from" name="stateFrom" @finish="fnFinish">
         <a-tabs
           v-model:activeKey="activeKey"
@@ -221,30 +221,26 @@ onBeforeUnmount(() => {
               </a-input-password>
             </a-form-item>
 
-            <a-row :gutter="8" v-if="state.captcha.enabled">
-              <a-col :span="16">
-                <a-form-item
-                  name="code"
-                  :rules="[
-                    { required: true, min: 1, message: '请输入正确验证码' },
-                  ]"
+            <a-form-item
+              v-if="state.captcha.enabled"
+              name="code"
+              :rules="[{ required: true, min: 1, message: '请输入正确验证码' }]"
+            >
+              <a-input-group compact>
+                <a-input
+                  v-model:value="state.from.code"
+                  size="large"
+                  placeholder="验证码"
+                  :maxlength="6"
+                  style="width: calc(100% - 120px)"
                 >
-                  <a-input
-                    v-model:value="state.from.code"
-                    size="large"
-                    placeholder="验证码"
-                    :maxlength="6"
-                  >
-                    <template #prefix>
-                      <RobotOutlined class="prefix-icon" />
-                    </template>
-                  </a-input>
-                </a-form-item>
-              </a-col>
-              <a-col :span="8">
+                  <template #prefix>
+                    <RobotOutlined class="prefix-icon" />
+                  </template>
+                </a-input>
                 <a-image
                   alt="验证码"
-                  style="cursor: pointer; border-radius: 6px"
+                  style="cursor: pointer; border-radius: inherit"
                   width="120px"
                   height="40px"
                   :preview="false"
@@ -252,12 +248,13 @@ onBeforeUnmount(() => {
                   :fallback="state.captcha.codeImgFall"
                   @click="fnGetCaptcha"
                 />
-              </a-col>
-            </a-row>
+              </a-input-group>
+            </a-form-item>
 
-            <a-row :gutter="8" align="middle" style="margin-bottom: 16px">
-              <a-col :span="6">
+            <a-form-item>
+              <a-space direction="horizontal" :size="8">
                 <a-button
+                  size="small"
                   type="link"
                   target="_self"
                   title="注册账号"
@@ -265,11 +262,9 @@ onBeforeUnmount(() => {
                 >
                   注册账号
                 </a-button>
-              </a-col>
-              <a-col :span="6" :offset="12" v-if="false">
-                <a-button type="link">忘记密码</a-button>
-              </a-col>
-            </a-row>
+                <a-button size="small" type="link">忘记密码</a-button>
+              </a-space>
+            </a-form-item>
           </a-tab-pane>
 
           <a-tab-pane key="phonenumber" tab="手机号登录">
@@ -356,7 +351,7 @@ onBeforeUnmount(() => {
           </a-col>
         </a-row>
       </a-form>
-    </div>
+    </a-card>
 
     <GlobalFooter
       class="footer"
@@ -381,6 +376,9 @@ onBeforeUnmount(() => {
   background-repeat: no-repeat;
   background-position: center 110px;
   background-size: 100%;
+}
+[data-theme='dark'] .container {
+  background-color: #141414;
 }
 
 .top {
@@ -418,6 +416,13 @@ onBeforeUnmount(() => {
   }
 }
 
+[data-theme='dark'] .top .header .title {
+  color: rgba(255, 255, 255, 0.85);
+}
+[data-theme='dark'] .top .desc {
+  color: rgba(255, 255, 255, 0.45);
+}
+
 .main {
   width: 368px;
   min-width: 260px;
@@ -433,5 +438,8 @@ onBeforeUnmount(() => {
   position: absolute;
   bottom: 0;
   width: 100%;
+}
+[data-theme='dark'] .footer {
+  color: rgba(255, 255, 255, 0.85);
 }
 </style>
