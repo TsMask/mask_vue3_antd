@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { PageContainer } from 'antdv-pro-layout';
-import { message } from 'ant-design-vue/lib';
+import { message } from 'ant-design-vue';
 import { getUserProfile } from '@/api/profile';
 import { reactive, ref, onMounted } from 'vue';
 import { parseDateToStr } from '@/utils/date-utils';
@@ -181,6 +181,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 16px 0;
   &-no {
     align-self: flex-start;
     font-size: 14px;

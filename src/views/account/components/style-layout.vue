@@ -1,20 +1,30 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
-import { getLocalColor, changePrimaryColor } from '@/hooks/useTheme';
+import { viewTransitionTheme } from 'antdv-pro-layout';
 import useLayoutStore from '@/store/modules/layout';
-const { proConfig, changeConf } = useLayoutStore();
+const { proConfig, changeConf, themeConfig, changePrimaryColor } =
+  useLayoutStore();
 
-let color = ref<string>(getLocalColor());
+let timerId: any = null;
 
 /**改变主题色 */
 function fnColorChange(e: Event) {
   const target = e.target as HTMLInputElement;
-  if (target.nodeName === 'INPUT') {
-    changePrimaryColor(target.value ?? '#1890ff');
-  } else {
-    changePrimaryColor();
-  }
-  color.value = getLocalColor();
+  // 需要防抖函数处理
+  clearTimeout(timerId);
+  timerId = setTimeout(() => {
+    if (target.nodeName === 'INPUT') {
+      changePrimaryColor(target.value ?? '#1890ff');
+    } else {
+      changePrimaryColor();
+    }
+  }, 300);
+}
+
+/**手动变更主题-过渡动画 */
+function changeTheme(e: any) {
+  viewTransitionTheme(isDarkMode => {
+    changeConf('theme', isDarkMode ? 'light' : 'dark');
+  }, e);
 }
 </script>
 
@@ -44,8 +54,25 @@ function fnColorChange(e: Event) {
           <a-button type="primary" size="small" @click="fnColorChange">
             <BgColorsOutlined /> 随机
           </a-button>
-          <input type="color" :value="color" @input="fnColorChange" />
+          <input
+            type="color"
+            :value="themeConfig?.token?.colorPrimary"
+            @input="fnColorChange"
+          />
         </a-space>
+      </template>
+    </a-list-item>
+    <a-list-item>
+      主题明亮
+      <template #actions> 全局主题色 </template>
+      <template #extra>
+        <a-button
+          :type="proConfig.theme === 'dark' ? 'primary' : 'default'"
+          size="small"
+          @click="changeTheme"
+        >
+          {{ proConfig.theme }}
+        </a-button>
       </template>
     </a-list-item>
     <a-list-item>
@@ -55,9 +82,9 @@ function fnColorChange(e: Event) {
         <a-switch
           checked-children="是"
           un-checked-children="否"
-          :checked="proConfig.navTheme === 'dark'"
+          :checked="proConfig.menuTheme === 'dark'"
           @change="
-            (checked:any) => changeConf('navTheme', checked ? 'dark' : 'light')
+            (checked:any) => changeConf('menuTheme', checked ? 'dark' : 'light')
           "
         ></a-switch>
       </template>
