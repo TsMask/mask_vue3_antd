@@ -2,10 +2,10 @@
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
-import { message, Modal, Form } from 'ant-design-vue/lib';
-import { SizeType } from 'ant-design-vue/lib/config-provider';
-import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
-import { ColumnsType } from 'ant-design-vue/lib/table';
+import { message, Modal, Form } from 'ant-design-vue';
+import type { SizeType } from 'ant-design-vue/es/config-provider';
+import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
+import type { ColumnsType } from 'ant-design-vue/es/table';
 import UploadModal from '@/components/UploadModal/index.vue';
 import {
   importData,
@@ -31,7 +31,7 @@ import {
 } from '@/utils/regular-utils';
 import useDictStore from '@/store/modules/dict';
 import useUserStore from '@/store/modules/user';
-import { DataNode } from 'ant-design-vue/lib/tree';
+import { DataNode } from 'ant-design-vue/es/tree';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const route = useRoute();

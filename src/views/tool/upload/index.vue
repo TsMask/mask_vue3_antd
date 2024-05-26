@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { reactive } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
-import { Modal } from 'ant-design-vue/lib/components';
-import message from 'ant-design-vue/lib/message';
-import { FileType, UploadFile } from 'ant-design-vue/lib/upload/interface';
-import { UploadRequestOption } from 'ant-design-vue/lib/vc-upload/interface';
+import { Modal } from 'ant-design-vue/es/components';
+import message from 'ant-design-vue/es/message';
+import type { FileType, UploadFile } from 'ant-design-vue/es/upload/interface';
+import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface';
 import saveAs from 'file-saver';
 import {
   downloadFile,

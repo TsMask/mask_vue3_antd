@@ -10,8 +10,8 @@ import {
   clearCacheSafe,
 } from '@/api/monitor/cache';
 import { PageContainer } from 'antdv-pro-layout';
-import { ColumnsType } from 'ant-design-vue/lib/table/Table';
-import { message } from 'ant-design-vue/lib';
+import { message } from 'ant-design-vue';
+import type { ColumnsType } from 'ant-design-vue/es/table/Table';
 import { hasPermissions } from '@/plugins/auth-user';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const route = useRoute();

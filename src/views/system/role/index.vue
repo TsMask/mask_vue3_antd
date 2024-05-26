@@ -2,10 +2,10 @@
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
-import { message, Modal, Form } from 'ant-design-vue/lib';
-import { SizeType } from 'ant-design-vue/lib/config-provider';
-import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
-import { ColumnsType } from 'ant-design-vue/lib/table';
+import { message, Modal, Form } from 'ant-design-vue';
+import type { SizeType } from 'ant-design-vue/es/config-provider';
+import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
+import type { ColumnsType } from 'ant-design-vue/es/table';
 import {
   exportRole,
   addRole,
@@ -21,7 +21,7 @@ import { roleDeptTreeSelect } from '@/api/system/dept';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
-import { DataNode } from 'ant-design-vue/lib/tree';
+import { DataNode } from 'ant-design-vue/es/tree';
 import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/parse-tree-utils';
 import { hasPermissions } from '@/plugins/auth-user';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
@@ -1028,7 +1028,7 @@ onMounted(() => {
           :label-col="{ span: 3 }"
           :label-wrap="true"
         >
-        <a-textarea
+          <a-textarea
             :value="modalState.from.remark"
             :auto-size="{ minRows: 2, maxRows: 6 }"
             :disabled="true"

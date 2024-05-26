@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { reactive, toRaw, watch } from 'vue';
-import { message } from 'ant-design-vue/lib';
-import { SizeType } from 'ant-design-vue/lib/config-provider';
-import { ColumnsType } from 'ant-design-vue/lib/table';
+import { message } from 'ant-design-vue';
+import type { SizeType } from 'ant-design-vue/es/config-provider';
+import type { ColumnsType } from 'ant-design-vue/es/table';
 import { authUserAllocatedList } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';

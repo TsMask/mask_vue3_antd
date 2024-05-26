@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { PageContainer } from 'antdv-pro-layout';
-import { message, Modal, Form } from 'ant-design-vue/lib';
-import { SizeType } from 'ant-design-vue/lib/config-provider';
-import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
-import { ColumnsType } from 'ant-design-vue/lib/table';
+import { message, Modal, Form } from 'ant-design-vue';
+import type { SizeType } from 'ant-design-vue/es/config-provider';
+import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
+import type { ColumnsType } from 'ant-design-vue/es/table';
 import IconFont from '@/components/IconFont/index.vue';
 import { iconFonts } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import { useRoute } from 'vue-router';

@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
         // https://cn.vitejs.dev/config/#server-proxy
         [env.VITE_API_BASE_URL]: {
           target: 'https://mock.apifox.cn/m1/1551143-0-default',
-          // target: 'http://192.168.56.1:6275',
+          // target: 'http://192.168.56.1:6276',
           changeOrigin: true,
           rewrite: (p: string) => p.replace(env.VITE_API_BASE_URL, ''),
         },
@@ -67,9 +67,9 @@ export default defineConfig(({ mode }) => {
         extensions: ['vue', 'tsx'],
         resolvers: [
           AntDesignVueResolver({
-            importStyle: false,
             resolveIcons: true,
-            cjs: true, // 避免es模块打包缺失
+            importStyle: false,
+            cjs: false,
           }),
         ],
       }),

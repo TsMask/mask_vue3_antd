@@ -2,7 +2,7 @@
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
-import { ColumnsType } from 'ant-design-vue/lib/table';
+import type { ColumnsType } from 'ant-design-vue/es/table';
 import { getSystemInfo } from '@/api/monitor/system';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const route = useRoute();
