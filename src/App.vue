@@ -1,12 +1,29 @@
 <script setup lang="ts">
-import { ConfigProvider } from 'ant-design-vue/lib';
-import { usePrimaryColor } from '@/hooks/useTheme';
+import { onBeforeMount, watch } from 'vue';
+import useLayoutStore from '@/store/modules/layout';
 import useAppStore from '@/store/modules/app';
-import zhCN from 'ant-design-vue/lib/locale/zh_CN';
+import zhCN from 'ant-design-vue/es/locale/zh_CN';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
+import { usePrefersColorScheme, viewTransitionTheme } from 'antdv-pro-layout';
 dayjs.locale('zh-cn'); // 默认中文
-usePrimaryColor(); // 载入用户自定义主题色
+const { themeConfig, initPrimaryColor, changeConf } = useLayoutStore();
+
+// 偏好设置
+const colorScheme = usePrefersColorScheme();
+watch(
+  () => colorScheme.value,
+  themeMode => {
+    viewTransitionTheme(() => {
+      changeConf('theme', themeMode);
+    });
+  }
+);
+
+onBeforeMount(() => {
+  initPrimaryColor();
+});
+
 const appStore = useAppStore();
 // 输出应用版本号
 console.info(
@@ -17,17 +34,13 @@ console.info(
 </script>
 
 <template>
-  <ConfigProvider
-    :theme="{
-      token: {
-        // colorPrimary: '#00b96b',
-      },
-    }"
+  <a-config-provider
+    :theme="themeConfig"
     :locale="zhCN"
     :component-size="appStore.componentSize"
   >
     <RouterView />
-  </ConfigProvider>
+  </a-config-provider>
 </template>
 
 <style>
@@ -39,10 +52,6 @@ body .ant-pro-basicLayout {
   flex-direction: column;
   width: 100%;
   min-height: 100vh;
-}
-
-.ant-pro-sider {
-  z-index: 20;
 }
 
 .slide-left-enter-active,
@@ -65,5 +74,25 @@ body .ant-pro-basicLayout {
 .slide-right-enter {
   opacity: 0;
   transform: translate(-2em, 0);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+[data-theme='dark']::view-transition-old(root) {
+  z-index: 1;
+}
+[data-theme='dark']::view-transition-new(root) {
+  z-index: 999;
+}
+
+::view-transition-old(root) {
+  z-index: 999;
+}
+::view-transition-new(root) {
+  z-index: 1;
 }
 </style>
