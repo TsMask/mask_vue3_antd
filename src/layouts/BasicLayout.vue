@@ -22,7 +22,7 @@ const tabsStore = useTabsStore();
 const router = useRouter();
 
 /**菜单面板 */
-let layoutState = reactive({
+const layoutState = reactive({
   collapsed: false, // 是否展开菜单面板
   openKeys: ['/'], // 打开菜单key
   selectedKeys: ['/index'], // 选中高亮菜单key
@@ -122,7 +122,6 @@ tabsStore.clear();
       v-model:openKeys="layoutState.openKeys"
       :menu-data="menuData"
       :breadcrumb="{ routes: breadcrumb }"
-      disable-content-margin
       v-bind="proConfig"
       :iconfont-url="scriptUrl"
     >
@@ -138,7 +137,7 @@ tabsStore.clear();
       <template #headerContentRender></template>
 
       <!--插槽-顶部右侧-->
-      <template #rightContentRender>
+      <template #headerContentRightRender>
         <RightContent />
       </template>
 

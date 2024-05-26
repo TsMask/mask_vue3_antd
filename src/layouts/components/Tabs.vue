@@ -138,7 +138,7 @@ watch(router.currentRoute, v => tabsStore.tabOpen(v), { immediate: true });
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>更多选项</template>
-            <a-dropdown :trigger="['click', 'hover']" placement="bottomRight">
+            <a-dropdown trigger="click" placement="bottomRight">
               <a-button type="ghost" shape="circle" size="small">
                 <template #icon><DownOutlined /></template>
               </a-button>
@@ -181,7 +181,18 @@ watch(router.currentRoute, v => tabsStore.tabOpen(v), { immediate: true });
   }
 }
 
+[data-theme='dark'] .tabs {
+  background: #141414;
+}
+
 .tabs :deep(.ant-tabs-nav:before) {
   border-bottom: none;
+}
+.tabs :deep(.ant-tabs-nav-list .ant-tabs-tab) {
+  border-radius: 8px;
+}
+.tabs :deep(.ant-tabs-nav-list .ant-tabs-tab.ant-tabs-tab-active) {
+  border-bottom-right-radius: unset;
+  border-bottom-left-radius: unset;
 }
 </style>

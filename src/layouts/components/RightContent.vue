@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
-import { SizeType } from 'ant-design-vue/lib/config-provider';
+import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
+import type { SizeType } from 'ant-design-vue/es/config-provider';
 import { toggle, isFullscreen } from '@/utils/fullscreen-utils';
 import { useRouter } from 'vue-router';
 import useUserStore from '@/store/modules/user';
@@ -35,7 +35,7 @@ function fnClick({ key }: MenuInfo) {
     <a-popover
       overlayClassName="head-notice"
       placement="bottomRight"
-      :trigger="['click']"
+      trigger="click"
     >
       <a-button type="text">
         <template #icon>
@@ -113,7 +113,7 @@ function fnClick({ key }: MenuInfo) {
       </a-dropdown>
     </a-tooltip>
 
-    <a-dropdown placement="bottomRight" :trigger="['click', 'hover']">
+    <a-dropdown placement="bottomRight" trigger="click">
       <div class="user">
         <a-avatar
           shape="circle"
