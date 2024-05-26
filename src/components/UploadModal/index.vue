@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { message } from 'ant-design-vue/lib';
-import { FileType } from 'ant-design-vue/lib/upload/interface';
-import { UploadRequestOption } from 'ant-design-vue/lib/vc-upload/interface';
+import { message } from 'ant-design-vue';
+import type { FileType } from 'ant-design-vue/es/upload/interface';
+import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface';
 const emit = defineEmits(['upload', 'close', 'update:open']);
 const props = defineProps({
   /**窗口标题 */

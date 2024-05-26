@@ -1,4 +1,4 @@
-import { SizeType } from 'ant-design-vue/lib/config-provider';
+import type { SizeType } from 'ant-design-vue/es/config-provider';
 import { defineStore } from 'pinia';
 
 /**应用参数类型 */
