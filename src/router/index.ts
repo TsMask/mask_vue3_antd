@@ -15,6 +15,8 @@ import { validHttp } from '@/utils/regular-utils';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
 import useRouterStore from '@/store/modules/router';
+import { createVNode } from 'vue';
+import { AlipayOutlined } from '@ant-design/icons-vue';
 
 // NProgress Configuration
 NProgress.configure({ showSpinner: false });
@@ -55,7 +57,7 @@ const constantRoutes: RouteRecordRaw[] = [
       {
         path: '/dome3',
         name: 'Dome3',
-        meta: { title: '示例三', icon: 'icon-qunzhu' },
+        meta: { title: '示例三', icon: createVNode(AlipayOutlined) },
         component: () => import('@/views/dome/dome3.vue'),
       },
       {
@@ -94,6 +96,12 @@ const constantRoutes: RouteRecordRaw[] = [
             component: () => {},
           },
           {
+            path: 'danger',
+            name: 'Danger',
+            meta: { title: '危险警告', danger: true },
+            component: () => import('@/views/dome/dome3.vue'),
+          },
+          {
             path: 'https://github.com/TsMask',
             name: 'BlankGithubTsMask',
             meta: {
@@ -109,7 +117,7 @@ const constantRoutes: RouteRecordRaw[] = [
             meta: {
               title: 'Antdv-内嵌窗口',
               icon: 'icon-morentouxiang',
-              target: null,
+              target: undefined,
             },
             component: LinkLayout,
           },
