@@ -1,9 +1,10 @@
 <template>
-  <a-modal
+  <ProModal
+    :drag="true"
+    :destroyOnClose="true"
     title="Cron表达式生成"
     :visible="props.visible"
     :body-style="{ padding: '0 24px' }"
-    :destroy-on-close="true"
     @cancel="fnCronModal(false)"
     @ok="fnCronModal(true)"
   >
@@ -31,7 +32,7 @@
       v-model:value="cronStr"
       disabled
     />
-  </a-modal>
+  </ProModal>
 </template>
 <script lang="ts" setup>
 import CronSecond from './components/Second.vue';

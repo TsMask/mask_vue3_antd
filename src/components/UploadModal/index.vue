@@ -33,15 +33,15 @@ const props = defineProps({
 
 /**弹框关闭事件 */
 function fnModalClose() {
-  if(props.loading) return
+  if (props.loading) return;
   emit('close');
 }
 
 /**上传前检查或转换压缩 */
 function fnBeforeUpload(file: FileType) {
   if (props.loading) return false;
-    // 检查文件大小
-    if (props.size > 0) {
+  // 检查文件大小
+  if (props.size > 0) {
     const fileSize = file.size;
     const isLtM = fileSize / 1024 / 1024 < props.size;
     if (!isLtM) {
@@ -63,13 +63,13 @@ function fnBeforeUpload(file: FileType) {
 
 /**上传请求发出 */
 function fnUpload(up: UploadRequestOption) {
-  emit('upload', up.file)
+  emit('upload', up.file);
 }
 </script>
 
 <template>
-  <a-modal
-    width="500px"
+  <ProModal
+    :drag="true"
     :title="props.title"
     :visible="props.visible"
     :keyboard="false"
@@ -88,24 +88,22 @@ function fnUpload(up: UploadRequestOption) {
         :before-upload="fnBeforeUpload"
         :custom-request="fnUpload"
       >
-        <p class="ant-upload-drag-icon">
-          <inbox-outlined></inbox-outlined>
-        </p>
+        <p class="ant-upload-drag-icon"><InboxOutlined /></p>
         <p class="ant-upload-text">点击选择或将文件拖入边框区域进行上传</p>
         <p class="ant-upload-hint">
-          <div v-if="props.size > 0">
+          <template v-if="props.size > 0">
             允许上传文件大小 {{ props.size }} MB
-          </div>
-          <div v-if="props.ext.length > 0">
+          </template>
+          <template v-if="props.ext.length > 0">
             允许导入
             {{ props.ext.join('、') }}
             格式文件
-          </div>
+          </template>
         </p>
       </a-upload-dragger>
       <slot></slot>
     </a-space>
-  </a-modal>
+  </ProModal>
 </template>
 
 <style lang="less" scoped></style>

@@ -215,8 +215,12 @@ watch(
 </script>
 
 <template>
-  <a-modal
-    width="800px"
+  <ProModal
+    :drag="true"
+    :fullscreen="true"
+    :forceFullscreen="true"
+    :destroyOnClose="true"
+    :width="800"
     :title="props.title"
     :visible="props.visible"
     :keyboard="false"
@@ -300,7 +304,7 @@ watch(
         </template>
       </template>
     </a-table>
-  </a-modal>
+  </ProModal>
 </template>
 
 <style lang="less" scoped></style>

@@ -860,8 +860,9 @@ onMounted(() => {
     </a-card>
 
     <!-- 详情框 -->
-    <a-modal
-      width="800px"
+    <ProModal
+      :drag="true"
+      :width="800"
       :visible="modalState.visibleByView"
       :title="modalState.title"
       @cancel="fnModalCancel"
@@ -969,11 +970,13 @@ onMounted(() => {
       <template #footer>
         <a-button key="cancel" @click="fnModalCancel">关闭</a-button>
       </template>
-    </a-modal>
+    </ProModal>
 
     <!-- 新增框或修改框 -->
-    <a-modal
-      width="800px"
+    <ProModal
+      :drag="true"
+      :destroyOnClose="true"
+      :width="800"
       :keyboard="false"
       :mask-closable="false"
       :visible="modalState.visibleByEdit"
@@ -1163,7 +1166,7 @@ onMounted(() => {
           />
         </a-form-item>
       </a-form>
-    </a-modal>
+    </ProModal>
 
     <!-- 生成cron表达式 -->
     <CronModal
