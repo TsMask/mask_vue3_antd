@@ -5,7 +5,7 @@ import {
   WaterMark,
   getMenuData,
   clearMenuItem,
-} from '@ant-design-vue/pro-layout';
+} from 'antdv-pro-layout';
 import RightContent from './components/RightContent.vue';
 import Tabs from './components/Tabs.vue';
 import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
@@ -123,7 +123,6 @@ tabsStore.clear();
       v-model:openKeys="layoutState.openKeys"
       :menu-data="menuData"
       :breadcrumb="{ routes: breadcrumb }"
-      disable-content-margin
       v-bind="proConfig"
       :iconfont-url="scriptUrl"
     >
@@ -135,11 +134,11 @@ tabsStore.clear();
         </RouterLink>
       </template>
 
-      <!--插槽-顶部左侧，只对side布局有效-->
+      <!--插槽-渲染顶部内容区域，仅布局side有效-->
       <template #headerContentRender></template>
 
-      <!--插槽-顶部右侧-->
-      <template #rightContentRender>
+      <!--插槽-渲染顶部内容右端区域-->
+      <template #headerContentRightRender>
         <RightContent />
       </template>
 

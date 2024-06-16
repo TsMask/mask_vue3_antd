@@ -9,7 +9,7 @@ import {
   clearCacheKey,
   clearCacheSafe,
 } from '@/api/monitor/cache';
-import { PageContainer } from '@ant-design-vue/pro-layout';
+import { PageContainer } from 'antdv-pro-layout';
 import { ColumnsType } from 'ant-design-vue/lib/table/Table';
 import { message } from 'ant-design-vue/lib';
 import { hasPermissions } from '@/plugins/auth-user';

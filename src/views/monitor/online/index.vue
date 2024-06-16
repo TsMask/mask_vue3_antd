@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted } from 'vue';
-import { PageContainer } from '@ant-design-vue/pro-layout';
+import { PageContainer } from 'antdv-pro-layout';
 import { message, Modal } from 'ant-design-vue/lib';
 import { forceLogout, listOnline } from '@/api/monitor/online';
 import { parseDateToStr } from '@/utils/date-utils';

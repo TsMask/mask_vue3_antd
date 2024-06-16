@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
-import { SizeType } from 'ant-design-vue/lib/config-provider';
+import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
+import type { SizeType } from 'ant-design-vue/es/config-provider';
 import { toggle, isFullscreen } from '@/utils/fullscreen-utils';
 import { useRouter } from 'vue-router';
 import useUserStore from '@/store/modules/user';
@@ -35,11 +35,11 @@ function fnClick({ key }: MenuInfo) {
     <a-popover
       overlayClassName="head-notice"
       placement="bottomRight"
-      :trigger="['click']"
+      trigger="click"
     >
-      <a-button type="text">
+      <a-button type="text" style="color: inherit">
         <template #icon>
-          <a-badge :count="9999" :overflow-count="99">
+          <a-badge :count="9999" :overflow-count="99" style="color: inherit">
             <BellOutlined />
           </a-badge>
         </template>
@@ -64,7 +64,12 @@ function fnClick({ key }: MenuInfo) {
 
     <a-tooltip>
       <template #title>开源仓库</template>
-      <a-button type="text" href="https://gitee.com/TsMask" target="_blank">
+      <a-button
+        type="text"
+        style="color: inherit"
+        href="https://gitee.com/TsMask"
+        target="_blank"
+      >
         <template #icon>
           <GithubOutlined />
         </template>
@@ -75,6 +80,7 @@ function fnClick({ key }: MenuInfo) {
       <template #title>文档手册</template>
       <a-button
         type="text"
+        style="color: inherit"
         href="https://juejin.cn/column/7188761626017792056"
         target="_blank"
       >
@@ -86,7 +92,7 @@ function fnClick({ key }: MenuInfo) {
 
     <a-tooltip>
       <template #title>全屏显示</template>
-      <a-button type="text" @click="toggle">
+      <a-button type="text" style="color: inherit" @click="toggle">
         <template #icon>
           <FullscreenExitOutlined v-if="isFullscreen()" />
           <FullscreenOutlined v-else />
@@ -97,7 +103,7 @@ function fnClick({ key }: MenuInfo) {
     <a-tooltip>
       <template #title>组件尺寸</template>
       <a-dropdown placement="bottom" trigger="click">
-        <a-button type="text">
+        <a-button type="text" style="color: inherit">
           <template #icon><FontSizeOutlined /></template>
         </a-button>
         <template #overlay>
@@ -113,7 +119,7 @@ function fnClick({ key }: MenuInfo) {
       </a-dropdown>
     </a-tooltip>
 
-    <a-dropdown placement="bottomRight" :trigger="['click', 'hover']">
+    <a-dropdown placement="bottomRight" trigger="click">
       <div class="user">
         <a-avatar
           shape="circle"

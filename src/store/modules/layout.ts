@@ -10,10 +10,10 @@ type LayoutStore = {
   proConfig: {
     /**导航布局 */
     layout: 'side' | 'top' | 'mix';
-    /**导航菜单主题色 */
-    navTheme: 'dark' | 'light';
-    /**顶部导航主题，仅导航布局为mix时生效 */
-    headerTheme: 'dark' | 'light';
+    /**全局主题色*/
+    theme: 'dark' | 'light';
+    /**菜单导航主题色 */
+    menuTheme: 'dark' | 'light';
     /**固定顶部栏 */
     fixedHeader: boolean;
     /**固定菜单栏 */
@@ -41,8 +41,8 @@ const proConfigLocal: LayoutStore['proConfig'] = localGetJSON(
   CACHE_LOCAL_PROCONFIG
 ) || {
   layout: 'side',
-  headerTheme: 'light',
-  navTheme: 'light',
+  theme: 'light',
+  menuTheme: 'light',
   fixSiderbar: true,
   fixedHeader: true,
   splitMenus: true,
@@ -53,8 +53,8 @@ const useLayoutStore = defineStore('layout', {
     visible: false,
     proConfig: {
       layout: proConfigLocal.layout,
-      navTheme: proConfigLocal.navTheme,
-      headerTheme: proConfigLocal.headerTheme,
+      theme: proConfigLocal.theme,
+      menuTheme: proConfigLocal.menuTheme,
       fixedHeader: Boolean(proConfigLocal.fixedHeader),
       fixSiderbar: Boolean(proConfigLocal.fixSiderbar),
       splitMenus: Boolean(proConfigLocal.splitMenus),
@@ -77,10 +77,6 @@ const useLayoutStore = defineStore('layout', {
     /**修改布局设置 */
     changeConf(key: string, value: boolean | string | number | undefined) {
       if (Reflect.has(this.proConfig, key)) {
-        // 同时修改mix混合菜单的导航主题
-        if (key === 'navTheme') {
-          Reflect.set(this.proConfig, 'headerTheme', value);
-        }
         Reflect.set(this.proConfig, key, value);
         localSetJSON(CACHE_LOCAL_PROCONFIG, this.proConfig);
       }

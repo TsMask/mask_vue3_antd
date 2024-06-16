@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { Modal, message } from 'ant-design-vue/lib';
-import { FileType } from 'ant-design-vue/lib/upload/interface';
-import { UploadRequestOption } from 'ant-design-vue/lib/vc-upload/interface';
+import type { FileType } from 'ant-design-vue/es/upload/interface';
+import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface';
 import { onMounted, reactive, ref, toRaw } from 'vue';
 import { updateUserProfile, uploadAvatar } from '@/api/profile';
 import { regExpEmail, regExpMobile, regExpNick } from '@/utils/regular-utils';
@@ -125,12 +125,13 @@ onMounted(() => {
   <a-form
     :model="stateForm.form"
     name="stateForm"
-    layout="vertical"
-    :wrapper-col="{ lg: 12, md: 20, xs:24 }"
+    :wrapper-col="{ span: 14 }"
+    :label-col="{ span: 4 }"
+    :label-warp="true"
     @finish="fnFinish"
   >
     <a-row :gutter="16">
-      <a-col :lg="12" :md="12" :xs="24" style="margin-bottom: 30px">
+      <a-col :lg="8" :md="8" :xs="24" style="margin-bottom: 30px">
         <a-form-item
           label="用户昵称"
           name="nickName"
@@ -206,25 +207,26 @@ onMounted(() => {
           </a-select>
         </a-form-item>
 
-        <a-space :size="8">
-          <a-button
-            block
-            type="primary"
-            html-type="submit"
-            :loading="stateForm.formClick"
-          >
-            确认修改
-          </a-button>
-          <a-button
-            type="default"
-            @click="fnInitstateForm"
-            :disabled="stateForm.formClick"
-          >
-            重置
-          </a-button>
-        </a-space>
+        <a-form-item :wrapper-col="{ offset: 4, span: 12 }">
+          <a-space :size="8">
+            <a-button
+              type="primary"
+              html-type="submit"
+              :loading="stateForm.formClick"
+            >
+              确认修改
+            </a-button>
+            <a-button
+              type="default"
+              @click="fnInitstateForm"
+              :disabled="stateForm.formClick"
+            >
+              重置
+            </a-button>
+          </a-space>
+        </a-form-item>
       </a-col>
-      <a-col :lg="12" :md="12" :xs="24">
+      <a-col :lg="6" :md="6" :xs="24">
         <a-space direction="vertical" :size="16">
           <a-avatar
             shape="circle"

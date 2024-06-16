@@ -4,10 +4,10 @@
       <a-descriptions size="small" :column="2">
         <a-descriptions-item label="创建人">张三</a-descriptions-item>
         <a-descriptions-item label="联系方式">
-          <a>421421</a>
+          <a>15612341234</a>
         </a-descriptions-item>
-        <a-descriptions-item label="创建时间">2017-01-10</a-descriptions-item>
-        <a-descriptions-item label="更新时间">2017-10-10</a-descriptions-item>
+        <a-descriptions-item label="创建时间">2021-01-10</a-descriptions-item>
+        <a-descriptions-item label="更新时间">2024-03-03</a-descriptions-item>
         <a-descriptions-item label="备注">
           中国浙江省杭州市西湖区古翠路
         </a-descriptions-item>
@@ -18,7 +18,7 @@
       <a-button key="2">操作</a-button>
       <a-button key="1" type="primary">主操作</a-button>
     </template>
-    <template #extraContent>
+    <template #contentExtra>
       <a-space>
         <a-statistic title="Feedback" :value="1128">
           <template #prefix>
@@ -47,10 +47,10 @@
 </template>
 
 <script setup lang="ts">
-import { PageContainer } from '@ant-design-vue/pro-layout';
+import { PageContainer } from 'antdv-pro-layout';
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-
+import { LikeOutlined } from '@ant-design/icons-vue';
 const route = useRoute();
 const router = useRouter();
 

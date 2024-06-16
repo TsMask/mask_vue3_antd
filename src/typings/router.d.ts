@@ -1,5 +1,5 @@
 import 'vue-router';
-import { MetaRecord, MenuDataItem } from '@ant-design-vue/pro-layout';
+import { MetaRecord, MenuDataItem } from 'antdv-pro-layout';
 
 declare module 'vue-router' {
   interface RouteMeta extends MetaRecord {

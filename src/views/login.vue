@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { GlobalFooter } from '@ant-design-vue/pro-layout';
+import { GlobalFooter } from 'antdv-pro-layout';
 import { message } from 'ant-design-vue/lib';
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import useUserStore from '@/store/modules/user';
@@ -165,7 +165,7 @@ onBeforeUnmount(() => {
       <div class="desc">基于 ant-design-vue + vue3 的管理系统</div>
     </div>
 
-    <div class="main">
+    <a-card :bordered="true" class="main">
       <a-form :model="state.from" name="stateFrom" @finish="fnFinish">
         <a-tabs
           v-model:activeKey="activeKey"
@@ -221,30 +221,26 @@ onBeforeUnmount(() => {
               </a-input-password>
             </a-form-item>
 
-            <a-row :gutter="8" v-if="state.captcha.enabled">
-              <a-col :span="16">
-                <a-form-item
-                  name="code"
-                  :rules="[
-                    { required: true, min: 1, message: '请输入正确验证码' },
-                  ]"
+            <a-form-item
+              v-if="state.captcha.enabled"
+              name="code"
+              :rules="[{ required: true, min: 1, message: '请输入正确验证码' }]"
+            >
+              <a-input-group compact>
+                <a-input
+                  v-model:value="state.from.code"
+                  size="large"
+                  placeholder="验证码"
+                  :maxlength="6"
+                  style="width: calc(100% - 120px)"
                 >
-                  <a-input
-                    v-model:value="state.from.code"
-                    size="large"
-                    placeholder="验证码"
-                    :maxlength="6"
-                  >
-                    <template #prefix>
-                      <RobotOutlined class="prefix-icon" />
-                    </template>
-                  </a-input>
-                </a-form-item>
-              </a-col>
-              <a-col :span="8">
+                  <template #prefix>
+                    <RobotOutlined class="prefix-icon" />
+                  </template>
+                </a-input>
                 <a-image
                   alt="验证码"
-                  style="cursor: pointer; border-radius: 2px"
+                  style="cursor: pointer; border-radius: inherit"
                   width="120px"
                   height="40px"
                   :preview="false"
@@ -252,12 +248,13 @@ onBeforeUnmount(() => {
                   :fallback="state.captcha.codeImgFall"
                   @click="fnGetCaptcha"
                 />
-              </a-col>
-            </a-row>
+              </a-input-group>
+            </a-form-item>
 
-            <a-row :gutter="8" align="middle" style="margin-bottom: 16px">
-              <a-col :span="6">
+            <a-form-item>
+              <a-space direction="horizontal" :size="8">
                 <a-button
+                  size="small"
                   type="link"
                   target="_self"
                   title="注册账号"
@@ -265,11 +262,9 @@ onBeforeUnmount(() => {
                 >
                   注册账号
                 </a-button>
-              </a-col>
-              <a-col :span="6" :offset="12" v-if="false">
-                <a-button type="link">忘记密码</a-button>
-              </a-col>
-            </a-row>
+                <a-button size="small" type="link">忘记密码</a-button>
+              </a-space>
+            </a-form-item>
           </a-tab-pane>
 
           <a-tab-pane key="phonenumber" tab="手机号登录">
@@ -356,7 +351,7 @@ onBeforeUnmount(() => {
           </a-col>
         </a-row>
       </a-form>
-    </div>
+    </a-card>
 
     <GlobalFooter
       class="footer"
@@ -403,7 +398,8 @@ onBeforeUnmount(() => {
     .title {
       position: relative;
       top: 2px;
-      color: rgba(0, 0, 0, 0.85);
+      color: inherit;
+      opacity: 0.85;
       font-weight: 600;
       font-size: 33px;
       font-family: Avenir, Helvetica Neue, Arial, Helvetica, sans-serif;
@@ -413,7 +409,8 @@ onBeforeUnmount(() => {
   .desc {
     margin-top: 12px;
     margin-bottom: 40px;
-    color: rgba(0, 0, 0, 0.45);
+    color: inherit;
+    opacity: 0.65;
     font-size: 14px;
   }
 }

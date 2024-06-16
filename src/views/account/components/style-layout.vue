@@ -1,20 +1,49 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import { usePrefersColorScheme, viewTransitionTheme } from 'antdv-pro-layout';
 import { getLocalColor, changePrimaryColor } from '@/hooks/useTheme';
 import useLayoutStore from '@/store/modules/layout';
 const { proConfig, changeConf } = useLayoutStore();
 
+let timerId: any = null;
 let color = ref<string>(getLocalColor());
 
 /**改变主题色 */
 function fnColorChange(e: Event) {
   const target = e.target as HTMLInputElement;
-  if (target.nodeName === 'INPUT') {
-    changePrimaryColor(target.value ?? '#1890ff');
-  } else {
-    changePrimaryColor();
+  // 需要防抖函数处理
+  clearTimeout(timerId);
+  timerId = setTimeout(() => {
+    if (target.nodeName === 'INPUT') {
+      changePrimaryColor(target.value ?? '#1890ff');
+    } else {
+      changePrimaryColor();
+    }
+    color.value = getLocalColor();
+  }, 300);
+}
+
+// 偏好设置
+const colorScheme = usePrefersColorScheme();
+watch(
+  () => colorScheme.value,
+  themeMode => {
+    // 普通
+    changeConf('theme', themeMode);
+    document.documentElement.setAttribute('data-theme', themeMode);
+    // 过渡动画
+    // changeTheme(undefined);
   }
-  color.value = getLocalColor();
+);
+
+// 手动变更主题-过渡动画
+function changeTheme(e: any) {
+  viewTransitionTheme(isDarkMode => {
+    const themeMode = isDarkMode ? 'light' : 'dark';
+    changeConf('theme', themeMode);
+    document.documentElement.setAttribute('data-theme', themeMode);
+    // 暂时没找到合适的切换方式导入样式文件 TODO
+  }, e);
 }
 </script>
 
@@ -42,10 +71,23 @@ function fnColorChange(e: Event) {
       <template #extra>
         <a-space :size="16" align="end" direction="horizontal">
           <a-button type="primary" size="small" @click="fnColorChange">
-            <BgColorsOutlined /> 随机
+            随机
           </a-button>
           <input type="color" :value="color" @input="fnColorChange" />
         </a-space>
+      </template>
+    </a-list-item>
+    <a-list-item>
+      主题明亮
+      <template #actions> 全局主题色 </template>
+      <template #extra>
+        <a-button
+          :type="proConfig.theme === 'dark' ? 'primary' : 'default'"
+          size="small"
+          @click="changeTheme"
+        >
+          {{ proConfig.theme }}
+        </a-button>
       </template>
     </a-list-item>
     <a-list-item>
@@ -55,9 +97,9 @@ function fnColorChange(e: Event) {
         <a-switch
           checked-children="是"
           un-checked-children="否"
-          :checked="proConfig.navTheme === 'dark'"
+          :checked="proConfig.menuTheme === 'dark'"
           @change="
-            (checked:any) => changeConf('navTheme', checked ? 'dark' : 'light')
+            (checked:any) => changeConf('menuTheme', checked ? 'dark' : 'light')
           "
         ></a-switch>
       </template>

@@ -18,10 +18,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ant-design-vue/pro-layout": "^3.2.5",
     "@ant-design/icons-vue": "^7.0.1",
     "ant-design-vue": "^3.2.20",
-    "dayjs": "^1.11.10",
+    "antdv-pro-layout": "^3.3.5",
+    "dayjs": "^1.11.11",
     "echarts": "^5.5.0",
     "file-saver": "^2.0.5",
     "js-base64": "^3.7.7",

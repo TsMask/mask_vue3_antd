@@ -19,10 +19,11 @@ import useRouterStore from '@/store/modules/router';
 // NProgress Configuration
 NProgress.configure({ showSpinner: false });
 
-// import { MetaRecord, MenuDataItem } from '@ant-design-vue/pro-layout';
-// mate数据类型 MetaRecord
-// 根据/路径构建菜单列表，列表项类型 MenuDataItem
-// https://github.com/vueComponent/pro-components/blob/a19279f3a28190bf11e8c36f316c92dbd3387a6d/packages/pro-layout/src/typings.ts#L16
+// import { MetaRecord, MenuDataItem } from 'antdv-pro-layout';
+// 根据/路径构建菜单列表，
+// 菜单数据项类型 MenuDataItem
+// 菜单数据项元数据类型 MetaRecord
+// https://gitee.com/TsMask/antdv-pro-layout/blob/v3/src/typings/index.ts
 // 菜单图标来源 https://ant.design/components/icon 自定义iconfont
 
 /**公共路由 */
@@ -94,6 +95,12 @@ const constantRoutes: RouteRecordRaw[] = [
             component: () => {},
           },
           {
+            path: 'danger',
+            name: 'Danger',
+            meta: { title: '危险警告', danger: true },
+            component: () => import('@/views/dome/dome3.vue'),
+          },
+          {
             path: 'https://github.com/TsMask',
             name: 'BlankGithubTsMask',
             meta: {
@@ -104,12 +111,12 @@ const constantRoutes: RouteRecordRaw[] = [
             component: () => {},
           },
           {
-            path: encode('https://www.antdv.com/components/comment-cn'),
+            path: encode('https://3x.antdv.com/components/comment-cn'),
             name: 'HttpsAntDesignVue',
             meta: {
               title: 'Antdv-内嵌窗口',
               icon: 'icon-morentouxiang',
-              target: null,
+              target: undefined,
             },
             component: LinkLayout,
           },
@@ -126,7 +133,7 @@ const constantRoutes: RouteRecordRaw[] = [
         component: () => {},
       },
       {
-        path: 'https://www.antdv.com/components/comment-cn?sdf=12321&id=12&sdnf',
+        path: 'https://3x.antdv.com/components/comment-cn?sdf=12321&id=12&sdnf',
         name: 'SelfAnt Design Vue',
         meta: {
           title: 'Antdv-当前窗口',
@@ -236,7 +243,7 @@ router.afterEach((to, from, failure) => {
 });
 
 /**全局路由-前置守卫 */
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   NProgress.start();
   const token = getToken();
 
@@ -260,31 +267,27 @@ router.beforeEach((to, from, next) => {
       // 判断当前用户是否有角色信息
       const user = useUserStore();
       if (user.roles && user.roles.length === 0) {
-        // 获取用户信息
-        user
-          .fnGetInfo()
-          .then(() => {
-            return useRouterStore().generateRoutes();
-          })
-          .then(accessRoutes => {
-            // 根据后台配置生成可访问的路由表
-            if (accessRoutes && accessRoutes.length !== 0) {
-              for (const route of accessRoutes) {
-                // 动态添加可访问路由表，http开头会异常
-                if (!validHttp(route.path)) {
-                  router.addRoute(route);
-                }
+        try {
+          // 获取用户信息
+          await user.fnGetInfo();
+          // 获取路由信息
+          const accessRoutes = await useRouterStore().generateRoutes();
+          // 根据后台配置生成可访问的路由表
+          if (accessRoutes && accessRoutes.length !== 0) {
+            for (const route of accessRoutes) {
+              // 动态添加可访问路由表，http开头会异常
+              if (!validHttp(route.path)) {
+                router.addRoute(route);
               }
             }
-            // 刷新替换原先路由，确保addRoutes已完成
-            next({ ...to, replace: true });
-          })
-          .catch(e => {
-            console.error(`[${to.path}]: ${e.message}`);
-            user.fnLogOut().finally(() => {
-              next({ name: 'Login' });
-            });
-          });
+          }
+          // 刷新替换原先路由，确保addRoutes已完成
+          next({ ...to, replace: true });
+        } catch (error: any) {
+          console.error(`[${to.path}]: ${error.message}`);
+          await user.fnLogOut();
+          next({ name: 'Login' });
+        }
       } else {
         next();
       }
