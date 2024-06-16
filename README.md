@@ -4,14 +4,14 @@
 ![Build Vite](https://img.shields.io/badge/Build-Vite-green.svg)
 ![Build Vue3](https://img.shields.io/badge/Build-Vue3-green.svg)
 ![Build MaskApi](https://img.shields.io/badge/Build-MaskApi-orange.svg)
-![Release V0.3.0](https://img.shields.io/badge/Release-V0.3.0-orange.svg)
+![Release V3.0.1](https://img.shields.io/badge/Release-V3.0.1-orange.svg)
 ![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 ## 简介
 
 该项目选择 [RuoYi-Vue3](https://github.com/yangzongzhuan/RuoYi-Vue3) 进行功能适配。
 
-- 系统布局使用 [@ant-design-vue/pro-layout](https://github.com/vueComponent/pro-components)
+- 系统布局使用 [antdv-pro-layout](https://gitee.com/TsMask/antdv-pro-layout)
 - 图标来源 [@ant-design/icons-vue](https://ant.design/components/icon)
 - 菜单图标使用自定义iconfont `font_8d5l8fzk5b87iudi.js`图标文件
 

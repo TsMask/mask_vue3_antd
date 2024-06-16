@@ -1,7 +1,7 @@
 {
   "name": "mask_vue3_antd",
   "type": "module",
-  "version": "0.3.0",
+  "version": "3.0.1",
   "description": "🎉 基于 ant-design-vue + vue3 的管理系统",
   "author": "TsMask",
   "repository": {
