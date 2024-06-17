@@ -965,104 +965,105 @@ onMounted(() => {
           </a-radio-group>
         </a-form-item>
 
-        <a-row
-          :gutter="16"
-          v-if="modalState.from.menuType !== MENU_TYPE_BUTTON"
-        >
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="菜单图标" name="icon">
-              <a-select
-                v-model:value="modalState.from.icon"
-                placeholder="请选择菜单图标"
-                show-search
-                option-filter-prop="label"
-                option-label-prop="label"
-                :options="icons"
+        <a-row :gutter="16">
+          <template v-if="modalState.from.menuType !== MENU_TYPE_BUTTON">
+            <a-col :lg="12" :md="12" :xs="24">
+              <a-form-item label="菜单图标" name="icon">
+                <a-select
+                  v-model:value="modalState.from.icon"
+                  placeholder="请选择菜单图标"
+                  show-search
+                  option-filter-prop="label"
+                  option-label-prop="label"
+                  :options="icons"
+                >
+                  <template #suffixIcon>
+                    <IconFont :type="modalState.from.icon"></IconFont>
+                  </template>
+                  <template #option="{ value, label }">
+                    <div style="font-size: 18px">
+                      <IconFont :type="value"></IconFont>
+                      &nbsp;&nbsp;{{ label }}
+                    </div>
+                  </template>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :lg="12" :md="12" :xs="24">
+              <a-form-item
+                label="路由地址"
+                name="path"
+                v-bind="modalStateFrom.validateInfos.path"
               >
-                <template #suffixIcon>
-                  <IconFont :type="modalState.from.icon"></IconFont>
-                </template>
-                <template #option="{ value, label }">
-                  <div style="font-size: 18px">
-                    <IconFont :type="value"></IconFont>
-                    &nbsp;&nbsp;{{ label }}
-                  </div>
-                </template>
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="路由地址"
-              name="path"
-              v-bind="modalStateFrom.validateInfos.path"
-            >
-              <a-input
-                v-model:value="modalState.from.path"
-                allow-clear
-                placeholder="请输入路由地址"
-                :maxlength="200"
-              >
-                <template #prefix>
-                  <a-tooltip placement="topLeft">
-                    <template #title>
-                      <div>
-                        访问的路由地址，如：user、/auth
-                        <br />
-                        1. 如网络地址需内部访问<br />则以 http(s):// 开头
-                        <br />菜单行为（根节点）：当前窗口打开
-                        <br />菜单行为（非根节点）：内嵌窗口
-                        <br />
-                        2. 如网络地址需外部访问<br />则将内部地址选项设为否
-                        <br />菜单行为：打开新标签
-                        <br />
-                        3. 如内嵌子页面需要隐藏页面<br />则将显示状态选项设为隐藏
-                        <br />地址拼接以内嵌路由地址
-                        {{ MENU_PATH_INLINE }}/子页面地址
-                      </div>
-                    </template>
-                    <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />
-                  </a-tooltip>
-                </template>
-              </a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="内部地址" name="isFrame">
-              <a-select
-                v-model:value="modalState.from.isFrame"
-                default-value="0"
-                placeholder="内部地址"
-              >
-                <a-select-option key="0" value="0">否</a-select-option>
-                <a-select-option key="1" value="1">是</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="页面缓存" name="isCache">
-              <a-select
-                v-model:value="modalState.from.isCache"
-                default-value="0"
-                placeholder="页面缓存"
-              >
-                <a-select-option key="0" value="0">不缓存</a-select-option>
-                <a-select-option key="1" value="1">缓存</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="显示状态" name="visible">
-              <a-select
-                v-model:value="modalState.from.visible"
-                default-value="0"
-                placeholder="显示状态"
-              >
-                <a-select-option key="0" value="0">隐藏</a-select-option>
-                <a-select-option key="1" value="1">显示</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
+                <a-input
+                  v-model:value="modalState.from.path"
+                  allow-clear
+                  placeholder="请输入路由地址"
+                  :maxlength="200"
+                >
+                  <template #prefix>
+                    <a-tooltip placement="topLeft">
+                      <template #title>
+                        <div>
+                          访问的路由地址，如：user、/auth
+                          <br />
+                          1. 如网络地址需内部访问<br />则以 http(s):// 开头
+                          <br />菜单行为（根节点）：当前窗口打开
+                          <br />菜单行为（非根节点）：内嵌窗口
+                          <br />
+                          2. 如网络地址需外部访问<br />则将内部地址选项设为否
+                          <br />菜单行为：打开新标签
+                          <br />
+                          3. 如内嵌子页面需要隐藏页面<br />则将显示状态选项设为隐藏
+                          <br />地址拼接以内嵌路由地址
+                          {{ MENU_PATH_INLINE }}/子页面地址
+                        </div>
+                      </template>
+                      <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />
+                    </a-tooltip>
+                  </template>
+                </a-input>
+              </a-form-item>
+            </a-col>
+          </template>
+          <template v-if="modalState.from.menuType === MENU_TYPE_MENU">
+            <a-col :lg="12" :md="12" :xs="24">
+              <a-form-item label="内部地址" name="isFrame">
+                <a-select
+                  v-model:value="modalState.from.isFrame"
+                  default-value="0"
+                  placeholder="内部地址"
+                >
+                  <a-select-option key="0" value="0">否</a-select-option>
+                  <a-select-option key="1" value="1">是</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :lg="12" :md="12" :xs="24">
+              <a-form-item label="页面缓存" name="isCache">
+                <a-select
+                  v-model:value="modalState.from.isCache"
+                  default-value="0"
+                  placeholder="页面缓存"
+                >
+                  <a-select-option key="0" value="0">不缓存</a-select-option>
+                  <a-select-option key="1" value="1">缓存</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :lg="12" :md="12" :xs="24">
+              <a-form-item label="显示状态" name="visible">
+                <a-select
+                  v-model:value="modalState.from.visible"
+                  default-value="0"
+                  placeholder="显示状态"
+                >
+                  <a-select-option key="0" value="0">隐藏</a-select-option>
+                  <a-select-option key="1" value="1">显示</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+          </template>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单状态" name="status">
               <a-select
