@@ -254,7 +254,7 @@ router.beforeEach(async (to, from, next) => {
       next();
     } else {
       // 否则全部重定向到登录页
-      next(`/login?redirect=${to.fullPath}`);
+      next(`/login?redirect=${encodeURIComponent(to.fullPath)}`);
     }
   }
 

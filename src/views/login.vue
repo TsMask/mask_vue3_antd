@@ -12,10 +12,6 @@ const route = useRoute();
 const codeImgFall =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
-/**登录后重定向页面 */
-const redirectPath =
-  (route.query && (route.query.redirect as string)) || '/index';
-
 /**Tab默认激活 */
 let activeKey = ref<'username' | 'phonenumber'>('username');
 
@@ -73,8 +69,10 @@ function fnFinish() {
     .fnLogin(form)
     .then(res => {
       if (res.code === RESULT_CODE_SUCCESS) {
-        message.success('登录成功', 1);
-        router.push({ path: redirectPath });
+        message.success('登录成功', 3);
+        /**登录后重定向页面 */
+        const redirectPath = (route.query && route.query.redirect) || '/index';
+        router.push({ path: redirectPath as string });
       } else {
         message.error(`${res.msg}`, 3);
       }
