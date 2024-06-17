@@ -115,6 +115,7 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
   if (
     options.repeatSubmit &&
     options.dataType === 'json' &&
+    !(options.data instanceof FormData) &&
     ['post', 'put'].includes(options.method)
   ) {
     const requestObj: RepeatSubmitType = {
