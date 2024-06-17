@@ -13,9 +13,9 @@ const { getDict } = useDictStore();
 
 /**用户性别字典 */
 let sysUserSex = ref<DictType[]>([
-  { label: '未知', value: '0', elTagType: '', elTagClass: '' },
-  { label: '男', value: '1', elTagType: '', elTagClass: '' },
-  { label: '女', value: '2', elTagType: '', elTagClass: '' },
+  { label: '未知', value: '0', tagType: '', tagClass: '' },
+  { label: '男', value: '1', tagType: '', tagClass: '' },
+  { label: '女', value: '2', tagType: '', tagClass: '' },
 ]);
 
 /**表单数据状态 */
