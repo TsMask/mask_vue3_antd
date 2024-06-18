@@ -2,6 +2,6 @@
 type DictType = {
   label: string;
   value: string;
-  tagClass: string;
-  tagType: string;
+  tagClass?: string;
+  tagType?: string;
 };
