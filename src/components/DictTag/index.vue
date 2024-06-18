@@ -13,7 +13,6 @@ const props = defineProps({
   /**当前值不存在时，从中选择数据默认值 */
   valueDefalut: {
     type: [Number, String],
-    default: '',
   },
   /**当前的值 */
   value: {
@@ -29,7 +28,7 @@ const item = computed(() => {
       item => `${item[props.valueField]}` === `${props.value}`
     );
     // 数据默认值
-    if (!option && props.valueDefalut) {
+    if (!option && props.valueDefalut !== undefined) {
       option = props.options.find(
         item => `${item[props.valueField]}` === `${props.valueDefalut}`
       );
