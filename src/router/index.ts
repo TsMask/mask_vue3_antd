@@ -252,9 +252,11 @@ router.beforeEach(async (to, from, next) => {
     if (WHITE_LIST.includes(to.path)) {
       // 在免登录白名单，直接进入
       next();
+      return;
     } else {
       // 否则全部重定向到登录页
       next(`/login?redirect=${encodeURIComponent(to.fullPath)}`);
+      return;
     }
   }
 
@@ -263,33 +265,40 @@ router.beforeEach(async (to, from, next) => {
     // 防止重复访问登录页面
     if (to.path === '/login') {
       next({ name: 'Index' });
+      return;
+    } else if (WHITE_LIST.includes(to.path)) {
+      // 在免登录白名单，直接进入
+      next();
+      return;
     } else {
       // 判断当前用户是否有角色信息
       const user = useUserStore();
-      if (user.roles && user.roles.length === 0) {
-        try {
-          // 获取用户信息
-          await user.fnGetInfo();
-          // 获取路由信息
-          const accessRoutes = await useRouterStore().generateRoutes();
-          // 根据后台配置生成可访问的路由表
-          if (accessRoutes && accessRoutes.length !== 0) {
-            for (const route of accessRoutes) {
-              // 动态添加可访问路由表，http开头会异常
-              if (!validHttp(route.path)) {
-                router.addRoute(route);
-              }
+      if (Array.isArray(user.roles) && user.roles.length > 0) {
+        next();
+        return;
+      }
+      try {
+        // 获取用户信息
+        await user.fnGetInfo();
+        // 获取路由信息
+        const accessRoutes = await useRouterStore().generateRoutes();
+        // 根据后台配置生成可访问的路由表
+        if (accessRoutes && accessRoutes.length !== 0) {
+          for (const route of accessRoutes) {
+            // 动态添加可访问路由表，http开头会异常
+            if (!validHttp(route.path)) {
+              router.addRoute(route);
             }
           }
-          // 刷新替换原先路由，确保addRoutes已完成
-          next({ ...to, replace: true });
-        } catch (error: any) {
-          console.error(`[${to.path}]: ${error.message}`);
-          await user.fnLogOut();
-          next({ name: 'Login' });
         }
-      } else {
-        next();
+        // 刷新替换原先路由，确保addRoutes已完成
+        next({ ...to, replace: true });
+        return;
+      } catch (error: any) {
+        console.error(`[${to.path}]: ${error.message}`);
+        await user.fnLogOut();
+        next({ name: 'Login' });
+        return;
       }
     }
   }
