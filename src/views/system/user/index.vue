@@ -1057,8 +1057,9 @@ onMounted(() => {
     </a-card>
 
     <!-- 详情框 -->
-    <a-modal
-      width="800px"
+    <ProModal
+      :drag="true"
+      :width="800"
       :open="modalState.openByView"
       :title="modalState.title"
       @cancel="fnModalCancel"

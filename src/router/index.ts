@@ -113,7 +113,7 @@ const constantRoutes: RouteRecordRaw[] = [
             component: () => {},
           },
           {
-            path: encode('https://3x.antdv.com/components/comment-cn'),
+            path: encode('https://www.antdv.com/components/comment-cn'),
             name: 'HttpsAntDesignVue',
             meta: {
               title: 'Antdv-内嵌窗口',
@@ -135,7 +135,7 @@ const constantRoutes: RouteRecordRaw[] = [
         component: () => {},
       },
       {
-        path: 'https://3x.antdv.com/components/comment-cn?sdf=12321&id=12&sdnf',
+        path: 'https://www.antdv.com/components/comment-cn?sdf=12321&id=12&sdnf',
         name: 'SelfAnt Design Vue',
         meta: {
           title: 'Antdv-当前窗口',
