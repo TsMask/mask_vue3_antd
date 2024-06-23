@@ -2,6 +2,7 @@
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
+import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
@@ -427,7 +428,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="公告标题" name="noticeTitle">
               <a-input
@@ -628,7 +629,7 @@ onMounted(() => {
     <ProModal
       :drag="true"
       :width="800"
-      :visible="modalState.visibleByView"
+      :open="modalState.visibleByView"
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
@@ -642,7 +643,7 @@ onMounted(() => {
           {{ modalState.from.noticeTitle }}
         </a-form-item>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="公告类型" name="noticeType">
               <DictTag
@@ -681,7 +682,7 @@ onMounted(() => {
       :width="800"
       :keyboard="false"
       :mask-closable="false"
-      :visible="modalState.visibleByEdit"
+      :open="modalState.visibleByEdit"
       :title="modalState.title"
       :confirm-loading="modalState.confirmLoading"
       @ok="fnModalOk"
@@ -708,7 +709,7 @@ onMounted(() => {
           ></a-input>
         </a-form-item>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="公告类型"

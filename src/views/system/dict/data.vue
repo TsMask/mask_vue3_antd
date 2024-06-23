@@ -2,6 +2,7 @@
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
+import { ProModal } from 'antdv-pro-modal';
 import { Form, message, Modal } from 'ant-design-vue';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
@@ -488,7 +489,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="字典名称" name="dictType">
               <a-select
@@ -690,12 +691,12 @@ onMounted(() => {
     <ProModal
       :drag="true"
       :width="800"
-      :visible="modalState.visibleByView"
+      :open="modalState.visibleByView"
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="数据代码" name="dictCode">
               {{ modalState.from.dictCode }}
@@ -709,7 +710,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="字典类型" name="dictType">
               {{
@@ -728,7 +729,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="数据标签" name="dictLabel">
               {{ modalState.from.dictLabel }}
@@ -740,7 +741,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="标签类型" name="tagType">
               <DictTag
@@ -755,7 +756,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="样式属性" name="tagClass">
               {{ modalState.from.tagClass }}
@@ -796,7 +797,7 @@ onMounted(() => {
       :width="800"
       :keyboard="false"
       :mask-closable="false"
-      :visible="modalState.visibleByEdit"
+      :open="modalState.visibleByEdit"
       :title="modalState.title"
       :confirm-loading="modalState.confirmLoading"
       @ok="fnModalOk"
@@ -808,7 +809,7 @@ onMounted(() => {
         :label-col="{ span: 6 }"
         :label-wrap="true"
       >
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="字典类型" name="dictType">
               <a-select
@@ -833,7 +834,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="数据标签"
@@ -863,7 +864,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="标签类型" name="tagType">
               <a-select

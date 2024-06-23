@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { PageContainer } from 'antdv-pro-layout';
+import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
@@ -490,7 +491,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="菜单名称" name="menuName">
               <a-input
@@ -689,12 +690,12 @@ onMounted(() => {
     <ProModal
       :drag="true"
       :width="800"
-      :visible="modalState.visibleByView"
+      :open="modalState.visibleByView"
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单编号" name="menuId">
               {{ modalState.from.menuId }}
@@ -730,7 +731,7 @@ onMounted(() => {
           </a-tree-select>
         </a-form-item>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单名称" name="menuName">
               {{ modalState.from.menuName }}
@@ -769,7 +770,7 @@ onMounted(() => {
           </a-tag>
         </a-form-item>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单图标" name="icon">
               <IconFont
@@ -790,10 +791,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row
-          :gutter="16"
-          v-if="modalState.from.menuType !== MENU_TYPE_BUTTON"
-        >
+        <a-row v-if="modalState.from.menuType !== MENU_TYPE_BUTTON">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="内部地址" name="isFrame">
               <a-tag color="default">
@@ -871,7 +869,7 @@ onMounted(() => {
       :width="800"
       :keyboard="false"
       :mask-closable="false"
-      :visible="modalState.visibleByEdit"
+      :open="modalState.visibleByEdit"
       :title="modalState.title"
       :confirm-loading="modalState.confirmLoading"
       @ok="fnModalOk"
@@ -910,7 +908,7 @@ onMounted(() => {
           </a-tree-select>
         </a-form-item>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="菜单名称"
@@ -965,7 +963,7 @@ onMounted(() => {
           </a-radio-group>
         </a-form-item>
 
-        <a-row :gutter="16">
+        <a-row>
           <template v-if="modalState.from.menuType !== MENU_TYPE_BUTTON">
             <a-col :lg="12" :md="12" :xs="24">
               <a-form-item label="菜单图标" name="icon">

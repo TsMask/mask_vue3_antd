@@ -2,6 +2,7 @@
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
+import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
@@ -606,7 +607,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="任务名称" name="jobName">
               <a-input
@@ -863,12 +864,12 @@ onMounted(() => {
     <ProModal
       :drag="true"
       :width="800"
-      :visible="modalState.visibleByView"
+      :open="modalState.visibleByView"
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务名称" name="jobName">
               {{ modalState.from.jobName }}
@@ -890,7 +891,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="调用目标" name="invokeTarget">
               {{ modalState.from.invokeTarget }}
@@ -906,7 +907,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务状态" name="status">
               {{ ['暂停', '正常'][+modalState.from.status] }}
@@ -922,7 +923,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="cron表达式" name="cronExpression">
               <a-tag color="default">
@@ -979,7 +980,7 @@ onMounted(() => {
       :width="800"
       :keyboard="false"
       :mask-closable="false"
-      :visible="modalState.visibleByEdit"
+      :open="modalState.visibleByEdit"
       :title="modalState.title"
       :confirm-loading="modalState.confirmLoading"
       @ok="fnModalOk"
@@ -991,7 +992,7 @@ onMounted(() => {
         :label-col="{ span: 6 }"
         :label-wrap="true"
       >
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="任务名称"
@@ -1035,7 +1036,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="调用目标"
@@ -1076,7 +1077,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务状态" name="status">
               <a-select
@@ -1170,7 +1171,7 @@ onMounted(() => {
 
     <!-- 生成cron表达式 -->
     <CronModal
-      v-model:visible="modalState.visibleByCron"
+      v-model:open="modalState.visibleByCron"
       :cron="modalState.from.cronExpression"
       @ok="fnModalCron(false, $event)"
     ></CronModal>

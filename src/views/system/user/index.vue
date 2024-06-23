@@ -2,6 +2,7 @@
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
+import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
@@ -792,7 +793,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="18" :md="12" :xs="24">
             <a-form-item label="部门名称" name="deptId">
               <a-tree-select
@@ -829,7 +830,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="登录账号" name="userName">
               <a-input
@@ -1065,7 +1066,7 @@ onMounted(() => {
       @cancel="fnModalCancel"
     >
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户编号" name="userId">
               {{ modalState.from.userId }}
@@ -1079,7 +1080,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="登录地址" name="loginIp">
               {{ modalState.from.loginIp }}
@@ -1093,7 +1094,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户头像" name="avatar">
               <a-avatar
@@ -1111,7 +1112,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户昵称" name="nickName">
               {{ modalState.from.nickName }}
@@ -1119,7 +1120,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户性别" name="sex">
               <DictTag
@@ -1138,7 +1139,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="手机号码" name="phonenumber">
               {{ modalState.from.phonenumber }}
@@ -1175,7 +1176,7 @@ onMounted(() => {
           </a-tree-select>
         </a-form-item>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户岗位" name="postIds">
               <a-select
@@ -1244,7 +1245,7 @@ onMounted(() => {
         :label-col="{ span: 6 }"
         :label-wrap="true"
       >
-        <a-row :gutter="16" v-if="!modalState.from.userId">
+        <a-row v-if="!modalState.from.userId">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="登录账号"
@@ -1282,7 +1283,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="用户昵称"
@@ -1299,7 +1300,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户性别" name="sex">
               <a-select
@@ -1324,7 +1325,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="手机号码"
@@ -1380,7 +1381,7 @@ onMounted(() => {
           </a-tree-select>
         </a-form-item>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户岗位" name="postIds">
               <a-select
@@ -1489,7 +1490,7 @@ onMounted(() => {
       :size="10"
     >
       <template #default>
-        <a-row :gutter="18" justify="space-between" align="middle">
+        <a-row justify="space-between" align="middle">
           <a-col :span="12">
             <a-checkbox v-model:checked="uploadImportState.updateSupport">
               是否更新已经存在的数据

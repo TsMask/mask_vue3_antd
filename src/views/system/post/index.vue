@@ -2,6 +2,7 @@
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
+import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
@@ -432,7 +433,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="岗位编码" name="postCode">
               <a-input
@@ -627,12 +628,12 @@ onMounted(() => {
     <ProModal
       :drag="true"
       :width="800"
-      :visible="modalState.visibleByView"
+      :open="modalState.visibleByView"
       :title="modalState.title"
       @cancel="fnModalCancel"
     >
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="岗位编号" name="postId">
               {{ modalState.from.postId }}
@@ -646,7 +647,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="岗位顺序" name="postSort">
               {{ modalState.from.postSort }}
@@ -661,7 +662,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="岗位编码" name="postCode">
               {{ modalState.from.postCode }}
@@ -699,7 +700,7 @@ onMounted(() => {
       :width="800"
       :keyboard="false"
       :mask-closable="false"
-      :visible="modalState.visibleByEdit"
+      :open="modalState.visibleByEdit"
       :title="modalState.title"
       :confirm-loading="modalState.confirmLoading"
       @ok="fnModalOk"
@@ -711,7 +712,7 @@ onMounted(() => {
         :label-col="{ span: 6 }"
         :label-wrap="true"
       >
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="岗位编码"
@@ -739,7 +740,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="岗位名称"

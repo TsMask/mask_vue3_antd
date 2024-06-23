@@ -510,7 +510,7 @@ onMounted(() => {
     <AuthUserSelect
       :role-id="roleId"
       :title="modalState.title"
-      v-model:visible="modalState.visibleBySelectUser"
+      v-model:open="modalState.visibleBySelectUser"
       @ok="fnModalOk"
     />
   </PageContainer>

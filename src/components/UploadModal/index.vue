@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ProModal } from 'antdv-pro-modal';
 import { message } from 'ant-design-vue';
 import type { FileType } from 'ant-design-vue/es/upload/interface';
 import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface';

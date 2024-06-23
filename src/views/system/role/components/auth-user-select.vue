@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { reactive, toRaw, watch } from 'vue';
+import { ProModal } from 'antdv-pro-modal';
 import { message } from 'ant-design-vue';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
 import type { ColumnsType } from 'ant-design-vue/es/table';
@@ -8,13 +9,13 @@ import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
-const emit = defineEmits(['ok', 'cancel', 'update:visible']);
+const emit = defineEmits(['ok', 'cancel', 'update:open']);
 const props = defineProps({
   title: {
     type: String,
     default: '标题',
   },
-  visible: {
+  open: {
     type: Boolean,
     default: false,
   },
@@ -183,13 +184,13 @@ function fnModalOk() {
     message.error(`请选择要分配的用户`, 2);
     return;
   }
-  emit('update:visible', false);
+  emit('update:open', false);
   emit('ok', userIds);
 }
 
 /**弹框取消按钮事件 */
 function fnModalCancel() {
-  emit('update:visible', false);
+  emit('update:open', false);
   emit('cancel');
 }
 
@@ -207,7 +208,7 @@ function init() {
 
 /**监听是否显示，初始数据 */
 watch(
-  () => props.visible,
+  () => props.open,
   val => {
     if (val) init();
   }
@@ -222,7 +223,7 @@ watch(
     :destroyOnClose="true"
     :width="800"
     :title="props.title"
-    :visible="props.visible"
+    :open="props.open"
     :keyboard="false"
     :mask-closable="false"
     @ok="fnModalOk"
@@ -230,7 +231,7 @@ watch(
   >
     <!-- 表格搜索栏 -->
     <a-form :model="queryParams" name="queryParams" layout="horizontal">
-      <a-row :gutter="16">
+      <a-row>
         <a-col :lg="8" :md="12" :xs="24">
           <a-form-item label="登录账号" name="userName">
             <a-input

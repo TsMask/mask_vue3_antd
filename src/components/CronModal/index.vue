@@ -3,7 +3,7 @@
     :drag="true"
     :destroyOnClose="true"
     title="Cron表达式生成"
-    :visible="props.visible"
+    :open="props.open"
     :body-style="{ padding: '0 24px' }"
     @cancel="fnCronModal(false)"
     @ok="fnCronModal(true)"
@@ -35,6 +35,7 @@
   </ProModal>
 </template>
 <script lang="ts" setup>
+import { ProModal } from 'antdv-pro-modal';
 import CronSecond from './components/Second.vue';
 import CronMinute from './components/Minute.vue';
 import CronHour from './components/Hour.vue';
@@ -42,9 +43,9 @@ import CronDay from './components/Day.vue';
 import CronMonth from './components/Month.vue';
 import { reactive, computed, watch } from 'vue';
 
-const emit = defineEmits(['cancel', 'ok', 'update:visible']);
+const emit = defineEmits(['cancel', 'ok', 'update:open']);
 const props = defineProps({
-  visible: {
+  open: {
     type: Boolean,
     required: true,
   },
@@ -73,7 +74,7 @@ const cronStr = computed(() => {
 
 /**监听是否显示，初始cron属性 */
 watch(
-  () => props.visible,
+  () => props.open,
   val => {
     if (!val) return;
     const arr = props.cron.split(' ');
@@ -96,7 +97,7 @@ watch(
  * @param val modal触发事件
  */
 function fnCronModal(val: boolean) {
-  emit('update:visible', false);
+  emit('update:open', false);
   if (val) {
     emit('ok', cronStr.value);
   } else {
