@@ -22,9 +22,10 @@ import { AlipayOutlined } from '@ant-design/icons-vue';
 NProgress.configure({ showSpinner: false });
 
 // import { MetaRecord, MenuDataItem } from 'antdv-pro-layout';
-// mate数据类型 MetaRecord
-// 根据/路径构建菜单列表，列表项类型 MenuDataItem
-// https://github.com/vueComponent/pro-components/blob/a19279f3a28190bf11e8c36f316c92dbd3387a6d/packages/pro-layout/src/typings.ts#L16
+// 根据/路径构建菜单列表，
+// 菜单数据项类型 MenuDataItem
+// 菜单数据项元数据类型 MetaRecord
+// https://gitee.com/TsMask/antdv-pro-layout/blob/main/src/utils/index.ts
 // 菜单图标来源 https://ant.design/components/icon 自定义iconfont
 
 /**公共路由 */
@@ -112,7 +113,7 @@ const constantRoutes: RouteRecordRaw[] = [
             component: () => {},
           },
           {
-            path: encode('https://www.antdv.com/components/comment-cn'),
+            path: encode('https://3x.antdv.com/components/comment-cn'),
             name: 'HttpsAntDesignVue',
             meta: {
               title: 'Antdv-内嵌窗口',
@@ -134,7 +135,7 @@ const constantRoutes: RouteRecordRaw[] = [
         component: () => {},
       },
       {
-        path: 'https://www.antdv.com/components/comment-cn?sdf=12321&id=12&sdnf',
+        path: 'https://3x.antdv.com/components/comment-cn?sdf=12321&id=12&sdnf',
         name: 'SelfAnt Design Vue',
         meta: {
           title: 'Antdv-当前窗口',
@@ -244,7 +245,7 @@ router.afterEach((to, from, failure) => {
 });
 
 /**全局路由-前置守卫 */
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   NProgress.start();
   const token = getToken();
 
@@ -253,9 +254,11 @@ router.beforeEach((to, from, next) => {
     if (WHITE_LIST.includes(to.path)) {
       // 在免登录白名单，直接进入
       next();
+      return;
     } else {
       // 否则全部重定向到登录页
-      next(`/login?redirect=${to.fullPath}`);
+      next(`/login?redirect=${encodeURIComponent(to.fullPath)}`);
+      return;
     }
   }
 
@@ -264,37 +267,40 @@ router.beforeEach((to, from, next) => {
     // 防止重复访问登录页面
     if (to.path === '/login') {
       next({ name: 'Index' });
+      return;
+    } else if (WHITE_LIST.includes(to.path)) {
+      // 在免登录白名单，直接进入
+      next();
+      return;
     } else {
       // 判断当前用户是否有角色信息
       const user = useUserStore();
-      if (user.roles && user.roles.length === 0) {
-        // 获取用户信息
-        user
-          .fnGetInfo()
-          .then(() => {
-            return useRouterStore().generateRoutes();
-          })
-          .then(accessRoutes => {
-            // 根据后台配置生成可访问的路由表
-            if (accessRoutes && accessRoutes.length !== 0) {
-              for (const route of accessRoutes) {
-                // 动态添加可访问路由表，http开头会异常
-                if (!validHttp(route.path)) {
-                  router.addRoute(route);
-                }
-              }
-            }
-            // 刷新替换原先路由，确保addRoutes已完成
-            next({ ...to, replace: true });
-          })
-          .catch(e => {
-            console.error(`[${to.path}]: ${e.message}`);
-            user.fnLogOut().finally(() => {
-              next({ name: 'Login' });
-            });
-          });
-      } else {
+      if (Array.isArray(user.roles) && user.roles.length > 0) {
         next();
+        return;
+      }
+      try {
+        // 获取用户信息
+        await user.fnGetInfo();
+        // 获取路由信息
+        const accessRoutes = await useRouterStore().generateRoutes();
+        // 根据后台配置生成可访问的路由表
+        if (accessRoutes && accessRoutes.length !== 0) {
+          for (const route of accessRoutes) {
+            // 动态添加可访问路由表，http开头会异常
+            if (!validHttp(route.path)) {
+              router.addRoute(route);
+            }
+          }
+        }
+        // 刷新替换原先路由，确保addRoutes已完成
+        next({ ...to, replace: true });
+        return;
+      } catch (error: any) {
+        console.error(`[${to.path}]: ${error.message}`);
+        await user.fnLogOut();
+        next({ name: 'Login' });
+        return;
       }
     }
   }

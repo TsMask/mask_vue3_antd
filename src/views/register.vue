@@ -281,7 +281,8 @@ onMounted(() => {
     .title {
       position: relative;
       top: 2px;
-      color: rgba(0, 0, 0, 0.85);
+      color: inherit;
+      opacity: 0.85;
       font-weight: 600;
       font-size: 33px;
       font-family: Avenir, Helvetica Neue, Arial, Helvetica, sans-serif;
@@ -291,7 +292,8 @@ onMounted(() => {
   .desc {
     margin-top: 12px;
     margin-bottom: 40px;
-    color: rgba(0, 0, 0, 0.45);
+    color: inherit;
+    opacity: 0.65;
     font-size: 14px;
   }
 }

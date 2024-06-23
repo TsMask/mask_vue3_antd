@@ -138,7 +138,7 @@ watch(router.currentRoute, v => tabsStore.tabOpen(v), { immediate: true });
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>更多选项</template>
-            <a-dropdown trigger="click" placement="bottomRight">
+            <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="ghost" shape="circle" size="small">
                 <template #icon><DownOutlined /></template>
               </a-button>

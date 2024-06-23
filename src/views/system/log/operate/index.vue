@@ -42,6 +42,8 @@ let queryParams = reactive({
   title: '',
   /**操作人员 */
   operName: '',
+  /**操作地址 */
+  operIp: '',
   /**业务类型 */
   businessType: undefined,
   /**操作状态 */
@@ -128,7 +130,7 @@ let tableColumns: ColumnsType = [
     width: 100,
   },
   {
-    title: '请求主机',
+    title: '操作地址',
     dataIndex: 'operIp',
     align: 'left',
     width: 120,
@@ -429,6 +431,16 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="操作地址" name="operIp">
+              <a-input
+                v-model:value="queryParams.operIp"
+                allow-clear
+                placeholder="请输入操作地址"
+                @keyup.enter.native="fnGetList()"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="业务类型" name="businessType">
               <a-select
                 v-model:value="queryParams.businessType"
@@ -612,8 +624,9 @@ onMounted(() => {
     </a-card>
 
     <!-- 详情框 -->
-    <a-modal
-      width="800px"
+    <ProModal
+      :drag="true"
+      :width="800"
       :visible="modalState.visibleByView"
       :title="modalState.title"
       @cancel="fnModalCancel"
@@ -707,7 +720,7 @@ onMounted(() => {
       <template #footer>
         <a-button key="cancel" @click="fnModalCancel">关闭</a-button>
       </template>
-    </a-modal>
+    </ProModal>
   </PageContainer>
 </template>
 

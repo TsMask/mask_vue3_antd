@@ -133,10 +133,10 @@ tabsStore.clear();
         </RouterLink>
       </template>
 
-      <!--插槽-顶部左侧，只对side布局有效-->
+      <!--插槽-渲染顶部内容区域，仅布局side有效-->
       <template #headerContentRender></template>
 
-      <!--插槽-顶部右侧-->
+      <!--插槽-渲染顶部内容右端区域-->
       <template #headerContentRightRender>
         <RightContent />
       </template>

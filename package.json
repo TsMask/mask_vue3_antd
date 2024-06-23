@@ -1,7 +1,7 @@
 {
   "name": "mask_vue3_antd",
   "type": "module",
-  "version": "0.4.0",
+  "version": "4.0.1",
   "description": "🎉 基于 ant-design-vue + vue3 的管理系统",
   "author": "TsMask",
   "repository": {
@@ -21,6 +21,7 @@
     "@ant-design/icons-vue": "^7.0.1",
     "ant-design-vue": "^4.2.1",
     "antdv-pro-layout": "^4.1.7",
+    "antdv-pro-modal": "^4.0.4",
     "dayjs": "^1.11.11",
     "echarts": "^5.5.0",
     "file-saver": "^2.0.5",
@@ -29,7 +30,7 @@
     "nprogress": "^0.2.0",
     "pinia": "^2.1.7",
     "vue": "^3.4.27",
-    "vue-router": "^4.3.0"
+    "vue-router": "^4.3.3"
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.7",
@@ -40,7 +41,7 @@
     "less": "^4.2.0",
     "typescript": "^5.4.5",
     "unplugin-vue-components": "^0.27.0",
-    "vite": "^5.2.11",
+    "vite": "^5.3.1",
     "vite-plugin-compression": "^0.5.1",
     "vue-tsc": "^2.0.19"
   }

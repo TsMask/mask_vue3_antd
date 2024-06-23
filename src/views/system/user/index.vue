@@ -1222,11 +1222,13 @@ onMounted(() => {
       <template #footer>
         <a-button key="cancel" @click="fnModalCancel">关闭</a-button>
       </template>
-    </a-modal>
+    </ProModal>
 
     <!-- 新增框或修改框 -->
-    <a-modal
-      width="800px"
+    <ProModal
+      :drag="true"
+      :destroyOnClose="true"
+      :width="800"
       :keyboard="false"
       :mask-closable="false"
       :open="modalState.openByEdit"
@@ -1427,11 +1429,11 @@ onMounted(() => {
           />
         </a-form-item>
       </a-form>
-    </a-modal>
+    </ProModal>
 
     <!-- 重置密码修改框 -->
-    <a-modal
-      width="500px"
+    <ProModal
+      :drag="true"
       :keyboard="false"
       :mask-closable="false"
       :open="modalState.openByResetPwd"
@@ -1473,7 +1475,7 @@ onMounted(() => {
           </a-input-password>
         </a-form-item>
       </a-form>
-    </a-modal>
+    </ProModal>
 
     <!-- 上传导入表格数据文件框 -->
     <UploadModal

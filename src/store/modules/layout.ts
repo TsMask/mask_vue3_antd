@@ -71,8 +71,8 @@ const proConfigLocal: LayoutStore['proConfig'] = localGetJSON(
   CACHE_LOCAL_PROCONFIG
 ) || {
   layout: 'side',
-  theme: 'light', // "dark" | "light",
-  menuTheme: 'light', // "dark" | "light",
+  theme: 'light',
+  menuTheme: 'light',
   fixSiderbar: true,
   fixedHeader: true,
   splitMenus: true,

@@ -68,8 +68,8 @@ function goTarget(type: string) {
       </a-col>
       <a-col :lg="8" :md="8" :xs="24">
         <a-card title="快速开始" style="margin-bottom: 16px">
-          <a-row :gutter="16">
-            <a-col :lg="6" :md="12" :xs="24">
+          <a-row :gutter="16" :wrap="true">
+            <a-col :lg="4" :md="12" :xs="12">
               <a-button
                 type="link"
                 target="_blank"
@@ -79,7 +79,7 @@ function goTarget(type: string) {
                 开发手册
               </a-button>
             </a-col>
-            <a-col :lg="6" :md="12" :xs="24">
+            <a-col :lg="4" :md="12" :xs="12">
               <a-button
                 type="link"
                 target="_blank"
@@ -89,17 +89,27 @@ function goTarget(type: string) {
                 接口文档
               </a-button>
             </a-col>
-            <a-col :lg="6" :md="12" :xs="24">
+            <a-col :lg="4" :md="12" :xs="12">
               <a-button
                 type="link"
                 target="_blank"
                 title="Middwayjs版本服务端"
                 href="https://gitee.com/TsMask/mask_api_midwayjs"
               >
-                Node后端
+                Nodejs后端
               </a-button>
             </a-col>
-            <a-col :lg="6" :md="12" :xs="24">
+            <a-col :lg="4" :md="12" :xs="12">
+              <a-button
+                type="link"
+                target="_blank"
+                title="Gin版本服务端"
+                href="https://gitee.com/TsMask/mask_api_gin"
+              >
+                Golang后端
+              </a-button>
+            </a-col>
+            <a-col :lg="4" :md="12" :xs="12">
               <a-button type="text"> 相关待定 </a-button>
             </a-col>
           </a-row>
@@ -115,7 +125,8 @@ function goTarget(type: string) {
 <style lang="less" scoped>
 .nickname {
   margin-bottom: 12px;
-  color: rgba(0, 0, 0, 0.85);
+  color: inherit;
+  opacity: 0.85;
   font-weight: 500;
   font-size: 20px;
   line-height: 28px;

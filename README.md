@@ -4,12 +4,13 @@
 ![Build Vite](https://img.shields.io/badge/Build-Vite-green.svg)
 ![Build Vue3](https://img.shields.io/badge/Build-Vue3-green.svg)
 ![Build MaskApi](https://img.shields.io/badge/Build-MaskApi-orange.svg)
-![Release V0.4.0](https://img.shields.io/badge/Release-V0.4.0-orange.svg)
+![Release V4.0.1](https://img.shields.io/badge/Release-V4.0.1-orange.svg)
 ![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 ## 简介
 
-- 系统布局使用 [antdv-pro-layout](https://www.npmjs.com/package/antdv-pro-layout)
+- 系统布局使用 [antdv-pro-layout@3](https://www.npmjs.com/package/antdv-pro-layout?activeTab=versions)
+- 系统模态框使用 [antdv-pro-modal@3](https://www.npmjs.com/package/antdv-pro-modal?activeTab=versions)
 - 图标来源 [@ant-design/icons-vue](https://ant.design/components/icon)
 - 菜单图标使用自定义iconfont `font_8d5l8fzk5b87iudi.js`图标文件
 

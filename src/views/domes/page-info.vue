@@ -58,9 +58,9 @@ let title = ref<string>(route.meta?.title as any);
 <style scoped lang="css">
 .result-box {
   height: 100%;
-  background: rgb(255, 255, 255);
+  background: #ffffff;
 }
-[data-theme="dark"] .result-box {
+[data-theme='dark'] .result-box {
   background: #141414;
 }
 </style>

@@ -34,13 +34,13 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
-import { PageContainer } from "antdv-pro-layout";
+import { ref } from 'vue';
+import { PageContainer } from 'antdv-pro-layout';
 
 const list = ref<number>(50);
 
 const loading = ref<boolean>(true);
 setTimeout(() => {
-  loading.value = false
+  loading.value = false;
 }, 1200);
 </script>

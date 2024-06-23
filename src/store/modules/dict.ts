@@ -10,7 +10,7 @@ type DictStore = {
 
 const useDictStore = defineStore('dict', {
   state: (): DictStore => ({
-    dicts: new Map(),
+    dicts: new Map<string, DictType[]>(),
   }),
   actions: {
     /**清空字典 */
@@ -32,8 +32,8 @@ const useDictStore = defineStore('dict', {
         {
           label: data.dictLabel,
           value: data.dictValue,
-          elTagType: data.tagType,
-          elTagClass: data.tagClass,
+          tagClass: data.tagClass,
+          tagType: data.tagType,
         },
       ];
     },
@@ -47,8 +47,8 @@ const useDictStore = defineStore('dict', {
           const dictData: DictType[] = res.data.map(d => ({
             label: d.dictLabel,
             value: d.dictValue,
-            elTagType: d.tagType,
-            elTagClass: d.tagClass,
+            tagClass: d.tagClass,
+            tagType: d.tagType,
           }));
           this.dicts.set(key, dictData);
           disct = dictData;

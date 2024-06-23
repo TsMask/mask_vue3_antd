@@ -11,6 +11,8 @@ import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 type UserInfo = {
   /**授权凭证 */
   token: string;
+  /**用户ID */
+  userId: string;
   /**登录账号 */
   userName: string;
   /**用户角色 字符串数组 */
@@ -48,6 +50,7 @@ function parseAvatar(avatar: string): string {
 const useUserStore = defineStore('user', {
   state: (): UserInfo => ({
     token: getToken(),
+    userId: '',
     userName: '',
     roles: [],
     permissions: [],
@@ -120,6 +123,8 @@ const useUserStore = defineStore('user', {
       const res = await getInfo();
       if (res.code === RESULT_CODE_SUCCESS && res.data) {
         const { user, roles, permissions } = res.data;
+        // 用户ID
+        this.userId = user.userId;
         // 登录账号
         this.userName = user.userName;
         // 用户头像

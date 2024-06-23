@@ -1,5 +1,5 @@
 <template>
-  <a-card title="typography" style="margin: 24px;">
+  <a-card title="typography" style="margin: 24px">
     <a-typography>
       <a-typography-title>Introduction</a-typography-title>
       <a-typography-paragraph>
@@ -98,7 +98,7 @@
   </a-card>
 </template>
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref } from 'vue';
 
 const blockContent =
   ref<string>(`AntV 是蚂蚁金服全新一代数据可视化解决方案，致力于提供一套简单方便、专业可靠、不限可能的数据可视化最佳实践。得益于丰富的业务场景和用户需求挑战，AntV 经历多年积累与不断打磨，已支撑整个阿里集团内外 20000+ 业务系统，通过了日均千万级 UV 产品的严苛考验。

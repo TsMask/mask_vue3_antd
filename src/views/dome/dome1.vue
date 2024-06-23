@@ -59,33 +59,33 @@
 </template>
 
 <script lang="ts" setup>
-import { PageContainer } from "antdv-pro-layout";
-import { message, Modal, notification } from "ant-design-vue";
-import { createVNode, h, ref } from "vue";
-import { ExclamationCircleOutlined } from "@ant-design/icons-vue";
+import { PageContainer } from 'antdv-pro-layout';
+import { message, Modal, notification } from 'ant-design-vue';
+import { createVNode, h, ref } from 'vue';
+import { ExclamationCircleOutlined } from '@ant-design/icons-vue';
 const [modal, contextHolder] = Modal.useModal();
 
 const spinning = ref<boolean>(false);
 
 const handleClick = () => {
-  console.log("handleClick");
-  message.success("Message Button clicked!");
+  console.log('handleClick');
+  message.success('Message Button clicked!');
 };
 
 function handleModal() {
   Modal.confirm({
-    title: "Are you sure Modal this task?",
+    title: 'Are you sure Modal this task?',
     icon: createVNode(ExclamationCircleOutlined),
-    content: "Some descriptions",
-    okText: "Yes",
-    okType: "danger",
-    cancelText: "No",
+    content: 'Some descriptions',
+    okText: 'Yes',
+    okType: 'danger',
+    cancelText: 'No',
     onOk() {
-      console.log("OK");
-      message.warning("Modal Button clicked!");
+      console.log('OK');
+      message.warning('Modal Button clicked!');
     },
     onCancel() {
-      console.log("Cancel");
+      console.log('Cancel');
     },
   });
 }
@@ -93,56 +93,56 @@ function handleModal() {
 // 使用useModal获取上下文
 const handleModalPromiseConfirm = () => {
   modal.confirm({
-    title: "Are you sure Modal this task?",
+    title: 'Are you sure Modal this task?',
     icon: h(ExclamationCircleOutlined),
-    content: "Some descriptions",
-    okText: "Yes",
-    okType: "danger",
+    content: 'Some descriptions',
+    okText: 'Yes',
+    okType: 'danger',
     okButtonProps: {
       disabled: true,
     },
-    cancelText: "No",
+    cancelText: 'No',
     onOk() {
-      console.log("OK");
+      console.log('OK');
     },
     onCancel() {
-      console.log("Cancel");
+      console.log('Cancel');
     },
   });
 };
 
 const handleConfirm = (e: MouseEvent) => {
   console.log(e);
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     setTimeout(() => resolve(true), 3000);
   });
 };
 
 const handleCancel = (e: MouseEvent) => {
   console.log(e);
-  message.error("Click on No");
+  message.error('Click on No');
 };
 
 const handleNotification = () => {
   notification.open({
-    message: "Notification Title",
+    message: 'Notification Title',
     description:
-      "This is the content of the notification. This is the content of the notification. This is the content of the notification.",
+      'This is the content of the notification. This is the content of the notification. This is the content of the notification.',
     onClick: () => {
-      message.info("Notification Clicked!");
+      message.info('Notification Clicked!');
     },
   });
 };
 
 // 点击确定后异步关闭对话框，例如提交表单。
-const modalText = ref<string>("Content of the modal");
+const modalText = ref<string>('Content of the modal');
 const open = ref<boolean>(false);
 const confirmLoading = ref<boolean>(false);
 const showModal = () => {
   open.value = true;
 };
 const handleOk = () => {
-  modalText.value = "The modal will be closed after two seconds";
+  modalText.value = 'The modal will be closed after two seconds';
   confirmLoading.value = true;
   setTimeout(() => {
     open.value = false;
@@ -158,9 +158,9 @@ const handleOk = () => {
 
 .result-box {
   height: 100%;
-  background: rgb(255, 255, 255);
+  background: #ffffff;
 }
-[data-theme="dark"] .result-box {
+[data-theme='dark'] .result-box {
   background: #141414;
 }
 </style>

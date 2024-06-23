@@ -52,7 +52,7 @@ function changeTheme(e: any) {
       <template #extra>
         <a-space :size="16" align="end" direction="horizontal">
           <a-button type="primary" size="small" @click="fnColorChange">
-            <BgColorsOutlined /> 随机
+            随机
           </a-button>
           <input
             type="color"

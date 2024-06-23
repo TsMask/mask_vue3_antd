@@ -52,9 +52,9 @@ const selectedKeys = ref<string[]>(["2"]);
 .layout-content-main {
   min-height: 280px;
   padding: 24px;
-  background: #fff;
+  background: #ffffff;
 }
-[data-theme="dark"] .layout-content-main {
+[data-theme='dark'] .layout-content-main {
   background: #141414;
 }
 
