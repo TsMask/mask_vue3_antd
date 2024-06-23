@@ -4,8 +4,9 @@ import useLayoutStore from '@/store/modules/layout';
 import useAppStore from '@/store/modules/app';
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
 import dayjs from 'dayjs';
-import 'dayjs/locale/zh-cn';
 import { usePrefersColorScheme, viewTransitionTheme } from 'antdv-pro-layout';
+import 'dayjs/locale/zh-cn';
+import { message } from 'ant-design-vue';
 dayjs.locale('zh-cn'); // 默认中文
 const { themeConfig, initPrimaryColor, changeConf } = useLayoutStore();
 
@@ -21,6 +22,12 @@ watch(
 );
 
 onBeforeMount(() => {
+  // 全局message提示
+  message.config({
+    top: '100px', // 距离顶部位置100px
+    duration: 3,
+    maxCount: 15,
+  });
   initPrimaryColor();
 });
 
