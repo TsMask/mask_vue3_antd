@@ -21,7 +21,7 @@
     "@ant-design/icons-vue": "^7.0.1",
     "ant-design-vue": "^4.2.3",
     "antdv-pro-layout": "^4.1.7",
-    "antdv-pro-modal": "^4.0.4",
+    "antdv-pro-modal": "^4.0.5",
     "dayjs": "^1.11.11",
     "echarts": "^5.5.0",
     "file-saver": "^2.0.5",
