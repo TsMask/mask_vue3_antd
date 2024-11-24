@@ -1,5 +1,5 @@
 /**令牌-数据响应字段 */
-export const TOKEN_RESPONSE_FIELD = 'access_token';
+export const TOKEN_RESPONSE_FIELD = 'accessToken';
 
 /**令牌-请求头标识前缀 */
 export const TOKEN_KEY_PREFIX = 'Bearer ';

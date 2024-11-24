@@ -8,7 +8,7 @@ import { request } from '@/plugins/http-fetch';
 export function listNotice(query: Record<string, any>) {
   return request({
     url: '/system/notice/list',
-    method: 'get',
+    method: 'GET',
     params: query,
   });
 }
@@ -21,7 +21,7 @@ export function listNotice(query: Record<string, any>) {
 export function getNotice(noticeId: string | number) {
   return request({
     url: `/system/notice/${noticeId}`,
-    method: 'get',
+    method: 'GET',
   });
 }
 
@@ -33,7 +33,7 @@ export function getNotice(noticeId: string | number) {
 export function addNotice(data: Record<string, any>) {
   return request({
     url: '/system/notice',
-    method: 'post',
+    method: 'POST',
     data: data,
   });
 }
@@ -46,7 +46,7 @@ export function addNotice(data: Record<string, any>) {
 export function updateNotice(data: Record<string, any>) {
   return request({
     url: '/system/notice',
-    method: 'put',
+    method: 'PUT',
     data: data,
   });
 }
@@ -59,6 +59,6 @@ export function updateNotice(data: Record<string, any>) {
 export function delNotice(noticeId: string | number) {
   return request({
     url: `/system/notice/${noticeId}`,
-    method: 'delete',
+    method: 'DELETE',
   });
 }

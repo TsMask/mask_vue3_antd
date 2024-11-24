@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { Dayjs } from 'dayjs';
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
+import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
@@ -37,7 +39,7 @@ let dict: {
 });
 
 /**开始结束时间 */
-let queryRangePicker = ref<[string, string]>(['', '']);
+let queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
 /**查询参数 */
 let queryParams = reactive({
@@ -46,11 +48,11 @@ let queryParams = reactive({
   /**字典类型 */
   dictType: '',
   /**字典状态 */
-  status: undefined,
-  /**记录开始时间 */
-  beginTime: '',
-  /**记录结束时间 */
-  endTime: '',
+  statusFlag: undefined,
+  /**开始时间 */
+  beginTime: undefined as undefined | number,
+  /**结束时间 */
+  endTime: undefined as undefined | number,
   /**当前页数 */
   pageNum: 1,
   /**每页条数 */
@@ -59,16 +61,16 @@ let queryParams = reactive({
 
 /**查询参数重置 */
 function fnQueryReset() {
-  queryParams = Object.assign(queryParams, {
+  Object.assign(queryParams, {
     dictName: '',
     dictType: '',
-    status: undefined,
-    beginTime: '',
-    endTime: '',
+    statusFlag: undefined,
+    beginTime: undefined,
+    endTime: undefined,
     pageNum: 1,
     pageSize: 20,
   });
-  queryRangePicker.value = ['', ''];
+  queryRangePicker.value = undefined;
   tablePagination.current = 1;
   tablePagination.pageSize = 20;
   fnGetList();
@@ -122,15 +124,15 @@ let tableColumns: ColumnsType = [
   },
   {
     title: '字典状态',
-    dataIndex: 'status',
-    key: 'status',
-    align: 'center',
+    dataIndex: 'statusFlag',
+    key: 'statusFlag',
+    align: 'left',
     width: 100,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
-    align: 'center',
+    align: 'left',
     width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
@@ -196,7 +198,7 @@ type ModalStateType = {
   /**标题 */
   title: string;
   /**表单数据 */
-  from: Record<string, any>;
+  form: Record<string, any>;
   /**确定按钮 loading */
   confirmLoading: boolean;
 };
@@ -206,19 +208,19 @@ let modalState: ModalStateType = reactive({
   visibleByView: false,
   visibleByEdit: false,
   title: '字典类型',
-  from: {
+  form: {
     dictId: undefined,
     dictName: '',
     dictType: undefined,
-    status: '0',
+    statusFlag: '0',
     remark: undefined,
   },
   confirmLoading: false,
 });
 
 /**对话框内表单属性和校验规则 */
-const modalStateFrom = Form.useForm(
-  modalState.from,
+const modalStateForm = Form.useForm(
+  modalState.form,
   reactive({
     dictName: [
       { required: true, min: 1, max: 50, message: '请正确输入字典名称' },
@@ -245,7 +247,7 @@ function fnModalVisibleByVive(dictId: string | number) {
     modalState.confirmLoading = false;
     hide();
     if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      modalState.from = Object.assign(modalState.from, res.data);
+      Object.assign(modalState.form, res.data);
       modalState.title = '字典类型信息';
       modalState.visibleByView = true;
     } else {
@@ -260,7 +262,7 @@ function fnModalVisibleByVive(dictId: string | number) {
  */
 function fnModalVisibleByEdit(dictId?: string | number) {
   if (!dictId) {
-    modalStateFrom.resetFields();
+    modalStateForm.resetFields();
     modalState.title = '添加字典类型';
     modalState.visibleByEdit = true;
   } else {
@@ -271,7 +273,7 @@ function fnModalVisibleByEdit(dictId?: string | number) {
       modalState.confirmLoading = false;
       hide();
       if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        modalState.from = Object.assign(modalState.from, res.data);
+        Object.assign(modalState.form, res.data);
         modalState.title = '修改字典类型';
         modalState.visibleByEdit = true;
       } else {
@@ -286,12 +288,12 @@ function fnModalVisibleByEdit(dictId?: string | number) {
  * 进行表达规则校验
  */
 function fnModalOk() {
-  modalStateFrom
+  modalStateForm
     .validate()
     .then(() => {
       modalState.confirmLoading = true;
-      const from = toRaw(modalState.from);
-      const dictType = from.dictId ? updateType(from) : addType(from);
+      const form = toRaw(modalState.form);
+      const dictType = form.dictId ? updateType(form) : addType(form);
       const key = 'dictType';
       message.loading({ content: '请稍等...', key });
       dictType
@@ -328,7 +330,7 @@ function fnModalOk() {
 function fnModalCancel() {
   modalState.visibleByEdit = false;
   modalState.visibleByView = false;
-  modalStateFrom.resetFields();
+  modalStateForm.resetFields();
 }
 
 /**
@@ -434,19 +436,28 @@ function fnGetList(pageNum?: number) {
   if (pageNum) {
     queryParams.pageNum = pageNum;
   }
-  if (!queryRangePicker.value) {
-    queryRangePicker.value = ['', ''];
+
+  // 时间范围
+  if (
+    Array.isArray(queryRangePicker.value) &&
+    queryRangePicker.value.length > 0
+  ) {
+    queryParams.beginTime = queryRangePicker.value[0].startOf('day').valueOf();
+    queryParams.endTime = queryRangePicker.value[1].endOf('day').valueOf();
+  } else {
+    queryParams.beginTime = undefined;
+    queryParams.endTime = undefined;
   }
-  queryParams.beginTime = queryRangePicker.value[0];
-  queryParams.endTime = queryRangePicker.value[1];
+
   listType(toRaw(queryParams)).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
       }
-      tablePagination.total = res.total;
-      tableState.data = res.rows;
+      const { total, rows } = res.data;
+      tablePagination.total = total;
+      tableState.data = rows;
     }
     tableState.loading = false;
   });
@@ -499,9 +510,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="4" :md="12" :xs="24">
-            <a-form-item label="字典状态" name="status">
+            <a-form-item label="字典状态" name="statusFlag">
               <a-select
-                v-model:value="queryParams.status"
+                v-model:value="queryParams.statusFlag"
                 allow-clear
                 placeholder="请选择"
                 :options="dict.sysNormalDisable"
@@ -513,10 +524,8 @@ onMounted(() => {
             <a-form-item label="创建时间" name="queryRangePicker">
               <a-range-picker
                 v-model:value="queryRangePicker"
-                allow-clear
-                bordered
-                value-format="YYYY-MM-DD"
-                :placeholder="['创建开始', '创建结束']"
+                :bordered="true"
+                :allow-clear="true"
                 style="width: 100%"
               ></a-range-picker>
             </a-form-item>
@@ -526,12 +535,12 @@ onMounted(() => {
               <a-space :size="8">
                 <a-button type="primary" @click.prevent="fnGetList(1)">
                   <template #icon><SearchOutlined /></template>
-                  搜索</a-button
-                >
+                  搜索
+                </a-button>
                 <a-button type="default" @click.prevent="fnQueryReset">
                   <template #icon><ClearOutlined /></template>
-                  重置</a-button
-                >
+                  重置
+                </a-button>
               </a-space>
             </a-form-item>
           </a-col>
@@ -658,8 +667,11 @@ onMounted(() => {
         }"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'status'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.status" />
+          <template v-if="column.key === 'statusFlag'">
+            <DictTag
+              :options="dict.sysNormalDisable"
+              :value="record.statusFlag"
+            />
           </template>
           <template v-if="column.key === 'dictId'">
             <a-space :size="8" align="center">
@@ -721,14 +733,14 @@ onMounted(() => {
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="字典编号" name="dictId">
-              {{ modalState.from.dictId }}
+              {{ modalState.form.dictId }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典状态" name="status">
+            <a-form-item label="字典状态" name="statusFlag">
               <DictTag
                 :options="dict.sysNormalDisable"
-                :value="modalState.from.status"
+                :value="modalState.form.statusFlag"
               />
             </a-form-item>
           </a-col>
@@ -736,12 +748,12 @@ onMounted(() => {
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="字典名称" name="dictName">
-              {{ modalState.from.dictName }}
+              {{ modalState.form.dictName }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="字典类型" name="dictType">
-              {{ modalState.from.dictType }}
+              {{ modalState.form.dictType }}
             </a-form-item>
           </a-col>
         </a-row>
@@ -752,7 +764,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            :value="modalState.from.remark"
+            :value="modalState.form.remark"
             :auto-size="{ minRows: 2, maxRows: 6 }"
             :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)"
@@ -778,7 +790,7 @@ onMounted(() => {
       @cancel="fnModalCancel"
     >
       <a-form
-        name="modalStateFrom"
+        name="modalStateForm"
         layout="horizontal"
         :label-col="{ span: 3 }"
         :label-wrap="true"
@@ -786,10 +798,10 @@ onMounted(() => {
         <a-form-item
           label="字典名称"
           name="dictName"
-          v-bind="modalStateFrom.validateInfos.dictName"
+          v-bind="modalStateForm.validateInfos.dictName"
         >
           <a-input
-            v-model:value="modalState.from.dictName"
+            v-model:value="modalState.form.dictName"
             allow-clear
             placeholder="请输入字典名称"
             :maxlength="50"
@@ -799,19 +811,19 @@ onMounted(() => {
         <a-form-item
           label="字典类型"
           name="dictType"
-          v-bind="modalStateFrom.validateInfos.dictType"
+          v-bind="modalStateForm.validateInfos.dictType"
         >
           <a-input
-            v-model:value="modalState.from.dictType"
+            v-model:value="modalState.form.dictType"
             allow-clear
             placeholder="请输入字典类型"
             :maxlength="50"
           ></a-input>
         </a-form-item>
 
-        <a-form-item label="字典状态" name="status">
+        <a-form-item label="字典状态" name="statusFlag">
           <a-select
-            v-model:value="modalState.from.status"
+            v-model:value="modalState.form.statusFlag"
             default-value="0"
             placeholder="字典状态"
             :options="dict.sysNormalDisable"
@@ -821,7 +833,7 @@ onMounted(() => {
 
         <a-form-item label="字典说明" name="remark">
           <a-textarea
-            v-model:value="modalState.from.remark"
+            v-model:value="modalState.form.remark"
             :auto-size="{ minRows: 4, maxRows: 6 }"
             :maxlength="450"
             :show-count="true"

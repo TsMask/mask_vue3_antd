@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Dayjs } from 'dayjs';
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
@@ -32,20 +33,20 @@ let dict: {
 });
 
 /**开始结束时间 */
-let queryRangePicker = ref<[string, string]>(['', '']);
+let queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
 /**查询参数 */
 let queryParams = reactive({
   /**登录地址 */
-  ipaddr: '',
+  loginIp: '',
   /**登录账号 */
   userName: '',
   /**登录状态 */
-  status: undefined,
+  statusFlag: undefined,
   /**开始时间 */
-  beginTime: '',
+  beginTime: undefined as undefined | number,
   /**结束时间 */
-  endTime: '',
+  endTime: undefined as undefined | number,
   /**当前页数 */
   pageNum: 1,
   /**每页条数 */
@@ -54,16 +55,16 @@ let queryParams = reactive({
 
 /**查询参数重置 */
 function fnQueryReset() {
-  queryParams = Object.assign(queryParams, {
-    ipaddr: '',
+  Object.assign(queryParams, {
+    loginIp: '',
     userName: '',
-    status: undefined,
-    beginTime: '',
-    endTime: '',
+    statusFlag: undefined,
+    beginTime: undefined,
+    endTime: undefined,
     pageNum: 1,
     pageSize: 20,
   });
-  queryRangePicker.value = ['', ''];
+  queryRangePicker.value = undefined;
   tablePagination.current = 1;
   tablePagination.pageSize = 20;
   fnGetList();
@@ -102,7 +103,7 @@ let tableState: TabeStateType = reactive({
 let tableColumns: ColumnsType = [
   {
     title: '日志编号',
-    dataIndex: 'loginId',
+    dataIndex: 'id',
     align: 'left',
     width: 100,
   },
@@ -113,8 +114,8 @@ let tableColumns: ColumnsType = [
     width: 150,
   },
   {
-    title: '登录地址',
-    dataIndex: 'ipaddr',
+    title: '登录IP',
+    dataIndex: 'loginIp',
     align: 'left',
     width: 150,
   },
@@ -138,15 +139,15 @@ let tableColumns: ColumnsType = [
   },
   {
     title: '登录状态',
-    dataIndex: 'status',
-    key: 'status',
-    align: 'center',
+    dataIndex: 'statusFlag',
+    key: 'statusFlag',
+    align: 'left',
     width: 100,
-  }, 
+  },
   {
     title: '登录时间',
     dataIndex: 'loginTime',
-    align: 'center',
+    align: 'left',
     width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
@@ -156,7 +157,7 @@ let tableColumns: ColumnsType = [
   {
     title: '登录信息',
     dataIndex: 'msg',
-    align: 'left', 
+    align: 'left',
   },
 ];
 
@@ -330,19 +331,28 @@ function fnGetList(pageNum?: number) {
   if (pageNum) {
     queryParams.pageNum = pageNum;
   }
-  if (!queryRangePicker.value) {
-    queryRangePicker.value = ['', ''];
+
+  // 时间范围
+  if (
+    Array.isArray(queryRangePicker.value) &&
+    queryRangePicker.value.length > 0
+  ) {
+    queryParams.beginTime = queryRangePicker.value[0].startOf('day').valueOf();
+    queryParams.endTime = queryRangePicker.value[1].endOf('day').valueOf();
+  } else {
+    queryParams.beginTime = undefined;
+    queryParams.endTime = undefined;
   }
-  queryParams.beginTime = queryRangePicker.value[0];
-  queryParams.endTime = queryRangePicker.value[1];
+
   listSysLogLogin(toRaw(queryParams)).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
       }
-      tablePagination.total = res.total;
-      tableState.data = res.rows;
+      const { total, rows } = res.data;
+      tablePagination.total = total;
+      tableState.data = rows;
     }
     tableState.loading = false;
   });
@@ -379,16 +389,6 @@ onMounted(() => {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录地址" name="ipaddr">
-              <a-input
-                v-model:value="queryParams.ipaddr"
-                allow-clear
-                :maxlength="128"
-                placeholder="请输入登录地址"
-              ></a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="登录账号" name="userName">
               <a-input
                 v-model:value="queryParams.userName"
@@ -399,9 +399,19 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录状态" name="status">
+            <a-form-item label="登录IP" name="loginIp">
+              <a-input
+                v-model:value="queryParams.loginIp"
+                allow-clear
+                :maxlength="128"
+                placeholder="请输入登录IP"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="6" :md="12" :xs="24">
+            <a-form-item label="登录状态" name="statusFlag">
               <a-select
-                v-model:value="queryParams.status"
+                v-model:value="queryParams.statusFlag"
                 allow-clear
                 placeholder="请选择登录状态"
                 :options="dict.sysCommonStatus"
@@ -413,10 +423,8 @@ onMounted(() => {
             <a-form-item label="登录时间" name="queryRangePicker">
               <a-range-picker
                 v-model:value="queryRangePicker"
-                allow-clear
-                bordered
-                value-format="YYYY-MM-DD"
-                :placeholder="['登录开始', '登录结束']"
+                :bordered="true"
+                :allow-clear="true"
                 style="width: 100%"
               ></a-range-picker>
             </a-form-item>
@@ -540,7 +548,7 @@ onMounted(() => {
         :size="tableState.size"
         :row-class-name="fnTableStriped"
         :scroll="{
-          x: tableColumns.length * 120,
+          x: tableColumns.length * 160,
           scrollToFirstRowOnChange: true,
         }"
         :pagination="tablePagination"
@@ -551,8 +559,8 @@ onMounted(() => {
         }"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'status'">
-            <DictTag :options="dict.sysCommonStatus" :value="record.status" />
+          <template v-if="column.key === 'statusFlag'">
+            <DictTag :options="dict.sysCommonStatus" :value="record.statusFlag" />
           </template>
         </template>
       </a-table>

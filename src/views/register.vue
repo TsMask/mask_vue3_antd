@@ -90,14 +90,21 @@ function fnFinish() {
 function fnGetCaptcha() {
   if (state.captchaClick) return;
   state.captchaClick = true;
-  getCaptchaImage().then(res => {
-    state.captchaClick = false;
-    state.captcha.enabled = Boolean(res.captchaEnabled);
-    if (state.captcha.enabled) {
-      state.captcha.codeImg = res.img;
-      state.form.uuid = res.uuid;
-    }
-  });
+  getCaptchaImage()
+    .then(res => {
+      if (res.code !== RESULT_CODE_SUCCESS) {
+        return;
+      }
+      const { enabled, img, uuid } = res.data;
+      state.captcha.enabled = Boolean(enabled);
+      if (state.captcha.enabled) {
+        state.captcha.codeImg = img;
+        state.form.uuid = uuid;
+      }
+    })
+    .finally(() => {
+      state.captchaClick = false;
+    });
 }
 
 onMounted(() => {

@@ -17,7 +17,7 @@ let title = ref<string>(route.meta.title ?? '标题');
 /**查询参数 */
 let queryParams = reactive({
   /**登录主机 */
-  ipaddr: '',
+  loginIp: '',
   /**登录账号 */
   userName: '',
 });
@@ -70,8 +70,8 @@ let tableColumns: ColumnsType = [
     width: 150,
   },
   {
-    title: '登录主机',
-    dataIndex: 'ipaddr',
+    title: '登录IP',
+    dataIndex: 'loginIp',
     align: 'left',
     width: 120,
   },
@@ -153,7 +153,7 @@ function fnTableStriped(_record: unknown, index: number): any {
 
 /**查询参数重置 */
 function fnQueryReset() {
-  queryParams.ipaddr = '';
+  queryParams.loginIp = '';
   queryParams.userName = '';
   tablePagination.current = 1;
   tablePagination.pageSize = 20;
@@ -165,8 +165,8 @@ function fnGetList() {
   if (tableState.loading) return;
   tableState.loading = true;
   listOnline(queryParams).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
-      tableState.data = res.rows;
+    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data.rows)) {
+      tableState.data = res.data.rows;
     }
     tableState.loading = false;
   });
@@ -237,12 +237,12 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录主机" name="ipaddr">
+            <a-form-item label="登录IP" name="ipaddr">
               <a-input
-                v-model:value="queryParams.ipaddr"
+                v-model:value="queryParams.loginIp"
                 allow-clear
                 :maxlength="128"
-                placeholder="请输入登录主机"
+                placeholder="请输入登录IP"
               ></a-input> </a-form-item
           ></a-col>
           <a-col :lg="12" :md="24" :xs="24">

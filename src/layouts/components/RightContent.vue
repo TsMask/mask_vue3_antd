@@ -62,7 +62,7 @@ function fnClick({ key }: MenuInfo) {
       </template>
     </a-popover>
 
-    <a-tooltip>
+    <a-tooltip placement="bottomRight">
       <template #title>开源仓库</template>
       <a-button
         type="text"
@@ -76,7 +76,7 @@ function fnClick({ key }: MenuInfo) {
       </a-button>
     </a-tooltip>
 
-    <a-tooltip>
+    <a-tooltip placement="bottomRight">
       <template #title>文档手册</template>
       <a-button
         type="text"
@@ -90,7 +90,7 @@ function fnClick({ key }: MenuInfo) {
       </a-button>
     </a-tooltip>
 
-    <a-tooltip>
+    <a-tooltip placement="bottomRight">
       <template #title>全屏显示</template>
       <a-button type="text" style="color: inherit" @click="toggle">
         <template #icon>
@@ -100,9 +100,9 @@ function fnClick({ key }: MenuInfo) {
       </a-button>
     </a-tooltip>
 
-    <a-tooltip>
+    <a-tooltip placement="right">
       <template #title>组件尺寸</template>
-      <a-dropdown placement="bottom" trigger="click">
+      <a-dropdown placement="bottomRight" trigger="click">
         <a-button type="text" style="color: inherit">
           <template #icon><FontSizeOutlined /></template>
         </a-button>
@@ -167,7 +167,6 @@ function fnClick({ key }: MenuInfo) {
   cursor: pointer;
   .nick {
     padding-left: 8px;
-    padding-right: 16px;
     font-size: 16px;
     max-width: 164px;
     white-space: nowrap;

@@ -47,7 +47,7 @@ type OptionsType = {
   /**请求地址 */
   url: string;
   /**请求方法 */
-  method: 'get' | 'post' | 'put' | 'delete';
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   /**请求头 */
   headers?: HeadersInit;
   /**地址栏参数 */
@@ -77,7 +77,7 @@ const FATCH_OPTIONS: OptionsType = {
   baseUrl: import.meta.env.VITE_API_BASE_URL,
   timeout: 10 * 1000,
   url: '',
-  method: 'get',
+  method: 'GET',
   headers: {
     [APP_REQUEST_HEADER_CODE]: import.meta.env.VITE_APP_CODE,
     [APP_REQUEST_HEADER_VERSION]: import.meta.env.VITE_APP_VERSION,
@@ -145,20 +145,25 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
     }
   }
 
-  // get请求拼接地址栏参数
-  if (options.method === 'get' && options.params) {
-    let paramStr = '';
+  // 请求拼接地址栏参数
+  if (options.params) {
     const params = options.params;
+    const queryParams: string[] = [];
     for (const key in params) {
       const value = params[key];
       // 空字符或未定义的值不作为参数发送
       if (value === '' || value === undefined) continue;
-      paramStr += `&${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+      const str = `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+      queryParams.push(str);
     }
-    if (paramStr && paramStr.startsWith('&')) {
-      options.url = `${options.url}?${paramStr.substring(1)}`;
+    const paramStr = queryParams.join('&');
+    if (paramStr) {
+      const separator = options.url.includes('?') ? '&' : '?';
+      options.url += `${separator}${paramStr}`;
     }
   }
+
+  if (options.method === 'GET') return options;
 
   // 非get参数提交
   if (options.data instanceof FormData) {

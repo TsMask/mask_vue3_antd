@@ -2,6 +2,7 @@
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
+import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
@@ -52,7 +53,7 @@ let queryParams = reactive({
   /**任务组名 */
   jobGroup: undefined,
   /**任务状态 */
-  status: undefined,
+  statusFlag: undefined,
   /**当前页数 */
   pageNum: 1,
   /**每页条数 */
@@ -61,10 +62,10 @@ let queryParams = reactive({
 
 /**查询参数重置 */
 function fnQueryReset() {
-  queryParams = Object.assign(queryParams, {
+  Object.assign(queryParams, {
     jobName: '',
     jobGroup: undefined,
-    status: undefined,
+    statusFlag: undefined,
     pageNum: 1,
     pageSize: 20,
   });
@@ -134,16 +135,16 @@ let tableColumns: ColumnsType = [
   },
   {
     title: '状态',
-    dataIndex: 'status',
-    key: 'status',
-    align: 'center',
+    dataIndex: 'statusFlag',
+    key: 'statusFlag',
+    align: 'left',
     width: 100,
   },
   {
     title: '记录日志',
     dataIndex: 'saveLog',
     key: 'saveLog',
-    align: 'center',
+    align: 'left',
     width: 100,
   },
   {
@@ -205,7 +206,7 @@ type ModalStateType = {
   /**标题 */
   title: string;
   /**表单数据 */
-  from: Record<string, any>;
+  form: Record<string, any>;
   /**确定按钮 loading */
   confirmLoading: boolean;
   /**cron生成框是否显示 */
@@ -217,7 +218,7 @@ let modalState: ModalStateType = reactive({
   visibleByView: false,
   visibleByEdit: false,
   title: '任务',
-  from: {
+  form: {
     jobId: undefined,
     jobName: '',
     invokeTarget: '',
@@ -225,7 +226,7 @@ let modalState: ModalStateType = reactive({
     misfirePolicy: '3',
     concurrent: '0',
     jobGroup: 'DEFAULT',
-    status: '0',
+    statusFlag: '0',
     saveLog: '0',
     targetParams: '',
     remark: '',
@@ -235,8 +236,8 @@ let modalState: ModalStateType = reactive({
 });
 
 /**对话框内表单属性和校验规则 */
-const modalStateFrom = Form.useForm(
-  modalState.from,
+const modalStateForm = Form.useForm(
+  modalState.form,
   reactive({
     jobName: [
       {
@@ -280,7 +281,7 @@ function fnModalVisibleByVive(jobId: string | number) {
     modalState.confirmLoading = false;
     hide();
     if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      modalState.from = Object.assign(modalState.from, res.data);
+      Object.assign(modalState.form, res.data);
       modalState.title = '任务信息';
       modalState.visibleByView = true;
     } else {
@@ -295,7 +296,7 @@ function fnModalVisibleByVive(jobId: string | number) {
  */
 function fnModalVisibleByEdit(jobId?: string | number) {
   if (!jobId) {
-    modalStateFrom.resetFields();
+    modalStateForm.resetFields();
     modalState.title = '添加任务';
     modalState.visibleByEdit = true;
   } else {
@@ -306,7 +307,7 @@ function fnModalVisibleByEdit(jobId?: string | number) {
       modalState.confirmLoading = false;
       hide();
       if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        modalState.from = Object.assign(modalState.from, res.data);
+        Object.assign(modalState.form, res.data);
         modalState.title = '修改任务';
         modalState.visibleByEdit = true;
       } else {
@@ -321,33 +322,31 @@ function fnModalVisibleByEdit(jobId?: string | number) {
  * 进行表达规则校验
  */
 function fnModalOk() {
-  modalStateFrom
+  modalStateForm
     .validate()
     .then(() => {
       modalState.confirmLoading = true;
-      const from = toRaw(modalState.from);
-      const job = from.jobId ? updateJob(from) : addJob(from);
-      const key = 'job';
-      message.loading({ content: '请稍等...', key });
+      const hide = message.loading('请稍等...', 0);
+      const form = toRaw(modalState.form);
+      const job = form.jobId ? updateJob(form) : addJob(form);
       job
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
-              key,
-              duration: 2,
+              duration: 3,
             });
             fnGetList(1);
             fnModalCancel();
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
-              duration: 2,
+              duration: 3,
             });
           }
         })
         .finally(() => {
+          hide();
           modalState.confirmLoading = false;
         });
     })
@@ -363,7 +362,7 @@ function fnModalOk() {
 function fnModalCancel() {
   modalState.visibleByEdit = false;
   modalState.visibleByView = false;
-  modalStateFrom.resetFields();
+  modalStateForm.resetFields();
 }
 
 /**
@@ -372,7 +371,7 @@ function fnModalCancel() {
 function fnModalCron(opt: boolean, cronStr?: string) {
   modalState.visibleByCron = opt;
   if (cronStr) {
-    modalState.from.cronExpression = cronStr;
+    modalState.form.cronExpression = cronStr;
   }
 }
 
@@ -391,7 +390,7 @@ function fnRecordStatus(row: Record<string, string>) {
     onOk() {
       const key = 'changeJobStatus';
       message.loading({ content: '请稍等...', key });
-      changeJobStatus(row.jobId, row.status).then(res => {
+      changeJobStatus(row.jobId, row.statusFlag).then(res => {
         if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `${row.jobName} ${text}成功`,
@@ -409,7 +408,7 @@ function fnRecordStatus(row: Record<string, string>) {
       });
     },
     onCancel() {
-      row.status = row.status === '1' ? '0' : '1';
+      row.statusFlag = row.statusFlag === '1' ? '0' : '1';
     },
   });
 }
@@ -553,8 +552,9 @@ function fnGetList(pageNum?: number) {
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
       }
-      tablePagination.total = res.total;
-      tableState.data = res.rows;
+      const { total, rows } = res.data;
+      tablePagination.total = total;
+      tableState.data = rows;
       tableState.loading = false;
     }
   });
@@ -628,9 +628,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="任务状态" name="status">
+            <a-form-item label="任务状态" name="statusFlag">
               <a-select
-                v-model:value="queryParams.status"
+                v-model:value="queryParams.statusFlag"
                 allow-clear
                 placeholder="请选择任务状态"
                 :options="dict.sysJobStatus"
@@ -778,13 +778,13 @@ onMounted(() => {
           <template v-if="column.key === 'jobGroup'">
             <DictTag :options="dict.sysJobGroup" :value="record.jobGroup" />
           </template>
-          <template v-if="column.key === 'status'">
+          <template v-if="column.key === 'statusFlag'">
             <a-switch
               v-if="
                 dict.sysJobStatus.length > 0 &&
                 hasPermissions(['monitor:job:changeStatus'])
               "
-              v-model:checked="record.status"
+              v-model:checked="record.statusFlag"
               checked-value="1"
               :checked-children="dict.sysJobStatus[0].label"
               un-checked-value="0"
@@ -795,7 +795,7 @@ onMounted(() => {
             <DictTag
               v-else
               :options="dict.sysJobStatus"
-              :value="record.status"
+              :value="record.statusFlag"
             />
           </template>
           <template v-if="column.key === 'saveLog'">
@@ -871,21 +871,21 @@ onMounted(() => {
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务名称" name="jobName">
-              {{ modalState.from.jobName }}
+              {{ modalState.form.jobName }}
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="6" :xs="24">
             <a-form-item label="出错策略" name="misfirePolicy">
               {{
                 ['立即执行', '执行一次', '放弃执行'][
-                  +modalState.from.misfirePolicy - 1
+                  +modalState.form.misfirePolicy - 1
                 ]
               }}
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="6" :xs="24">
             <a-form-item label="是否并发" name="concurrent">
-              {{ ['禁止', '允许'][+modalState.from.concurrent] }}
+              {{ ['禁止', '允许'][+modalState.form.concurrent] }}
             </a-form-item>
           </a-col>
         </a-row>
@@ -893,14 +893,14 @@ onMounted(() => {
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="调用目标" name="invokeTarget">
-              {{ modalState.from.invokeTarget }}
+              {{ modalState.form.invokeTarget }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务组名" name="jobGroup">
               <DictTag
                 :options="dict.sysJobGroup"
-                :value="modalState.from.jobGroup"
+                :value="modalState.form.jobGroup"
               />
             </a-form-item>
           </a-col>
@@ -909,14 +909,14 @@ onMounted(() => {
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务状态" name="status">
-              {{ ['暂停', '正常'][+modalState.from.status] }}
+              {{ ['暂停', '正常'][+modalState.form.status] }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="记录日志" name="saveLog">
               <DictTag
                 :options="dict.sysJobSaveLog"
-                :value="modalState.from.saveLog"
+                :value="modalState.form.saveLog"
               />
             </a-form-item>
           </a-col>
@@ -926,14 +926,14 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="cron表达式" name="cronExpression">
               <a-tag color="default">
-                {{ modalState.from.cronExpression }}
+                {{ modalState.form.cronExpression }}
               </a-tag>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="创建时间" name="createTime">
-              <span v-if="+modalState.from.createTime > 0">
-                {{ parseDateToStr(+modalState.from.createTime) }}
+              <span v-if="+modalState.form.createTime > 0">
+                {{ parseDateToStr(+modalState.form.createTime) }}
               </span>
             </a-form-item>
           </a-col>
@@ -946,7 +946,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            :value="modalState.from.targetParams"
+            :value="modalState.form.targetParams"
             :auto-size="{ minRows: 2, maxRows: 6 }"
             :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)"
@@ -960,7 +960,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            :value="modalState.from.remark"
+            :value="modalState.form.remark"
             :auto-size="{ minRows: 2, maxRows: 6 }"
             :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)"
@@ -986,7 +986,7 @@ onMounted(() => {
       @cancel="fnModalCancel"
     >
       <a-form
-        name="modalStateFrom"
+        name="modalStateForm"
         layout="horizontal"
         :label-col="{ span: 6 }"
         :label-wrap="true"
@@ -996,10 +996,10 @@ onMounted(() => {
             <a-form-item
               label="任务名称"
               name="jobName"
-              v-bind="modalStateFrom.validateInfos.jobName"
+              v-bind="modalStateForm.validateInfos.jobName"
             >
               <a-input
-                v-model:value="modalState.from.jobName"
+                v-model:value="modalState.form.jobName"
                 allow-clear
                 placeholder="请输入任务名称"
                 :maxlength="40"
@@ -1010,7 +1010,7 @@ onMounted(() => {
             <a-form-item label="出错策略" name="misfirePolicy">
               <a-select
                 :disabled="true"
-                v-model:value="modalState.from.misfirePolicy"
+                v-model:value="modalState.form.misfirePolicy"
                 default-value="3"
                 placeholder="出错策略"
               >
@@ -1024,7 +1024,7 @@ onMounted(() => {
             <a-form-item label="是否并发" name="concurrent">
               <a-select
                 :disabled="true"
-                v-model:value="modalState.from.concurrent"
+                v-model:value="modalState.form.concurrent"
                 default-value="0"
                 placeholder="是否并发"
               >
@@ -1040,10 +1040,10 @@ onMounted(() => {
             <a-form-item
               label="调用目标"
               name="invokeTarget"
-              v-bind="modalStateFrom.validateInfos.invokeTarget"
+              v-bind="modalStateForm.validateInfos.invokeTarget"
             >
               <a-input
-                v-model:value="modalState.from.invokeTarget"
+                v-model:value="modalState.form.invokeTarget"
                 allow-clear
                 placeholder="请输入调用目标"
                 :maxlength="40"
@@ -1066,7 +1066,7 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务组名" name="jobGroup">
               <a-select
-                v-model:value="modalState.from.jobGroup"
+                v-model:value="modalState.form.jobGroup"
                 default-value="DEFAULT"
                 placeholder="任务组名"
                 :options="dict.sysJobGroup"
@@ -1078,9 +1078,9 @@ onMounted(() => {
 
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="任务状态" name="status">
+            <a-form-item label="任务状态" name="statusFlag">
               <a-select
-                v-model:value="modalState.from.status"
+                v-model:value="modalState.form.statusFlag"
                 default-value="0"
                 placeholder="任务状态"
                 :options="dict.sysJobStatus"
@@ -1091,7 +1091,7 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="记录日志" name="saveLog">
               <a-select
-                v-model:value="modalState.from.saveLog"
+                v-model:value="modalState.form.saveLog"
                 default-value="0"
                 placeholder="记录日志"
                 :options="dict.sysJobSaveLog"
@@ -1104,12 +1104,12 @@ onMounted(() => {
         <a-form-item
           label="cron表达式"
           name="cronExpression"
-          v-bind="modalStateFrom.validateInfos.cronExpression"
+          v-bind="modalStateForm.validateInfos.cronExpression"
           :label-col="{ span: 3 }"
           :label-wrap="true"
         >
           <a-input
-            v-model:value="modalState.from.cronExpression"
+            v-model:value="modalState.form.cronExpression"
             allow-clear
             placeholder="请输入或生成cron执行表达式"
           >
@@ -1144,7 +1144,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            v-model:value="modalState.from.targetParams"
+            v-model:value="modalState.form.targetParams"
             :auto-size="{ minRows: 2, maxRows: 6 }"
             :maxlength="480"
             placeholder="调用目标传入参数，仅支持json字符串"
@@ -1158,7 +1158,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            v-model:value="modalState.from.remark"
+            v-model:value="modalState.form.remark"
             :auto-size="{ minRows: 2, maxRows: 6 }"
             :maxlength="480"
             :show-count="true"
@@ -1171,7 +1171,7 @@ onMounted(() => {
     <!-- 生成cron表达式 -->
     <CronModal
       v-model:visible="modalState.visibleByCron"
-      :cron="modalState.from.cronExpression"
+      :cron="modalState.form.cronExpression"
       @ok="fnModalCron(false, $event)"
     ></CronModal>
   </PageContainer>

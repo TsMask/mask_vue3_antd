@@ -105,9 +105,7 @@ function buildRouters(recordRaws: RecordRaws[]): RouteRecordRaw[] {
     if (!metaIcon.startsWith('icon-')) {
       metaIcon = '';
     }
-    item.meta = Object.assign(item.meta, {
-      icon: metaIcon,
-    });
+    Object.assign(item.meta, { icon: metaIcon });
 
     // 构建路由
     const router: RouteRecordRaw = {

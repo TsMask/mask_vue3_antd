@@ -8,8 +8,8 @@ import { request } from '@/plugins/http-fetch';
 export function exportPost(query: Record<string, any>) {
   return request({
     url: '/system/post/export',
-    method: 'post',
-    data: query,
+    method: 'GET',
+    params: query,
     responseType: 'blob',
   });
 }
@@ -22,7 +22,7 @@ export function exportPost(query: Record<string, any>) {
 export function listPost(query: Record<string, any>) {
   return request({
     url: '/system/post/list',
-    method: 'get',
+    method: 'GET',
     params: query,
   });
 }
@@ -35,7 +35,7 @@ export function listPost(query: Record<string, any>) {
 export function getPost(postId: string | number) {
   return request({
     url: `/system/post/${postId}`,
-    method: 'get',
+    method: 'GET',
   });
 }
 
@@ -47,7 +47,7 @@ export function getPost(postId: string | number) {
 export function addPost(data: Record<string, any>) {
   return request({
     url: '/system/post',
-    method: 'post',
+    method: 'POST',
     data: data,
   });
 }
@@ -60,7 +60,7 @@ export function addPost(data: Record<string, any>) {
 export function updatePost(data: Record<string, any>) {
   return request({
     url: '/system/post',
-    method: 'put',
+    method: 'PUT',
     data: data,
   });
 }
@@ -73,6 +73,6 @@ export function updatePost(data: Record<string, any>) {
 export function delPost(postId: string | number) {
   return request({
     url: `/system/post/${postId}`,
-    method: 'delete',
+    method: 'DELETE',
   });
 }

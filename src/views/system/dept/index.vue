@@ -2,6 +2,7 @@
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
+import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
@@ -38,14 +39,14 @@ let queryParams = reactive({
   /**部门名称 */
   deptName: '',
   /**部门状态 */
-  status: undefined,
+  statusFlag: undefined,
 });
 
 /**查询参数重置 */
 function fnQueryReset() {
-  queryParams = Object.assign(queryParams, {
+  Object.assign(queryParams, {
     deptName: '',
-    status: undefined,
+    statusFlag: undefined,
   });
   fnGetList();
 }
@@ -98,14 +99,14 @@ let tableColumns: ColumnsType = [
   },
   {
     title: '部门排序',
-    dataIndex: 'orderNum',
+    dataIndex: 'deptSort',
     align: 'left',
     width: 100,
   },
   {
     title: '岗位状态',
-    dataIndex: 'status',
-    key: 'status',
+    dataIndex: 'statusFlag',
+    key: 'statusFlag',
     align: 'center',
     width: 100,
   },
@@ -158,7 +159,7 @@ type ModalStateType = {
   /**标题 */
   title: string;
   /**表单数据 */
-  from: Record<string, any>;
+  form: Record<string, any>;
   /**确定按钮 loading */
   confirmLoading: boolean;
   /**上级部门选择树 */
@@ -170,25 +171,24 @@ let modalState: ModalStateType = reactive({
   visibleByView: false,
   visibleByEdit: false,
   title: '部门',
-  from: {
+  form: {
     deptId: undefined,
     deptName: '',
     email: '',
     leader: '',
-    orderNum: 0,
+    deptSort: 0,
     parentId: '100',
     ancestors: '',
-    parentName: null,
     phone: '',
-    status: '0',
+    statusFlag: '0',
   },
   confirmLoading: false,
   treeData: [],
 });
 
 /**对话框内表单属性和校验规则 */
-const modalStateFrom = Form.useForm(
-  modalState.from,
+const modalStateForm = Form.useForm(
+  modalState.form,
   reactive({
     parentId: [{ required: true, message: '上级部门不能为空' }],
     deptName: [
@@ -234,7 +234,7 @@ function fnModalVisibleByVive(deptId: string | number) {
       } else {
         modalState.treeData = treeDataAll;
       }
-      modalState.from = Object.assign(modalState.from, res.data);
+      Object.assign(modalState.form, res.data);
       modalState.title = '部门信息';
       modalState.visibleByView = true;
     } else {
@@ -253,9 +253,9 @@ function fnModalVisibleByEdit(
   parentId?: string | number
 ) {
   if (!deptId) {
-    modalStateFrom.resetFields();
+    modalStateForm.resetFields();
     if (parentId) {
-      modalState.from.parentId = parentId;
+      modalState.form.parentId = parentId;
     }
     modalState.treeData = treeDataAll;
     modalState.title = '添加部门信息';
@@ -268,7 +268,7 @@ function fnModalVisibleByEdit(
     Promise.all([getDept(deptId), listDeptExcludeChild(deptId)])
       .then(resArr => {
         if (resArr[0].code === RESULT_CODE_SUCCESS && resArr[0].data) {
-          modalState.from = Object.assign(modalState.from, resArr[0].data);
+          Object.assign(modalState.form, resArr[0].data);
           if (
             resArr[1].code === RESULT_CODE_SUCCESS &&
             Array.isArray(resArr[1].data)
@@ -299,12 +299,12 @@ function fnModalVisibleByEdit(
  * 进行表达规则校验
  */
 function fnModalOk() {
-  modalStateFrom
+  modalStateForm
     .validate()
     .then(() => {
       modalState.confirmLoading = true;
-      const from = toRaw(modalState.from);
-      const dept = from.deptId ? updateDept(from) : addDept(from);
+      const form = toRaw(modalState.form);
+      const dept = form.deptId ? updateDept(form) : addDept(form);
       const hide = message.loading('请稍等...', 0);
       dept
         .then(res => {
@@ -314,7 +314,7 @@ function fnModalOk() {
               duration: 2,
             });
             // 新增时清空上级部门树重新获取
-            if (!from.deptId) {
+            if (!form.deptId) {
               treeDataAll = [];
             }
             fnGetList();
@@ -343,7 +343,7 @@ function fnModalOk() {
 function fnModalCancel() {
   modalState.visibleByEdit = false;
   modalState.visibleByView = false;
-  modalStateFrom.resetFields();
+  modalStateForm.resetFields();
 }
 
 /**
@@ -432,9 +432,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="岗位状态" name="status">
+            <a-form-item label="岗位状态" name="statusFlag">
               <a-select
-                v-model:value="queryParams.status"
+                v-model:value="queryParams.statusFlag"
                 allow-clear
                 placeholder="请选择"
                 :options="dict.sysNormalDisable"
@@ -551,8 +551,11 @@ onMounted(() => {
         @expandedRowsChange="fnTableExpandedRowsChange"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'status'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.status" />
+          <template v-if="column.key === 'statusFlag'">
+            <DictTag
+              :options="dict.sysNormalDisable"
+              :value="record.statusFlag"
+            />
           </template>
           <template v-if="column.key === 'deptId'">
             <a-space :size="8" align="center">
@@ -586,7 +589,7 @@ onMounted(() => {
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip v-if="record.status !== '0'">
+              <a-tooltip v-if="record.statusFlag !== '0'">
                 <template #title>新增子部门</template>
                 <a-button
                   type="link"
@@ -619,7 +622,7 @@ onMounted(() => {
           :label-col="{ span: 3 }"
           :label-wrap="true"
         >
-          {{ modalState.from.deptId }}
+          {{ modalState.form.deptId }}
         </a-form-item>
         <a-form-item
           label="上级部门"
@@ -628,7 +631,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-tree-select
-            :value="modalState.from.parentId"
+            :value="modalState.form.parentId"
             placeholder="上级部门"
             disabled
             :tree-data="modalState.treeData"
@@ -645,16 +648,16 @@ onMounted(() => {
 
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="部门状态" name="status">
+            <a-form-item label="部门状态" name="statusFlag">
               <DictTag
                 :options="dict.sysNormalDisable"
-                :value="modalState.from.status"
+                :value="modalState.form.statusFlag"
               />
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="显示排序" name="orderNum">
-              {{ modalState.from.orderNum }}
+            <a-form-item label="显示排序" name="deptSort">
+              {{ modalState.form.deptSort }}
             </a-form-item>
           </a-col>
         </a-row>
@@ -665,25 +668,25 @@ onMounted(() => {
           :label-col="{ span: 3 }"
           :label-wrap="true"
         >
-          {{ modalState.from.deptName }}
+          {{ modalState.form.deptName }}
         </a-form-item>
 
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="负责人" name="leader">
-              {{ modalState.from.leader }}
+              {{ modalState.form.leader }}
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="联系电话" name="phone">
-              {{ modalState.from.phone }}
+              {{ modalState.form.phone }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="邮箱" name="email">
-              {{ modalState.from.email }}
+              {{ modalState.form.email }}
             </a-form-item>
           </a-col>
         </a-row>
@@ -707,7 +710,7 @@ onMounted(() => {
       @cancel="fnModalCancel"
     >
       <a-form
-        name="modalStateFrom"
+        name="modalStateForm"
         layout="horizontal"
         :label-col="{ span: 6 }"
         :label-wrap="true"
@@ -715,12 +718,12 @@ onMounted(() => {
         <a-form-item
           label="上级部门"
           name="parentId"
-          v-bind="modalStateFrom.validateInfos.parentId"
+          v-bind="modalStateForm.validateInfos.parentId"
           :label-col="{ span: 3 }"
           :label-wrap="true"
         >
           <a-tree-select
-            v-model:value="modalState.from.parentId"
+            v-model:value="modalState.form.parentId"
             placeholder="上级部门"
             show-search
             tree-default-expand-all
@@ -741,12 +744,12 @@ onMounted(() => {
         <a-form-item
           label="部门名称"
           name="deptName"
-          v-bind="modalStateFrom.validateInfos.deptName"
+          v-bind="modalStateForm.validateInfos.deptName"
           :label-col="{ span: 3 }"
           :label-wrap="true"
         >
           <a-input
-            v-model:value="modalState.from.deptName"
+            v-model:value="modalState.form.deptName"
             allow-clear
             :maxlength="50"
             placeholder="请输入部门名称"
@@ -755,9 +758,9 @@ onMounted(() => {
 
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位状态" name="status">
+            <a-form-item label="岗位状态" name="statusFlag">
               <a-select
-                v-model:value="modalState.from.status"
+                v-model:value="modalState.form.statusFlag"
                 default-value="0"
                 placeholder="岗位状态"
                 :options="dict.sysNormalDisable"
@@ -766,9 +769,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="显示顺序" name="orderNum">
+            <a-form-item label="显示顺序" name="deptSort">
               <a-input-number
-                v-model:value="modalState.from.orderNum"
+                v-model:value="modalState.form.deptSort"
                 :min="0"
                 :max="9999"
                 :step="1"
@@ -783,10 +786,10 @@ onMounted(() => {
             <a-form-item
               label="负责人"
               name="leader"
-              v-bind="modalStateFrom.validateInfos.leader"
+              v-bind="modalStateForm.validateInfos.leader"
             >
               <a-input
-                v-model:value="modalState.from.leader"
+                v-model:value="modalState.form.leader"
                 allow-clear
                 placeholder="请输入负责人名称"
                 :maxlength="50"
@@ -800,10 +803,10 @@ onMounted(() => {
             <a-form-item
               label="联系电话"
               name="phone"
-              v-bind="modalStateFrom.validateInfos.phone"
+              v-bind="modalStateForm.validateInfos.phone"
             >
               <a-input
-                v-model:value="modalState.from.phone"
+                v-model:value="modalState.form.phone"
                 allow-clear
                 :maxlength="11"
                 placeholder="请输入负责人联系电话"
@@ -814,10 +817,10 @@ onMounted(() => {
             <a-form-item
               label="邮箱"
               name="email"
-              v-bind="modalStateFrom.validateInfos.email"
+              v-bind="modalStateForm.validateInfos.email"
             >
               <a-input
-                v-model:value="modalState.from.email"
+                v-model:value="modalState.form.email"
                 allow-clear
                 :maxlength="40"
                 placeholder="请输入负责人邮箱"

@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
 export function getUserProfile() {
   return request({
     url: '/system/user/profile',
-    method: 'get',
+    method: 'GET',
   });
 }
 
@@ -19,7 +19,7 @@ export function getUserProfile() {
 export function updateUserProfile(data: Record<string, any>) {
   return request({
     url: '/system/user/profile',
-    method: 'put',
+    method: 'PUT',
     data: data,
   });
 }
@@ -30,27 +30,13 @@ export function updateUserProfile(data: Record<string, any>) {
  * @param status 变更状态值
  * @returns object
  */
-export function updateUserPwd(oldPassword: string, newPassword: string) {
+export function updateUserPasswd(oldPassword: string, newPassword: string) {
   return request({
-    url: '/system/user/profile/updatePwd',
-    method: 'put',
+    url: '/system/user/profile/passwd',
+    method: 'PUT',
     data: {
       oldPassword,
       newPassword,
     },
-  });
-}
-
-/**
- * 用户头像上传
- * @param data 表单数据对象
- * @returns object
- */
-export function uploadAvatar(data: FormData) {
-  return request({
-    url: '/system/user/profile/avatar',
-    method: 'post',
-    data,
-    dataType: 'form-data',
   });
 }

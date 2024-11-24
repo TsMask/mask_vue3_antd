@@ -12,7 +12,7 @@ let activeKey = ref<string>('base-info');
 <template>
   <PageContainer>
     <a-card>
-      <a-tabs tab-position="left" v-model:activeKey="activeKey">
+      <a-tabs tab-position="top" v-model:activeKey="activeKey">
         <a-tab-pane key="base-info" tab="基础信息">
           <BaseInfo></BaseInfo>
         </a-tab-pane>

@@ -2,6 +2,7 @@
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
+import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
@@ -39,7 +40,7 @@ let queryParams = reactive({
   /**岗位名称 */
   postName: '',
   /**岗位状态 */
-  status: undefined,
+  statusFlag: undefined,
   /**当前页数 */
   pageNum: 1,
   /**每页条数 */
@@ -48,10 +49,10 @@ let queryParams = reactive({
 
 /**查询参数重置 */
 function fnQueryReset() {
-  queryParams = Object.assign(queryParams, {
+  Object.assign(queryParams, {
     postCode: '',
     postName: '',
-    status: undefined,
+    statusFlag: undefined,
     pageNum: 1,
     pageSize: 20,
   });
@@ -114,8 +115,8 @@ let tableColumns: ColumnsType = [
   },
   {
     title: '岗位状态',
-    dataIndex: 'status',
-    key: 'status',
+    dataIndex: 'statusFlag',
+    key: 'statusFlag',
     align: 'center',
     width: 100,
   },
@@ -188,7 +189,7 @@ type ModalStateType = {
   /**标题 */
   title: string;
   /**表单数据 */
-  from: Record<string, any>;
+  form: Record<string, any>;
   /**确定按钮 loading */
   confirmLoading: boolean;
 };
@@ -198,12 +199,12 @@ let modalState: ModalStateType = reactive({
   visibleByView: false,
   visibleByEdit: false,
   title: '岗位',
-  from: {
+  form: {
     postId: undefined,
     postName: '',
     postCode: '',
     postSort: 0,
-    status: '0',
+    statusFlag: '0',
     remark: '',
     createTime: 0,
   },
@@ -211,8 +212,8 @@ let modalState: ModalStateType = reactive({
 });
 
 /**对话框内表单属性和校验规则 */
-const modalStateFrom = Form.useForm(
-  modalState.from,
+const modalStateForm = Form.useForm(
+  modalState.form,
   reactive({
     postName: [
       { required: true, min: 1, max: 50, message: '请正确输入岗位编码' },
@@ -239,7 +240,7 @@ function fnModalVisibleByVive(postId: string | number) {
     modalState.confirmLoading = false;
     hide();
     if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      modalState.from = Object.assign(modalState.from, res.data);
+      Object.assign(modalState.form, res.data);
       modalState.title = '岗位信息';
       modalState.visibleByView = true;
     } else {
@@ -254,7 +255,7 @@ function fnModalVisibleByVive(postId: string | number) {
  */
 function fnModalVisibleByEdit(postId?: string | number) {
   if (!postId) {
-    modalStateFrom.resetFields();
+    modalStateForm.resetFields();
     modalState.title = '添加岗位信息';
     modalState.visibleByEdit = true;
   } else {
@@ -265,7 +266,7 @@ function fnModalVisibleByEdit(postId?: string | number) {
       modalState.confirmLoading = false;
       hide();
       if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        modalState.from = Object.assign(modalState.from, res.data);
+        Object.assign(modalState.form, res.data);
         modalState.title = '修改岗位信息';
         modalState.visibleByEdit = true;
       } else {
@@ -280,12 +281,12 @@ function fnModalVisibleByEdit(postId?: string | number) {
  * 进行表达规则校验
  */
 function fnModalOk() {
-  modalStateFrom
+  modalStateForm
     .validate()
     .then(() => {
       modalState.confirmLoading = true;
-      const from = toRaw(modalState.from);
-      const post = from.postId ? updatePost(from) : addPost(from);
+      const form = toRaw(modalState.form);
+      const post = form.postId ? updatePost(form) : addPost(form);
       const key = 'notice';
       message.loading({ content: '请稍等...', key });
       post
@@ -322,7 +323,7 @@ function fnModalOk() {
 function fnModalCancel() {
   modalState.visibleByEdit = false;
   modalState.visibleByView = false;
-  modalStateFrom.resetFields();
+  modalStateForm.resetFields();
 }
 
 /**
@@ -395,13 +396,14 @@ function fnGetList(pageNum?: number) {
     queryParams.pageNum = pageNum;
   }
   listPost(toRaw(queryParams)).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
       }
-      tablePagination.total = res.total;
-      tableState.data = res.rows;
+      const { total, rows } = res.data;
+      tablePagination.total = total;
+      tableState.data = rows;
     }
     tableState.loading = false;
   });
@@ -452,9 +454,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="岗位状态" name="status">
+            <a-form-item label="岗位状态" name="statusFlag">
               <a-select
-                v-model:value="queryParams.status"
+                v-model:value="queryParams.statusFlag"
                 allow-clear
                 placeholder="请选择"
                 :options="dict.sysNormalDisable"
@@ -582,8 +584,11 @@ onMounted(() => {
         }"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'status'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.status" />
+          <template v-if="column.key === 'statusFlag'">
+            <DictTag
+              :options="dict.sysNormalDisable"
+              :value="record.statusFlag"
+            />
           </template>
           <template v-if="column.key === 'postId'">
             <a-space :size="8" align="center">
@@ -635,13 +640,13 @@ onMounted(() => {
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="岗位编号" name="postId">
-              {{ modalState.from.postId }}
+              {{ modalState.form.postId }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="创建时间" name="createTime">
-              <span v-if="+modalState.from.createTime > 0">
-                {{ parseDateToStr(+modalState.from.createTime) }}
+              <span v-if="+modalState.form.createTime > 0">
+                {{ parseDateToStr(+modalState.form.createTime) }}
               </span>
             </a-form-item>
           </a-col>
@@ -649,14 +654,14 @@ onMounted(() => {
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="岗位顺序" name="postSort">
-              {{ modalState.from.postSort }}
+              {{ modalState.form.postSort }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位状态" name="status">
+            <a-form-item label="岗位状态" name="statusFlag">
               <DictTag
                 :options="dict.sysNormalDisable"
-                :value="modalState.from.status"
+                :value="modalState.form.statusFlag"
               />
             </a-form-item>
           </a-col>
@@ -664,12 +669,12 @@ onMounted(() => {
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="岗位编码" name="postCode">
-              {{ modalState.from.postCode }}
+              {{ modalState.form.postCode }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="岗位名称" name="postName">
-              {{ modalState.from.postName }}
+              {{ modalState.form.postName }}
             </a-form-item>
           </a-col>
         </a-row>
@@ -680,7 +685,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            :value="modalState.from.remark"
+            :value="modalState.form.remark"
             :auto-size="{ minRows: 2, maxRows: 6 }"
             :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)"
@@ -706,7 +711,7 @@ onMounted(() => {
       @cancel="fnModalCancel"
     >
       <a-form
-        name="modalStateFrom"
+        name="modalStateForm"
         layout="horizontal"
         :label-col="{ span: 6 }"
         :label-wrap="true"
@@ -716,10 +721,10 @@ onMounted(() => {
             <a-form-item
               label="岗位编码"
               name="postCode"
-              v-bind="modalStateFrom.validateInfos.postCode"
+              v-bind="modalStateForm.validateInfos.postCode"
             >
               <a-input
-                v-model:value="modalState.from.postCode"
+                v-model:value="modalState.form.postCode"
                 allow-clear
                 placeholder="请输入岗位编码"
                 :maxlength="50"
@@ -727,9 +732,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位状态" name="status">
+            <a-form-item label="岗位状态" name="statusFlag">
               <a-select
-                v-model:value="modalState.from.status"
+                v-model:value="modalState.form.statusFlag"
                 default-value="0"
                 placeholder="岗位状态"
                 :options="dict.sysNormalDisable"
@@ -744,10 +749,10 @@ onMounted(() => {
             <a-form-item
               label="岗位名称"
               name="postName"
-              v-bind="modalStateFrom.validateInfos.postName"
+              v-bind="modalStateForm.validateInfos.postName"
             >
               <a-input
-                v-model:value="modalState.from.postName"
+                v-model:value="modalState.form.postName"
                 allow-clear
                 placeholder="请输入岗位名称"
                 :maxlength="50"
@@ -757,7 +762,7 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="岗位顺序" name="postSort">
               <a-input-number
-                v-model:value="modalState.from.postSort"
+                v-model:value="modalState.form.postSort"
                 :min="0"
                 :max="9999"
                 :step="1"
@@ -774,7 +779,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            v-model:value="modalState.from.remark"
+            v-model:value="modalState.form.remark"
             :auto-size="{ minRows: 4, maxRows: 6 }"
             :maxlength="450"
             :show-count="true"

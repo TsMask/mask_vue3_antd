@@ -8,8 +8,8 @@ import { request } from '@/plugins/http-fetch';
 export function exportConfig(query: Record<string, any>) {
   return request({
     url: '/system/config/export',
-    method: 'post',
-    data: query,
+    method: 'GET',
+    params: query,
     responseType: 'blob',
   });
 }
@@ -22,7 +22,7 @@ export function exportConfig(query: Record<string, any>) {
 export function listConfig(query: Record<string, any>) {
   return request({
     url: '/system/config/list',
-    method: 'get',
+    method: 'GET',
     params: query,
   });
 }
@@ -35,7 +35,7 @@ export function listConfig(query: Record<string, any>) {
 export function getConfig(configId: string | number) {
   return request({
     url: `/system/config/${configId}`,
-    method: 'get',
+    method: 'GET',
   });
 }
 
@@ -46,8 +46,8 @@ export function getConfig(configId: string | number) {
  */
 export function getConfigKey(configKey: string) {
   return request({
-    url: `/system/config/configKey/${configKey}`,
-    method: 'get',
+    url: `/system/config/config-key/${configKey}`,
+    method: 'GET',
   });
 }
 
@@ -59,7 +59,7 @@ export function getConfigKey(configKey: string) {
 export function addConfig(data: Record<string, any>) {
   return request({
     url: '/system/config',
-    method: 'post',
+    method: 'POST',
     data: data,
   });
 }
@@ -72,7 +72,7 @@ export function addConfig(data: Record<string, any>) {
 export function updateConfig(data: Record<string, any>) {
   return request({
     url: '/system/config',
-    method: 'put',
+    method: 'PUT',
     data: data,
   });
 }
@@ -85,7 +85,7 @@ export function updateConfig(data: Record<string, any>) {
 export function delConfig(configId: string | number) {
   return request({
     url: `/system/config/${configId}`,
-    method: 'delete',
+    method: 'DELETE',
   });
 }
 
@@ -95,7 +95,7 @@ export function delConfig(configId: string | number) {
  */
 export function refreshCache() {
   return request({
-    url: '/system/config/refreshCache',
-    method: 'put',
+    url: '/system/config/refresh',
+    method: 'PUT',
   });
 }

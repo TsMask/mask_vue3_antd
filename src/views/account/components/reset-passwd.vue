@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { Modal, message } from 'ant-design-vue/lib';
 import { reactive } from 'vue';
-import { updateUserPwd } from '@/api/profile';
+import { updateUserPasswd } from '@/api/profile';
 import { regExpPasswd } from '@/utils/regular-utils';
 import useUserStore from '@/store/modules/user';
 import { useRouter } from 'vue-router';
@@ -47,7 +47,7 @@ function fnFinish() {
       state.formClick = true;
       // 发送请求
       const hide = message.loading('请稍等...', 0);
-      updateUserPwd(state.form.oldPassword, state.form.confirmPassword)
+      updateUserPasswd(state.form.oldPassword, state.form.confirmPassword)
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             Modal.success({
@@ -75,8 +75,8 @@ function fnFinish() {
   <a-form
     :model="state.form"
     name="stateForm"
-    :wrapper-col="{ span: 4 }"
-    :label-col="{ span: 2 }"
+    :wrapper-col="{ lg: 4, md: 12, xs: 14 }"
+    :label-col="{ lg: 2, md: 4, xs: 6 }"
     :label-warp="true"
     @finish="fnFinish"
   >
@@ -144,13 +144,8 @@ function fnFinish() {
       </a-input-password>
     </a-form-item>
 
-    <a-form-item :wrapper-col="{ offset: 2, span: 2 }">
-      <a-button
-        block
-        type="primary"
-        html-type="submit"
-        :loading="state.formClick"
-      >
+    <a-form-item :wrapper-col="{ offset: 2 }">
+      <a-button type="primary" html-type="submit" :loading="state.formClick">
         提交修改
       </a-button>
     </a-form-item>

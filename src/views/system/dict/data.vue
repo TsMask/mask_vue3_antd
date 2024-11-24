@@ -2,6 +2,7 @@
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
+import { ProModal } from 'antdv-pro-modal';
 import { Form, message, Modal } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
@@ -14,7 +15,7 @@ import {
   addData,
   updateData,
 } from '@/api/system/dict/data';
-import { getDictOptionselect, getType } from '@/api/system/dict/type';
+import { getDictOption, getType } from '@/api/system/dict/type';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import useTabsStore from '@/store/modules/tabs';
@@ -67,9 +68,9 @@ let queryParams = reactive({
   /**字典名称 */
   dictType: '',
   /**数据标签 */
-  dictLabel: '',
+  dataLabel: '',
   /**数据状态 */
-  status: undefined,
+  statusFlag: undefined,
   /**当前页数 */
   pageNum: 1,
   /**每页条数 */
@@ -79,17 +80,17 @@ let queryParams = reactive({
 /**查询参数重置 */
 function fnQueryReset() {
   if (dictId && dictId !== '0') {
-    queryParams = Object.assign(queryParams, {
-      dictLabel: '',
-      status: undefined,
+    Object.assign(queryParams, {
+      dataLabel: '',
+      statusFlag: undefined,
       pageNum: 1,
       pageSize: 20,
     });
   } else {
-    queryParams = Object.assign(queryParams, {
+    Object.assign(queryParams, {
       dictType: '',
-      dictLabel: '',
-      status: undefined,
+      dataLabel: '',
+      statusFlag: undefined,
       pageNum: 1,
       pageSize: 20,
     });
@@ -128,33 +129,33 @@ let tableState: TabeStateType = reactive({
 /**表格字段列 */
 let tableColumns: ColumnsType = [
   {
-    title: '数据代码',
-    dataIndex: 'dictCode',
+    title: '数据编号',
+    dataIndex: 'dataId',
     align: 'left',
     width: 100,
   },
   {
     title: '数据标签',
-    dataIndex: 'dictLabel',
+    dataIndex: 'dataLabel',
     align: 'left',
     width: 200,
   },
   {
     title: '数据键值',
-    dataIndex: 'dictValue',
+    dataIndex: 'dataValue',
     align: 'left',
     width: 200,
   },
   {
     title: '数据排序',
-    dataIndex: 'dictSort',
+    dataIndex: 'dataSort',
     align: 'left',
     width: 100,
   },
   {
     title: '数据状态',
-    dataIndex: 'status',
-    key: 'status',
+    dataIndex: 'statusFlag',
+    key: 'statusFlag',
     align: 'center',
     width: 100,
   },
@@ -170,7 +171,7 @@ let tableColumns: ColumnsType = [
   },
   {
     title: '操作',
-    key: 'dictCode',
+    key: 'dataId',
     align: 'left',
   },
 ];
@@ -227,7 +228,7 @@ type ModalStateType = {
   /**标题 */
   title: string;
   /**表单数据 */
-  from: Record<string, any>;
+  form: Record<string, any>;
   /**确定按钮 loading */
   confirmLoading: boolean;
 };
@@ -237,16 +238,16 @@ let modalState: ModalStateType = reactive({
   visibleByView: false,
   visibleByEdit: false,
   title: '字典数据',
-  from: {
-    dictCode: undefined,
-    dictLabel: '',
-    dictSort: 0,
+  form: {
+    dataId: undefined,
     dictType: 'sys_oper_type',
-    dictValue: '',
+    dataLabel: '',
+    dataSort: 0,
+    dataValue: '',
     tagClass: '',
     tagType: '',
     remark: '',
-    status: '0',
+    statusFlag: '0',
     createTime: 0,
     createBy: undefined,
   },
@@ -254,13 +255,13 @@ let modalState: ModalStateType = reactive({
 });
 
 /**对话框内表单属性和校验规则 */
-const modalStateFrom = Form.useForm(
-  modalState.from,
+const modalStateForm = Form.useForm(
+  modalState.form,
   reactive({
-    dictLabel: [
+    dataLabel: [
       { required: true, min: 1, max: 50, message: '请正确输入数据标签' },
     ],
-    dictValue: [
+    dataValue: [
       { required: true, min: 1, max: 50, message: '请正确输入数据键值' },
     ],
   })
@@ -271,30 +272,30 @@ const modalStateFrom = Form.useForm(
  * @param row 调度日志信息对象
  */
 function fnModalVisibleByVive(row: Record<string, string>) {
-  modalState.from = Object.assign(modalState.from, row);
+  Object.assign(modalState.form, row);
   modalState.title = '字典数据信息';
   modalState.visibleByView = true;
 }
 
 /**
  * 对话框弹出显示为 新增或者修改
- * @param dictCode 数据编号id, 不传为新增
+ * @param dataId 数据编号id, 不传为新增
  */
-function fnModalVisibleByEdit(dictCode?: string | number) {
-  if (!dictCode) {
-    modalStateFrom.resetFields();
-    modalState.from.dictType = queryParams.dictType;
+function fnModalVisibleByEdit(dataId?: string | number) {
+  if (!dataId) {
+    modalStateForm.resetFields();
+    modalState.form.dictType = queryParams.dictType;
     modalState.title = '添加字典数据';
     modalState.visibleByEdit = true;
   } else {
     if (modalState.confirmLoading) return;
     const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
-    getData(dictCode).then(res => {
+    getData(dataId).then(res => {
       modalState.confirmLoading = false;
       hide();
       if (res.code === RESULT_CODE_SUCCESS) {
-        modalState.from = Object.assign(modalState.from, res.data);
+        Object.assign(modalState.form, res.data);
         modalState.title = '修改字典数据';
         modalState.visibleByEdit = true;
       } else {
@@ -309,12 +310,12 @@ function fnModalVisibleByEdit(dictCode?: string | number) {
  * 进行表达规则校验
  */
 function fnModalOk() {
-  modalStateFrom
+  modalStateForm
     .validate()
     .then(() => {
       modalState.confirmLoading = true;
-      const from = toRaw(modalState.from);
-      const dictData = from.dictCode ? updateData(from) : addData(from);
+      const form = toRaw(modalState.form);
+      const dictData = form.dataId ? updateData(form) : addData(form);
       const key = 'dictData';
       message.loading({ content: '请稍等...', key });
       dictData
@@ -351,24 +352,24 @@ function fnModalOk() {
 function fnModalCancel() {
   modalState.visibleByEdit = false;
   modalState.visibleByView = false;
-  modalStateFrom.resetFields();
+  modalStateForm.resetFields();
 }
 
 /**
  * 字典删除
- * @param dictCode 字典代码
+ * @param dataId 字典编号
  */
-function fnRecordDelete(dictCode: string = '0') {
-  if (dictCode === '0') {
-    dictCode = tableState.selectedRowKeys.join(',');
+function fnRecordDelete(dataId: string = '0') {
+  if (dataId === '0') {
+    dataId = tableState.selectedRowKeys.join(',');
   }
   Modal.confirm({
     title: '提示',
-    content: `确认删除字典数据代码为 【${dictCode}】 的数据项?`,
+    content: `确认删除字典数据编号为 【${dataId}】 的数据项?`,
     onOk() {
       const key = 'delData';
       message.loading({ content: '请稍等...', key });
-      delData(dictCode).then(res => {
+      delData(dataId).then(res => {
         if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: `删除成功`,
@@ -434,13 +435,14 @@ function fnGetList(pageNum?: number) {
     queryParams.pageNum = pageNum;
   }
   listData(toRaw(queryParams)).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
       }
-      tablePagination.total = res.total;
-      tableState.data = res.rows;
+      const { total, rows } = res.data;
+      tablePagination.total = total;
+      tableState.data = rows;
     }
     tableState.loading = false;
   });
@@ -450,7 +452,7 @@ onMounted(() => {
   // 初始字典数据
   Promise.allSettled([
     getDict('sys_normal_disable'),
-    getDictOptionselect(),
+    getDictOption(),
   ]).then(resArr => {
     if (resArr[0].status === 'fulfilled') {
       dict.sysNormalDisable = resArr[0].value;
@@ -502,18 +504,18 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="数据标签" name="dictLabel">
+            <a-form-item label="数据标签" name="dataLabel">
               <a-input
-                v-model:value="queryParams.dictLabel"
+                v-model:value="queryParams.dataLabel"
                 allow-clear
                 placeholder="请输入数据标签"
               ></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="数据状态" name="status">
+            <a-form-item label="数据状态" name="statusFlag">
               <a-select
-                v-model:value="queryParams.status"
+                v-model:value="queryParams.statusFlag"
                 allow-clear
                 placeholder="请选择数据状态"
                 :options="dict.sysNormalDisable"
@@ -579,7 +581,7 @@ onMounted(() => {
       <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
             <a-switch
               v-model:checked="tableState.seached"
@@ -588,7 +590,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
             <a-switch
               v-model:checked="tableState.striped"
@@ -597,7 +599,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>刷新</template>
             <a-button type="text" @click.prevent="fnGetList()">
               <template #icon><ReloadOutlined /></template>
@@ -627,7 +629,7 @@ onMounted(() => {
       <!-- 表格列表 -->
       <a-table
         class="table"
-        row-key="dictCode"
+        row-key="dataId"
         :columns="tableColumns"
         :loading="tableState.loading"
         :data-source="tableState.data"
@@ -645,12 +647,15 @@ onMounted(() => {
         }"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'status'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.status" />
+          <template v-if="column.key === 'statusFlag'">
+            <DictTag
+              :options="dict.sysNormalDisable"
+              :value="record.statusFlag"
+            />
           </template>
-          <template v-if="column.key === 'dictCode'">
+          <template v-if="column.key === 'dataId'">
             <a-space :size="8" align="center">
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
                 <a-button
                   type="link"
@@ -660,21 +665,21 @@ onMounted(() => {
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>编辑</template>
                 <a-button
                   type="link"
-                  @click.prevent="fnModalVisibleByEdit(record.dictCode)"
+                  @click.prevent="fnModalVisibleByEdit(record.dataId)"
                   v-perms:has="['system:dict:edit']"
                 >
                   <template #icon><FormOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>删除</template>
                 <a-button
                   type="link"
-                  @click.prevent="fnRecordDelete(record.dictCode)"
+                  @click.prevent="fnRecordDelete(record.dataId)"
                   v-perms:has="['system:dict:remove']"
                 >
                   <template #icon><DeleteOutlined /></template>
@@ -697,14 +702,14 @@ onMounted(() => {
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据代码" name="dictCode">
-              {{ modalState.from.dictCode }}
+            <a-form-item label="数据编号" name="dataId">
+              {{ modalState.form.dataId }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="创建时间" name="createTime">
-              <span v-if="+modalState.from.createTime > 0">
-                {{ parseDateToStr(+modalState.from.createTime) }}
+              <span v-if="+modalState.form.createTime > 0">
+                {{ parseDateToStr(+modalState.form.createTime) }}
               </span>
             </a-form-item>
           </a-col>
@@ -714,7 +719,7 @@ onMounted(() => {
             <a-form-item label="字典类型" name="dictType">
               {{
                 dict.sysDictType.find(
-                  item => item.value === modalState.from.dictType
+                  item => item.value === modalState.form.dictType
                 )?.label
               }}
             </a-form-item>
@@ -723,20 +728,20 @@ onMounted(() => {
             <a-form-item label="数据状态" name="status">
               <DictTag
                 :options="dict.sysNormalDisable"
-                :value="modalState.from.status"
+                :value="modalState.form.status"
               />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据标签" name="dictLabel">
-              {{ modalState.from.dictLabel }}
+            <a-form-item label="数据标签" name="dataLabel">
+              {{ modalState.form.dataLabel }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据键值" name="dictValue">
-              {{ modalState.from.dictValue }}
+            <a-form-item label="数据键值" name="dataValue">
+              {{ modalState.form.dataValue }}
             </a-form-item>
           </a-col>
         </a-row>
@@ -745,27 +750,27 @@ onMounted(() => {
             <a-form-item label="标签类型" name="tagType">
               <DictTag
                 :options="tagTypeOptions"
-                :value="modalState.from.tagType"
+                :value="modalState.form.tagType"
               />
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据排序" name="dictSort">
-              {{ modalState.from.dictSort }}
+            <a-form-item label="数据排序" name="dataSort">
+              {{ modalState.form.dataSort }}
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="样式属性" name="tagClass">
-              {{ modalState.from.tagClass }}
+              {{ modalState.form.tagClass }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="回显预览" name="tagType">
               <DictTag
-                :options="parseDataDict(modalState.from)"
-                :value="modalState.from.dictValue"
+                :options="parseDataDict(modalState.form)"
+                :value="modalState.form.dataValue"
               />
             </a-form-item>
           </a-col>
@@ -777,7 +782,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            :value="modalState.from.remark"
+            :value="modalState.form.remark"
             :auto-size="{ minRows: 2, maxRows: 6 }"
             :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)"
@@ -803,7 +808,7 @@ onMounted(() => {
       @cancel="fnModalCancel"
     >
       <a-form
-        name="modalStateFrom"
+        name="modalStateForm"
         layout="horizontal"
         :label-col="{ span: 6 }"
         :label-wrap="true"
@@ -812,7 +817,7 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="字典类型" name="dictType">
               <a-select
-                v-model:value="modalState.from.dictType"
+                v-model:value="modalState.form.dictType"
                 default-value="sys_oper_type"
                 placeholder="字典类型"
                 :options="dict.sysDictType"
@@ -824,7 +829,7 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="数据状态" name="status">
               <a-select
-                v-model:value="modalState.from.status"
+                v-model:value="modalState.form.status"
                 default-value="0"
                 placeholder="数据状态"
                 :options="dict.sysNormalDisable"
@@ -837,11 +842,11 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="数据标签"
-              name="dictLabel"
-              v-bind="modalStateFrom.validateInfos.dictLabel"
+              name="dataLabel"
+              v-bind="modalStateForm.validateInfos.dataLabel"
             >
               <a-input
-                v-model:value="modalState.from.dictLabel"
+                v-model:value="modalState.form.dataLabel"
                 allow-clear
                 placeholder="请输入数据标签"
                 :maxlength="50"
@@ -851,11 +856,11 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="数据键值"
-              name="dictValue"
-              v-bind="modalStateFrom.validateInfos.dictValue"
+              name="dataValue"
+              v-bind="modalStateForm.validateInfos.dataValue"
             >
               <a-input
-                v-model:value="modalState.from.dictValue"
+                v-model:value="modalState.form.dataValue"
                 allow-clear
                 placeholder="请输入数据键值"
                 :maxlength="50"
@@ -867,7 +872,7 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="标签类型" name="tagType">
               <a-select
-                v-model:value="modalState.from.tagType"
+                v-model:value="modalState.form.tagType"
                 placeholder="标签类型"
                 :options="tagTypeOptions"
               >
@@ -875,9 +880,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据排序" name="dictSort">
+            <a-form-item label="数据排序" name="dataSort">
               <a-input-number
-                v-model:value="modalState.from.dictSort"
+                v-model:value="modalState.form.dataSort"
                 :min="0"
                 :max="9999"
                 :step="1"
@@ -893,7 +898,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-input
-            v-model:value="modalState.from.tagClass"
+            v-model:value="modalState.form.tagClass"
             allow-clear
             placeholder="请输入样式属性"
             :maxlength="50"
@@ -906,7 +911,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            v-model:value="modalState.from.remark"
+            v-model:value="modalState.form.remark"
             :auto-size="{ minRows: 4, maxRows: 6 }"
             :maxlength="450"
             :show-count="true"

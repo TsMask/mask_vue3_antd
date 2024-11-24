@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
 export function getCache() {
   return request({
     url: '/monitor/cache',
-    method: 'get',
+    method: 'GET',
   });
 }
 
@@ -17,8 +17,8 @@ export function getCache() {
  */
 export function listCacheName() {
   return request({
-    url: '/monitor/cache/getNames',
-    method: 'get',
+    url: '/monitor/cache/names',
+    method: 'GET',
   });
 }
 
@@ -29,8 +29,9 @@ export function listCacheName() {
  */
 export function listCacheKey(cacheName: string) {
   return request({
-    url: `/monitor/cache/getKeys/${cacheName}`,
-    method: 'get',
+    url: `/monitor/cache//keys`,
+    method: 'GET',
+    params: { cacheName },
   });
 }
 
@@ -42,8 +43,22 @@ export function listCacheKey(cacheName: string) {
  */
 export function getCacheValue(cacheName: string, cacheKey: string) {
   return request({
-    url: `/monitor/cache/getValue/${cacheName}/${cacheKey}`,
-    method: 'get',
+    url: `/monitor/cache/value`,
+    method: 'GET',
+    params: { cacheName, cacheKey },
+  });
+}
+
+/**
+ * 缓存名称列表安全删除
+ *
+ * 指定可清理的缓存key
+ * @returns object
+ */
+export function clearCacheSafe() {
+  return request({
+    url: '/monitor/cache/names',
+    method: 'DELETE',
   });
 }
 
@@ -54,8 +69,9 @@ export function getCacheValue(cacheName: string, cacheKey: string) {
  */
 export function clearCacheName(cacheName: string) {
   return request({
-    url: `/monitor/cache/clearCacheName/${cacheName}`,
-    method: 'delete',
+    url: `/monitor/cache/keys`,
+    method: 'DELETE',
+    params: { cacheName },
   });
 }
 
@@ -67,20 +83,8 @@ export function clearCacheName(cacheName: string) {
  */
 export function clearCacheKey(cacheName: string, cacheKey: string) {
   return request({
-    url: `/monitor/cache/clearCacheKey/${cacheName}/${cacheKey}`,
-    method: 'delete',
-  });
-}
-
-/**
- * 安全清理缓存名称
- *
- * 指定可清理的缓存key
- * @returns object
- */
-export function clearCacheSafe() {
-  return request({
-    url: '/monitor/cache/clearCacheSafe',
-    method: 'delete',
+    url: `/monitor/cache/value`,
+    method: 'DELETE',
+    params: { cacheName, cacheKey },
   });
 }

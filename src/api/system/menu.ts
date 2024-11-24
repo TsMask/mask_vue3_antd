@@ -8,7 +8,7 @@ import { request } from '@/plugins/http-fetch';
 export function listMenu(query?: Record<string, any>) {
   return request({
     url: '/system/menu/list',
-    method: 'get',
+    method: 'GET',
     params: query,
   });
 }
@@ -21,7 +21,7 @@ export function listMenu(query?: Record<string, any>) {
 export function getMenu(menuId: string | number) {
   return request({
     url: `/system/menu/${menuId}`,
-    method: 'get',
+    method: 'GET',
   });
 }
 
@@ -31,8 +31,8 @@ export function getMenu(menuId: string | number) {
  */
 export function menuTreeSelect() {
   return request({
-    url: '/system/menu/treeSelect',
-    method: 'get',
+    url: '/system/menu/tree',
+    method: 'GET',
   });
 }
 
@@ -41,10 +41,10 @@ export function menuTreeSelect() {
  * @param roleId 角色ID
  * @returns object
  */
-export function roleMenuTreeSelect(roleId: string | number) {
+export function menuTreeSelectRole(roleId: string | number) {
   return request({
-    url: `/system/menu/roleMenuTreeSelect/${roleId}`,
-    method: 'get',
+    url: `/system/menu/tree/role/${roleId}`,
+    method: 'GET',
   });
 }
 
@@ -56,7 +56,7 @@ export function roleMenuTreeSelect(roleId: string | number) {
 export function addMenu(data: Record<string, any>) {
   return request({
     url: '/system/menu',
-    method: 'post',
+    method: 'POST',
     data: data,
   });
 }
@@ -69,7 +69,7 @@ export function addMenu(data: Record<string, any>) {
 export function updateMenu(data: Record<string, any>) {
   return request({
     url: '/system/menu',
-    method: 'put',
+    method: 'PUT',
     data: data,
   });
 }
@@ -82,6 +82,6 @@ export function updateMenu(data: Record<string, any>) {
 export function delMenu(menuId: string | number) {
   return request({
     url: `/system/menu/${menuId}`,
-    method: 'delete',
+    method: 'DELETE',
   });
 }

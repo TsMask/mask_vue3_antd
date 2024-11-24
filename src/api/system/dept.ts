@@ -8,7 +8,7 @@ import { request } from '@/plugins/http-fetch';
 export function listDept(query: Record<string, any>) {
   return request({
     url: '/system/dept/list',
-    method: 'get',
+    method: 'GET',
     params: query,
   });
 }
@@ -21,7 +21,7 @@ export function listDept(query: Record<string, any>) {
 export function listDeptExcludeChild(deptId: string | number) {
   return request({
     url: `/system/dept/list/exclude/${deptId}`,
-    method: 'get',
+    method: 'GET',
   });
 }
 
@@ -33,7 +33,7 @@ export function listDeptExcludeChild(deptId: string | number) {
 export function getDept(deptId: string | number) {
   return request({
     url: `/system/dept/${deptId}`,
-    method: 'get',
+    method: 'GET',
   });
 }
 
@@ -45,7 +45,7 @@ export function getDept(deptId: string | number) {
 export function addDept(data: Record<string, any>) {
   return request({
     url: '/system/dept',
-    method: 'post',
+    method: 'POST',
     data: data,
   });
 }
@@ -58,7 +58,7 @@ export function addDept(data: Record<string, any>) {
 export function updateDept(data: Record<string, any>) {
   return request({
     url: '/system/dept',
-    method: 'put',
+    method: 'PUT',
     data: data,
   });
 }
@@ -71,7 +71,7 @@ export function updateDept(data: Record<string, any>) {
 export function delDept(deptId: string | number) {
   return request({
     url: `/system/dept/${deptId}`,
-    method: 'delete',
+    method: 'DELETE',
   });
 }
 
@@ -79,10 +79,10 @@ export function delDept(deptId: string | number) {
  * 查询部门下拉树结构
  * @returns object
  */
-export function deptTreeSelect() {
+export function deptTree() {
   return request({
-    url: '/system/dept/treeSelect',
-    method: 'get',
+    url: '/system/dept/tree',
+    method: 'GET',
   });
 }
 
@@ -91,9 +91,9 @@ export function deptTreeSelect() {
  * @param roleId 角色ID
  * @returns object
  */
-export function roleDeptTreeSelect(roleId: string | number) {
+export function deptTreeRole(roleId: string | number) {
   return request({
-    url: `/system/dept/roleDeptTreeSelect/${roleId}`,
-    method: 'get',
+    url: `/system/dept/tree/role/${roleId}`,
+    method: 'GET',
   });
 }

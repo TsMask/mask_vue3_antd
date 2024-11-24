@@ -13,24 +13,24 @@ const codeImgFall =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
 /**Tab默认激活 */
-let activeKey = ref<'username' | 'phonenumber'>('username');
+let activeKey = ref<'username' | 'phone'>('username');
 
 let state = reactive({
   /**表单属性 */
-  from: {
+  form: {
     /**账号 */
-    username: 'maskAdmin',
+    username: 'system',
     /**密码 */
-    password: 'Admin@1234',
+    password: 'Abcd@1234..',
     /**手机号 */
-    phonenumber: '',
+    phone: '',
     /**验证码 */
     code: '',
     /**验证码uuid */
     uuid: '',
   },
   /**表单提交点击状态 */
-  fromClick: false,
+  formClick: false,
   /**验证码状态 */
   captcha: {
     /**验证码开关 */
@@ -45,23 +45,23 @@ let state = reactive({
 
 /**表单验证通过 */
 function fnFinish() {
-  state.fromClick = true;
+  state.formClick = true;
   let form = {};
   // 账号密码登录
   if (activeKey.value === 'username') {
     form = {
-      username: state.from.username,
-      password: state.from.password,
-      code: state.from.code,
-      uuid: state.from.uuid,
+      username: state.form.username,
+      password: state.form.password,
+      code: state.form.code,
+      uuid: state.form.uuid,
     };
   }
   // 手机号登录
-  if (activeKey.value === 'phonenumber') {
+  if (activeKey.value === 'phone') {
     form = {
-      phonenumber: state.from.phonenumber,
-      code: state.from.code,
-      uuid: state.from.uuid,
+      phone: state.form.phone,
+      code: state.form.code,
+      uuid: state.form.uuid,
     };
   }
   // 发送请求
@@ -78,10 +78,10 @@ function fnFinish() {
       }
     })
     .finally(() => {
-      state.fromClick = false;
+      state.formClick = false;
       // 刷新验证码
       if (state.captcha.enabled) {
-        state.from.code = '';
+        state.form.code = '';
         fnGetCaptcha();
       }
     });
@@ -93,14 +93,21 @@ function fnFinish() {
 function fnGetCaptcha() {
   if (state.captchaClick) return;
   state.captchaClick = true;
-  getCaptchaImage().then(res => {
-    state.captchaClick = false;
-    state.captcha.enabled = Boolean(res.captchaEnabled);
-    if (state.captcha.enabled) {
-      state.captcha.codeImg = res.img;
-      state.from.uuid = res.uuid;
-    }
-  });
+  getCaptchaImage()
+    .then(res => {
+      if (res.code !== RESULT_CODE_SUCCESS) {
+        return;
+      }
+      const { enabled, img, uuid } = res.data;
+      state.captcha.enabled = Boolean(enabled);
+      if (state.captcha.enabled) {
+        state.captcha.codeImg = img;
+        state.form.uuid = uuid;
+      }
+    })
+    .finally(() => {
+      state.captchaClick = false;
+    });
 }
 
 /**短信验证码定时器 */
@@ -117,7 +124,7 @@ let smsState = reactive({
 /**获取短信验证码 */
 function fnGetSmsCaptcha() {
   if (smsState.click) return;
-  if (!validMobile(state.from.phonenumber)) {
+  if (!validMobile(state.form.phone)) {
     message.warning('请确认手机号码是否有效', 3);
     return;
   }
@@ -126,7 +133,7 @@ function fnGetSmsCaptcha() {
   setTimeout(() => {
     // start 得到发送结果启动定时
     message.success('发送成功，请注意查看短信', 3);
-    state.from.uuid = '短信校验id';
+    state.form.uuid = '短信校验id';
     smsInterval = setInterval(() => {
       if (smsState.time <= 0) {
         smsState.time = 120;
@@ -164,7 +171,7 @@ onBeforeUnmount(() => {
     </div>
 
     <a-card :bordered="true" class="main">
-      <a-form :model="state.from" name="stateFrom" @finish="fnFinish">
+      <a-form :model="state.form" name="StateForm" @finish="fnFinish">
         <a-tabs
           v-model:activeKey="activeKey"
           tabPosition="top"
@@ -185,7 +192,7 @@ onBeforeUnmount(() => {
               ]"
             >
               <a-input
-                v-model:value="state.from.username"
+                v-model:value="state.form.username"
                 size="large"
                 placeholder="登录账号"
                 :maxlength="30"
@@ -208,7 +215,7 @@ onBeforeUnmount(() => {
               ]"
             >
               <a-input-password
-                v-model:value="state.from.password"
+                v-model:value="state.form.password"
                 size="large"
                 placeholder="登录密码"
                 :maxlength="26"
@@ -226,7 +233,7 @@ onBeforeUnmount(() => {
             >
               <a-input-group compact>
                 <a-input
-                  v-model:value="state.from.code"
+                  v-model:value="state.form.code"
                   size="large"
                   placeholder="验证码"
                   :maxlength="6"
@@ -265,9 +272,9 @@ onBeforeUnmount(() => {
             </a-form-item>
           </a-tab-pane>
 
-          <a-tab-pane key="phonenumber" tab="手机号登录">
+          <a-tab-pane key="phone" tab="手机号登录">
             <a-form-item
-              name="phonenumber"
+              name="phone"
               :rules="[
                 {
                   required: true,
@@ -277,7 +284,7 @@ onBeforeUnmount(() => {
               ]"
             >
               <a-input
-                v-model:value="state.from.phonenumber"
+                v-model:value="state.form.phone"
                 size="large"
                 placeholder="手机号码"
                 :maxlength="11"
@@ -294,7 +301,7 @@ onBeforeUnmount(() => {
               ]"
             >
               <a-input
-                v-model:value="state.from.code"
+                v-model:value="state.form.code"
                 size="large"
                 placeholder="验证码"
                 :maxlength="6"
@@ -322,7 +329,7 @@ onBeforeUnmount(() => {
           type="primary"
           size="large"
           html-type="submit"
-          :loading="state.fromClick"
+          :loading="state.formClick"
         >
           登录
         </a-button>
@@ -330,7 +337,7 @@ onBeforeUnmount(() => {
         <a-row :gutter="8" align="middle" style="margin-top: 18px">
           <a-col :span="24">
             <span>其他登录方式：</span>
-            <a-tooltip title="微信扫一扫登录">
+            <a-tooltip title="微信扫一扫登录" placement="bottom">
               <a-button shape="circle" size="middle" type="link">
                 <template #icon>
                   <WechatOutlined
@@ -339,7 +346,7 @@ onBeforeUnmount(() => {
                 </template>
               </a-button>
             </a-tooltip>
-            <a-tooltip title="QQ扫码登录">
+            <a-tooltip title="QQ扫码登录" placement="bottom">
               <a-button shape="circle" size="middle" type="link">
                 <template #icon>
                   <QqOutlined :style="{ color: '#40a9ff', fontSize: '18px' }" />

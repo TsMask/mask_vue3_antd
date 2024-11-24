@@ -7,8 +7,8 @@ import { request } from '@/plugins/http-fetch';
  */
 export function listOnline(query: Record<string, any>) {
   return request({
-    url: '/monitor/online/list',
-    method: 'get',
+    url: '/monitor/user-online/list',
+    method: 'GET',
     params: query,
   });
 }
@@ -20,7 +20,7 @@ export function listOnline(query: Record<string, any>) {
  */
 export function forceLogout(tokenId: string) {
   return request({
-    url: `/monitor/online/${tokenId}`,
-    method: 'delete',
+    url: `/monitor/user-online/logout/${tokenId}`,
+    method: 'DELETE',
   });
 }

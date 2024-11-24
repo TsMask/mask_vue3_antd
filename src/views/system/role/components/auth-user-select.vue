@@ -3,7 +3,7 @@ import { reactive, toRaw, watch } from 'vue';
 import { message } from 'ant-design-vue/lib';
 import { SizeType } from 'ant-design-vue/lib/config-provider';
 import { ColumnsType } from 'ant-design-vue/lib/table';
-import { authUserAllocatedList } from '@/api/system/role';
+import { authUserList } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
@@ -37,13 +37,13 @@ let queryParams = reactive({
   /**登录账号 */
   userName: '',
   /**手机号码 */
-  phonenumber: '',
+  phone: '',
   /**用户状态 */
-  status: undefined,
+  statusFlag: undefined,
   /**角色ID */
   roleId: props.roleId,
   /**是否已分配 */
-  allocated: false,
+  auth: false,
   /**当前页数 */
   pageNum: 1,
   /**每页条数 */
@@ -52,10 +52,10 @@ let queryParams = reactive({
 
 /**查询参数重置 */
 function fnQueryReset() {
-  queryParams = Object.assign(queryParams, {
+    Object.assign(queryParams, {
     userName: '',
-    phonenumber: '',
-    status: undefined,
+    phone: '',
+    statusFlag: undefined,
     pageNum: 1,
     pageSize: 20,
   });
@@ -106,8 +106,8 @@ let tableColumns: ColumnsType = [
   },
   {
     title: '用户状态',
-    dataIndex: 'status',
-    key: 'status',
+    dataIndex: 'statusFlag',
+    key: 'statusFlag',
     align: 'center',
     width: 100,
   },
@@ -163,14 +163,15 @@ function fnGetList(pageNum?: number) {
   if (pageNum) {
     queryParams.pageNum = pageNum;
   }
-  authUserAllocatedList(toRaw(queryParams)).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
+  authUserList(toRaw(queryParams)).then(res => {
+    if (res.code === RESULT_CODE_SUCCESS) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
       }
-      tablePagination.total = res.total;
-      tableState.data = res.rows;
+      const { total, rows } = res.data;
+      tablePagination.total = total;
+      tableState.data = rows;
     }
     tableState.loading = false;
   });
@@ -215,7 +216,7 @@ watch(
 </script>
 
 <template>
-  <ProModal
+  <a-modal
     :drag="true"
     :fullscreen="true"
     :forceFullscreen="true"
@@ -242,9 +243,9 @@ watch(
           </a-form-item>
         </a-col>
         <a-col :lg="10" :md="12" :xs="24">
-          <a-form-item label="手机号码" name="phonenumber">
+          <a-form-item label="手机号码" name="phone">
             <a-input
-              v-model:value="queryParams.phonenumber"
+              v-model:value="queryParams.phone"
               allow-clear
               :maxlength="11"
               placeholder="请输入手机号码"
@@ -252,9 +253,9 @@ watch(
           </a-form-item>
         </a-col>
         <a-col :lg="6" :md="12" :xs="24">
-          <a-form-item label="用户状态" name="status">
+          <a-form-item label="用户状态" name="statusFlag">
             <a-select
-              v-model:value="queryParams.status"
+              v-model:value="queryParams.statusFlag"
               allow-clear
               placeholder="请选择用户状态"
               :options="dict.sysNormalDisable"
@@ -299,12 +300,12 @@ watch(
       }"
     >
       <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'status'">
-          <DictTag :options="dict.sysNormalDisable" :value="record.status" />
+        <template v-if="column.key === 'statusFlag'">
+          <DictTag :options="dict.sysNormalDisable" :value="record.statusFlag" />
         </template>
       </template>
     </a-table>
-  </ProModal>
+  </a-modal>
 </template>
 
 <style lang="less" scoped></style>

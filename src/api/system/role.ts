@@ -8,7 +8,7 @@ import { request } from '@/plugins/http-fetch';
 export function exportRole(query: Record<string, any>) {
   return request({
     url: '/system/role/export',
-    method: 'post',
+    method: 'POST',
     data: query,
     responseType: 'blob',
   });
@@ -22,7 +22,7 @@ export function exportRole(query: Record<string, any>) {
 export function listRole(query: Record<string, any>) {
   return request({
     url: '/system/role/list',
-    method: 'get',
+    method: 'GET',
     params: query,
   });
 }
@@ -35,7 +35,7 @@ export function listRole(query: Record<string, any>) {
 export function getRole(roleId: string | number) {
   return request({
     url: `/system/role/${roleId}`,
-    method: 'get',
+    method: 'GET',
   });
 }
 
@@ -47,7 +47,7 @@ export function getRole(roleId: string | number) {
 export function addRole(data: Record<string, any>) {
   return request({
     url: '/system/role',
-    method: 'post',
+    method: 'POST',
     data: data,
   });
 }
@@ -60,7 +60,7 @@ export function addRole(data: Record<string, any>) {
 export function updateRole(data: Record<string, any>) {
   return request({
     url: '/system/role',
-    method: 'put',
+    method: 'PUT',
     data: data,
   });
 }
@@ -73,7 +73,7 @@ export function updateRole(data: Record<string, any>) {
 export function delRole(roleId: string | number) {
   return request({
     url: `/system/role/${roleId}`,
-    method: 'delete',
+    method: 'DELETE',
   });
 }
 
@@ -85,8 +85,8 @@ export function delRole(roleId: string | number) {
  */
 export function changeRoleStatus(roleId: string, status: string | number) {
   return request({
-    url: '/system/role/changeStatus',
-    method: 'put',
+    url: '/system/role/status',
+    method: 'PUT',
     data: {
       roleId,
       status,
@@ -101,8 +101,8 @@ export function changeRoleStatus(roleId: string, status: string | number) {
  */
 export function dataScope(data: Record<string, any>) {
   return request({
-    url: '/system/role/dataScope',
-    method: 'put',
+    url: '/system/role/data-scope',
+    method: 'PUT',
     data: data,
   });
 }
@@ -112,10 +112,10 @@ export function dataScope(data: Record<string, any>) {
  * @param query 查询参数
  * @returns object
  */
-export function authUserAllocatedList(query: Record<string, any>) {
+export function authUserList(query: Record<string, any>) {
   return request({
-    url: '/system/role/authUser/allocatedList',
-    method: 'get',
+    url: '/system/role/user/list',
+    method: 'GET',
     params: query,
   });
 }
@@ -127,8 +127,8 @@ export function authUserAllocatedList(query: Record<string, any>) {
  */
 export function authUserChecked(data: Record<string, any>) {
   return request({
-    url: '/system/role/authUser/checked',
-    method: 'put',
+    url: '/system/role/user/auth',
+    method: 'PUT',
     data: data,
   });
 }

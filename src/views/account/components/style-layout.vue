@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
-import { usePrefersColorScheme, viewTransitionTheme } from 'antdv-pro-layout';
+import { ref } from 'vue';
 import { getLocalColor, changePrimaryColor } from '@/hooks/useTheme';
 import useLayoutStore from '@/store/modules/layout';
 const { proConfig, changeConf } = useLayoutStore();
@@ -21,29 +20,6 @@ function fnColorChange(e: Event) {
     }
     color.value = getLocalColor();
   }, 300);
-}
-
-// 偏好设置
-const colorScheme = usePrefersColorScheme();
-watch(
-  () => colorScheme.value,
-  themeMode => {
-    // 普通
-    changeConf('theme', themeMode);
-    document.documentElement.setAttribute('data-theme', themeMode);
-    // 过渡动画
-    // changeTheme(undefined);
-  }
-);
-
-// 手动变更主题-过渡动画
-function changeTheme(e: any) {
-  viewTransitionTheme(isDarkMode => {
-    const themeMode = isDarkMode ? 'light' : 'dark';
-    changeConf('theme', themeMode);
-    document.documentElement.setAttribute('data-theme', themeMode);
-    // 暂时没找到合适的切换方式导入样式文件 TODO
-  }, e);
 }
 </script>
 
@@ -75,19 +51,6 @@ function changeTheme(e: any) {
           </a-button>
           <input type="color" :value="color" @input="fnColorChange" />
         </a-space>
-      </template>
-    </a-list-item>
-    <a-list-item>
-      主题明亮
-      <template #actions> 全局主题色 </template>
-      <template #extra>
-        <a-button
-          :type="proConfig.theme === 'dark' ? 'primary' : 'default'"
-          size="small"
-          @click="changeTheme"
-        >
-          {{ proConfig.theme }}
-        </a-button>
       </template>
     </a-list-item>
     <a-list-item>

@@ -45,7 +45,7 @@ function fnCacheKeyInfo(cacheKey: string) {
   getCacheValue(cacheKeyTable.cacheName, cacheKey).then(res => {
     isClick.value = false;
     if (res.code === RESULT_CODE_SUCCESS) {
-      cacheKeyInfo.data = Object.assign(cacheKeyInfo.data, res.data);
+      Object.assign(cacheKeyInfo.data, res.data);
       cacheKeyInfo.loading = false;
     }
   });
@@ -490,7 +490,7 @@ onMounted(() => {
                   :auto-size="{ minRows: 4, maxRows: 18 }"
                   :maxlength="4000"
                   :disabled="true"
-                  style="color: rgba(0,0,0,.85);"
+                  style="color: rgba(0, 0, 0, 0.85)"
                   placeholder="显示缓存内容"
                 />
               </a-typography-paragraph>
