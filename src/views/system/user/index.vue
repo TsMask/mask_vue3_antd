@@ -34,6 +34,7 @@ import {
 import useDictStore from '@/store/modules/dict';
 import useUserStore from '@/store/modules/user';
 import { DataNode } from 'ant-design-vue/lib/tree';
+import { SYS_ROLE_SYSTEM_ID } from '@/constants/system-constants';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
@@ -161,8 +162,8 @@ let tableColumns: ColumnsType = [
   },
   {
     title: '登录时间',
-    dataIndex: 'loginDate',
-    align: 'center',
+    dataIndex: 'loginTime',
+    align: 'left',
     width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
@@ -173,7 +174,7 @@ let tableColumns: ColumnsType = [
     title: '用户状态',
     dataIndex: 'statusFlag',
     key: 'statusFlag',
-    align: 'center',
+    align: 'left',
     width: 100,
   },
   {
@@ -930,7 +931,7 @@ onMounted(() => {
       <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
             <a-switch
               v-model:checked="tableState.seached"
@@ -939,7 +940,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
             <a-switch
               v-model:checked="tableState.striped"
@@ -948,7 +949,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>刷新</template>
             <a-button type="text" @click.prevent="fnGetList()">
               <template #icon><ReloadOutlined /></template>
@@ -1001,7 +1002,10 @@ onMounted(() => {
           </template>
           <template v-if="column.key === 'statusFlag'">
             <a-switch
-              v-if="dict.sysNormalDisable.length > 0 && record.userId !== '1'"
+              v-if="
+                dict.sysNormalDisable.length > 0 &&
+                !record.roleIds?.includes(SYS_ROLE_SYSTEM_ID)
+              "
               v-perms:has="['system:user:edit']"
               v-model:checked="record.statusFlag"
               checked-value="1"
@@ -1018,8 +1022,8 @@ onMounted(() => {
             />
           </template>
           <template v-if="column.key === 'userId'">
-            <a-space :size="8" align="center" v-if="record.userName !== 'system'">
-              <a-tooltip>
+            <a-space :size="8" align="center">
+              <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
                 <a-button
                   type="link"
@@ -1029,7 +1033,10 @@ onMounted(() => {
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip
+                placement="topRight"
+                v-if="!record.roleIds?.includes(SYS_ROLE_SYSTEM_ID)"
+              >
                 <template #title>编辑</template>
                 <a-button
                   type="link"
@@ -1039,7 +1046,10 @@ onMounted(() => {
                   <template #icon><FormOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip
+                placement="topRight"
+                v-if="!record.roleIds?.includes(SYS_ROLE_SYSTEM_ID)"
+              >
                 <template #title>删除</template>
                 <a-button
                   type="link"
@@ -1049,7 +1059,10 @@ onMounted(() => {
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip
+                placement="topRight"
+                v-if="!record.roleIds?.includes(SYS_ROLE_SYSTEM_ID)"
+              >
                 <template #title>重置密码</template>
                 <a-button
                   type="link"
@@ -1095,9 +1108,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="登录时间" name="loginDate">
-              <span v-if="+modalState.form.loginDate > 0">
-                {{ parseDateToStr(+modalState.form.loginDate) }}
+            <a-form-item label="登录时间" name="loginTime">
+              <span v-if="+modalState.form.loginTime > 0">
+                {{ parseDateToStr(+modalState.form.loginTime) }}
               </span>
             </a-form-item>
           </a-col>
@@ -1199,7 +1212,12 @@ onMounted(() => {
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
+          <a-col
+            :lg="12"
+            :md="12"
+            :xs="24"
+            v-if="!modalState.form.roleIds?.includes(SYS_ROLE_SYSTEM_ID)"
+          >
             <a-form-item label="用户角色" name="roleIds">
               <a-select
                 :value="modalState.form.roleIds"
