@@ -1,5 +1,5 @@
 /**响应-code正常成功 */
-export const RESULT_CODE_SUCCESS = 0;
+export const RESULT_CODE_SUCCESS = 200;
 
 /**响应-msg正常成功 */
 export const RESULT_MSG_SUCCESS = 'success';
