@@ -105,7 +105,7 @@ let tableColumns: ColumnsType = [
     title: '岗位名称',
     dataIndex: 'postName',
     align: 'left',
-    width: 100,
+    width: 200,
   },
   {
     title: '岗位排序',
@@ -117,13 +117,13 @@ let tableColumns: ColumnsType = [
     title: '岗位状态',
     dataIndex: 'statusFlag',
     key: 'statusFlag',
-    align: 'center',
+    align: 'left',
     width: 100,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
-    align: 'center',
+    align: 'left',
     width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
@@ -518,7 +518,7 @@ onMounted(() => {
       <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
             <a-switch
               v-model:checked="tableState.seached"
@@ -527,7 +527,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
             <a-switch
               v-model:checked="tableState.striped"
@@ -536,7 +536,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>刷新</template>
             <a-button type="text" @click.prevent="fnGetList()">
               <template #icon><ReloadOutlined /></template>
@@ -592,7 +592,7 @@ onMounted(() => {
           </template>
           <template v-if="column.key === 'postId'">
             <a-space :size="8" align="center">
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
                 <a-button
                   type="link"
@@ -602,7 +602,7 @@ onMounted(() => {
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>编辑</template>
                 <a-button
                   type="link"
@@ -612,7 +612,7 @@ onMounted(() => {
                   <template #icon><FormOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>删除</template>
                 <a-button
                   type="link"

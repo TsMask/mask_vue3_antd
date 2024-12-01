@@ -56,7 +56,7 @@ let queryParams = reactive({
 
 /**查询参数重置 */
 function fnQueryReset() {
-   Object.assign(queryParams, {
+  Object.assign(queryParams, {
     menuName: '',
     statusFlag: undefined,
   });
@@ -152,7 +152,7 @@ let tableColumns: ColumnsType = [
     title: '创建时间',
     dataIndex: 'createTime',
     align: 'left',
-    width: 150,
+    width: 200,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
@@ -263,7 +263,9 @@ const modalStateForm = Form.useForm(
     component: [
       { required: true, min: 1, max: 200, message: '请正确输入组件路径' },
     ],
-    menuPath: [{ required: true, min: 1, max: 200, message: '请正确输入路由地址' }],
+    menuPath: [
+      { required: true, min: 1, max: 200, message: '请正确输入路由地址' },
+    ],
     perms: [
       { required: true, min: 1, max: 100, message: '请正确输入权限标识' },
     ],
@@ -548,7 +550,7 @@ onMounted(() => {
       <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>展开/折叠</template>
             <a-switch
               v-model:checked="tableState.expandedRowAll"
@@ -558,7 +560,7 @@ onMounted(() => {
               @change="fnTableExpandedRowsAll"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
             <a-switch
               v-model:checked="tableState.seached"
@@ -567,7 +569,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
             <a-switch
               v-model:checked="tableState.striped"
@@ -576,7 +578,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>刷新</template>
             <a-button type="text" @click.prevent="fnGetList()">
               <template #icon><ReloadOutlined /></template>
@@ -630,11 +632,14 @@ onMounted(() => {
             </a-tag>
           </template>
           <template v-if="column.key === 'statusFlag'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.statusFlag" />
+            <DictTag
+              :options="dict.sysNormalDisable"
+              :value="record.statusFlag"
+            />
           </template>
           <template v-if="column.key === 'menuId'">
             <a-space :size="8" align="center">
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
                 <a-button
                   type="link"
@@ -644,7 +649,7 @@ onMounted(() => {
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>编辑</template>
                 <a-button
                   type="link"
@@ -654,7 +659,7 @@ onMounted(() => {
                   <template #icon><FormOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>删除</template>
                 <a-button
                   type="link"
@@ -664,7 +669,10 @@ onMounted(() => {
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip v-if="record.menuType !== MENU_TYPE_BUTTON">
+              <a-tooltip
+                placement="topRight"
+                v-if="record.menuType !== MENU_TYPE_BUTTON"
+              >
                 <template #title>新增子菜单</template>
                 <a-button
                   type="link"

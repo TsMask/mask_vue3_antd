@@ -493,7 +493,7 @@ onMounted(() => {
       <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
             <a-switch
               v-model:checked="tableState.seached"
@@ -502,7 +502,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
             <a-switch
               v-model:checked="tableState.striped"
@@ -511,7 +511,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>刷新</template>
             <a-button type="text" @click.prevent="fnGetList()">
               <template #icon><ReloadOutlined /></template>

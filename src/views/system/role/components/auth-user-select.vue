@@ -96,25 +96,25 @@ let tableColumns: ColumnsType = [
     title: '登录账号',
     dataIndex: 'userName',
     align: 'left',
-    width: 100,
+    width: 150,
   },
   {
     title: '用户昵称',
     dataIndex: 'nickName',
     align: 'left',
-    width: 100,
+    width: 150,
   },
   {
     title: '用户状态',
     dataIndex: 'statusFlag',
     key: 'statusFlag',
-    align: 'center',
+    align: 'left',
     width: 100,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
-    align: 'center',
+    align: 'left',
     width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
