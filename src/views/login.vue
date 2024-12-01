@@ -104,6 +104,9 @@ function fnGetCaptcha() {
         state.captcha.codeImg = img;
         state.form.uuid = uuid;
       }
+      if (res.data?.text) {
+        state.form.code = res.data.text;
+      }
     })
     .finally(() => {
       state.captchaClick = false;
