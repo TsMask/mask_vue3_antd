@@ -111,7 +111,7 @@ export function delUser(userId: string | number) {
  */
 export function resetUserPwd(userId: string | number, password: string) {
   return request({
-    url: '/system/user/passwd',
+    url: '/system/user/password',
     method: 'PUT',
     data: {
       userId,

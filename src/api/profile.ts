@@ -25,18 +25,15 @@ export function updateUserProfile(data: Record<string, any>) {
 }
 
 /**
- * 用户密码重置
- * @param userId 用户ID
- * @param status 变更状态值
+ * 用户个人密码重置
+ * @param oldPassword 旧密码
+ * @param newPassword 新密码
  * @returns object
  */
-export function updateUserPasswd(oldPassword: string, newPassword: string) {
+export function updateUserPassword(oldPassword: string, newPassword: string) {
   return request({
-    url: '/system/user/profile/passwd',
+    url: '/system/user/profile/password',
     method: 'PUT',
-    data: {
-      oldPassword,
-      newPassword,
-    },
+    data: { oldPassword, newPassword },
   });
 }

@@ -45,26 +45,29 @@ function fnFinish() {
     title: '提示',
     content: `确认要提交修改用户基本信息吗?`,
     onOk() {
-      stateForm.formClick = true;
       // 发送请求
       const hide = message.loading('请稍等...', 0);
+      stateForm.formClick = true;
       const form = toRaw(stateForm.form);
-      updateUserProfile(form).then(res => {
-        hide();
-        stateForm.formClick = false;
-        if (res.code === RESULT_CODE_SUCCESS) {
-          Modal.success({
-            title: '提示',
-            content: `用户基本信息修改成功！`,
-            okText: '我知道了',
-            onOk() {
-              userStore.setBaseInfo(form);
-            },
-          });
-        } else {
-          message.error(`${res.msg}`, 3);
-        }
-      });
+      updateUserProfile(form)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            Modal.success({
+              title: '提示',
+              content: `用户基本信息修改成功！`,
+              okText: '我知道了',
+              onOk() {
+                userStore.setBaseInfo(form);
+              },
+            });
+          } else {
+            message.error(`${res.msg}`, 3);
+          }
+        })
+        .finally(() => {
+          hide();
+          stateForm.formClick = false;
+        });
     },
   });
 }
@@ -121,8 +124,8 @@ function fnUpload(up: UploadRequestOption) {
           }
         })
         .finally(() => {
-          upState.value = false;
           hide();
+          upState.value = false;
         });
     },
   });
@@ -145,7 +148,7 @@ onMounted(() => {
     :model="stateForm.form"
     name="stateForm"
     :wrapper-col="{ lg: 12, md: 16, xs: 14 }"
-    :label-col="{ lg: 6, md: 6, xs: 6}"
+    :label-col="{ lg: 6, md: 6, xs: 6 }"
     :label-warp="true"
     @finish="fnFinish"
   >
