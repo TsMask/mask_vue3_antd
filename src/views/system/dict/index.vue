@@ -291,30 +291,28 @@ function fnModalOk() {
   modalStateForm
     .validate()
     .then(() => {
+      const hide = message.loading('请稍等...', 0);
       modalState.confirmLoading = true;
       const form = toRaw(modalState.form);
       const dictType = form.dictId ? updateType(form) : addType(form);
-      const key = 'dictType';
-      message.loading({ content: '请稍等...', key });
       dictType
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
-              key,
-              duration: 2,
+              duration: 3,
             });
             fnGetList(1);
             fnModalCancel();
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
-              duration: 2,
+              duration: 3,
             });
           }
         })
         .finally(() => {
+          hide();
           modalState.confirmLoading = false;
         });
     })
@@ -345,24 +343,25 @@ function fnRecordDelete(dictId: string = '0') {
     title: '提示',
     content: `确认删除参数编号为 【${dictId}】 的数据项?`,
     onOk() {
-      const key = 'delType';
-      message.loading({ content: '请稍等...', key });
-      delType(dictId).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `删除成功`,
-            key,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key: key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      delType(dictId)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `删除成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -373,24 +372,25 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const key = 'exportType';
-      message.loading({ content: '请稍等...', key });
-      exportType(toRaw(queryParams)).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `已完成导出`,
-            key,
-            duration: 2,
-          });
-          saveAs(res.data, `dict_${Date.now()}.xlsx`);
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      exportType(toRaw(queryParams))
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `已完成导出`,
+              duration: 3,
+            });
+            saveAs(res.data, `dict_${Date.now()}.xlsx`);
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -403,23 +403,24 @@ function fnRefreshCache() {
     title: '提示',
     content: `确定要刷新字典数据缓存吗?`,
     onOk() {
-      const key = 'refreshCache';
-      message.loading({ content: '请稍等...', key });
-      refreshCache().then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `刷新缓存成功`,
-            key,
-            duration: 2,
-          });
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key: key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      refreshCache()
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `刷新缓存成功`,
+              duration: 3,
+            });
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }

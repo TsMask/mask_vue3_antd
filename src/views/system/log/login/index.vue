@@ -220,24 +220,25 @@ function fnRecordDelete() {
     title: '提示',
     content: `确认删除访问编号为 【${ids}】 的数据项吗?`,
     onOk() {
-      const key = 'delSysLogLogin';
-      message.loading({ content: '请稍等...', key });
-      delSysLogLogin(ids).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `删除成功`,
-            key,
-            duration: 3,
-          });
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 3,
-          });
-        }
-        fnGetList();
-      });
+      const hide = message.loading('请稍等...', 0);
+      delSysLogLogin(ids)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `删除成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -248,24 +249,25 @@ function fnCleanList() {
     title: '提示',
     content: `确认清空所有登录日志数据项?`,
     onOk() {
-      const key = 'cleanSysLogLogin';
-      message.loading({ content: '请稍等...', key });
-      cleanSysLogLogin().then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `清空成功`,
-            key,
-            duration: 3,
-          });
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 3,
-          });
-        }
-        fnGetList();
-      });
+      const hide = message.loading('请稍等...', 0);
+      cleanSysLogLogin()
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `清空成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -278,20 +280,24 @@ function fnUnlock() {
     content: `确认解锁用户 【${username}】 数据项?`,
     onOk() {
       const hide = message.loading('请稍等...', 0);
-      unlock(username).then(res => {
-        hide();
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `${username} 解锁成功`,
-            duration: 3,
-          });
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            duration: 3,
-          });
-        }
-      });
+      unlock(username)
+        .then(res => {
+          hide();
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `${username} 解锁成功`,
+              duration: 3,
+            });
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -302,24 +308,25 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const key = 'exportSysLogLogin';
-      message.loading({ content: '请稍等...', key });
-      exportSysLogLogin(toRaw(queryParams)).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `已完成导出`,
-            key,
-            duration: 2,
-          });
-          saveAs(res.data, `sys_log_login_${Date.now()}.xlsx`);
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      exportSysLogLogin(toRaw(queryParams))
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `已完成导出`,
+              duration: 3,
+            });
+            saveAs(res.data, `sys_log_login_${Date.now()}.xlsx`);
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -560,7 +567,10 @@ onMounted(() => {
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'statusFlag'">
-            <DictTag :options="dict.sysCommonStatus" :value="record.statusFlag" />
+            <DictTag
+              :options="dict.sysCommonStatus"
+              :value="record.statusFlag"
+            />
           </template>
         </template>
       </a-table>

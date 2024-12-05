@@ -276,24 +276,25 @@ function fnRecordDelete() {
     title: '提示',
     content: `确认删除访问编号为 【${ids}】 的数据项吗?`,
     onOk() {
-      const key = 'delSysLogOperate';
-      message.loading({ content: '请稍等...', key });
-      delSysLogOperate(ids).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: '删除成功',
-            key,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      delSysLogOperate(ids)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: '删除成功',
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -304,21 +305,18 @@ function fnCleanList() {
     title: '提示',
     content: `确认清空所有登录日志数据项?`,
     onOk() {
-      const key = 'cleanSysLogOperate';
-      message.loading({ content: '请稍等...', key });
+      const hide = message.loading('请稍等...', 0);
       cleanSysLogOperate().then(res => {
         if (res.code === RESULT_CODE_SUCCESS) {
           message.success({
             content: '清空成功',
-            key,
-            duration: 2,
+            duration: 3,
           });
           fnGetList();
         } else {
           message.error({
             content: `${res.msg}`,
-            key,
-            duration: 2,
+            duration: 3,
           });
         }
       });
@@ -332,24 +330,25 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const key = 'exportSysLogOperate';
-      message.loading({ content: '请稍等...', key });
-      exportSysLogOperate(toRaw(queryParams)).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `已完成导出`,
-            key,
-            duration: 2,
-          });
-          saveAs(res.data, `sys_log_operate_${Date.now()}.xlsx`);
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      exportSysLogOperate(toRaw(queryParams))
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `已完成导出`,
+              duration: 3,
+            });
+            saveAs(res.data, `sys_log_operate_${Date.now()}.xlsx`);
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }

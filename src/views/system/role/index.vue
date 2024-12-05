@@ -313,26 +313,29 @@ function fnModalVisibleByVive(roleId: string | number) {
   const hide = message.loading('正在打开...', 0);
   modalState.confirmLoading = true;
   // 查询角色详细同时根据角色ID查询菜单下拉树结构
-  Promise.all([getRole(roleId), menuTreeSelectRole(roleId)]).then(resArr => {
-    modalState.confirmLoading = false;
-    hide();
-    if (resArr[0].code === RESULT_CODE_SUCCESS && resArr[0].data) {
-      Object.assign(modalState.form, resArr[0].data);
-      if (resArr[1].code === RESULT_CODE_SUCCESS && resArr[1].data) {
-        const { menus, checkedKeys } = resArr[1].data;
-        menuTree.checkedKeys = parseTreeKeys(menus, 'id');
-        menuTree.expandedKeys = parseTreeNodeKeys(menus, 'id');
-        menuTree.treeData = menus;
-        modalState.menuTree.treeData = menus;
-        modalState.menuTree.checkedKeys = checkedKeys;
-        modalState.form.menuIds = checkedKeys;
+  Promise.all([getRole(roleId), menuTreeSelectRole(roleId)])
+    .then(resArr => {
+      if (resArr[0].code === RESULT_CODE_SUCCESS && resArr[0].data) {
+        Object.assign(modalState.form, resArr[0].data);
+        if (resArr[1].code === RESULT_CODE_SUCCESS && resArr[1].data) {
+          const { menus, checkedKeys } = resArr[1].data;
+          menuTree.checkedKeys = parseTreeKeys(menus, 'id');
+          menuTree.expandedKeys = parseTreeNodeKeys(menus, 'id');
+          menuTree.treeData = menus;
+          modalState.menuTree.treeData = menus;
+          modalState.menuTree.checkedKeys = checkedKeys;
+          modalState.form.menuIds = checkedKeys;
+        }
+        modalState.title = '角色信息';
+        modalState.visibleByView = true;
+      } else {
+        message.error(`获取角色信息失败`, 3);
       }
-      modalState.title = '角色信息';
-      modalState.visibleByView = true;
-    } else {
-      message.error(`获取角色信息失败`, 2);
-    }
-  });
+    })
+    .finally(() => {
+      hide();
+      modalState.confirmLoading = false;
+    });
 }
 
 /**
@@ -351,44 +354,50 @@ function fnModalVisibleByEdit(roleId?: string | number) {
       const hide = message.loading('正在打开...', 0);
       modalState.confirmLoading = true;
       // 查询菜单下拉树结构
-      menuTreeSelect().then(res => {
-        modalState.confirmLoading = false;
-        hide();
-        if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
-          menuTree.checkedKeys = parseTreeKeys(res.data, 'id');
-          menuTree.expandedKeys = parseTreeNodeKeys(res.data, 'id');
-          menuTree.treeData = res.data;
-          modalState.menuTree.treeData = res.data;
-          modalState.title = '添加角色信息';
-          modalState.visibleByEdit = true;
-        }
-      });
+      menuTreeSelect()
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
+            menuTree.checkedKeys = parseTreeKeys(res.data, 'id');
+            menuTree.expandedKeys = parseTreeNodeKeys(res.data, 'id');
+            menuTree.treeData = res.data;
+            modalState.menuTree.treeData = res.data;
+            modalState.title = '添加角色信息';
+            modalState.visibleByEdit = true;
+          }
+        })
+        .finally(() => {
+          hide();
+          modalState.confirmLoading = false;
+        });
     }
   } else {
     if (modalState.confirmLoading) return;
     const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
     // 查询角色详细同时根据角色ID查询菜单下拉树结构
-    Promise.all([getRole(roleId), menuTreeSelectRole(roleId)]).then(resArr => {
-      modalState.confirmLoading = false;
-      hide();
-      if (resArr[0].code === RESULT_CODE_SUCCESS && resArr[0].data) {
-        Object.assign(modalState.form, resArr[0].data);
-        if (resArr[1].code === RESULT_CODE_SUCCESS && resArr[1].data) {
-          const { menus, checkedKeys } = resArr[1].data;
-          menuTree.checkedKeys = parseTreeKeys(menus, 'id');
-          menuTree.expandedKeys = parseTreeNodeKeys(menus, 'id');
-          menuTree.treeData = menus;
-          modalState.menuTree.treeData = menus;
-          modalState.menuTree.checkedKeys = checkedKeys;
-          modalState.form.menuIds = checkedKeys;
+    Promise.all([getRole(roleId), menuTreeSelectRole(roleId)])
+      .then(resArr => {
+        if (resArr[0].code === RESULT_CODE_SUCCESS && resArr[0].data) {
+          Object.assign(modalState.form, resArr[0].data);
+          if (resArr[1].code === RESULT_CODE_SUCCESS && resArr[1].data) {
+            const { menus, checkedKeys } = resArr[1].data;
+            menuTree.checkedKeys = parseTreeKeys(menus, 'id');
+            menuTree.expandedKeys = parseTreeNodeKeys(menus, 'id');
+            menuTree.treeData = menus;
+            modalState.menuTree.treeData = menus;
+            modalState.menuTree.checkedKeys = checkedKeys;
+            modalState.form.menuIds = checkedKeys;
+          }
+          modalState.title = '修改角色信息';
+          modalState.visibleByEdit = true;
+        } else {
+          message.error(`获取角色信息失败`, 3);
         }
-        modalState.title = '修改角色信息';
-        modalState.visibleByEdit = true;
-      } else {
-        message.error(`获取角色信息失败`, 2);
-      }
-    });
+      })
+      .finally(() => {
+        hide();
+        modalState.confirmLoading = false;
+      });
   }
 }
 
@@ -400,30 +409,28 @@ function fnModalOk() {
   modalStateForm
     .validate()
     .then(() => {
+      const hide = message.loading('请稍等...', 0);
       modalState.confirmLoading = true;
       const form = toRaw(modalState.form);
       const role = form.roleId ? updateRole(form) : addRole(form);
-      const key = 'role';
-      message.loading({ content: '请稍等...', key });
       role
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
-              key,
-              duration: 2,
+              duration: 3,
             });
             fnGetList(1);
             fnModalCancel();
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
-              duration: 2,
+              duration: 3,
             });
           }
         })
         .finally(() => {
+          hide();
           modalState.confirmLoading = false;
         });
     })
@@ -509,8 +516,8 @@ function fnModalCheckStrictly(checked: boolean, type: 'menu' | 'dept') {
  */
 function fnModalOkDataScope() {
   if (modalState.confirmLoading) return;
-  modalState.confirmLoading = true;
   const hide = message.loading('请稍等...', 0);
+  modalState.confirmLoading = true;
   const fromInfo = toRaw(modalState.form);
   if (fromInfo.dataScope !== '2') {
     fromInfo.deptIds = [];
@@ -520,14 +527,14 @@ function fnModalOkDataScope() {
       if (res.code === RESULT_CODE_SUCCESS) {
         message.success({
           content: `${modalState.title}成功`,
-          duration: 2,
+          duration: 3,
         });
         modalState.visibleByDataScope = false;
         modalStateForm.resetFields();
       } else {
         message.error({
           content: `${res.msg}`,
-          duration: 2,
+          duration: 3,
         });
       }
     })
@@ -566,12 +573,12 @@ function fnRecordDataScope(roleId: string | number) {
         modalState.title = '分配数据权限';
         modalState.visibleByDataScope = true;
       } else {
-        message.error(`获取角色信息失败`, 2);
+        message.error(`获取角色信息失败`, 3);
       }
     })
     .finally(() => {
-      modalState.confirmLoading = false;
       hide();
+      modalState.confirmLoading = false;
     });
 }
 
@@ -599,21 +606,24 @@ function fnRecordStatus(row: Record<string, string>) {
     content: `确定要${text} ${row.roleName} 角色吗?`,
     onOk() {
       const hide = message.loading('请稍等...', 0);
-      changeRoleStatus(row.roleId, row.statusFlag).then(res => {
-        hide();
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `${row.roleName} ${text}成功`,
-            duration: 2,
-          });
-        } else {
-          message.error({
-            content: `${row.roleName} ${text}失败`,
-            duration: 2,
-          });
-        }
-        fnGetList();
-      });
+      changeRoleStatus(row.roleId, row.statusFlag)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `${row.roleName} ${text}成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${row.roleName} ${text}失败`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
     onCancel() {
       row.statusFlag = row.statusFlag === '1' ? '0' : '1';
@@ -633,24 +643,25 @@ function fnRecordDelete(roleId: string = '0') {
     title: '提示',
     content: `确认删除角色编号为 【${roleId}】 的数据项?`,
     onOk() {
-      const key = 'delRole';
-      message.loading({ content: '请稍等...', key });
-      delRole(roleId).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `删除成功`,
-            key,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      delRole(roleId)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `删除成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -661,24 +672,25 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const key = 'exportRole';
-      message.loading({ content: '请稍等...', key });
-      exportRole(toRaw(queryParams)).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `已完成导出`,
-            key,
-            duration: 2,
-          });
-          saveAs(res.data, `role_${Date.now()}.xlsx`);
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      exportRole(toRaw(queryParams))
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `已完成导出`,
+              duration: 3,
+            });
+            saveAs(res.data, `role_${Date.now()}.xlsx`);
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -937,7 +949,10 @@ onMounted(() => {
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip placement="topRight" v-if="record.roleId !== SYS_ROLE_SYSTEM_ID">
+              <a-tooltip
+                placement="topRight"
+                v-if="record.roleId !== SYS_ROLE_SYSTEM_ID"
+              >
                 <template #title>编辑</template>
                 <a-button
                   type="link"
@@ -947,7 +962,10 @@ onMounted(() => {
                   <template #icon><FormOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip placement="topRight" v-if="record.roleId !== SYS_ROLE_SYSTEM_ID">
+              <a-tooltip
+                placement="topRight"
+                v-if="record.roleId !== SYS_ROLE_SYSTEM_ID"
+              >
                 <template #title>删除</template>
                 <a-button
                   type="link"
@@ -957,7 +975,10 @@ onMounted(() => {
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip placement="topRight" v-if="record.roleId !== SYS_ROLE_SYSTEM_ID">
+              <a-tooltip
+                placement="topRight"
+                v-if="record.roleId !== SYS_ROLE_SYSTEM_ID"
+              >
                 <template #title>分配数据权限</template>
                 <a-button
                   type="link"
@@ -967,7 +988,10 @@ onMounted(() => {
                   <template #icon><SecurityScanOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip placement="topRight" v-if="record.roleId !== SYS_ROLE_SYSTEM_ID">
+              <a-tooltip
+                placement="topRight"
+                v-if="record.roleId !== SYS_ROLE_SYSTEM_ID"
+              >
                 <template #title>分配用户</template>
                 <a-button
                   type="link"

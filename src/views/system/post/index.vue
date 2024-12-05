@@ -236,17 +236,20 @@ function fnModalVisibleByVive(postId: string | number) {
   if (modalState.confirmLoading) return;
   const hide = message.loading('正在打开...', 0);
   modalState.confirmLoading = true;
-  getPost(postId).then(res => {
-    modalState.confirmLoading = false;
-    hide();
-    if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      Object.assign(modalState.form, res.data);
-      modalState.title = '岗位信息';
-      modalState.visibleByView = true;
-    } else {
-      message.error(`获取岗位信息失败`, 2);
-    }
-  });
+  getPost(postId)
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
+        Object.assign(modalState.form, res.data);
+        modalState.title = '岗位信息';
+        modalState.visibleByView = true;
+      } else {
+        message.error(`获取岗位信息失败`, 3);
+      }
+    })
+    .finally(() => {
+      hide();
+      modalState.confirmLoading = false;
+    });
 }
 
 /**
@@ -262,17 +265,20 @@ function fnModalVisibleByEdit(postId?: string | number) {
     if (modalState.confirmLoading) return;
     const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
-    getPost(postId).then(res => {
-      modalState.confirmLoading = false;
-      hide();
-      if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        Object.assign(modalState.form, res.data);
-        modalState.title = '修改岗位信息';
-        modalState.visibleByEdit = true;
-      } else {
-        message.error(`获取岗位信息失败`, 2);
-      }
-    });
+    getPost(postId)
+      .then(res => {
+        if (res.code === RESULT_CODE_SUCCESS && res.data) {
+          Object.assign(modalState.form, res.data);
+          modalState.title = '修改岗位信息';
+          modalState.visibleByEdit = true;
+        } else {
+          message.error(`获取岗位信息失败`, 2);
+        }
+      })
+      .finally(() => {
+        hide();
+        modalState.confirmLoading = false;
+      });
   }
 }
 
@@ -284,30 +290,28 @@ function fnModalOk() {
   modalStateForm
     .validate()
     .then(() => {
+      const hide = message.loading('请稍等...', 0);
       modalState.confirmLoading = true;
       const form = toRaw(modalState.form);
       const post = form.postId ? updatePost(form) : addPost(form);
-      const key = 'notice';
-      message.loading({ content: '请稍等...', key });
       post
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
-              key,
-              duration: 2,
+              duration: 3,
             });
             fnGetList(1);
             fnModalCancel();
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
-              duration: 2,
+              duration: 3,
             });
           }
         })
         .finally(() => {
+          hide();
           modalState.confirmLoading = false;
         });
     })
@@ -338,24 +342,25 @@ function fnRecordDelete(postId: string = '0') {
     title: '提示',
     content: `确认删除岗位编号为 【${postId}】 的数据项?`,
     onOk() {
-      const key = 'delPost';
-      message.loading({ content: '请稍等...', key });
-      delPost(postId).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `删除成功`,
-            key,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key: key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      delPost(postId)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `删除成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -366,24 +371,25 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const key = 'exportPost';
-      message.loading({ content: '请稍等...', key });
-      exportPost(toRaw(queryParams)).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `已完成导出`,
-            key,
-            duration: 2,
-          });
-          saveAs(res.data, `post_${Date.now()}.xlsx`);
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      exportPost(toRaw(queryParams))
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `已完成导出`,
+              duration: 3,
+            });
+            saveAs(res.data, `post_${Date.now()}.xlsx`);
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }

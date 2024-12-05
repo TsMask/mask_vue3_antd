@@ -251,17 +251,20 @@ function fnModalVisibleByVive(noticeId: string | number) {
   if (modalState.confirmLoading) return;
   const hide = message.loading('正在打开...', 0);
   modalState.confirmLoading = true;
-  getNotice(noticeId).then(res => {
-    modalState.confirmLoading = false;
-    hide();
-    if (res.code === RESULT_CODE_SUCCESS) {
-      Object.assign(modalState.form, res.data);
-      modalState.title = '公告信息';
-      modalState.visibleByView = true;
-    } else {
-      message.error(`获取公告信息失败`, 2);
-    }
-  });
+  getNotice(noticeId)
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS) {
+        Object.assign(modalState.form, res.data);
+        modalState.title = '公告信息';
+        modalState.visibleByView = true;
+      } else {
+        message.error(`获取公告信息失败`, 2);
+      }
+    })
+    .finally(() => {
+      hide();
+      modalState.confirmLoading = false;
+    });
 }
 
 /**
@@ -277,17 +280,20 @@ function fnModalVisibleByEdit(noticeId?: string | number) {
     if (modalState.confirmLoading) return;
     const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
-    getNotice(noticeId).then(res => {
-      modalState.confirmLoading = false;
-      hide();
-      if (res.code === RESULT_CODE_SUCCESS) {
-        Object.assign(modalState.form, res.data);
-        modalState.title = '修改公告';
-        modalState.visibleByEdit = true;
-      } else {
-        message.error(`获取公告信息失败`, 2);
-      }
-    });
+    getNotice(noticeId)
+      .then(res => {
+        if (res.code === RESULT_CODE_SUCCESS) {
+          Object.assign(modalState.form, res.data);
+          modalState.title = '修改公告';
+          modalState.visibleByEdit = true;
+        } else {
+          message.error(`获取公告信息失败`, 3);
+        }
+      })
+      .finally(() => {
+        hide();
+        modalState.confirmLoading = false;
+      });
   }
 }
 
@@ -299,30 +305,28 @@ function fnModalOk() {
   modalStateForm
     .validate()
     .then(() => {
+      const hide = message.loading('请稍等...', 0);
       modalState.confirmLoading = true;
       const form = toRaw(modalState.form);
       const notice = form.noticeId ? updateNotice(form) : addNotice(form);
-      const key = 'notice';
-      message.loading({ content: '请稍等...', key });
       notice
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
-              key,
-              duration: 2,
+              duration: 3,
             });
             fnGetList(1);
             fnModalCancel();
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
-              duration: 2,
+              duration: 3,
             });
           }
         })
         .finally(() => {
+          hide();
           modalState.confirmLoading = false;
         });
     })
@@ -353,24 +357,25 @@ function fnRecordDelete(noticeId: string = '0') {
     title: '提示',
     content: `确认删除公告编号为 【${noticeId}】 的数据项?`,
     onOk() {
-      const key = 'delNotice';
-      message.loading({ content: '请稍等...', key });
-      delNotice(noticeId).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `删除成功`,
-            key,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key: key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      delNotice(noticeId)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `删除成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide;
+        });
     },
   });
 }

@@ -277,17 +277,20 @@ function fnModalVisibleByVive(jobId: string | number) {
   if (modalState.confirmLoading) return;
   const hide = message.loading('正在打开...', 0);
   modalState.confirmLoading = true;
-  getJob(jobId).then(res => {
-    modalState.confirmLoading = false;
-    hide();
-    if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      Object.assign(modalState.form, res.data);
-      modalState.title = '任务信息';
-      modalState.visibleByView = true;
-    } else {
-      message.error(`获取任务信息失败`, 2);
-    }
-  });
+  getJob(jobId)
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
+        Object.assign(modalState.form, res.data);
+        modalState.title = '任务信息';
+        modalState.visibleByView = true;
+      } else {
+        message.error(`获取任务信息失败`, 2);
+      }
+    })
+    .finally(() => {
+      hide();
+      modalState.confirmLoading = false;
+    });
 }
 
 /**
@@ -301,19 +304,22 @@ function fnModalVisibleByEdit(jobId?: string | number) {
     modalState.visibleByEdit = true;
   } else {
     if (modalState.confirmLoading) return;
-    const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
-    getJob(jobId).then(res => {
-      modalState.confirmLoading = false;
-      hide();
-      if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        Object.assign(modalState.form, res.data);
-        modalState.title = '修改任务';
-        modalState.visibleByEdit = true;
-      } else {
-        message.error(`获取任务信息失败`, 2);
-      }
-    });
+    const hide = message.loading('正在打开...', 0);
+    getJob(jobId)
+      .then(res => {
+        if (res.code === RESULT_CODE_SUCCESS && res.data) {
+          Object.assign(modalState.form, res.data);
+          modalState.title = '修改任务';
+          modalState.visibleByEdit = true;
+        } else {
+          message.error(`获取任务信息失败`, 2);
+        }
+      })
+      .finally(() => {
+        hide();
+        modalState.confirmLoading = false;
+      });
   }
 }
 
@@ -325,8 +331,8 @@ function fnModalOk() {
   modalStateForm
     .validate()
     .then(() => {
-      modalState.confirmLoading = true;
       const hide = message.loading('请稍等...', 0);
+      modalState.confirmLoading = true;
       const form = toRaw(modalState.form);
       const job = form.jobId ? updateJob(form) : addJob(form);
       job
@@ -388,24 +394,25 @@ function fnRecordStatus(row: Record<string, string>) {
     title: '提示',
     content: `确定要${text} ${row.jobName} 任务吗?`,
     onOk() {
-      const key = 'changeJobStatus';
-      message.loading({ content: '请稍等...', key });
-      changeJobStatus(row.jobId, row.statusFlag).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `${row.jobName} ${text}成功`,
-            key,
-            duration: 2,
-          });
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-        fnGetList();
-      });
+      const hide = message.loading('请稍等...', 0);
+      changeJobStatus(row.jobId, row.statusFlag)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `${row.jobName} ${text}成功`,
+              duration: 3,
+            });
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+          fnGetList();
+        })
+        .finally(() => {
+          hide();
+        });
     },
     onCancel() {
       row.statusFlag = row.statusFlag === '1' ? '0' : '1';
@@ -422,23 +429,24 @@ function fnRecordRunOne(row: Record<string, string>) {
     title: '提示',
     content: `确定要立即执行一次 【${row.jobName}】 任务吗?`,
     onOk() {
-      const key = 'runJob';
-      message.loading({ content: '请稍等...', key });
-      runJob(row.jobId).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `${row.jobName} 执行成功`,
-            key,
-            duration: 2,
-          });
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      runJob(row.jobId)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `${row.jobName} 执行成功`,
+              duration: 3,
+            });
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -455,24 +463,25 @@ function fnRecordDelete(jobId: string = '0') {
     title: '提示',
     content: `确认删除定时任务编号为 【${jobId}】 任务吗?`,
     onOk() {
-      const key = 'delJob';
-      message.loading({ content: '请稍等...', key });
-      delJob(jobId).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `删除成功`,
-            key,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      delJob(jobId)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `删除成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -485,23 +494,25 @@ function fnResetQueueJob() {
     title: '提示',
     content: `确定要重置并刷新调度任务吗?`,
     onOk() {
-      const key = 'resetQueueJob';
-      message.loading({ content: '请稍等...', key });
-      resetQueueJob().then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `重置成功`,
-            key,
-            duration: 2,
-          });
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      // 发送请求
+      const hide = message.loading('请稍等...', 0);
+      resetQueueJob()
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `重置成功`,
+              duration: 3,
+            });
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -512,24 +523,25 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const key = 'exportJob';
-      message.loading({ content: '请稍等...', key });
-      exportJob(toRaw(queryParams)).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `已完成导出`,
-            key,
-            duration: 2,
-          });
-          saveAs(res.data, `job_${Date.now()}.xlsx`);
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      exportJob(toRaw(queryParams))
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `已完成导出`,
+              duration: 3,
+            });
+            saveAs(res.data, `job_${Date.now()}.xlsx`);
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }

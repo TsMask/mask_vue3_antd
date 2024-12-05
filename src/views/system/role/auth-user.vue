@@ -216,29 +216,30 @@ function fnModalOk(userIds: string[] | number[]) {
     message.error(`请选择要分配的用户`, 2);
     return;
   }
-  const key = 'authUserChecked';
-  message.loading({ content: '请稍等...', key });
+  const hide = message.loading('请稍等...', 0);
   authUserChecked({
     checked: true,
     userIds: userIds.join(','),
     roleId: roleId,
-  }).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS) {
-      modalState.visibleBySelectUser = false;
-      message.success({
-        content: `授权用户添加成功`,
-        key,
-        duration: 3,
-      });
-      fnGetList(1);
-    } else {
-      message.error({
-        content: `${res.msg}`,
-        key,
-        duration: 3,
-      });
-    }
-  });
+  })
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS) {
+        modalState.visibleBySelectUser = false;
+        message.success({
+          content: `授权用户添加成功`,
+          duration: 3,
+        });
+        fnGetList(1);
+      } else {
+        message.error({
+          content: `${res.msg}`,
+          duration: 3,
+        });
+      }
+    })
+    .finally(() => {
+      hide();
+    });
 }
 
 /**
@@ -253,26 +254,25 @@ function fnRecordDelete(userId: string | number) {
     title: '提示',
     content: `确认取消用户编号为 【${userId}】 的数据项授权?`,
     onOk() {
-      const key = 'authUserChecked';
-      message.loading({ content: '请稍等...', key });
-      authUserChecked({ checked: false, userIds: userId, roleId: roleId }).then(
-        res => {
+      const hide = message.loading('请稍等...', 0);
+      authUserChecked({ checked: false, userIds: userId, roleId: roleId })
+        .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `取消授权成功`,
-              key,
               duration: 3,
             });
             fnGetList(1);
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
               duration: 3,
             });
           }
-        }
-      );
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -295,7 +295,7 @@ function fnGetList(pageNum?: number) {
     queryParams.pageNum = pageNum;
   }
   authUserList(toRaw(queryParams)).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS  ) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
@@ -487,7 +487,10 @@ onMounted(() => {
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'statusFlag'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.statusFlag" />
+            <DictTag
+              :options="dict.sysNormalDisable"
+              :value="record.statusFlag"
+            />
           </template>
           <template v-if="column.key === 'userId'">
             <a-space :size="8" align="center">

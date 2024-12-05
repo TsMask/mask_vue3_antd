@@ -285,17 +285,20 @@ function fnModalVisibleByVive(menuId: string | number) {
   const hide = message.loading('正在打开...', 0);
   modalState.confirmLoading = true;
   modalState.treeData = treeDataAll;
-  getMenu(menuId).then(res => {
-    modalState.confirmLoading = false;
-    hide();
-    if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      Object.assign(modalState.form, res.data);
-      modalState.title = '菜单信息';
-      modalState.visibleByView = true;
-    } else {
-      message.error(`获取菜单信息失败`, 2);
-    }
-  });
+  getMenu(menuId)
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
+        Object.assign(modalState.form, res.data);
+        modalState.title = '菜单信息';
+        modalState.visibleByView = true;
+      } else {
+        message.error(`获取菜单信息失败`, 2);
+      }
+    })
+    .finally(() => {
+      hide();
+      modalState.confirmLoading = false;
+    });
 }
 
 /**
@@ -321,17 +324,20 @@ function fnModalVisibleByEdit(
     if (modalState.confirmLoading) return;
     const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
-    getMenu(menuId).then(res => {
-      modalState.confirmLoading = false;
-      hide();
-      if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        Object.assign(modalState.form, res.data);
-        modalState.title = '修改菜单信息';
-        modalState.visibleByEdit = true;
-      } else {
-        message.error(`获取菜单信息失败`, 2);
-      }
-    });
+    getMenu(menuId)
+      .then(res => {
+        if (res.code === RESULT_CODE_SUCCESS && res.data) {
+          Object.assign(modalState.form, res.data);
+          modalState.title = '修改菜单信息';
+          modalState.visibleByEdit = true;
+        } else {
+          message.error(`获取菜单信息失败`, 2);
+        }
+      })
+      .finally(() => {
+        hide();
+        modalState.confirmLoading = false;
+      });
   }
 }
 
@@ -355,18 +361,16 @@ function fnModalOk() {
   modalStateForm
     .validate(validateNames)
     .then(() => {
+      const hide = message.loading('请稍等...', 0);
       modalState.confirmLoading = true;
       const form = toRaw(modalState.form);
       const menu = form.menuId ? updateMenu(form) : addMenu(form);
-      const key = 'menu';
-      message.loading({ content: '请稍等...', key });
       menu
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
-              key,
-              duration: 2,
+              duration: 3,
             });
             treeDataAll = [];
             fnGetList();
@@ -374,12 +378,12 @@ function fnModalOk() {
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
-              duration: 2,
+              duration: 3,
             });
           }
         })
         .finally(() => {
+          hide();
           modalState.confirmLoading = false;
         });
     })
@@ -407,24 +411,25 @@ function fnRecordDelete(menuId: string | number) {
     title: '提示',
     content: `确认删除菜单编号为 【${menuId}】 的数据项?`,
     onOk() {
-      const key = 'delMenu';
-      message.loading({ content: '请稍等...', key });
-      delMenu(menuId).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `删除成功`,
-            key,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key: key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      delMenu(menuId)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `删除成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }

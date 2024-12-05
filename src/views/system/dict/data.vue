@@ -291,17 +291,20 @@ function fnModalVisibleByEdit(dataId?: string | number) {
     if (modalState.confirmLoading) return;
     const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
-    getData(dataId).then(res => {
-      modalState.confirmLoading = false;
-      hide();
-      if (res.code === RESULT_CODE_SUCCESS) {
-        Object.assign(modalState.form, res.data);
-        modalState.title = '修改字典数据';
-        modalState.visibleByEdit = true;
-      } else {
-        message.error(`获取字典数据信息失败`, 2);
-      }
-    });
+    getData(dataId)
+      .then(res => {
+        if (res.code === RESULT_CODE_SUCCESS) {
+          Object.assign(modalState.form, res.data);
+          modalState.title = '修改字典数据';
+          modalState.visibleByEdit = true;
+        } else {
+          message.error(`获取字典数据信息失败`, 2);
+        }
+      })
+      .finally(() => {
+        hide();
+        modalState.confirmLoading = false;
+      });
   }
 }
 
@@ -313,30 +316,28 @@ function fnModalOk() {
   modalStateForm
     .validate()
     .then(() => {
+      const hide = message.loading('请稍等...', 0);
       modalState.confirmLoading = true;
       const form = toRaw(modalState.form);
       const dictData = form.dataId ? updateData(form) : addData(form);
-      const key = 'dictData';
-      message.loading({ content: '请稍等...', key });
       dictData
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
-              key,
-              duration: 2,
+              duration: 3,
             });
             fnGetList(1);
             fnModalCancel();
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
-              duration: 2,
+              duration: 3,
             });
           }
         })
         .finally(() => {
+          hide();
           modalState.confirmLoading = false;
         });
     })
@@ -367,24 +368,25 @@ function fnRecordDelete(dataId: string = '0') {
     title: '提示',
     content: `确认删除字典数据编号为 【${dataId}】 的数据项?`,
     onOk() {
-      const key = 'delData';
-      message.loading({ content: '请稍等...', key });
-      delData(dataId).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `删除成功`,
-            key,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key: key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      delData(dataId)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `删除成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -395,24 +397,25 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const key = 'exportData';
-      message.loading({ content: '请稍等...', key });
-      exportData(toRaw(queryParams)).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `已完成导出`,
-            key,
-            duration: 2,
-          });
-          saveAs(res.data, `dict_data_${Date.now()}.xlsx`);
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      exportData(toRaw(queryParams))
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `已完成导出`,
+              duration: 3,
+            });
+            saveAs(res.data, `dict_data_${Date.now()}.xlsx`);
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -450,20 +453,19 @@ function fnGetList(pageNum?: number) {
 
 onMounted(() => {
   // 初始字典数据
-  Promise.allSettled([
-    getDict('sys_normal_disable'),
-    getDictOption(),
-  ]).then(resArr => {
-    if (resArr[0].status === 'fulfilled') {
-      dict.sysNormalDisable = resArr[0].value;
-    }
-    if (resArr[1].status === 'fulfilled') {
-      const dicts = resArr[1].value;
-      if (dicts.code === RESULT_CODE_SUCCESS) {
-        dict.sysDictType = dicts.data;
+  Promise.allSettled([getDict('sys_normal_disable'), getDictOption()]).then(
+    resArr => {
+      if (resArr[0].status === 'fulfilled') {
+        dict.sysNormalDisable = resArr[0].value;
+      }
+      if (resArr[1].status === 'fulfilled') {
+        const dicts = resArr[1].value;
+        if (dicts.code === RESULT_CODE_SUCCESS) {
+          dict.sysDictType = dicts.data;
+        }
       }
     }
-  });
+  );
   // 指定字典id列表数据
   if (dictId && dictId !== '0') {
     getType(dictId).then(res => {

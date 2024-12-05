@@ -25,7 +25,7 @@ import { deptTree } from '@/api/system/dept';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import {
-  regExpPasswd,
+  regExpPassword,
   regExpMobile,
   regExpNick,
   regExpEmail,
@@ -290,13 +290,13 @@ const modalStateForm = Form.useForm(
       {
         required: true,
         pattern: regExpUserName,
-        message: '账号不能以数字开头，可包含大写小写字母，数字，且不少于5位',
+        message: '账号只能包含大写小写字母，数字，且不少于4位',
       },
     ],
     password: [
       {
         required: true,
-        pattern: regExpPasswd,
+        pattern: regExpPassword,
         message: '密码至少包含大小写字母、数字、特殊符号，且不少于6位',
       },
     ],
@@ -336,34 +336,39 @@ function fnModalVisibleByVive(userId: string | number) {
   if (modalState.confirmLoading) return;
   const hide = message.loading('正在打开...', 0);
   modalState.confirmLoading = true;
-  getUser(userId).then(res => {
-    modalState.confirmLoading = false;
-    hide();
-    if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      const roles = res.data.roles.map((m: Record<string, any>) => {
-        const disabled = m.statusFlag === '0';
-        Reflect.set(m, 'disabled', disabled);
-        return m;
-      });
-      const posts = res.data.posts.map((m: Record<string, any>) => {
-        const disabled = m.statusFlag === '0';
-        Reflect.set(m, 'disabled', disabled);
-        return m;
-      });
-      modalState.options.roles = roles;
-      modalState.options.posts = posts;
-      const { user, roleIds, postIds } = res.data;
-      Object.assign(modalState.form, user);
-      modalState.form.roleIds = roleIds;
-      modalState.form.postIds = postIds;
-      // 头像解析
-      modalState.form.avatar = useUserStore().fnAvatar(modalState.form.avatar);
-      modalState.title = '用户信息';
-      modalState.visibleByView = true;
-    } else {
-      message.error('获取用户信息失败', 2);
-    }
-  });
+  getUser(userId)
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
+        const roles = res.data.roles.map((m: Record<string, any>) => {
+          const disabled = m.statusFlag === '0';
+          Reflect.set(m, 'disabled', disabled);
+          return m;
+        });
+        const posts = res.data.posts.map((m: Record<string, any>) => {
+          const disabled = m.statusFlag === '0';
+          Reflect.set(m, 'disabled', disabled);
+          return m;
+        });
+        modalState.options.roles = roles;
+        modalState.options.posts = posts;
+        const { user, roleIds, postIds } = res.data;
+        Object.assign(modalState.form, user);
+        modalState.form.roleIds = roleIds;
+        modalState.form.postIds = postIds;
+        // 头像解析
+        modalState.form.avatar = useUserStore().fnAvatar(
+          modalState.form.avatar
+        );
+        modalState.title = '用户信息';
+        modalState.visibleByView = true;
+      } else {
+        message.error('获取用户信息失败', 3);
+      }
+    })
+    .finally(() => {
+      hide();
+      modalState.confirmLoading = false;
+    });
 }
 
 /**
@@ -377,62 +382,68 @@ function fnModalVisibleByEdit(userId?: string | number) {
     const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
     // 查询用户详细获取岗位和角色列表
-    getUser().then(res => {
-      modalState.confirmLoading = false;
-      hide();
-      if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        const roles = res.data.roles.map((m: Record<string, any>) => {
-          const disabled = m.statusFlag === '0';
-          Reflect.set(m, 'disabled', disabled);
-          return m;
-        });
-        const posts = res.data.posts.map((m: Record<string, any>) => {
-          const disabled = m.statusFlag === '0';
-          Reflect.set(m, 'disabled', disabled);
-          return m;
-        });
-        modalState.options.roles = roles;
-        modalState.options.posts = posts;
-        const { user, roleIds, postIds } = res.data;
-        Object.assign(modalState.form, user);
-        modalState.form.roleIds = roleIds;
-        modalState.form.postIds = postIds;
-        modalState.title = '添加用户信息';
-        modalState.visibleByEdit = true;
-      } else {
-        message.error('获取用户信息失败', 2);
-      }
-    });
+    getUser()
+      .then(res => {
+        if (res.code === RESULT_CODE_SUCCESS && res.data) {
+          const roles = res.data.roles.map((m: Record<string, any>) => {
+            const disabled = m.statusFlag === '0';
+            Reflect.set(m, 'disabled', disabled);
+            return m;
+          });
+          const posts = res.data.posts.map((m: Record<string, any>) => {
+            const disabled = m.statusFlag === '0';
+            Reflect.set(m, 'disabled', disabled);
+            return m;
+          });
+          modalState.options.roles = roles;
+          modalState.options.posts = posts;
+          const { user, roleIds, postIds } = res.data;
+          Object.assign(modalState.form, user);
+          modalState.form.roleIds = roleIds;
+          modalState.form.postIds = postIds;
+          modalState.title = '添加用户信息';
+          modalState.visibleByEdit = true;
+        } else {
+          message.error('获取用户信息失败', 3);
+        }
+      })
+      .finally(() => {
+        hide();
+        modalState.confirmLoading = false;
+      });
   } else {
     if (modalState.confirmLoading) return;
     const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
-    getUser(userId).then(res => {
-      modalState.confirmLoading = false;
-      hide();
-      if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        const roles = res.data.roles.map((m: Record<string, any>) => {
-          const disabled = m.statusFlag === '0';
-          Reflect.set(m, 'disabled', disabled);
-          return m;
-        });
-        const posts = res.data.posts.map((m: Record<string, any>) => {
-          const disabled = m.statusFlag === '0';
-          Reflect.set(m, 'disabled', disabled);
-          return m;
-        });
-        modalState.options.roles = roles;
-        modalState.options.posts = posts;
-        const { user, roleIds, postIds } = res.data;
-        Object.assign(modalState.form, user);
-        modalState.form.roleIds = roleIds;
-        modalState.form.postIds = postIds;
-        modalState.title = '修改用户信息';
-        modalState.visibleByEdit = true;
-      } else {
-        message.error(`获取用户信息失败`, 2);
-      }
-    });
+    getUser(userId)
+      .then(res => {
+        if (res.code === RESULT_CODE_SUCCESS && res.data) {
+          const roles = res.data.roles.map((m: Record<string, any>) => {
+            const disabled = m.statusFlag === '0';
+            Reflect.set(m, 'disabled', disabled);
+            return m;
+          });
+          const posts = res.data.posts.map((m: Record<string, any>) => {
+            const disabled = m.statusFlag === '0';
+            Reflect.set(m, 'disabled', disabled);
+            return m;
+          });
+          modalState.options.roles = roles;
+          modalState.options.posts = posts;
+          const { user, roleIds, postIds } = res.data;
+          Object.assign(modalState.form, user);
+          modalState.form.roleIds = roleIds;
+          modalState.form.postIds = postIds;
+          modalState.title = '修改用户信息';
+          modalState.visibleByEdit = true;
+        } else {
+          message.error(`获取用户信息失败`, 3);
+        }
+      })
+      .finally(() => {
+        hide();
+        modalState.confirmLoading = false;
+      });
   }
 }
 
@@ -448,30 +459,28 @@ function fnModalOk() {
   modalStateForm
     .validate(validateName)
     .then(() => {
+      const hide = message.loading('请稍等...', 0);
       modalState.confirmLoading = true;
       const form = toRaw(modalState.form);
       const user = form.userId ? updateUser(form) : addUser(form);
-      const key = 'user';
-      message.loading({ content: '请稍等...', key });
       user
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
-              key,
-              duration: 2,
+              duration: 3,
             });
             fnGetList(1);
             fnModalCancel();
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
-              duration: 2,
+              duration: 3,
             });
           }
         })
         .finally(() => {
+          hide();
           modalState.confirmLoading = false;
         });
     })
@@ -501,28 +510,26 @@ function fnModalOkResetPwd() {
   modalStateForm
     .validate(['userName', 'password'])
     .then(() => {
+      const hide = message.loading('请稍等...', 0);
       modalState.confirmLoading = true;
-      const key = 'user';
-      message.loading({ content: '请稍等...', key });
       resetUserPwd(modalState.form.userId, modalState.form.password)
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
-              key,
-              duration: 2,
+              duration: 3,
             });
             modalState.visibleByResetPwd = false;
             modalStateForm.resetFields();
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
-              duration: 2,
+              duration: 3,
             });
           }
         })
         .finally(() => {
+          hide();
           modalState.confirmLoading = false;
         });
     })
@@ -553,24 +560,25 @@ function fnRecordStatus(row: Record<string, string>) {
     title: '提示',
     content: `确定要${text} ${row.userName} 用户吗?`,
     onOk() {
-      const key = 'changeUserStatus';
-      message.loading({ content: '请稍等...', key });
-      changeUserStatus(row.userId, row.statusFlag).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `${row.userName} ${text}成功`,
-            key: key,
-            duration: 2,
-          });
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key: key,
-            duration: 2,
-          });
-        }
-        fnGetList();
-      });
+      const hide = message.loading('请稍等...', 0);
+      changeUserStatus(row.userId, row.statusFlag)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `${row.userName} ${text}成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
     onCancel() {
       row.statusFlag = row.statusFlag === '1' ? '0' : '1';
@@ -590,24 +598,25 @@ function fnRecordDelete(userId: string = '0') {
     title: '提示',
     content: `确认删除用户编号为 【${userId}】 的数据项?`,
     onOk() {
-      const key = 'delUser';
-      message.loading({ content: '请稍等...', key });
-      delUser(userId).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `删除成功`,
-            key,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key: key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      delUser(userId)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `删除成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -618,24 +627,25 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const key = 'exportUser';
-      message.loading({ content: '请稍等...', key });
-      exportUser(toRaw(queryParams)).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `已完成导出`,
-            key,
-            duration: 2,
-          });
-          saveAs(res.data, `user_${Date.now()}.xlsx`);
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      exportUser(toRaw(queryParams))
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `已完成导出`,
+              duration: 3,
+            });
+            saveAs(res.data, `user_${Date.now()}.xlsx`);
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -708,13 +718,13 @@ function fnModalUploadImportExportTemplate() {
       if (res.code === RESULT_CODE_SUCCESS) {
         message.success({
           content: `成功读取并下载导入模板`,
-          duration: 2,
+          duration: 3,
         });
         saveAs(res.data, `user_template_${Date.now()}.xlsx`);
       } else {
         message.error({
           content: `${res.msg}`,
-          duration: 2,
+          duration: 3,
         });
       }
     })

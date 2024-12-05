@@ -217,30 +217,33 @@ const modalStateForm = Form.useForm(
  */
 function fnModalVisibleByVive(deptId: string | number) {
   if (!deptId) {
-    message.error(`部门记录存在错误`, 2);
+    message.error(`部门记录存在错误`, 3);
     return;
   }
   if (modalState.confirmLoading) return;
   const hide = message.loading('正在打开...', 0);
   modalState.confirmLoading = true;
-  getDept(deptId).then(res => {
-    modalState.confirmLoading = false;
-    hide();
-    if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      if (res.data.parentId === '0') {
-        modalState.treeData = [
-          { deptId: '0', parentId: '0', deptName: '根节点' },
-        ];
+  getDept(deptId)
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
+        if (res.data.parentId === '0') {
+          modalState.treeData = [
+            { deptId: '0', parentId: '0', deptName: '根节点' },
+          ];
+        } else {
+          modalState.treeData = treeDataAll;
+        }
+        Object.assign(modalState.form, res.data);
+        modalState.title = '部门信息';
+        modalState.visibleByView = true;
       } else {
-        modalState.treeData = treeDataAll;
+        message.error(`获取部门信息失败`, 3);
       }
-      Object.assign(modalState.form, res.data);
-      modalState.title = '部门信息';
-      modalState.visibleByView = true;
-    } else {
-      message.error(`获取部门信息失败`, 2);
-    }
-  });
+    })
+    .finally(() => {
+      hide();
+      modalState.confirmLoading = false;
+    });
 }
 
 /**
@@ -284,12 +287,12 @@ function fnModalVisibleByEdit(
           modalState.title = '修改部门信息';
           modalState.visibleByEdit = true;
         } else {
-          message.error(`获取部门信息失败`, 2);
+          message.error(`获取部门信息失败`, 3);
         }
       })
       .finally(() => {
-        modalState.confirmLoading = false;
         hide();
+        modalState.confirmLoading = false;
       });
   }
 }
@@ -302,16 +305,16 @@ function fnModalOk() {
   modalStateForm
     .validate()
     .then(() => {
+      const hide = message.loading('请稍等...', 0);
       modalState.confirmLoading = true;
       const form = toRaw(modalState.form);
       const dept = form.deptId ? updateDept(form) : addDept(form);
-      const hide = message.loading('请稍等...', 0);
       dept
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
-              duration: 2,
+              duration: 3,
             });
             // 新增时清空上级部门树重新获取
             if (!form.deptId) {
@@ -322,7 +325,7 @@ function fnModalOk() {
           } else {
             message.error({
               content: `${res.msg}`,
-              duration: 2,
+              duration: 3,
             });
           }
         })
@@ -356,21 +359,24 @@ function fnRecordDelete(deptId: string | number) {
     content: `确认删除部门编号为 【${deptId}】 的数据项?`,
     onOk() {
       const hide = message.loading('请稍等...', 0);
-      delDept(deptId).then(res => {
-        hide();
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `删除成功`,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            duration: 2,
-          });
-        }
-      });
+      delDept(deptId)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `删除成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }

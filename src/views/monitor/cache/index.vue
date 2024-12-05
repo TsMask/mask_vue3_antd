@@ -103,28 +103,31 @@ let cacheKeyTable = reactive({
  */
 function fnCacheKeyClear(cacheKey: string) {
   if (isClick.value) return;
-  isClick.value = true;
   const hide = message.loading('请稍等...', 0);
-  clearCacheKey(cacheKeyTable.cacheName, cacheKey).then(res => {
-    hide();
-    isClick.value = false;
-    if (res.code === RESULT_CODE_SUCCESS) {
-      message.success({
-        content: `已删除缓存键名 ${cacheKey}`,
-        duration: 3,
-      });
-      // 缓存内容显示且是删除的缓存键名，需要进行加载显示
-      if (!cacheKeyInfo.loading && cacheKeyInfo.data.cacheKey === cacheKey) {
-        cacheKeyInfo.loading = true;
+  isClick.value = true;
+  clearCacheKey(cacheKeyTable.cacheName, cacheKey)
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS) {
+        message.success({
+          content: `已删除缓存键名 ${cacheKey}`,
+          duration: 3,
+        });
+        // 缓存内容显示且是删除的缓存键名，需要进行加载显示
+        if (!cacheKeyInfo.loading && cacheKeyInfo.data.cacheKey === cacheKey) {
+          cacheKeyInfo.loading = true;
+        }
+      } else {
+        message.error({
+          content: res.msg,
+          duration: 3,
+        });
       }
-    } else {
-      message.error({
-        content: res.msg,
-        duration: 3,
-      });
-    }
-    fnCacheKeyList();
-  });
+      fnCacheKeyList();
+    })
+    .finally(() => {
+      hide();
+      isClick.value = false;
+    });
 }
 
 /** 查询缓存键名列表 */
@@ -205,23 +208,26 @@ function fnClearCacheSafe() {
   if (isClick.value) return;
   isClick.value = true;
   const hide = message.loading('请稍等...', 0);
-  clearCacheSafe().then(res => {
-    hide();
-    isClick.value = false;
-    if (res.code === RESULT_CODE_SUCCESS) {
-      message.success({
-        content: '已完成安全清理缓存',
-        duration: 3,
-      });
-      cacheKeyTable.loading = true;
-      cacheKeyInfo.loading = true;
-    } else {
-      message.error({
-        content: res.msg,
-        duration: 3,
-      });
-    }
-  });
+  clearCacheSafe()
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS) {
+        message.success({
+          content: '已完成安全清理缓存',
+          duration: 3,
+        });
+        cacheKeyTable.loading = true;
+        cacheKeyInfo.loading = true;
+      } else {
+        message.error({
+          content: res.msg,
+          duration: 3,
+        });
+      }
+    })
+    .finally(() => {
+      hide();
+      isClick.value = false;
+    });
 }
 
 /**
@@ -232,26 +238,32 @@ function fnCacheNameClear(cacheName: string) {
   if (isClick.value) return;
   isClick.value = true;
   const hide = message.loading('请稍等...', 0);
-  clearCacheName(cacheName).then(res => {
-    hide();
-    isClick.value = false;
-    if (res.code === RESULT_CODE_SUCCESS) {
-      message.success({
-        content: `已清理缓存名称 ${cacheName}`,
-        duration: 3,
-      });
-      // 缓存内容显示且是删除的缓存名称，需要进行加载显示
-      if (!cacheKeyInfo.loading && cacheKeyInfo.data.cacheName === cacheName) {
-        cacheKeyInfo.loading = true;
+  clearCacheName(cacheName)
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS) {
+        message.success({
+          content: `已清理缓存名称 ${cacheName}`,
+          duration: 3,
+        });
+        // 缓存内容显示且是删除的缓存名称，需要进行加载显示
+        if (
+          !cacheKeyInfo.loading &&
+          cacheKeyInfo.data.cacheName === cacheName
+        ) {
+          cacheKeyInfo.loading = true;
+        }
+      } else {
+        message.error({
+          content: res.msg,
+          duration: 3,
+        });
       }
-    } else {
-      message.error({
-        content: res.msg,
-        duration: 3,
-      });
-    }
-    fnCacheKeyList(cacheName);
-  });
+      fnCacheKeyList(cacheName);
+    })
+    .finally(() => {
+      hide();
+      isClick.value = false;
+    });
 }
 
 /**查询缓存名称列表 */
