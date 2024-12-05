@@ -111,6 +111,7 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
   if (options.whithToken && token) {
     Reflect.set(options.headers, TOKEN_KEY, TOKEN_KEY_PREFIX + token);
   }
+
   // 是否需要防止数据重复提交
   if (
     options.repeatSubmit &&
@@ -197,7 +198,7 @@ export async function request(options: OptionsType): Promise<ResultType> {
   options = Object.assign({}, FATCH_OPTIONS, options);
 
   // 请求超时控制请求终止
-  let timeoutId: any = 0;
+  let timeoutId: any = null;
   if (!options.signal) {
     const controller = new AbortController();
     options.signal = controller.signal;
@@ -280,5 +281,6 @@ export async function request(options: OptionsType): Promise<ResultType> {
     throw error;
   } finally {
     clearTimeout(timeoutId); // 清除超时计时器
+    timeoutId = null;
   }
 }
