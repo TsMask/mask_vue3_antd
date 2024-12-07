@@ -24,7 +24,7 @@ type UserInfo = {
   /**用户昵称 */
   nickName: string;
   /**用户手机号 */
-  phonenumber: string;
+  phone: string;
   /**用户邮箱 */
   email: string;
   /**用户性别 */
@@ -56,7 +56,7 @@ const useUserStore = defineStore('user', {
     permissions: [],
     avatar: '',
     nickName: '',
-    phonenumber: '',
+    phone: '',
     email: '',
     sex: undefined,
   }),
@@ -77,9 +77,10 @@ const useUserStore = defineStore('user', {
     getBaseInfo(state) {
       return {
         nickName: state.nickName,
-        phonenumber: state.phonenumber,
+        phone: state.phone,
         email: state.email,
         sex: state.sex,
+        avatar: state.avatar,
       };
     },
   },
@@ -90,7 +91,7 @@ const useUserStore = defineStore('user', {
      */
     setBaseInfo(data: Record<string, any>) {
       this.nickName = data.nickName;
-      this.phonenumber = data.phonenumber;
+      this.phone = data.phone;
       this.email = data.email;
       this.sex = data.sex;
     },
@@ -131,7 +132,7 @@ const useUserStore = defineStore('user', {
         this.avatar = user.avatar;
         // 基础信息
         this.nickName = user.nickName;
-        this.phonenumber = user.phonenumber;
+        this.phone = user.phone;
         this.email = user.email;
         this.sex = user.sex;
 
@@ -146,8 +147,8 @@ const useUserStore = defineStore('user', {
 
         // 水印文字信息=用户昵称 手机号
         let waterMarkContent = this.nickName;
-        if (this.phonenumber) {
-          waterMarkContent = `${this.nickName} ${this.phonenumber}`;
+        if (this.phone) {
+          waterMarkContent = `${this.nickName} ${this.phone}`;
         }
         useLayoutStore().changeWaterMark(waterMarkContent);
       }

@@ -4,7 +4,7 @@
 ![Build Vite](https://img.shields.io/badge/Build-Vite-green.svg)
 ![Build Vue3](https://img.shields.io/badge/Build-Vue3-green.svg)
 ![Build MaskApi](https://img.shields.io/badge/Build-MaskApi-orange.svg)
-![Release V4.0.2](https://img.shields.io/badge/Release-V4.0.2-orange.svg)
+![Release V3.2.4](https://img.shields.io/badge/Release-V3.2.4-orange.svg)
 ![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 ## 简介
@@ -58,20 +58,20 @@ npm run build      # 构建生产项目代码
 
 ## 内置功能
 
-1. 用户管理：用户是系统操作者，该功能主要完成系统用户配置。
-2. 部门管理：配置系统组织机构，树结构展现支持数据权限。
-3. 岗位管理：配置系统用户所属担任职务。
-4. 菜单管理：配置系统菜单，操作权限，按钮权限标识等。
-5. 角色管理：角色菜单权限分配、设置角色按机构进行数据范围权限划分。
+1. 用户管理：用户是系统数据使用者，该功能主要对系统用户进行配置。
+2. 部门管理：配置系统组织机构，树结构展现支持部门组织数据。
+3. 岗位管理：配置系统用户所属担任职务标记。
+4. 菜单管理：配置系统菜单，页面操作权限，按钮权限标识等。
+5. 角色管理：角色菜单权限分配、设置角色按组织机构进行数据范围权限划分。
 6. 字典管理：对系统中经常使用的一些较为固定的数据进行维护。
 7. 参数管理：对系统动态配置常用参数。
 8. 通知公告：系统通知公告信息发布维护。
-9. 系统日志：系统正常操作日志记录和查询；系统异常信息日志记录和查询。
-10. 登录日志：系统登录日志记录查询包含登录异常。
-11. 在线用户：当前系统中活跃用户状态监控。
+9. 系统日志：系统接口操作日志记录，记录请求地址和请求方法等。
+10. 登录日志：系统用户登录日志记录，登录成功和异常访问。
+11. 在线用户：当前系统中在线登录的用户状态。
 12. 调度任务：在线（添加、修改、删除）任务调度包含执行结果日志。
-13. 服务信息：监视当前系统CPU、内存、磁盘、堆栈等相关信息。
+13. 服务信息：监视当前系统CPU、内存、磁盘、堆栈空间等相关信息。
 14. 缓存信息：对系统的缓存信息查询，命令统计。
 
-> 有任何问题或者建议，可以在 [_Issues_](https://gitee.com/TsMask/mask_api_midwayjs/issues) 或通过QQ群：[_57242844_](https://jq.qq.com/?_wv=1027&k=z6Y4YQcB) 提出想法。  
+> 有任何问题或者建议，可以在 [_Issues_](https://gitee.com/TsMask/mask_vue3_antd/issues) 或通过QQ群：[_57242844_](https://jq.qq.com/?_wv=1027&k=z6Y4YQcB) 提出想法。  
 > 如果觉得项目对您有帮助，可以来个Star ⭐

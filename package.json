@@ -1,7 +1,7 @@
 {
   "name": "mask_vue3_antd",
   "type": "module",
-  "version": "4.0.2",
+  "version": "3.2.4",
   "description": "🎉 基于 ant-design-vue + vue3 的管理系统",
   "author": "TsMask",
   "repository": {
@@ -33,8 +33,8 @@
     "vue-router": "^4.4.0"
   },
   "devDependencies": {
-    "@types/file-saver": "^2.0.7",
-    "@types/js-cookie": "^3.0.6",
+    "@types/file-saver": "2.0.7",
+    "@types/js-cookie": "3.0.6",
     "@types/node": "^18.0.0",
     "@types/nprogress": "^0.2.3",
     "@vitejs/plugin-vue": "^5.0.4",

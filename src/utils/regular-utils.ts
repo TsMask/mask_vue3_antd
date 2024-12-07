@@ -1,22 +1,24 @@
 /**
  * 有效账号格式
  *
- * 账号不能以数字开头，可包含大写小写字母，数字，且不少于5位
+ * 账号只能包含大写小写字母，数字，且不少于4位
  */
-export const regExpUserName = /^[a-zA-Z][a-z0-9A-Z]{5,}$/;
+export const regExpUserName = /[a-z0-9A-Z]{3,}$/;
 
 /**
  * 有效密码格式
  *
  * 密码至少包含大小写字母、数字、特殊符号，且不少于6位
  */
-export const regExpPasswd =
-  /^(?![A-Za-z0-9]+$)(?![a-z0-9\W]+$)(?![A-Za-z\W]+$)(?![A-Z0-9\W]+$)[a-zA-Z0-9\W]{6,}$/;
+export const regExpPassword =
+  /^(?![A-Za-z0-9]+$)(?![a-z0-9\W]+$)(?![A-Za-z\W]+$)(?![A-Z0-9\W]+$)[a-zA-Z0-9\W]{5,}$/;
 
 /**
  * 有效手机号格式
+ * 
+ * 1开头的11位手机号
  */
-export const regExpMobile = /^1[3|4|5|6|7|8|9][0-9]\d{8}$/;
+export const regExpMobile = /^1[3-9]\d{9}$/;
 
 /**
  * 有效邮箱格式

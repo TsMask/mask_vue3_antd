@@ -101,7 +101,7 @@ onMounted(() => {
             :column="1"
           >
             <a-descriptions-item label="手机号码">
-              {{ state.user.phonenumber || '-' }}
+              {{ state.user.phone || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="用户邮箱">
               {{ state.user.email || '-' }}
@@ -125,8 +125,8 @@ onMounted(() => {
               {{ state.user.loginIp || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="登录时间">
-              <span v-if="+state.user.loginDate > 0">
-                {{ parseDateToStr(+state.user.loginDate) }}
+              <span v-if="+state.user.loginTime > 0">
+                {{ parseDateToStr(+state.user.loginTime) }}
               </span>
               <span v-else>-</span>
             </a-descriptions-item>

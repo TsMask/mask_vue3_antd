@@ -9,9 +9,9 @@ export function exportJobLog(
   query: Record<string, any>
 ) {
   return request({
-    url: '/monitor/jobLog/export',
-    method: 'post',
-    data: query,
+    url: '/monitor/job/log/export',
+    method: 'GET',
+    params: query,
     responseType: 'blob',
   });
 }
@@ -23,8 +23,8 @@ export function exportJobLog(
  */
 export function listJobLog(query: Record<string, any>) {
   return request({
-    url: '/monitor/jobLog/list',
-    method: 'get',
+    url: '/monitor/job/log/list',
+    method: 'GET',
     params: query,
   });
 }
@@ -36,8 +36,8 @@ export function listJobLog(query: Record<string, any>) {
  */
 export function delJobLog(jobLogId: string) {
   return request({
-    url: `/monitor/jobLog/${jobLogId}`,
-    method: 'delete',
+    url: `/monitor/job/log/${jobLogId}`,
+    method: 'DELETE',
   });
 }
 
@@ -47,7 +47,7 @@ export function delJobLog(jobLogId: string) {
  */
 export function cleanJobLog() {
   return request({
-    url: '/monitor/jobLog/clean',
-    method: 'delete',
+    url: '/monitor/job/log/clean',
+    method: 'DELETE',
   });
 }

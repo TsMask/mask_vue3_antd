@@ -5,7 +5,7 @@ export const RESULT_CODE_SUCCESS = 200;
 export const RESULT_MSG_SUCCESS = 'success';
 
 /**响应-code错误失败 */
-export const RESULT_CODE_ERROR = 500;
+export const RESULT_CODE_ERROR = 400;
 
 /**响应-msg错误失败 */
 export const RESULT_MSG_ERROR = 'error';

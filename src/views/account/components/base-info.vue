@@ -3,7 +3,8 @@ import { Modal, message } from 'ant-design-vue';
 import type { FileType } from 'ant-design-vue/es/upload/interface';
 import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface';
 import { onMounted, reactive, ref, toRaw } from 'vue';
-import { updateUserProfile, uploadAvatar } from '@/api/profile';
+import { uploadFile } from '@/api/tool/file';
+import { updateUserProfile } from '@/api/profile';
 import { regExpEmail, regExpMobile, regExpNick } from '@/utils/regular-utils';
 import useUserStore from '@/store/modules/user';
 import useDictStore from '@/store/modules/dict';
@@ -12,8 +13,8 @@ const userStore = useUserStore();
 const { getDict } = useDictStore();
 
 /**用户性别字典 */
-let sysUserSex = ref<DictType[]>([
-  { label: '未知', value: '0', tagType: '', tagClass: '' },
+let userSexOptions = ref<DictType[]>([
+  { label: '未选择', value: '0', tagType: '', tagClass: '' },
   { label: '男', value: '1', tagType: '', tagClass: '' },
   { label: '女', value: '2', tagType: '', tagClass: '' },
 ]);
@@ -24,8 +25,9 @@ let stateForm = reactive({
   form: {
     nickName: '',
     email: '',
-    phonenumber: '',
+    phone: '',
     sex: undefined,
+    avatar: '',
   },
   /**表单提交点击状态 */
   formClick: false,
@@ -33,7 +35,7 @@ let stateForm = reactive({
 
 /**表单数据状态初始化 */
 function fnInitstateForm() {
-  stateForm.form = Object.assign(stateForm.form, userStore.getBaseInfo);
+  Object.assign(stateForm.form, userStore.getBaseInfo);
   stateForm.formClick = false;
 }
 
@@ -43,26 +45,29 @@ function fnFinish() {
     title: '提示',
     content: `确认要提交修改用户基本信息吗?`,
     onOk() {
-      stateForm.formClick = true;
       // 发送请求
       const hide = message.loading('请稍等...', 0);
+      stateForm.formClick = true;
       const form = toRaw(stateForm.form);
-      updateUserProfile(form).then(res => {
-        hide();
-        stateForm.formClick = false;
-        if (res.code === RESULT_CODE_SUCCESS) {
-          Modal.success({
-            title: '提示',
-            content: `用户基本信息修改成功！`,
-            okText: '我知道了',
-            onOk() {
-              userStore.setBaseInfo(form);
-            },
-          });
-        } else {
-          message.error(`${res.msg}`, 3);
-        }
-      });
+      updateUserProfile(form)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            Modal.success({
+              title: '提示',
+              content: `用户基本信息修改成功！`,
+              okText: '我知道了',
+              onOk() {
+                userStore.setBaseInfo(form);
+              },
+            });
+          } else {
+            message.error(`${res.msg}`, 3);
+          }
+        })
+        .finally(() => {
+          hide();
+          stateForm.formClick = false;
+        });
     },
   });
 }
@@ -95,16 +100,33 @@ function fnUpload(up: UploadRequestOption) {
       upState.value = true;
       let formData = new FormData();
       formData.append('file', up.file);
-      uploadAvatar(formData).then(res => {
-        upState.value = false;
-        hide();
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success('头像上传/变更成功', 3);
-          userStore.setAvatar(res.data);
-        } else {
-          message.error(res.msg, 3);
-        }
-      });
+      formData.append('subPath', 'avatar');
+      uploadFile(formData)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            return res.data.filePath;
+          }
+          return '';
+        })
+        .then(filePath => {
+          if (filePath === '') return undefined;
+          const form = toRaw(stateForm.form);
+          form.avatar = filePath;
+          return updateUserProfile(form);
+        })
+        .then(res => {
+          if (res === undefined) return;
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success('头像变更成功', 3);
+            userStore.setAvatar(stateForm.form.avatar);
+          } else {
+            message.error(res.msg, 3);
+          }
+        })
+        .finally(() => {
+          hide();
+          upState.value = false;
+        });
     },
   });
 }
@@ -113,7 +135,7 @@ onMounted(() => {
   // 初始字典数据
   getDict('sys_user_sex').then(res => {
     if (res.length > 0) {
-      sysUserSex.value = res;
+      userSexOptions.value = res;
     }
   });
   // 初始表单值
@@ -125,13 +147,13 @@ onMounted(() => {
   <a-form
     :model="stateForm.form"
     name="stateForm"
-    :wrapper-col="{ span: 14 }"
-    :label-col="{ span: 4 }"
+    :wrapper-col="{ lg: 12, md: 16, xs: 14 }"
+    :label-col="{ lg: 6, md: 6, xs: 6 }"
     :label-warp="true"
     @finish="fnFinish"
   >
-    <a-row :gutter="16">
-      <a-col :lg="8" :md="8" :xs="24" style="margin-bottom: 30px">
+    <a-row>
+      <a-col :lg="8" :md="18" :xs="24" style="margin-bottom: 30px">
         <a-form-item
           label="用户昵称"
           name="nickName"
@@ -153,7 +175,7 @@ onMounted(() => {
 
         <a-form-item
           label="手机号码"
-          name="phonenumber"
+          name="phone"
           :rules="[
             {
               required: false,
@@ -163,7 +185,7 @@ onMounted(() => {
           ]"
         >
           <a-input
-            v-model:value="stateForm.form.phonenumber"
+            v-model:value="stateForm.form.phone"
             allow-clear
             :maxlength="11"
             placeholder="请输入手机号码"
@@ -202,7 +224,7 @@ onMounted(() => {
           <a-select
             v-model:value="stateForm.form.sex"
             placeholder="用户性别"
-            :options="sysUserSex"
+            :options="userSexOptions"
           >
           </a-select>
         </a-form-item>
@@ -226,7 +248,7 @@ onMounted(() => {
           </a-space>
         </a-form-item>
       </a-col>
-      <a-col :lg="6" :md="6" :xs="24">
+      <a-col :lg="6" :md="4" :xs="24">
         <a-space direction="vertical" :size="16">
           <a-avatar
             shape="circle"

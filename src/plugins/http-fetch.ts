@@ -47,7 +47,7 @@ type OptionsType = {
   /**请求地址 */
   url: string;
   /**请求方法 */
-  method: 'get' | 'post' | 'put' | 'delete';
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   /**请求头 */
   headers?: HeadersInit;
   /**地址栏参数 */
@@ -77,12 +77,12 @@ const FATCH_OPTIONS: OptionsType = {
   baseUrl: import.meta.env.VITE_API_BASE_URL,
   timeout: 10 * 1000,
   url: '',
-  method: 'get',
+  method: 'GET',
   headers: {
     [APP_REQUEST_HEADER_CODE]: import.meta.env.VITE_APP_CODE,
     [APP_REQUEST_HEADER_VERSION]: import.meta.env.VITE_APP_VERSION,
-    // 使用mock.apifox.cn时开启
-    apifoxToken: '8zCzh3vipdEwd1ukv9lQEuTekdWIH7xN',
+    // 使用apifoxmock.com时开启
+    apifoxToken: '0KoMW8oFm5ruPw8HtaAlcQZP2YsZkbS1',
   },
   dataType: 'json',
   responseType: 'json',
@@ -111,6 +111,7 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
   if (options.whithToken && token) {
     Reflect.set(options.headers, TOKEN_KEY, TOKEN_KEY_PREFIX + token);
   }
+
   // 是否需要防止数据重复提交
   if (
     options.repeatSubmit &&
@@ -145,20 +146,25 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
     }
   }
 
-  // get请求拼接地址栏参数
-  if (options.method === 'get' && options.params) {
-    let paramStr = '';
+  // 请求拼接地址栏参数
+  if (options.params) {
     const params = options.params;
+    const queryParams: string[] = [];
     for (const key in params) {
       const value = params[key];
       // 空字符或未定义的值不作为参数发送
       if (value === '' || value === undefined) continue;
-      paramStr += `&${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+      const str = `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+      queryParams.push(str);
     }
-    if (paramStr && paramStr.startsWith('&')) {
-      options.url = `${options.url}?${paramStr.substring(1)}`;
+    const paramStr = queryParams.join('&');
+    if (paramStr) {
+      const separator = options.url.includes('?') ? '&' : '?';
+      options.url += `${separator}${paramStr}`;
     }
   }
+
+  if (options.method === 'GET') return options;
 
   // 非get参数提交
   if (options.data instanceof FormData) {
@@ -192,7 +198,7 @@ export async function request(options: OptionsType): Promise<ResultType> {
   options = Object.assign({}, FATCH_OPTIONS, options);
 
   // 请求超时控制请求终止
-  let timeoutId: any = 0;
+  let timeoutId: any = null;
   if (!options.signal) {
     const controller = new AbortController();
     options.signal = controller.signal;
@@ -275,5 +281,6 @@ export async function request(options: OptionsType): Promise<ResultType> {
     throw error;
   } finally {
     clearTimeout(timeoutId); // 清除超时计时器
+    timeoutId = null;
   }
 }

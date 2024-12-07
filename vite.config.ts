@@ -14,14 +14,14 @@ export default defineConfig(({ mode }) => {
     base: env.VITE_HISTORY_BASE_URL,
     // 本地开发服务配置
     server: {
-      port: 6269, // 端口
+      port: 6265, // 端口
       host: true, // 暴露到网络地址
       open: false, // 完成后自动跳转浏览器打开
       proxy: {
         // https://cn.vitejs.dev/config/#server-proxy
         [env.VITE_API_BASE_URL]: {
-          target: 'https://mock.apifox.cn/m1/1551143-0-default',
-          // target: 'http://192.168.56.1:6276',
+          target: 'https://apifoxmock.com/m1/2976680-2519385-default',
+          // target: 'http://192.168.56.1:6275',
           changeOrigin: true,
           rewrite: (p: string) => p.replace(env.VITE_API_BASE_URL, ''),
         },
@@ -78,7 +78,7 @@ export default defineConfig(({ mode }) => {
         verbose: false,
         algorithm: 'gzip',
         ext: '.gz',
-        disable: false, // 是否禁用
+        disable: true, // 是否禁用
       }),
     ],
   };

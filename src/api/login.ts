@@ -4,7 +4,7 @@ import { request } from '@/plugins/http-fetch';
 export function login(data: Record<string, string>) {
   return request({
     url: '/login',
-    method: 'post',
+    method: 'POST',
     data: data,
     whithToken: false,
   });
@@ -18,7 +18,7 @@ export function login(data: Record<string, string>) {
 export function register(data: Record<string, any>) {
   return request({
     url: '/register',
-    method: 'post',
+    method: 'POST',
     data: data,
     whithToken: false,
   });
@@ -30,8 +30,8 @@ export function register(data: Record<string, any>) {
  */
 export function getInfo() {
   return request({
-    url: '/getInfo',
-    method: 'get',
+    url: '/me',
+    method: 'GET',
   });
 }
 
@@ -42,7 +42,7 @@ export function getInfo() {
 export function logout() {
   return request({
     url: '/logout',
-    method: 'post',
+    method: 'POST',
     repeatSubmit: false,
   });
 }
@@ -53,8 +53,8 @@ export function logout() {
  */
 export function getCaptchaImage() {
   return request({
-    url: '/captchaImage',
-    method: 'get',
+    url: '/captcha-image',
+    method: 'GET',
     whithToken: false,
   });
 }

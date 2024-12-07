@@ -39,52 +39,54 @@ let state = reactive<{
 
 /**下载文件 */
 function fnDownload() {
-  const key = 'downloadFile';
-  message.loading({ content: '请稍等...', key });
+  const hide = message.loading('请稍等...', 0);
   const filePath = state.downloadFilePath;
   if (!filePath) return;
-  downloadFile(filePath).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS) {
-      message.success({
-        content: `已完成下载`,
-        key,
-        duration: 2,
-      });
-      const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-      saveAs(res.data, fileName);
-    } else {
-      message.error({
-        content: `${res.msg}`,
-        key,
-        duration: 2,
-      });
-    }
-  });
+  downloadFile(filePath)
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS) {
+        message.success({
+          content: `已完成下载`,
+          duration: 3,
+        });
+        const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+        saveAs(res.data, fileName);
+      } else {
+        message.error({
+          content: `${res.msg}`,
+          duration: 3,
+        });
+      }
+    })
+    .finally(() => {
+      hide();
+    });
 }
 
 /**下载切片文件 */
 function fnDownloadChunk() {
-  const key = 'downloadFileChunk';
-  message.loading({ content: '请稍等...', key });
+  const hide = message.loading('请稍等...', 0);
   const filePath = state.downloadFilePath;
-  downloadFileChunk(filePath, 5).then(blob => {
-    console.log(blob);
-    if (blob.size === 0) {
-      message.error({
-        content: `文件读取失败`,
-        key,
-        duration: 2,
-      });
-    } else {
-      message.success({
-        content: `已完成下载`,
-        key,
-        duration: 2,
-      });
-      const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-      saveAs(blob, fileName);
-    }
-  });
+  downloadFileChunk(filePath, 5)
+    .then(blob => {
+      console.log(blob);
+      if (blob.size === 0) {
+        message.error({
+          content: `文件读取失败`,
+          duration: 3,
+        });
+      } else {
+        message.success({
+          content: `已完成下载`,
+          duration: 3,
+        });
+        const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+        saveAs(blob, fileName);
+      }
+    })
+    .finally(() => {
+      hide();
+    });
 }
 
 /**上传前检查或转换压缩 */
@@ -113,17 +115,20 @@ function fnUpload(up: UploadRequestOption) {
       let formData = new FormData();
       formData.append('file', up.file);
       formData.append('subPath', 'default');
-      uploadFile(formData).then(res => {
-        state.loading = false;
-        hide();
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success('文件上传成功', 3);
-          state.uploadFilePath = res.data.url;
-          state.downloadFilePath = res.data.fileName;
-        } else {
-          message.error(res.msg, 3);
-        }
-      });
+      uploadFile(formData)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success('文件上传成功', 3);
+            state.uploadFilePath = res.data.url;
+            state.downloadFilePath = res.data.fileName;
+          } else {
+            message.error(res.msg, 3);
+          }
+        })
+        .finally(() => {
+          hide();
+          state.loading = false;
+        });
     },
   });
 }
@@ -138,21 +143,24 @@ function fnUploadChunk(up: UploadRequestOption) {
     onOk() {
       // 发送请求
       const hide = message.loading('请稍等...', 0);
-      uploadFileChunk(fileData, 4, 'default').then(res => {
-        hide();
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success('文件上传成功', 3);
-          if (item) {
-            item.url = res.data.url;
-            item.name = res.data.newFileName;
-            item.percent = 100;
-            item.status = 'done';
+      uploadFileChunk(fileData, 4, 'default')
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success('文件上传成功', 3);
+            if (item) {
+              item.url = res.data.url;
+              item.name = res.data.newFileName;
+              item.percent = 100;
+              item.status = 'done';
+            }
+          } else {
+            message.error(res.msg, 3);
+            state.fileList.splice(state.fileList.length - 1, 1);
           }
-        } else {
-          message.error(res.msg, 3);
-          state.fileList.splice(state.fileList.length - 1, 1);
-        }
-      });
+        })
+        .finally(() => {
+          hide();
+        });
     },
     onCancel() {
       if (item) {

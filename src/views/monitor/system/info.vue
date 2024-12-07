@@ -18,28 +18,28 @@ let diskTableColumns: ColumnsType = [
   {
     title: '路径盘符',
     dataIndex: 'target',
-    align: 'center',
+    align: 'left',
   },
   {
     title: '总大小',
     dataIndex: 'size',
-    align: 'center',
+    align: 'left',
   },
 
   {
     title: '剩余大小',
     dataIndex: 'avail',
-    align: 'center',
+    align: 'left',
   },
   {
     title: '已使用大小',
     dataIndex: 'used',
-    align: 'center',
+    align: 'left',
   },
   {
     title: '空间使用率(%)',
-    dataIndex: 'pcent',
-    align: 'center',
+    dataIndex: 'percent',
+    align: 'left',
   },
 ];
 
@@ -153,14 +153,6 @@ onMounted(() => {
         </a-descriptions-item>
         <a-descriptions-item label="项目路径">
           {{ server.project.appDir }}
-        </a-descriptions-item>
-        <a-descriptions-item label="项目依赖">
-          <a-tag
-            v-for="(value, name) in server.project.dependencies"
-            :key="name"
-          >
-            {{ name }}:{{ value }}
-          </a-tag>
         </a-descriptions-item>
       </a-descriptions>
     </a-card>

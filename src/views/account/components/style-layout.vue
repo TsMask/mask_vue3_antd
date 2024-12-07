@@ -63,19 +63,6 @@ function changeTheme(e: any) {
       </template>
     </a-list-item>
     <a-list-item>
-      主题明亮
-      <template #actions> 全局主题色 </template>
-      <template #extra>
-        <a-button
-          :type="proConfig.theme === 'dark' ? 'primary' : 'default'"
-          size="small"
-          @click="changeTheme"
-        >
-          {{ proConfig.theme }}
-        </a-button>
-      </template>
-    </a-list-item>
-    <a-list-item>
       深色菜单
       <template #actions> 只能改变导航模式的菜单 </template>
       <template #extra>

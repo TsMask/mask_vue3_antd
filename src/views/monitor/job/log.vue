@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Dayjs } from 'dayjs';
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
@@ -34,19 +35,19 @@ let dict: {
   sysCommonStatus: [],
 });
 
-/**记录开始结束时间 */
-let queryRangePicker = ref<[string, string]>(['', '']);
+/**开始结束时间 */
+let queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
 /**查询参数 */
 let queryParams = reactive({
   /**任务ID */
   jobId: '',
   /**执行状态 */
-  status: undefined,
-  /**记录开始时间 */
-  beginTime: '',
-  /**记录结束时间 */
-  endTime: '',
+  statusFlag: undefined,
+  /**开始时间 */
+  beginTime: undefined as undefined | number,
+  /**结束时间 */
+  endTime: undefined as undefined | number,
   /**当前页数 */
   pageNum: 1,
   /**每页条数 */
@@ -55,14 +56,14 @@ let queryParams = reactive({
 
 /**查询参数重置 */
 function fnQueryReset() {
-  queryParams = Object.assign(queryParams, {
-    status: undefined,
-    beginTime: '',
-    endTime: '',
+  Object.assign(queryParams, {
+    statusFlag: undefined,
+    beginTime: undefined,
+    endTime: undefined,
     pageNum: 1,
     pageSize: 20,
   });
-  queryRangePicker.value = ['', ''];
+  queryRangePicker.value = undefined;
   tablePagination.current = 1;
   tablePagination.pageSize = 20;
   fnGetList();
@@ -98,7 +99,7 @@ let tableState: TabeStateType = reactive({
 let tableColumns: ColumnsType = [
   {
     title: '日志编号',
-    dataIndex: 'jobLogId',
+    dataIndex: 'logId',
     align: 'left',
     width: 100,
   },
@@ -123,15 +124,15 @@ let tableColumns: ColumnsType = [
   },
   {
     title: '执行状态',
-    dataIndex: 'status',
-    key: 'status',
-    align: 'center',
+    dataIndex: 'statusFlag',
+    key: 'statusFlag',
+    align: 'left',
     width: 100,
   },
   {
     title: '记录时间',
     dataIndex: 'createTime',
-    align: 'center',
+    align: 'left',
     width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
@@ -150,7 +151,7 @@ let tableColumns: ColumnsType = [
   },
   {
     title: '操作',
-    key: 'jobLogId',
+    key: 'logId',
     align: 'left',
   },
 ];
@@ -205,20 +206,20 @@ type ModalStateType = {
   /**标题 */
   title: string;
   /**表单数据 */
-  from: Record<string, any>;
+  form: Record<string, any>;
 };
 
 /**对话框对象信息状态 */
 let modalState: ModalStateType = reactive({
   visibleByView: false,
   title: '任务日志',
-  from: {
-    jobLogId: undefined,
+  form: {
+    logId: undefined,
     jobName: '',
     jobGroup: 'DEFAULT',
     invokeTarget: '',
     targetParams: '',
-    status: '0',
+    statusFlag: '0',
     jobMsg: '',
     createTime: 0,
   },
@@ -229,7 +230,7 @@ let modalState: ModalStateType = reactive({
  * @param row 调度日志信息对象
  */
 function fnModalVisibleByVive(row: Record<string, string>) {
-  modalState.from = Object.assign(modalState.from, row);
+  Object.assign(modalState.form, row);
   modalState.title = '调度日志信息';
   modalState.visibleByView = true;
 }
@@ -250,24 +251,25 @@ function fnRecordDelete() {
     title: '提示',
     content: `确认删除调度日志编号为 【${ids}】 的数据项吗?`,
     onOk() {
-      const key = 'delJobLog';
-      message.loading({ content: '请稍等...', key });
-      delJobLog(ids).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `删除成功`,
-            key,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      delJobLog(ids)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `删除成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -278,24 +280,25 @@ function fnCleanList() {
     title: '提示',
     content: `确认清空所有调度日志数据项吗?`,
     onOk() {
-      const key = 'cleanJobLog';
-      message.loading({ content: '请稍等...', key });
-      cleanJobLog().then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `清空成功`,
-            key,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      cleanJobLog()
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `清空成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -306,24 +309,25 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const key = 'exportJobLog';
-      message.loading({ content: '请稍等...', key });
-      exportJobLog(toRaw(queryParams)).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `已完成导出`,
-            key,
-            duration: 2,
-          });
-          saveAs(res.data, `job_log_${Date.now()}.xlsx`);
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      exportJobLog(toRaw(queryParams))
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `已完成导出`,
+              duration: 3,
+            });
+            saveAs(res.data, `job_log_${Date.now()}.xlsx`);
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -344,16 +348,28 @@ function fnGetList(pageNum?: number) {
   if (pageNum) {
     queryParams.pageNum = pageNum;
   }
-  queryParams.beginTime = queryRangePicker.value[0];
-  queryParams.endTime = queryRangePicker.value[1];
+
+  // 时间范围
+  if (
+    Array.isArray(queryRangePicker.value) &&
+    queryRangePicker.value.length > 0
+  ) {
+    queryParams.beginTime = queryRangePicker.value[0].startOf('day').valueOf();
+    queryParams.endTime = queryRangePicker.value[1].endOf('day').valueOf();
+  } else {
+    queryParams.beginTime = undefined;
+    queryParams.endTime = undefined;
+  }
+
   listJobLog(toRaw(queryParams)).then(res => {
     if (res.code === RESULT_CODE_SUCCESS) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
       }
-      tablePagination.total = res.total;
-      tableState.data = res.rows;
+      const { total, rows } = res.data;
+      tablePagination.total = total;
+      tableState.data = rows;
       tableState.loading = false;
     }
   });
@@ -394,9 +410,9 @@ onMounted(() => {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="执行状态" name="status">
+            <a-form-item label="执行状态" name="statusFlag">
               <a-select
-                v-model:value="queryParams.status"
+                v-model:value="queryParams.statusFlag"
                 allow-clear
                 placeholder="请选择执行状态"
                 :options="dict.sysCommonStatus"
@@ -408,10 +424,8 @@ onMounted(() => {
             <a-form-item label="记录时间" name="queryRangePicker">
               <a-range-picker
                 v-model:value="queryRangePicker"
-                allow-clear
-                bordered
-                value-format="YYYY-MM-DD"
-                :placeholder="['记录开始', '记录结束']"
+                :bordered="true"
+                :allow-clear="true"
                 style="width: 100%"
               ></a-range-picker>
             </a-form-item>
@@ -475,7 +489,7 @@ onMounted(() => {
       <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
             <a-switch
               v-model:checked="tableState.seached"
@@ -484,7 +498,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
             <a-switch
               v-model:checked="tableState.striped"
@@ -493,7 +507,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>刷新</template>
             <a-button type="text" @click.prevent="fnGetList()">
               <template #icon><ReloadOutlined /></template>
@@ -523,7 +537,7 @@ onMounted(() => {
       <!-- 表格列表 -->
       <a-table
         class="table"
-        row-key="jobLogId"
+        row-key="logId"
         :columns="tableColumns"
         :loading="tableState.loading"
         :data-source="tableState.data"
@@ -544,21 +558,21 @@ onMounted(() => {
           <template v-if="column.key === 'jobGroup'">
             <DictTag :options="dict.sysJobGroup" :value="record.jobGroup" />
           </template>
-          <template v-if="column.key === 'status'">
+          <template v-if="column.key === 'statusFlag'">
             <a-tag
               v-if="dict.sysCommonStatus.length > 0"
-              :color="+record.status ? 'success' : 'error'"
+              :color="+record.statusFlag ? 'success' : 'error'"
             >
               {{
-                +modalState.from.status
+                +modalState.form.statusFlag
                   ? dict.sysCommonStatus[0].label
                   : dict.sysCommonStatus[1].label
               }}
             </a-tag>
           </template>
-          <template v-if="column.key === 'jobLogId'">
+          <template v-if="column.key === 'logId'">
             <a-space :size="8" align="center">
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
                 <a-button
                   type="link"
@@ -586,18 +600,18 @@ onMounted(() => {
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="日志编号" name="jobLogId">
-              {{ modalState.from.jobLogId }}
+            <a-form-item label="日志编号" name="logId">
+              {{ modalState.form.logId }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="执行状态" name="status">
+            <a-form-item label="执行状态" name="statusFlag">
               <a-tag
                 v-if="dict.sysCommonStatus.length > 0"
-                :color="+modalState.from.status ? 'success' : 'error'"
+                :color="+modalState.form.statusFlag ? 'success' : 'error'"
               >
                 {{
-                  +modalState.from.status
+                  +modalState.form.statusFlag
                     ? dict.sysCommonStatus[0].label
                     : dict.sysCommonStatus[1].label
                 }}
@@ -608,14 +622,14 @@ onMounted(() => {
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务名称" name="jobName">
-              {{ modalState.from.jobName }}
+              {{ modalState.form.jobName }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务组名" name="jobGroup">
               <DictTag
                 :options="dict.sysJobGroup"
-                :value="modalState.from.jobGroup"
+                :value="modalState.form.jobGroup"
               />
             </a-form-item>
           </a-col>
@@ -623,13 +637,13 @@ onMounted(() => {
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="调用目标" name="invokeTarget">
-              {{ modalState.from.invokeTarget }}
+              {{ modalState.form.invokeTarget }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="记录时间" name="createTime">
-              <span v-if="+modalState.from.createTime > 0">
-                {{ parseDateToStr(+modalState.from.createTime) }}
+              <span v-if="+modalState.form.createTime > 0">
+                {{ parseDateToStr(+modalState.form.createTime) }}
               </span>
             </a-form-item>
           </a-col>
@@ -641,7 +655,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            :value="modalState.from.targetParams"
+            :value="modalState.form.targetParams"
             :auto-size="{ minRows: 2, maxRows: 6 }"
             :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)"
@@ -654,7 +668,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            :value="modalState.from.jobMsg"
+            :value="modalState.form.jobMsg"
             :auto-size="{ minRows: 2, maxRows: 6 }"
             :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)"

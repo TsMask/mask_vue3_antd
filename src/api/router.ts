@@ -6,7 +6,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export const getRouters = () => {
   return request({
-    url: '/getRouters',
-    method: 'get',
+    url: '/router',
+    method: 'GET',
   });
 };

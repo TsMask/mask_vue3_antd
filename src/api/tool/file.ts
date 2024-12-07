@@ -11,7 +11,7 @@ import { encode } from 'js-base64';
 export async function downloadFile(filePath: string, range?: string) {
   return request({
     url: `/file/download/${encode(filePath)}`,
-    method: 'get',
+    method: 'GET',
     headers: range ? { range } : {},
     responseType: 'blob',
   });
@@ -72,7 +72,7 @@ export async function downloadFileChunk(
 export function uploadFile(data: FormData) {
   return request({
     url: '/file/upload',
-    method: 'post',
+    method: 'POST',
     data,
     dataType: 'form-data',
   });
@@ -156,8 +156,8 @@ export async function uploadFileChunk(
  */
 export function chunkCheck(identifier: string, fileName: string) {
   return request({
-    url: '/file/chunkCheck',
-    method: 'post',
+    url: '/file/chunk-check',
+    method: 'POST',
     data: { identifier, fileName },
   });
 }
@@ -175,8 +175,8 @@ export function chunkMerge(
   subPath: string = 'default'
 ) {
   return request({
-    url: '/file/chunkMerge',
-    method: 'post',
+    url: '/file/chunk-merge',
+    method: 'POST',
     data: { identifier, fileName, subPath },
   });
 }
@@ -188,8 +188,8 @@ export function chunkMerge(
  */
 export function chunkUpload(data: FormData) {
   return request({
-    url: '/file/chunkUpload',
-    method: 'post',
+    url: '/file/chunk-upload',
+    method: 'POST',
     data,
     dataType: 'form-data',
   });

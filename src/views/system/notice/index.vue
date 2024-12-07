@@ -43,7 +43,7 @@ let queryParams = reactive({
   /**公告类型 */
   noticeType: undefined,
   /**公告状态 */
-  status: undefined,
+  statusFlag: undefined,
   /**当前页数 */
   pageNum: 1,
   /**每页条数 */
@@ -52,11 +52,11 @@ let queryParams = reactive({
 
 /**查询参数重置 */
 function fnQueryReset() {
-  queryParams = Object.assign(queryParams, {
+  Object.assign(queryParams, {
     noticeTitle: '',
     createBy: '',
     noticeType: undefined,
-    status: undefined,
+    statusFlag: undefined,
     pageNum: 1,
     pageSize: 20,
   });
@@ -109,14 +109,14 @@ let tableColumns: ColumnsType = [
     title: '公告类型',
     dataIndex: 'noticeType',
     key: 'noticeType',
-    align: 'center',
+    align: 'left',
     width: 100,
   },
   {
     title: '状态',
-    dataIndex: 'status',
-    key: 'status',
-    align: 'center',
+    dataIndex: 'statusFlag',
+    key: 'statusFlag',
+    align: 'left',
     width: 100,
   },
   {
@@ -128,7 +128,7 @@ let tableColumns: ColumnsType = [
   {
     title: '创建时间',
     dataIndex: 'createTime',
-    align: 'center',
+    align: 'left',
     width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
@@ -194,7 +194,7 @@ type ModalStateType = {
   /**标题 */
   title: string;
   /**表单数据 */
-  from: Record<string, any>;
+  form: Record<string, any>;
   /**确定按钮 loading */
   confirmLoading: boolean;
 };
@@ -204,12 +204,12 @@ let modalState: ModalStateType = reactive({
   visibleByView: false,
   visibleByEdit: false,
   title: '公告',
-  from: {
+  form: {
     noticeId: undefined,
     noticeTitle: '',
     noticeContent: '',
     noticeType: '2',
-    status: '1',
+    statusFlag: '1',
     delFlag: '0',
     remark: '',
     createBy: undefined,
@@ -221,8 +221,8 @@ let modalState: ModalStateType = reactive({
 });
 
 /**对话框内表单属性和校验规则 */
-const modalStateFrom = Form.useForm(
-  modalState.from,
+const modalStateForm = Form.useForm(
+  modalState.form,
   reactive({
     noticeTitle: [
       { required: true, min: 2, max: 50, message: '请正确输入公告标题' },
@@ -251,17 +251,20 @@ function fnModalVisibleByVive(noticeId: string | number) {
   if (modalState.confirmLoading) return;
   const hide = message.loading('正在打开...', 0);
   modalState.confirmLoading = true;
-  getNotice(noticeId).then(res => {
-    modalState.confirmLoading = false;
-    hide();
-    if (res.code === RESULT_CODE_SUCCESS) {
-      modalState.from = Object.assign(modalState.from, res.data);
-      modalState.title = '公告信息';
-      modalState.visibleByView = true;
-    } else {
-      message.error(`获取公告信息失败`, 2);
-    }
-  });
+  getNotice(noticeId)
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS) {
+        Object.assign(modalState.form, res.data);
+        modalState.title = '公告信息';
+        modalState.visibleByView = true;
+      } else {
+        message.error(`获取公告信息失败`, 2);
+      }
+    })
+    .finally(() => {
+      hide();
+      modalState.confirmLoading = false;
+    });
 }
 
 /**
@@ -270,24 +273,27 @@ function fnModalVisibleByVive(noticeId: string | number) {
  */
 function fnModalVisibleByEdit(noticeId?: string | number) {
   if (!noticeId) {
-    modalStateFrom.resetFields();
+    modalStateForm.resetFields();
     modalState.title = '添加公告';
     modalState.visibleByEdit = true;
   } else {
     if (modalState.confirmLoading) return;
     const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
-    getNotice(noticeId).then(res => {
-      modalState.confirmLoading = false;
-      hide();
-      if (res.code === RESULT_CODE_SUCCESS) {
-        modalState.from = Object.assign(modalState.from, res.data);
-        modalState.title = '修改公告';
-        modalState.visibleByEdit = true;
-      } else {
-        message.error(`获取公告信息失败`, 2);
-      }
-    });
+    getNotice(noticeId)
+      .then(res => {
+        if (res.code === RESULT_CODE_SUCCESS) {
+          Object.assign(modalState.form, res.data);
+          modalState.title = '修改公告';
+          modalState.visibleByEdit = true;
+        } else {
+          message.error(`获取公告信息失败`, 3);
+        }
+      })
+      .finally(() => {
+        hide();
+        modalState.confirmLoading = false;
+      });
   }
 }
 
@@ -296,33 +302,31 @@ function fnModalVisibleByEdit(noticeId?: string | number) {
  * 进行表达规则校验
  */
 function fnModalOk() {
-  modalStateFrom
+  modalStateForm
     .validate()
     .then(() => {
+      const hide = message.loading('请稍等...', 0);
       modalState.confirmLoading = true;
-      const from = toRaw(modalState.from);
-      const notice = from.noticeId ? updateNotice(from) : addNotice(from);
-      const key = 'notice';
-      message.loading({ content: '请稍等...', key });
+      const form = toRaw(modalState.form);
+      const notice = form.noticeId ? updateNotice(form) : addNotice(form);
       notice
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
-              key,
-              duration: 2,
+              duration: 3,
             });
             fnGetList(1);
             fnModalCancel();
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
-              duration: 2,
+              duration: 3,
             });
           }
         })
         .finally(() => {
+          hide();
           modalState.confirmLoading = false;
         });
     })
@@ -338,7 +342,7 @@ function fnModalOk() {
 function fnModalCancel() {
   modalState.visibleByEdit = false;
   modalState.visibleByView = false;
-  modalStateFrom.resetFields();
+  modalStateForm.resetFields();
 }
 
 /**
@@ -353,24 +357,25 @@ function fnRecordDelete(noticeId: string = '0') {
     title: '提示',
     content: `确认删除公告编号为 【${noticeId}】 的数据项?`,
     onOk() {
-      const key = 'delNotice';
-      message.loading({ content: '请稍等...', key });
-      delNotice(noticeId).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `删除成功`,
-            key,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key: key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      delNotice(noticeId)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `删除成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide;
+        });
     },
   });
 }
@@ -383,13 +388,14 @@ function fnGetList(pageNum?: number) {
     queryParams.pageNum = pageNum;
   }
   listNotice(toRaw(queryParams)).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
       }
-      tablePagination.total = res.total;
-      tableState.data = res.rows;
+      const { total, rows } = res.data;
+      tablePagination.total = total;
+      tableState.data = rows;
     }
     tableState.loading = false;
   });
@@ -459,9 +465,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="公告状态" name="status">
+            <a-form-item label="公告状态" name="statusFlag">
               <a-select
-                v-model:value="queryParams.status"
+                v-model:value="queryParams.statusFlag"
                 allow-clear
                 placeholder="请选择公告状态"
                 :options="dict.sysNoticeStatus"
@@ -515,7 +521,7 @@ onMounted(() => {
       <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
             <a-switch
               v-model:checked="tableState.seached"
@@ -524,7 +530,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
             <a-switch
               v-model:checked="tableState.striped"
@@ -533,7 +539,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>刷新</template>
             <a-button type="text" @click.prevent="fnGetList()">
               <template #icon><ReloadOutlined /></template>
@@ -584,12 +590,15 @@ onMounted(() => {
           <template v-if="column.key === 'noticeType'">
             <DictTag :options="dict.sysNoticeType" :value="record.noticeType" />
           </template>
-          <template v-if="column.key === 'status'">
-            <DictTag :options="dict.sysNoticeStatus" :value="record.status" />
+          <template v-if="column.key === 'statusFlag'">
+            <DictTag
+              :options="dict.sysNoticeStatus"
+              :value="record.statusFlag"
+            />
           </template>
           <template v-if="column.key === 'noticeId'">
             <a-space :size="8" align="center">
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
                 <a-button
                   type="link"
@@ -599,7 +608,7 @@ onMounted(() => {
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>编辑</template>
                 <a-button
                   type="link"
@@ -609,7 +618,7 @@ onMounted(() => {
                   <template #icon><FormOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>删除</template>
                 <a-button
                   type="link"
@@ -634,40 +643,40 @@ onMounted(() => {
       @cancel="fnModalCancel"
     >
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
+        <a-row :gutter="16">
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="公告类型" name="noticeType">
+              <DictTag
+                :options="dict.sysNoticeType"
+                :value="modalState.form.noticeType"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="公告状态" name="statusFlag">
+              <DictTag
+                :options="dict.sysNoticeStatus"
+                :value="modalState.form.statusFlag"
+              />
+            </a-form-item>
+          </a-col>
+        </a-row>
+
         <a-form-item
           label="公告标题"
           name="noticeTitle"
           :label-col="{ span: 3 }"
           :label-wrap="true"
         >
-          {{ modalState.from.noticeTitle }}
+          {{ modalState.form.noticeTitle }}
         </a-form-item>
-
-        <a-row>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="公告类型" name="noticeType">
-              <DictTag
-                :options="dict.sysNoticeType"
-                :value="modalState.from.noticeType"
-              />
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="公告状态" name="status">
-              <DictTag
-                :options="dict.sysNoticeStatus"
-                :value="modalState.from.status"
-              />
-            </a-form-item>
-          </a-col>
-        </a-row>
         <a-form-item
           label="公告内容"
           name="noticeContent"
           :label-col="{ span: 3 }"
           :label-wrap="true"
         >
-          {{ modalState.from.noticeContent }}
+          {{ modalState.form.noticeContent }}
         </a-form-item>
       </a-form>
       <template #footer>
@@ -689,35 +698,20 @@ onMounted(() => {
       @cancel="fnModalCancel"
     >
       <a-form
-        name="modalStateFrom"
+        name="modalStateForm"
         layout="horizontal"
         :label-col="{ span: 6 }"
         :label-wrap="true"
       >
-        <a-form-item
-          label="公告标题"
-          name="noticeTitle"
-          v-bind="modalStateFrom.validateInfos.noticeTitle"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-input
-            v-model:value="modalState.from.noticeTitle"
-            allow-clear
-            placeholder="请输入公告标题"
-            :maxlength="50"
-          ></a-input>
-        </a-form-item>
-
-        <a-row>
+        <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="公告类型"
               name="noticeType"
-              v-bind="modalStateFrom.validateInfos.noticeType"
+              v-bind="modalStateForm.validateInfos.noticeType"
             >
               <a-select
-                v-model:value="modalState.from.noticeType"
+                v-model:value="modalState.form.noticeType"
                 default-value="1"
                 placeholder="公告类型"
                 :options="dict.sysNoticeType"
@@ -726,9 +720,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="公告状态" name="status">
+            <a-form-item label="公告状态" name="statusFlag">
               <a-select
-                v-model:value="modalState.from.status"
+                v-model:value="modalState.form.statusFlag"
                 default-value="0"
                 placeholder="公告状态"
                 :options="dict.sysNoticeStatus"
@@ -739,14 +733,28 @@ onMounted(() => {
         </a-row>
 
         <a-form-item
+          label="公告标题"
+          name="noticeTitle"
+          v-bind="modalStateForm.validateInfos.noticeTitle"
+          :label-col="{ span: 3 }"
+          :label-wrap="true"
+        >
+          <a-input
+            v-model:value="modalState.form.noticeTitle"
+            allow-clear
+            placeholder="请输入公告标题"
+            :maxlength="50"
+          ></a-input>
+        </a-form-item>
+        <a-form-item
           label="公告内容"
           name="noticeContent"
-          v-bind="modalStateFrom.validateInfos.noticeContent"
+          v-bind="modalStateForm.validateInfos.noticeContent"
           :label-col="{ span: 3 }"
           :label-wrap="true"
         >
           <a-textarea
-            v-model:value="modalState.from.noticeContent"
+            v-model:value="modalState.form.noticeContent"
             :auto-size="{ minRows: 4, maxRows: 14 }"
             :maxlength="3000"
             :show-count="true"

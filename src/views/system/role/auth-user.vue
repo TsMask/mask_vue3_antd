@@ -7,7 +7,7 @@ import type { SizeType } from 'ant-design-vue/es/config-provider';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import type { ColumnsType } from 'ant-design-vue/es/table';
 import AuthUserSelect from './components/auth-user-select.vue';
-import { authUserAllocatedList, authUserChecked } from '@/api/system/role';
+import { authUserList, authUserChecked } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
 import useTabsStore from '@/store/modules/tabs';
 import useDictStore from '@/store/modules/dict';
@@ -34,13 +34,13 @@ let queryParams = reactive({
   /**登录账号 */
   userName: '',
   /**手机号码 */
-  phonenumber: '',
+  phone: '',
   /**用户状态 */
-  status: undefined,
+  statusFlag: undefined,
   /**角色ID */
   roleId: roleId,
   /**是否已分配 */
-  allocated: true,
+  auth: true,
   /**当前页数 */
   pageNum: 1,
   /**每页条数 */
@@ -49,10 +49,10 @@ let queryParams = reactive({
 
 /**查询参数重置 */
 function fnQueryReset() {
-  queryParams = Object.assign(queryParams, {
+  Object.assign(queryParams, {
     userName: '',
-    phonenumber: '',
-    status: undefined,
+    phone: '',
+    statusFlag: undefined,
     pageNum: 1,
     pageSize: 20,
   });
@@ -99,37 +99,37 @@ let tableColumns: ColumnsType = [
     title: '登录账号',
     dataIndex: 'userName',
     align: 'left',
-    width: 100,
+    width: 150,
   },
   {
     title: '用户昵称',
     dataIndex: 'nickName',
     align: 'left',
-    width: 100,
+    width: 150,
   },
   {
     title: '手机号码',
-    dataIndex: 'phonenumber',
+    dataIndex: 'phone',
     align: 'left',
-    width: 120,
+    width: 150,
   },
   {
     title: '电子邮箱',
     dataIndex: 'email',
     align: 'left',
-    width: 120,
+    width: 200,
   },
   {
     title: '用户状态',
-    dataIndex: 'status',
-    key: 'status',
-    align: 'center',
+    dataIndex: 'statusFlag',
+    key: 'statusFlag',
+    align: 'left',
     width: 100,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
-    align: 'center',
+    align: 'left',
     width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
@@ -216,29 +216,30 @@ function fnModalOk(userIds: string[] | number[]) {
     message.error(`请选择要分配的用户`, 2);
     return;
   }
-  const key = 'authUserChecked';
-  message.loading({ content: '请稍等...', key });
+  const hide = message.loading('请稍等...', 0);
   authUserChecked({
     checked: true,
     userIds: userIds.join(','),
     roleId: roleId,
-  }).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS) {
-      modalState.visibleBySelectUser = false;
-      message.success({
-        content: `授权用户添加成功`,
-        key,
-        duration: 3,
-      });
-      fnGetList(1);
-    } else {
-      message.error({
-        content: `${res.msg}`,
-        key,
-        duration: 3,
-      });
-    }
-  });
+  })
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS) {
+        modalState.visibleBySelectUser = false;
+        message.success({
+          content: `授权用户添加成功`,
+          duration: 3,
+        });
+        fnGetList(1);
+      } else {
+        message.error({
+          content: `${res.msg}`,
+          duration: 3,
+        });
+      }
+    })
+    .finally(() => {
+      hide();
+    });
 }
 
 /**
@@ -253,26 +254,25 @@ function fnRecordDelete(userId: string | number) {
     title: '提示',
     content: `确认取消用户编号为 【${userId}】 的数据项授权?`,
     onOk() {
-      const key = 'authUserChecked';
-      message.loading({ content: '请稍等...', key });
-      authUserChecked({ checked: false, userIds: userId, roleId: roleId }).then(
-        res => {
+      const hide = message.loading('请稍等...', 0);
+      authUserChecked({ checked: false, userIds: userId, roleId: roleId })
+        .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `取消授权成功`,
-              key,
               duration: 3,
             });
             fnGetList(1);
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
               duration: 3,
             });
           }
-        }
-      );
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -294,14 +294,15 @@ function fnGetList(pageNum?: number) {
   if (pageNum) {
     queryParams.pageNum = pageNum;
   }
-  authUserAllocatedList(toRaw(queryParams)).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
+  authUserList(toRaw(queryParams)).then(res => {
+    if (res.code === RESULT_CODE_SUCCESS) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
       }
-      tablePagination.total = res.total;
-      tableState.data = res.rows;
+      const { total, rows } = res.data;
+      tablePagination.total = total;
+      tableState.data = rows;
     }
     tableState.loading = false;
   });
@@ -349,9 +350,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="手机号码" name="phonenumber">
+            <a-form-item label="手机号码" name="phone">
               <a-input
-                v-model:value="queryParams.phonenumber"
+                v-model:value="queryParams.phone"
                 allow-clear
                 :maxlength="11"
                 placeholder="请输入手机号码"
@@ -359,9 +360,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="用户状态" name="status">
+            <a-form-item label="用户状态" name="statusFlag">
               <a-select
-                v-model:value="queryParams.status"
+                v-model:value="queryParams.statusFlag"
                 allow-clear
                 placeholder="请选择用户状态"
                 :options="dict.sysNormalDisable"
@@ -419,7 +420,7 @@ onMounted(() => {
       <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
             <a-switch
               v-model:checked="tableState.seached"
@@ -428,7 +429,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
             <a-switch
               v-model:checked="tableState.striped"
@@ -437,7 +438,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>刷新</template>
             <a-button type="text" @click.prevent="fnGetList()">
               <template #icon><ReloadOutlined /></template>
@@ -485,12 +486,15 @@ onMounted(() => {
         }"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'status'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.status" />
+          <template v-if="column.key === 'statusFlag'">
+            <DictTag
+              :options="dict.sysNormalDisable"
+              :value="record.statusFlag"
+            />
           </template>
           <template v-if="column.key === 'userId'">
             <a-space :size="8" align="center">
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>取消授权</template>
                 <a-button
                   type="link"

@@ -3,7 +3,7 @@ import { GlobalFooter } from 'antdv-pro-layout';
 import { Modal, message } from 'ant-design-vue';
 import { reactive, onMounted, toRaw } from 'vue';
 import { getCaptchaImage, register } from '@/api/login';
-import { regExpPasswd, regExpUserName } from '@/utils/regular-utils';
+import { regExpPassword, regExpUserName } from '@/utils/regular-utils';
 import { useRouter } from 'vue-router';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const router = useRouter();
@@ -55,9 +55,9 @@ function fnEqualToPassword(
 
 /**表单验证通过 */
 function fnFinish() {
-  state.formClick = true;
   // 发送请求
   const hide = message.loading('请稍等...', 0);
+  state.formClick = true;
   register(toRaw(state.form))
     .then(res => {
       if (res.code === RESULT_CODE_SUCCESS) {
@@ -90,14 +90,24 @@ function fnFinish() {
 function fnGetCaptcha() {
   if (state.captchaClick) return;
   state.captchaClick = true;
-  getCaptchaImage().then(res => {
-    state.captchaClick = false;
-    state.captcha.enabled = Boolean(res.captchaEnabled);
-    if (state.captcha.enabled) {
-      state.captcha.codeImg = res.img;
-      state.form.uuid = res.uuid;
-    }
-  });
+  getCaptchaImage()
+    .then(res => {
+      if (res.code !== RESULT_CODE_SUCCESS) {
+        return;
+      }
+      const { enabled, img, uuid } = res.data;
+      state.captcha.enabled = Boolean(enabled);
+      if (state.captcha.enabled) {
+        state.captcha.codeImg = img;
+        state.form.uuid = uuid;
+      }
+      if (res.data?.text) {
+        state.form.code = res.data.text;
+      }
+    })
+    .finally(() => {
+      state.captchaClick = false;
+    });
 }
 
 onMounted(() => {
@@ -125,8 +135,7 @@ onMounted(() => {
             {
               required: true,
               pattern: regExpUserName,
-              message:
-                '账号不能以数字开头，可包含大写小写字母，数字，且不少于5位',
+              message: '账号只能包含大写小写字母，数字，且不少于4位',
             },
           ]"
         >
@@ -146,7 +155,7 @@ onMounted(() => {
           :rules="[
             {
               required: true,
-              pattern: regExpPasswd,
+              pattern: regExpPassword,
               message: '密码至少包含大小写字母、数字、特殊符号，且不少于6位',
             },
           ]"

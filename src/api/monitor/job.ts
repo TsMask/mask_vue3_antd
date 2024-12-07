@@ -8,8 +8,8 @@ import { request } from '@/plugins/http-fetch';
 export function exportJob(query: Record<string, any>) {
   return request({
     url: '/monitor/job/export',
-    method: 'post',
-    data: query,
+    method: 'GET',
+    params: query,
     responseType: 'blob',
   });
 }
@@ -22,7 +22,7 @@ export function exportJob(query: Record<string, any>) {
 export function listJob(query: Record<string, any>) {
   return request({
     url: '/monitor/job/list',
-    method: 'get',
+    method: 'GET',
     params: query,
   });
 }
@@ -35,7 +35,7 @@ export function listJob(query: Record<string, any>) {
 export function getJob(jobId: string | number) {
   return request({
     url: `/monitor/job/${jobId}`,
-    method: 'get',
+    method: 'GET',
   });
 }
 
@@ -47,7 +47,7 @@ export function getJob(jobId: string | number) {
 export function addJob(data: Record<string, any>) {
   return request({
     url: '/monitor/job',
-    method: 'post',
+    method: 'POST',
     data: data,
   });
 }
@@ -60,7 +60,7 @@ export function addJob(data: Record<string, any>) {
 export function updateJob(data: Record<string, any>) {
   return request({
     url: '/monitor/job',
-    method: 'put',
+    method: 'PUT',
     data: data,
   });
 }
@@ -73,7 +73,7 @@ export function updateJob(data: Record<string, any>) {
 export function delJob(jobId: string | number) {
   return request({
     url: `/monitor/job/${jobId}`,
-    method: 'delete',
+    method: 'DELETE',
   });
 }
 
@@ -85,14 +85,14 @@ export function delJob(jobId: string | number) {
  */
 export function changeJobStatus(
   jobId: string | number,
-  status: string | number
+  statusFlag: string | number
 ) {
   return request({
-    url: '/monitor/job/changeStatus',
-    method: 'put',
+    url: '/monitor/job/status',
+    method: 'PUT',
     data: {
       jobId,
-      status,
+      statusFlag,
     },
   });
 }
@@ -105,7 +105,7 @@ export function changeJobStatus(
 export function runJob(jobId: string) {
   return request({
     url: `/monitor/job/run/${jobId}`,
-    method: 'put',
+    method: 'PUT',
   });
 }
 
@@ -115,7 +115,7 @@ export function runJob(jobId: string) {
  */
 export function resetQueueJob() {
   return request({
-    url: '/monitor/job/resetQueueJob',
-    method: 'put',
+    url: '/monitor/job/reset',
+    method: 'PUT',
   });
 }

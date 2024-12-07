@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { Modal, message } from 'ant-design-vue';
 import { reactive } from 'vue';
-import { updateUserPwd } from '@/api/profile';
-import { regExpPasswd } from '@/utils/regular-utils';
+import { updateUserPassword } from '@/api/profile';
+import { regExpPassword } from '@/utils/regular-utils';
 import useUserStore from '@/store/modules/user';
 import { useRouter } from 'vue-router';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
@@ -44,10 +44,10 @@ function fnFinish() {
     title: '提示',
     content: `确认要提交修改密码吗?`,
     onOk() {
-      state.formClick = true;
       // 发送请求
       const hide = message.loading('请稍等...', 0);
-      updateUserPwd(state.form.oldPassword, state.form.confirmPassword)
+      state.formClick = true;
+      updateUserPassword(state.form.oldPassword, state.form.confirmPassword)
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             Modal.success({
@@ -75,8 +75,8 @@ function fnFinish() {
   <a-form
     :model="state.form"
     name="stateForm"
-    :wrapper-col="{ span: 4 }"
-    :label-col="{ span: 2 }"
+    :wrapper-col="{ lg: 4, md: 12, xs: 14 }"
+    :label-col="{ lg: 2, md: 4, xs: 6 }"
     :label-warp="true"
     @finish="fnFinish"
   >
@@ -108,7 +108,7 @@ function fnFinish() {
       :rules="[
         {
           required: true,
-          pattern: regExpPasswd,
+          pattern: regExpPassword,
           message: '密码至少包含大小写字母、数字、特殊符号，且不少于6位',
         },
       ]"
@@ -144,13 +144,8 @@ function fnFinish() {
       </a-input-password>
     </a-form-item>
 
-    <a-form-item :wrapper-col="{ offset: 2, span: 2 }">
-      <a-button
-        block
-        type="primary"
-        html-type="submit"
-        :loading="state.formClick"
-      >
+    <a-form-item :wrapper-col="{ offset: 2 }">
+      <a-button type="primary" html-type="submit" :loading="state.formClick">
         提交修改
       </a-button>
     </a-form-item>

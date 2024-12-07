@@ -1,6 +1,5 @@
 <template>
-  <ProModal
-    :drag="true"
+  <a-modal
     :destroyOnClose="true"
     title="Cron表达式生成"
     :open="props.open"
@@ -32,7 +31,7 @@
       v-model:value="cronStr"
       disabled
     />
-  </ProModal>
+  </a-modal>
 </template>
 <script lang="ts" setup>
 import { ProModal } from 'antdv-pro-modal';

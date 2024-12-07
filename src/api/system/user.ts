@@ -7,8 +7,8 @@ import { request } from '@/plugins/http-fetch';
  */
 export function importData(data: FormData) {
   return request({
-    url: '/system/user/importData',
-    method: 'post',
+    url: '/system/user/import',
+    method: 'POST',
     data,
     dataType: 'form-data',
   });
@@ -20,8 +20,8 @@ export function importData(data: FormData) {
  */
 export function importTemplate() {
   return request({
-    url: '/system/user/importTemplate',
-    method: 'get',
+    url: '/system/user/import/template',
+    method: 'GET',
     responseType: 'blob',
   });
 }
@@ -34,7 +34,7 @@ export function importTemplate() {
 export function exportUser(query: Record<string, any>) {
   return request({
     url: '/system/user/export',
-    method: 'post',
+    method: 'POST',
     data: query,
     responseType: 'blob',
   });
@@ -48,7 +48,7 @@ export function exportUser(query: Record<string, any>) {
 export function listUser(query: Record<string, any>) {
   return request({
     url: '/system/user/list',
-    method: 'get',
+    method: 'GET',
     params: query,
   });
 }
@@ -61,7 +61,7 @@ export function listUser(query: Record<string, any>) {
 export function getUser(userId: string | number = '0') {
   return request({
     url: `/system/user/${userId}`,
-    method: 'get',
+    method: 'GET',
   });
 }
 
@@ -73,7 +73,7 @@ export function getUser(userId: string | number = '0') {
 export function addUser(data: Record<string, any>) {
   return request({
     url: '/system/user',
-    method: 'post',
+    method: 'POST',
     data: data,
   });
 }
@@ -86,7 +86,7 @@ export function addUser(data: Record<string, any>) {
 export function updateUser(data: Record<string, any>) {
   return request({
     url: '/system/user',
-    method: 'put',
+    method: 'PUT',
     data: data,
   });
 }
@@ -99,7 +99,7 @@ export function updateUser(data: Record<string, any>) {
 export function delUser(userId: string | number) {
   return request({
     url: `/system/user/${userId}`,
-    method: 'delete',
+    method: 'DELETE',
   });
 }
 
@@ -111,8 +111,8 @@ export function delUser(userId: string | number) {
  */
 export function resetUserPwd(userId: string | number, password: string) {
   return request({
-    url: '/system/user/resetPwd',
-    method: 'put',
+    url: '/system/user/password',
+    method: 'PUT',
     data: {
       userId,
       password,
@@ -131,8 +131,8 @@ export function changeUserStatus(
   status: string | number
 ) {
   return request({
-    url: '/system/user/changeStatus',
-    method: 'put',
+    url: '/system/user/status',
+    method: 'PUT',
     data: {
       userId,
       status,

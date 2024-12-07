@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Dayjs } from 'dayjs';
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
@@ -20,11 +21,11 @@ import {
   updateUser,
   addUser,
 } from '@/api/system/user';
-import { deptTreeSelect } from '@/api/system/dept';
+import { deptTree } from '@/api/system/dept';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import {
-  regExpPasswd,
+  regExpPassword,
   regExpMobile,
   regExpNick,
   regExpEmail,
@@ -32,7 +33,8 @@ import {
 } from '@/utils/regular-utils';
 import useDictStore from '@/store/modules/dict';
 import useUserStore from '@/store/modules/user';
-import { DataNode } from 'ant-design-vue/es/tree';
+import { DataNode } from 'ant-design-vue/lib/tree';
+import { SYS_ROLE_SYSTEM_ID } from '@/constants/system-constants';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const { getDict } = useDictStore();
 const route = useRoute();
@@ -52,22 +54,22 @@ let dict: {
 });
 
 /**开始结束时间 */
-let queryRangePicker = ref<[string, string]>(['', '']);
+let queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
 /**查询参数 */
 let queryParams = reactive({
   /**登录账号 */
   userName: '',
   /**手机号 */
-  phonenumber: '',
+  phone: '',
   /**部门ID */
   deptId: '',
   /**用户状态 */
-  status: undefined,
-  /**记录开始时间 */
-  beginTime: '',
-  /**记录结束时间 */
-  endTime: '',
+  statusFlag: undefined,
+  /**开始时间 */
+  beginTime: undefined as undefined | number,
+  /**结束时间 */
+  endTime: undefined as undefined | number,
   /**当前页数 */
   pageNum: 1,
   /**每页条数 */
@@ -76,17 +78,17 @@ let queryParams = reactive({
 
 /**查询参数重置 */
 function fnQueryReset() {
-  queryParams = Object.assign(queryParams, {
+  Object.assign(queryParams, {
     userName: '',
-    phonenumber: '',
+    phone: '',
     deptId: '',
-    status: undefined,
-    beginTime: '',
-    endTime: '',
+    statusFlag: undefined,
+    beginTime: undefined,
+    endTime: undefined,
     pageNum: 1,
     pageSize: 20,
   });
-  queryRangePicker.value = ['', ''];
+  queryRangePicker.value = undefined;
   tablePagination.current = 1;
   tablePagination.pageSize = 20;
   fnGetList();
@@ -140,7 +142,7 @@ let tableColumns: ColumnsType = [
   },
   {
     title: '手机号码',
-    dataIndex: 'phonenumber',
+    dataIndex: 'phone',
     align: 'left',
     width: 120,
   },
@@ -160,8 +162,8 @@ let tableColumns: ColumnsType = [
   },
   {
     title: '登录时间',
-    dataIndex: 'loginDate',
-    align: 'center',
+    dataIndex: 'loginTime',
+    align: 'left',
     width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
@@ -170,9 +172,9 @@ let tableColumns: ColumnsType = [
   },
   {
     title: '用户状态',
-    dataIndex: 'status',
-    key: 'status',
-    align: 'center',
+    dataIndex: 'statusFlag',
+    key: 'statusFlag',
+    align: 'left',
     width: 100,
   },
   {
@@ -243,7 +245,7 @@ type ModalStateType = {
   /**标题 */
   title: string;
   /**表单数据 */
-  from: Record<string, any>;
+  form: Record<string, any>;
   /**确定按钮 loading */
   confirmLoading: boolean;
   /**选择列表 */
@@ -256,7 +258,7 @@ let modalState: ModalStateType = reactive({
   openByEdit: false,
   openByResetPwd: false,
   title: '用户',
-  from: {
+  form: {
     userId: undefined,
     userName: '',
     password: '',
@@ -265,11 +267,11 @@ let modalState: ModalStateType = reactive({
     loginDate: 0,
     loginIp: '',
     nickName: '',
-    phonenumber: '',
+    phone: '',
     postIds: [],
     roleIds: [],
     sex: '1',
-    status: '0',
+    statusFlag: '0',
     remark: '',
     createTime: 0,
   },
@@ -281,20 +283,20 @@ let modalState: ModalStateType = reactive({
 });
 
 /**对话框内表单属性和校验规则 */
-const modalStateFrom = Form.useForm(
-  modalState.from,
+const modalStateForm = Form.useForm(
+  modalState.form,
   reactive({
     userName: [
       {
         required: true,
         pattern: regExpUserName,
-        message: '账号不能以数字开头，可包含大写小写字母，数字，且不少于5位',
+        message: '账号只能包含大写小写字母，数字，且不少于4位',
       },
     ],
     password: [
       {
         required: true,
-        pattern: regExpPasswd,
+        pattern: regExpPassword,
         message: '密码至少包含大小写字母、数字、特殊符号，且不少于6位',
       },
     ],
@@ -312,7 +314,7 @@ const modalStateFrom = Form.useForm(
         message: '请输入正确的邮箱地址',
       },
     ],
-    phonenumber: [
+    phone: [
       {
         required: false,
         pattern: regExpMobile,
@@ -334,34 +336,39 @@ function fnModalOpenByVive(userId: string | number) {
   if (modalState.confirmLoading) return;
   const hide = message.loading('正在打开...', 0);
   modalState.confirmLoading = true;
-  getUser(userId).then(res => {
-    modalState.confirmLoading = false;
-    hide();
-    if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      const roles = res.data.roles.map((m: Record<string, any>) => {
-        const disabled = m.status === '0';
-        Reflect.set(m, 'disabled', disabled);
-        return m;
-      });
-      const posts = res.data.posts.map((m: Record<string, any>) => {
-        const disabled = m.status === '0';
-        Reflect.set(m, 'disabled', disabled);
-        return m;
-      });
-      modalState.options.roles = roles;
-      modalState.options.posts = posts;
-      const { user, roleIds, postIds } = res.data;
-      modalState.from = Object.assign(modalState.from, user);
-      modalState.from.roleIds = roleIds;
-      modalState.from.postIds = postIds;
-      // 头像解析
-      modalState.from.avatar = useUserStore().fnAvatar(modalState.from.avatar);
-      modalState.title = '用户信息';
-      modalState.openByView = true;
-    } else {
-      message.error('获取用户信息失败', 2);
-    }
-  });
+  getUser(userId)
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
+        const roles = res.data.roles.map((m: Record<string, any>) => {
+          const disabled = m.statusFlag === '0';
+          Reflect.set(m, 'disabled', disabled);
+          return m;
+        });
+        const posts = res.data.posts.map((m: Record<string, any>) => {
+          const disabled = m.statusFlag === '0';
+          Reflect.set(m, 'disabled', disabled);
+          return m;
+        });
+        modalState.options.roles = roles;
+        modalState.options.posts = posts;
+        const { user, roleIds, postIds } = res.data;
+        Object.assign(modalState.form, user);
+        modalState.form.roleIds = roleIds;
+        modalState.form.postIds = postIds;
+        // 头像解析
+        modalState.form.avatar = useUserStore().fnAvatar(
+          modalState.form.avatar
+        );
+        modalState.title = '用户信息';
+        modalState.openByView = true;
+      } else {
+        message.error('获取用户信息失败', 3);
+      }
+    })
+    .finally(() => {
+      hide();
+      modalState.confirmLoading = false;
+    });
 }
 
 /**
@@ -370,67 +377,73 @@ function fnModalOpenByVive(userId: string | number) {
  */
 function fnModalOpenByEdit(userId?: string | number) {
   if (!userId) {
-    modalStateFrom.resetFields();
+    modalStateForm.resetFields();
     if (modalState.confirmLoading) return;
     const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
     // 查询用户详细获取岗位和角色列表
-    getUser().then(res => {
-      modalState.confirmLoading = false;
-      hide();
-      if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        const roles = res.data.roles.map((m: Record<string, any>) => {
-          const disabled = m.status === '0';
-          Reflect.set(m, 'disabled', disabled);
-          return m;
-        });
-        const posts = res.data.posts.map((m: Record<string, any>) => {
-          const disabled = m.status === '0';
-          Reflect.set(m, 'disabled', disabled);
-          return m;
-        });
-        modalState.options.roles = roles;
-        modalState.options.posts = posts;
-        const { user, roleIds, postIds } = res.data;
-        modalState.from = Object.assign(modalState.from, user);
-        modalState.from.roleIds = roleIds;
-        modalState.from.postIds = postIds;
-        modalState.title = '添加用户信息';
-        modalState.openByEdit = true;
-      } else {
-        message.error('获取用户信息失败', 2);
-      }
-    });
+    getUser()
+      .then(res => {
+        if (res.code === RESULT_CODE_SUCCESS && res.data) {
+          const roles = res.data.roles.map((m: Record<string, any>) => {
+            const disabled = m.statusFlag === '0';
+            Reflect.set(m, 'disabled', disabled);
+            return m;
+          });
+          const posts = res.data.posts.map((m: Record<string, any>) => {
+            const disabled = m.statusFlag === '0';
+            Reflect.set(m, 'disabled', disabled);
+            return m;
+          });
+          modalState.options.roles = roles;
+          modalState.options.posts = posts;
+          const { user, roleIds, postIds } = res.data;
+          Object.assign(modalState.form, user);
+          modalState.form.roleIds = roleIds;
+          modalState.form.postIds = postIds;
+          modalState.title = '添加用户信息';
+          modalState.openByEdit = true;
+        } else {
+          message.error('获取用户信息失败', 3);
+        }
+      })
+      .finally(() => {
+        hide();
+        modalState.confirmLoading = false;
+      });
   } else {
     if (modalState.confirmLoading) return;
     const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
-    getUser(userId).then(res => {
-      modalState.confirmLoading = false;
-      hide();
-      if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        const roles = res.data.roles.map((m: Record<string, any>) => {
-          const disabled = m.status === '0';
-          Reflect.set(m, 'disabled', disabled);
-          return m;
-        });
-        const posts = res.data.posts.map((m: Record<string, any>) => {
-          const disabled = m.status === '0';
-          Reflect.set(m, 'disabled', disabled);
-          return m;
-        });
-        modalState.options.roles = roles;
-        modalState.options.posts = posts;
-        const { user, roleIds, postIds } = res.data;
-        modalState.from = Object.assign(modalState.from, user);
-        modalState.from.roleIds = roleIds;
-        modalState.from.postIds = postIds;
-        modalState.title = '修改用户信息';
-        modalState.openByEdit = true;
-      } else {
-        message.error(`获取用户信息失败`, 2);
-      }
-    });
+    getUser(userId)
+      .then(res => {
+        if (res.code === RESULT_CODE_SUCCESS && res.data) {
+          const roles = res.data.roles.map((m: Record<string, any>) => {
+            const disabled = m.statusFlag === '0';
+            Reflect.set(m, 'disabled', disabled);
+            return m;
+          });
+          const posts = res.data.posts.map((m: Record<string, any>) => {
+            const disabled = m.statusFlag === '0';
+            Reflect.set(m, 'disabled', disabled);
+            return m;
+          });
+          modalState.options.roles = roles;
+          modalState.options.posts = posts;
+          const { user, roleIds, postIds } = res.data;
+          Object.assign(modalState.form, user);
+          modalState.form.roleIds = roleIds;
+          modalState.form.postIds = postIds;
+          modalState.title = '修改用户信息';
+          modalState.openByEdit = true;
+        } else {
+          message.error(`获取用户信息失败`, 3);
+        }
+      })
+      .finally(() => {
+        hide();
+        modalState.confirmLoading = false;
+      });
   }
 }
 
@@ -439,37 +452,35 @@ function fnModalOpenByEdit(userId?: string | number) {
  * 进行表达规则校验
  */
 function fnModalOk() {
-  let validateName = ['nickName', 'email', 'phonenumber'];
-  if (!modalState.from.userId) {
+  let validateName = ['nickName', 'email', 'phone'];
+  if (!modalState.form.userId) {
     validateName.push('userName', 'password');
   }
-  modalStateFrom
+  modalStateForm
     .validate(validateName)
     .then(() => {
+      const hide = message.loading('请稍等...', 0);
       modalState.confirmLoading = true;
-      const from = toRaw(modalState.from);
-      const user = from.userId ? updateUser(from) : addUser(from);
-      const key = 'user';
-      message.loading({ content: '请稍等...', key });
+      const form = toRaw(modalState.form);
+      const user = form.userId ? updateUser(form) : addUser(form);
       user
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
-              key,
-              duration: 2,
+              duration: 3,
             });
             fnGetList(1);
             fnModalCancel();
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
-              duration: 2,
+              duration: 3,
             });
           }
         })
         .finally(() => {
+          hide();
           modalState.confirmLoading = false;
         });
     })
@@ -486,7 +497,7 @@ function fnModalCancel() {
   modalState.openByEdit = false;
   modalState.openByView = false;
   modalState.openByResetPwd = false;
-  modalStateFrom.resetFields();
+  modalStateForm.resetFields();
   modalState.options.roles = [];
   modalState.options.posts = [];
 }
@@ -496,31 +507,29 @@ function fnModalCancel() {
  * 进行表达规则校验
  */
 function fnModalOkResetPwd() {
-  modalStateFrom
+  modalStateForm
     .validate(['userName', 'password'])
     .then(() => {
+      const hide = message.loading('请稍等...', 0);
       modalState.confirmLoading = true;
-      const key = 'user';
-      message.loading({ content: '请稍等...', key });
-      resetUserPwd(modalState.from.userId, modalState.from.password)
+      resetUserPwd(modalState.form.userId, modalState.form.password)
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${modalState.title}成功`,
-              key,
-              duration: 2,
+              duration: 3,
             });
             modalState.openByResetPwd = false;
-            modalStateFrom.resetFields();
+            modalStateForm.resetFields();
           } else {
             message.error({
               content: `${res.msg}`,
-              key,
-              duration: 2,
+              duration: 3,
             });
           }
         })
         .finally(() => {
+          hide();
           modalState.confirmLoading = false;
         });
     })
@@ -534,9 +543,9 @@ function fnModalOkResetPwd() {
  * @param row 用户记录对象
  */
 function fnRecordResetPwd(row: Record<string, string>) {
-  modalStateFrom.resetFields();
-  modalState.from.userId = row.userId;
-  modalState.from.userName = row.userName;
+  modalStateForm.resetFields();
+  modalState.form.userId = row.userId;
+  modalState.form.userName = row.userName;
   modalState.title = '重置密码';
   modalState.openByResetPwd = true;
 }
@@ -546,32 +555,33 @@ function fnRecordResetPwd(row: Record<string, string>) {
  * @param row 用户记录对象
  */
 function fnRecordStatus(row: Record<string, string>) {
-  const text = row.status === '1' ? '启用' : '停用';
+  const text = row.statusFlag === '1' ? '启用' : '停用';
   Modal.confirm({
     title: '提示',
     content: `确定要${text} ${row.userName} 用户吗?`,
     onOk() {
-      const key = 'changeUserStatus';
-      message.loading({ content: '请稍等...', key });
-      changeUserStatus(row.userId, row.status).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `${row.userName} ${text}成功`,
-            key: key,
-            duration: 2,
-          });
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key: key,
-            duration: 2,
-          });
-        }
-        fnGetList();
-      });
+      const hide = message.loading('请稍等...', 0);
+      changeUserStatus(row.userId, row.statusFlag)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `${row.userName} ${text}成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
     onCancel() {
-      row.status = row.status === '1' ? '0' : '1';
+      row.statusFlag = row.statusFlag === '1' ? '0' : '1';
     },
   });
 }
@@ -588,24 +598,25 @@ function fnRecordDelete(userId: string = '0') {
     title: '提示',
     content: `确认删除用户编号为 【${userId}】 的数据项?`,
     onOk() {
-      const key = 'delUser';
-      message.loading({ content: '请稍等...', key });
-      delUser(userId).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `删除成功`,
-            key,
-            duration: 2,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key: key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      delUser(userId)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `删除成功`,
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -616,24 +627,25 @@ function fnExportList() {
     title: '提示',
     content: `确认根据搜索条件导出xlsx表格文件吗?`,
     onOk() {
-      const key = 'exportUser';
-      message.loading({ content: '请稍等...', key });
-      exportUser(toRaw(queryParams)).then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: `已完成导出`,
-            key,
-            duration: 2,
-          });
-          saveAs(res.data, `user_${Date.now()}.xlsx`);
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            key,
-            duration: 2,
-          });
-        }
-      });
+      const hide = message.loading('请稍等...', 0);
+      exportUser(toRaw(queryParams))
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `已完成导出`,
+              duration: 3,
+            });
+            saveAs(res.data, `user_${Date.now()}.xlsx`);
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -706,13 +718,13 @@ function fnModalUploadImportExportTemplate() {
       if (res.code === RESULT_CODE_SUCCESS) {
         message.success({
           content: `成功读取并下载导入模板`,
-          duration: 2,
+          duration: 3,
         });
         saveAs(res.data, `user_template_${Date.now()}.xlsx`);
       } else {
         message.error({
           content: `${res.msg}`,
-          duration: 2,
+          duration: 3,
         });
       }
     })
@@ -729,19 +741,28 @@ function fnGetList(pageNum?: number) {
   if (pageNum) {
     queryParams.pageNum = pageNum;
   }
-  if (!queryRangePicker.value) {
-    queryRangePicker.value = ['', ''];
+
+  // 时间范围
+  if (
+    Array.isArray(queryRangePicker.value) &&
+    queryRangePicker.value.length > 0
+  ) {
+    queryParams.beginTime = queryRangePicker.value[0].startOf('day').valueOf();
+    queryParams.endTime = queryRangePicker.value[1].endOf('day').valueOf();
+  } else {
+    queryParams.beginTime = undefined;
+    queryParams.endTime = undefined;
   }
-  queryParams.beginTime = queryRangePicker.value[0];
-  queryParams.endTime = queryRangePicker.value[1];
+
   listUser(toRaw(queryParams)).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.rows)) {
+    if (res.code === RESULT_CODE_SUCCESS) {
       // 取消勾选
       if (tableState.selectedRowKeys.length > 0) {
         tableState.selectedRowKeys = [];
       }
-      tablePagination.total = res.total;
-      tableState.data = res.rows;
+      const { total, rows } = res.data;
+      tablePagination.total = total;
+      tableState.data = rows;
     }
     tableState.loading = false;
   });
@@ -753,7 +774,7 @@ let deptTreeData = ref<DataNode[]>([]);
 /**查询部门下拉树结构 */
 function fnGetDeptTree() {
   if (deptTreeData.value.length > 0) return;
-  deptTreeSelect().then(res => {
+  deptTree().then(res => {
     if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
       deptTreeData.value = res.data;
     }
@@ -842,9 +863,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="手机号码" name="phonenumber">
+            <a-form-item label="手机号码" name="phone">
               <a-input
-                v-model:value="queryParams.phonenumber"
+                v-model:value="queryParams.phone"
                 allow-clear
                 :maxlength="11"
                 placeholder="请输入手机号码"
@@ -852,9 +873,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="4" :md="12" :xs="24">
-            <a-form-item label="用户状态" name="status">
+            <a-form-item label="用户状态" name="statusFlag">
               <a-select
-                v-model:value="queryParams.status"
+                v-model:value="queryParams.statusFlag"
                 allow-clear
                 placeholder="请选择"
                 :options="dict.sysNormalDisable"
@@ -866,10 +887,8 @@ onMounted(() => {
             <a-form-item label="登录时间" name="queryRangePicker">
               <a-range-picker
                 v-model:value="queryRangePicker"
-                allow-clear
-                bordered
-                value-format="YYYY-MM-DD"
-                :placeholder="['登录开始', '登录结束']"
+                :bordered="true"
+                :allow-clear="true"
                 style="width: 100%"
               ></a-range-picker>
             </a-form-item>
@@ -922,7 +941,7 @@ onMounted(() => {
       <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
             <a-switch
               v-model:checked="tableState.seached"
@@ -931,7 +950,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
             <a-switch
               v-model:checked="tableState.striped"
@@ -940,7 +959,7 @@ onMounted(() => {
               size="small"
             />
           </a-tooltip>
-          <a-tooltip>
+          <a-tooltip placement="topRight">
             <template #title>刷新</template>
             <a-button type="text" @click.prevent="fnGetList()">
               <template #icon><ReloadOutlined /></template>
@@ -991,11 +1010,14 @@ onMounted(() => {
           <template v-if="column.key === 'deptId'">
             {{ record.dept?.deptName }}
           </template>
-          <template v-if="column.key === 'status'">
+          <template v-if="column.key === 'statusFlag'">
             <a-switch
-              v-if="dict.sysNormalDisable.length > 0 && record.userId !== '1'"
+              v-if="
+                dict.sysNormalDisable.length > 0 &&
+                !record.roleIds?.includes(SYS_ROLE_SYSTEM_ID)
+              "
               v-perms:has="['system:user:edit']"
-              v-model:checked="record.status"
+              v-model:checked="record.statusFlag"
               checked-value="1"
               :checked-children="dict.sysNormalDisable[0].label"
               un-checked-value="0"
@@ -1006,12 +1028,12 @@ onMounted(() => {
             <DictTag
               v-else
               :options="dict.sysNormalDisable"
-              :value="record.status"
+              :value="record.statusFlag"
             />
           </template>
           <template v-if="column.key === 'userId'">
-            <a-space :size="8" align="center" v-if="record.userId !== '1'">
-              <a-tooltip>
+            <a-space :size="8" align="center">
+              <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
                 <a-button
                   type="link"
@@ -1021,7 +1043,10 @@ onMounted(() => {
                   <template #icon><ProfileOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip
+                placement="topRight"
+                v-if="!record.roleIds?.includes(SYS_ROLE_SYSTEM_ID)"
+              >
                 <template #title>编辑</template>
                 <a-button
                   type="link"
@@ -1031,7 +1056,10 @@ onMounted(() => {
                   <template #icon><FormOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip
+                placement="topRight"
+                v-if="!record.roleIds?.includes(SYS_ROLE_SYSTEM_ID)"
+              >
                 <template #title>删除</template>
                 <a-button
                   type="link"
@@ -1041,7 +1069,10 @@ onMounted(() => {
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip
+                placement="topRight"
+                v-if="!record.roleIds?.includes(SYS_ROLE_SYSTEM_ID)"
+              >
                 <template #title>重置密码</template>
                 <a-button
                   type="link"
@@ -1069,13 +1100,13 @@ onMounted(() => {
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户编号" name="userId">
-              {{ modalState.from.userId }}
+              {{ modalState.form.userId }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="创建时间" name="createTime">
-              <span v-if="+modalState.from.createTime > 0">
-                {{ parseDateToStr(+modalState.from.createTime) }}
+              <span v-if="+modalState.form.createTime > 0">
+                {{ parseDateToStr(+modalState.form.createTime) }}
               </span>
             </a-form-item>
           </a-col>
@@ -1083,13 +1114,13 @@ onMounted(() => {
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="登录地址" name="loginIp">
-              {{ modalState.from.loginIp }}
+              {{ modalState.form.loginIp }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="登录时间" name="loginDate">
-              <span v-if="+modalState.from.loginDate > 0">
-                {{ parseDateToStr(+modalState.from.loginDate) }}
+            <a-form-item label="登录时间" name="loginTime">
+              <span v-if="+modalState.form.loginTime > 0">
+                {{ parseDateToStr(+modalState.form.loginTime) }}
               </span>
             </a-form-item>
           </a-col>
@@ -1100,14 +1131,14 @@ onMounted(() => {
               <a-avatar
                 shape="circle"
                 size="default"
-                :src="modalState.from.avatar"
-                :alt="modalState.from.userName"
+                :src="modalState.form.avatar"
+                :alt="modalState.form.userName"
               ></a-avatar>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="登录账号" name="userName">
-              {{ modalState.from.userName }}
+              {{ modalState.form.userName }}
             </a-form-item>
           </a-col>
         </a-row>
@@ -1115,7 +1146,7 @@ onMounted(() => {
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户昵称" name="nickName">
-              {{ modalState.from.nickName }}
+              {{ modalState.form.nickName }}
             </a-form-item>
           </a-col>
         </a-row>
@@ -1125,15 +1156,15 @@ onMounted(() => {
             <a-form-item label="用户性别" name="sex">
               <DictTag
                 :options="dict.sysUserSex"
-                :value="modalState.from.sex"
+                :value="modalState.form.sex"
               />
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="用户状态" name="status">
+            <a-form-item label="用户状态" name="statusFlag">
               <DictTag
                 :options="dict.sysNormalDisable"
-                :value="modalState.from.status"
+                :value="modalState.form.statusFlag"
               />
             </a-form-item>
           </a-col>
@@ -1141,13 +1172,13 @@ onMounted(() => {
 
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="手机号码" name="phonenumber">
-              {{ modalState.from.phonenumber }}
+            <a-form-item label="手机号码" name="phone">
+              {{ modalState.form.phone }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="电子邮箱" name="email">
-              {{ modalState.from.email }}
+              {{ modalState.form.email }}
             </a-form-item>
           </a-col>
         </a-row>
@@ -1159,7 +1190,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-tree-select
-            :value="modalState.from.deptId"
+            :value="modalState.form.deptId"
             placeholder="归属部门"
             disabled
             :tree-data="deptTreeData"
@@ -1180,7 +1211,7 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户岗位" name="postIds">
               <a-select
-                :value="modalState.from.postIds"
+                :value="modalState.form.postIds"
                 disabled
                 mode="multiple"
                 placeholder="请选择用户岗位"
@@ -1191,10 +1222,15 @@ onMounted(() => {
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
+          <a-col
+            :lg="12"
+            :md="12"
+            :xs="24"
+            v-if="!modalState.form.roleIds?.includes(SYS_ROLE_SYSTEM_ID)"
+          >
             <a-form-item label="用户角色" name="roleIds">
               <a-select
-                :value="modalState.from.roleIds"
+                :value="modalState.form.roleIds"
                 disabled
                 mode="multiple"
                 placeholder="请选择用户角色"
@@ -1214,7 +1250,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            :value="modalState.from.remark"
+            :value="modalState.form.remark"
             :auto-size="{ minRows: 2, maxRows: 6 }"
             :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)"
@@ -1240,20 +1276,20 @@ onMounted(() => {
       @cancel="fnModalCancel"
     >
       <a-form
-        name="modalStateFromByEdit"
+        name="modalStateFormByEdit"
         layout="horizontal"
         :label-col="{ span: 6 }"
         :label-wrap="true"
       >
-        <a-row v-if="!modalState.from.userId">
+        <a-row :gutter="16" v-if="!modalState.form.userId">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="登录账号"
               name="userName"
-              v-bind="modalStateFrom.validateInfos.userName"
+              v-bind="modalStateForm.validateInfos.userName"
             >
               <a-input
-                v-model:value="modalState.from.userName"
+                v-model:value="modalState.form.userName"
                 allow-clear
                 :maxlength="30"
                 placeholder="请输入登录账号"
@@ -1268,10 +1304,10 @@ onMounted(() => {
             <a-form-item
               label="登录密码"
               name="password"
-              v-bind="modalStateFrom.validateInfos.password"
+              v-bind="modalStateForm.validateInfos.password"
             >
               <a-input-password
-                v-model:value="modalState.from.password"
+                v-model:value="modalState.form.password"
                 placeholder="登录密码"
                 :maxlength="26"
               >
@@ -1288,10 +1324,10 @@ onMounted(() => {
             <a-form-item
               label="用户昵称"
               name="nickName"
-              v-bind="modalStateFrom.validateInfos.nickName"
+              v-bind="modalStateForm.validateInfos.nickName"
             >
               <a-input
-                v-model:value="modalState.from.nickName"
+                v-model:value="modalState.form.nickName"
                 allow-clear
                 :maxlength="30"
                 placeholder="请输入用户昵称"
@@ -1304,7 +1340,7 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户性别" name="sex">
               <a-select
-                v-model:value="modalState.from.sex"
+                v-model:value="modalState.form.sex"
                 default-value="1"
                 placeholder="用户性别"
                 :options="dict.sysUserSex"
@@ -1313,9 +1349,9 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="用户状态" name="status">
+            <a-form-item label="用户状态" name="statusFlag">
               <a-select
-                v-model:value="modalState.from.status"
+                v-model:value="modalState.form.statusFlag"
                 default-value="0"
                 placeholder="用户状态"
                 :options="dict.sysNormalDisable"
@@ -1329,11 +1365,11 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="手机号码"
-              name="phonenumber"
-              v-bind="modalStateFrom.validateInfos.phonenumber"
+              name="phone"
+              v-bind="modalStateForm.validateInfos.phone"
             >
               <a-input
-                v-model:value="modalState.from.phonenumber"
+                v-model:value="modalState.form.phone"
                 allow-clear
                 :maxlength="11"
                 placeholder="请输入手机号码"
@@ -1344,10 +1380,10 @@ onMounted(() => {
             <a-form-item
               label="电子邮箱"
               name="email"
-              v-bind="modalStateFrom.validateInfos.email"
+              v-bind="modalStateForm.validateInfos.email"
             >
               <a-input
-                v-model:value="modalState.from.email"
+                v-model:value="modalState.form.email"
                 allow-clear
                 :maxlength="40"
                 placeholder="请输入电子邮箱"
@@ -1363,7 +1399,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-tree-select
-            v-model:value="modalState.from.deptId"
+            v-model:value="modalState.form.deptId"
             placeholder="归属部门"
             show-search
             tree-default-expand-all
@@ -1385,7 +1421,7 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户岗位" name="postIds">
               <a-select
-                v-model:value="modalState.from.postIds"
+                v-model:value="modalState.form.postIds"
                 allow-clear
                 mode="multiple"
                 placeholder="请选择用户岗位"
@@ -1401,7 +1437,7 @@ onMounted(() => {
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户角色" name="roleIds">
               <a-select
-                v-model:value="modalState.from.roleIds"
+                v-model:value="modalState.form.roleIds"
                 allow-clear
                 mode="multiple"
                 placeholder="请选择用户角色"
@@ -1423,7 +1459,7 @@ onMounted(() => {
           :label-wrap="true"
         >
           <a-textarea
-            v-model:value="modalState.from.remark"
+            v-model:value="modalState.form.remark"
             :auto-size="{ minRows: 4, maxRows: 6 }"
             :maxlength="450"
             :show-count="true"
@@ -1444,14 +1480,14 @@ onMounted(() => {
       @ok="fnModalOkResetPwd"
       @cancel="fnModalCancel"
     >
-      <a-form name="modalStateFromByResetPwd" layout="horizontal">
+      <a-form name="modalStateFormByResetPwd" layout="horizontal">
         <a-form-item
           label="登录账号"
           name="userName"
-          v-bind="modalStateFrom.validateInfos.userName"
+          v-bind="modalStateForm.validateInfos.userName"
         >
           <a-input
-            :value="modalState.from.userName"
+            :value="modalState.form.userName"
             disabled
             :maxlength="30"
             placeholder="登录账号"
@@ -1464,10 +1500,10 @@ onMounted(() => {
         <a-form-item
           label="登录密码"
           name="password"
-          v-bind="modalStateFrom.validateInfos.password"
+          v-bind="modalStateForm.validateInfos.password"
         >
           <a-input-password
-            v-model:value="modalState.from.password"
+            v-model:value="modalState.form.password"
             placeholder="登录密码"
             :maxlength="26"
           >

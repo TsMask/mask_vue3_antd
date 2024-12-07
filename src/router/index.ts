@@ -209,13 +209,14 @@ const constantRoutes: RouteRecordRaw[] = [
 // 根据.env配置获取是否带井号和基础路径
 const hasHash = import.meta.env.VITE_HISTORY_HASH;
 const bashUrl = import.meta.env.VITE_HISTORY_BASE_URL;
+const historyType =
+  hasHash === 'true'
+    ? createWebHashHistory(bashUrl)
+    : createWebHistory(bashUrl);
 
 /**全局路由 */
 const router = createRouter({
-  history:
-    hasHash === 'true'
-      ? createWebHashHistory(bashUrl)
-      : createWebHistory(bashUrl),
+  history: historyType,
   routes: constantRoutes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
@@ -229,7 +230,7 @@ const router = createRouter({
 /**无Token可访问页面地址白名单 */
 const WHITE_LIST: string[] = [
   '/login',
-  '/auth-redirect',
+  '/redirect',
   '/404',
   '/403',
   '/register',

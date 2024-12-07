@@ -8,8 +8,8 @@ import { request } from '@/plugins/http-fetch';
 export function exportData(query: Record<string, any>) {
   return request({
     url: '/system/dict/data/export',
-    method: 'post',
-    data: query,
+    method: 'GET',
+    params: query,
     responseType: 'blob',
   });
 }
@@ -22,7 +22,7 @@ export function exportData(query: Record<string, any>) {
 export function listData(query: Record<string, any>) {
   return request({
     url: '/system/dict/data/list',
-    method: 'get',
+    method: 'GET',
     params: query,
   });
 }
@@ -35,7 +35,7 @@ export function listData(query: Record<string, any>) {
 export function getData(dictCode: string | number) {
   return request({
     url: `/system/dict/data/${dictCode}`,
-    method: 'get',
+    method: 'GET',
   });
 }
 
@@ -47,7 +47,7 @@ export function getData(dictCode: string | number) {
 export function addData(data: Record<string, any>) {
   return request({
     url: '/system/dict/data',
-    method: 'post',
+    method: 'POST',
     data: data,
   });
 }
@@ -60,7 +60,7 @@ export function addData(data: Record<string, any>) {
 export function updateData(data: Record<string, any>) {
   return request({
     url: '/system/dict/data',
-    method: 'put',
+    method: 'PUT',
     data: data,
   });
 }
@@ -73,7 +73,7 @@ export function updateData(data: Record<string, any>) {
 export function delData(dictCode: string | number) {
   return request({
     url: `/system/dict/data/${dictCode}`,
-    method: 'delete',
+    method: 'DELETE',
   });
 }
 
@@ -85,6 +85,6 @@ export function delData(dictCode: string | number) {
 export function getDictDataType(dictType: string) {
   return request({
     url: `/system/dict/data/type/${dictType}`,
-    method: 'get',
+    method: 'GET',
   });
 }

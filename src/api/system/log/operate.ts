@@ -10,8 +10,8 @@ export function exportSysLogOperate(
 ) {
   return request({
     url: '/system/log/operate/export',
-    method: 'post',
-    data: query,
+    method: 'GET',
+    params: query,
     responseType: 'blob',
   });
 }
@@ -26,7 +26,7 @@ export function listSysLogOperate(
 ) {
   return request({
     url: '/system/log/operate/list',
-    method: 'get',
+    method: 'GET',
     params: query,
   });
 }
@@ -39,7 +39,7 @@ export function listSysLogOperate(
 export function delSysLogOperate(operId: string) {
   return request({
     url: `/system/log/operate/${operId}`,
-    method: 'delete',
+    method: 'DELETE',
   });
 }
 
@@ -50,6 +50,6 @@ export function delSysLogOperate(operId: string) {
 export function cleanSysLogOperate() {
   return request({
     url: '/system/log/operate/clean',
-    method: 'delete',
+    method: 'DELETE',
   });
 }

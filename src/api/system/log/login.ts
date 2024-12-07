@@ -10,8 +10,8 @@ export function exportSysLogLogin(
 ) {
   return request({
     url: '/system/log/login/export',
-    method: 'post',
-    data: query,
+    method: 'GET',
+    params: query,
     responseType: 'blob',
   });
 }
@@ -26,7 +26,7 @@ export function listSysLogLogin(
 ) {
   return request({
     url: '/system/log/login/list',
-    method: 'get',
+    method: 'GET',
     params: query,
   });
 }
@@ -39,7 +39,7 @@ export function listSysLogLogin(
 export function delSysLogLogin(loginIds: string) {
   return request({
     url: `/system/log/login/${loginIds}`,
-    method: 'delete',
+    method: 'DELETE',
   });
 }
 
@@ -50,7 +50,7 @@ export function delSysLogLogin(loginIds: string) {
 export function cleanSysLogLogin() {
   return request({
     url: '/system/log/login/clean',
-    method: 'delete',
+    method: 'DELETE',
   });
 }
 
@@ -62,6 +62,6 @@ export function cleanSysLogLogin() {
 export function unlock(userName: string) {
   return request({
     url: `/system/log/login/unlock/${userName}`,
-    method: 'put',
+    method: 'PUT',
   });
 }
