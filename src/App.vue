@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { onBeforeMount, watch } from 'vue';
+import { onMounted, onBeforeMount, watch } from 'vue';
 import useLayoutStore from '@/store/modules/layout';
 import useAppStore from '@/store/modules/app';
+import { usePrefersColorScheme, viewTransitionTheme } from 'antdv-pro-layout';
+import { message } from 'ant-design-vue';
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
 import dayjs from 'dayjs';
-import { usePrefersColorScheme, viewTransitionTheme } from 'antdv-pro-layout';
 import 'dayjs/locale/zh-cn';
-import { message } from 'ant-design-vue';
 dayjs.locale('zh-cn'); // 默认中文
+const appStore = useAppStore();
+const colorScheme = usePrefersColorScheme();
 const { themeConfig, initPrimaryColor, changeConf } = useLayoutStore();
 
-// 偏好设置
-const colorScheme = usePrefersColorScheme();
 watch(
   () => colorScheme.value,
   themeMode => {
@@ -31,13 +31,14 @@ onBeforeMount(() => {
   initPrimaryColor();
 });
 
-const appStore = useAppStore();
-// 输出应用版本号
-console.info(
-  `%c ${appStore.appName} %c ${appStore.appCode} - ${appStore.appVersion} `,
-  'color: #fadfa3; background: #030307; padding: 4px 0;',
-  'color: #030307; background: #fadfa3; padding: 4px 0;'
-);
+onMounted(() => {
+  // 输出应用版本号
+  console.info(
+    `%c ${appStore.appName} %c ${appStore.appCode} - ${appStore.appVersion} `,
+    'color: #fadfa3; background: #030307; padding: 4px 0;',
+    'color: #030307; background: #fadfa3; padding: 4px 0;'
+  );
+});
 </script>
 
 <template>

@@ -1,13 +1,24 @@
 <script setup lang="ts">
+import { viewTransitionTheme } from 'antdv-pro-layout';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
 import { toggle, isFullscreen } from '@/utils/fullscreen-utils';
 import { useRouter } from 'vue-router';
+import useLayoutStore from '@/store/modules/layout';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
+const { proConfig, changeConf } = useLayoutStore();
 const userStore = useUserStore();
 const appStore = useAppStore();
 const router = useRouter();
+
+// 手动变更主题-过渡动画
+function changeTheme(e: any) {
+  viewTransitionTheme(isDarkMode => {
+    const themeMode = isDarkMode ? 'light' : 'dark';
+    changeConf('theme', themeMode);
+  }, e);
+}
 
 /**组件尺寸点击选择 */
 function fnComponentSize({ key }: MenuInfo) {
@@ -86,6 +97,16 @@ function fnClick({ key }: MenuInfo) {
       >
         <template #icon>
           <QuestionCircleOutlined />
+        </template>
+      </a-button>
+    </a-tooltip>
+
+    <a-tooltip placement="bottomRight">
+      <template #title>主题明暗模式</template>
+      <a-button type="text" style="color: inherit" @click="changeTheme">
+        <template #icon>
+          <FrownOutlined v-if="proConfig.theme === 'dark'" />
+          <MehOutlined v-else />
         </template>
       </a-button>
     </a-tooltip>

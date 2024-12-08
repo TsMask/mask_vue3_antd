@@ -94,7 +94,6 @@ const useLayoutStore = defineStore('layout', {
     },
     themeConfig: {
       algorithm: [theme.darkAlgorithm],
-      // algorithm: themeColor["dark"],
       token: {
         // colorBgContainer: "#fff",
         colorPrimary: localGet(CACHE_LOCAL_PRIMARY_COLOR) || '#1890ff',
@@ -120,7 +119,6 @@ const useLayoutStore = defineStore('layout', {
     /**修改布局设置 */
     changeConf(key: string, value: boolean | string | number | undefined) {
       if (Reflect.has(this.proConfig, key)) {
-        console.log(key, value);
         if (key === 'theme') {
           // const themeColor = {
           //   light: theme.defaultAlgorithm,
