@@ -36,6 +36,7 @@ import useUserStore from '@/store/modules/user';
 import { DataNode } from 'ant-design-vue/lib/tree';
 import { SYS_ROLE_SYSTEM_ID } from '@/constants/system-constants';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import { uploadFile } from '@/api/tool/file';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -690,17 +691,30 @@ function fnModalUploadImportClose() {
 
 /**对话框表格信息导入上传 */
 function fnModalUploadImportUpload(file: File) {
+  // 发送请求
   const hide = message.loading('正在上传并解析数据...', 0);
   uploadImportState.loading = true;
   let formData = new FormData();
   formData.append('file', file);
-  formData.append('updateSupport', `${uploadImportState.updateSupport}`);
-  importData(formData)
+  formData.append('subPath', 'import');
+  uploadFile(formData)
     .then(res => {
-      uploadImportState.msg = res.msg?.replaceAll(/<br\/>+/g, '\r');
+      if (res.code === RESULT_CODE_SUCCESS) {
+        return res.data.filePath;
+      }
+      return '';
     })
-    .catch((err: { code: number; msg: string }) => {
-      message.error(`上传失败 ${err.msg}`);
+    .then(filePath => {
+      if (filePath === '') return undefined;
+      return importData(filePath, uploadImportState.updateSupport);
+    })
+    .then(res => {
+      if (res === undefined) return;
+      if (res.code === RESULT_CODE_SUCCESS) {
+        uploadImportState.msg = res.msg?.replaceAll(/<br\/>+/g, '\r');
+      } else {
+        message.error(res.msg, 3);
+      }
     })
     .finally(() => {
       hide();
