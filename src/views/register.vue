@@ -70,7 +70,10 @@ function fnFinish() {
           },
         });
       } else {
-        message.error(`${res.msg}`, 3);
+        message.error({
+          content: `${res.msg}`,
+          duration: 3,
+        });
       }
     })
     .finally(() => {

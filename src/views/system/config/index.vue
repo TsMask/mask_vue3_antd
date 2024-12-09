@@ -244,7 +244,10 @@ const modalStateForm = Form.useForm(
  */
 function fnModalVisibleByVive(configId: string | number) {
   if (!configId) {
-    message.error(`参数配置记录存在错误`, 2);
+    message.error({
+      content: '获取参数配置信息失败',
+      duration: 3,
+    });
     return;
   }
   getConfig(configId).then(res => {
@@ -253,7 +256,10 @@ function fnModalVisibleByVive(configId: string | number) {
       modalState.title = '参数配置信息';
       modalState.visibleByView = true;
     } else {
-      message.error(`获取参数配置信息失败`, 2);
+      message.error({
+        content: '获取参数配置信息失败',
+        duration: 3,
+      });
     }
   });
 }
@@ -278,7 +284,10 @@ function fnModalVisibleByEdit(configId?: string | number) {
           modalState.title = '修改参数配置';
           modalState.visibleByEdit = true;
         } else {
-          message.error(`获取参数配置信息失败`, 2);
+          message.error({
+            content: '获取参数配置信息失败',
+            duration: 3,
+          });
         }
       })
       .finally(() => {
@@ -322,7 +331,10 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
+      message.error({
+        content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
+        duration: 3,
+      });
     });
 }
 
@@ -491,7 +503,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row>
+        <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="参数名称" name="configName">
               <a-input
@@ -842,8 +854,8 @@ onMounted(() => {
         >
           <a-textarea
             v-model:value="modalState.form.remark"
-            :auto-size="{ minRows: 4, maxRows: 6 }"
-            :maxlength="450"
+            :auto-size="{ minRows: 2, maxRows: 6 }"
+            :maxlength="480"
             :show-count="true"
             placeholder="请输入参数说明"
           />

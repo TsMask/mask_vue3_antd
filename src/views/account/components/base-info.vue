@@ -1,8 +1,8 @@
 <script lang="ts" setup>
+import { onMounted, reactive, ref, toRaw } from 'vue';
 import { Modal, message } from 'ant-design-vue';
 import type { FileType } from 'ant-design-vue/es/upload/interface';
 import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface';
-import { onMounted, reactive, ref, toRaw } from 'vue';
 import { uploadFile } from '@/api/tool/file';
 import { updateUserProfile } from '@/api/profile';
 import { regExpEmail, regExpMobile, regExpNick } from '@/utils/regular-utils';
@@ -61,7 +61,10 @@ function fnFinish() {
               },
             });
           } else {
-            message.error(`${res.msg}`, 3);
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
           }
         })
         .finally(() => {
@@ -80,11 +83,17 @@ function fnBeforeUpload(file: FileType) {
   if (upState.value) return false;
   const isJpgOrPng = ['image/jpeg', 'image/png'].includes(file.type);
   if (!isJpgOrPng) {
-    message.error('只支持上传图片格式（jpg、png）', 3);
+    message.error({
+      content: '只支持上传图片格式（jpg、png）',
+      duration: 3,
+    });
   }
   const isLt2M = file.size / 1024 / 1024 < 2;
   if (!isLt2M) {
-    message.error('图片文件大小必须小于 2MB', 3);
+    message.error({
+      content: '图片文件大小必须小于 2MB',
+      duration: 3,
+    });
   }
   return isJpgOrPng && isLt2M;
 }
@@ -117,7 +126,10 @@ function fnUpload(up: UploadRequestOption) {
         .then(res => {
           if (res === undefined) return;
           if (res.code === RESULT_CODE_SUCCESS) {
-            message.success('头像变更成功', 3);
+            message.success({
+              content: '头像变更成功！',
+              duration: 3,
+            });
             userStore.setAvatar(stateForm.form.avatar);
           } else {
             message.error(res.msg, 3);

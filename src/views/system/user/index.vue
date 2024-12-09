@@ -331,7 +331,10 @@ const modalStateForm = Form.useForm(
  */
 function fnModalOpenByVive(userId: string | number) {
   if (!userId) {
-    message.error(`用户记录存在错误`, 2);
+    message.error({
+      content: '获取用户信息失败',
+      duration: 3,
+    });
     return;
   }
   if (modalState.confirmLoading) return;
@@ -363,7 +366,10 @@ function fnModalOpenByVive(userId: string | number) {
         modalState.title = '用户信息';
         modalState.openByView = true;
       } else {
-        message.error('获取用户信息失败', 3);
+        message.error({
+          content: '获取用户信息失败',
+          duration: 3,
+        });
       }
     })
     .finally(() => {
@@ -405,7 +411,10 @@ function fnModalOpenByEdit(userId?: string | number) {
           modalState.title = '添加用户信息';
           modalState.openByEdit = true;
         } else {
-          message.error('获取用户信息失败', 3);
+          message.error({
+            content: '获取用户信息失败',
+            duration: 3,
+          });
         }
       })
       .finally(() => {
@@ -438,7 +447,10 @@ function fnModalOpenByEdit(userId?: string | number) {
           modalState.title = '修改用户信息';
           modalState.openByEdit = true;
         } else {
-          message.error(`获取用户信息失败`, 3);
+          message.error({
+            content: '获取用户信息失败',
+            duration: 3,
+          });
         }
       })
       .finally(() => {
@@ -486,7 +498,10 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
+      message.error({
+        content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
+        duration: 3,
+      });
     });
 }
 
@@ -535,7 +550,10 @@ function fnModalOkResetPwd() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
+      message.error({
+        content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
+        duration: 3,
+      });
     });
 }
 
@@ -828,7 +846,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row>
+        <a-row :gutter="16">
           <a-col :lg="18" :md="12" :xs="24">
             <a-form-item label="部门名称" name="deptId">
               <a-tree-select
@@ -865,7 +883,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row>
+        <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="登录账号" name="userName">
               <a-input
@@ -1474,8 +1492,8 @@ onMounted(() => {
         >
           <a-textarea
             v-model:value="modalState.form.remark"
-            :auto-size="{ minRows: 4, maxRows: 6 }"
-            :maxlength="450"
+            :auto-size="{ minRows: 2, maxRows: 6 }"
+            :maxlength="480"
             :show-count="true"
             placeholder="请输入用户说明"
           />

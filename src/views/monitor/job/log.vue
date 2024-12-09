@@ -110,17 +110,17 @@ let tableColumns: ColumnsType = [
     width: 200,
   },
   {
+    title: '调用目标',
+    dataIndex: 'invokeTarget',
+    align: 'left',
+    width: 150,
+  },
+  {
     title: '任务组名',
     dataIndex: 'jobGroup',
     key: 'jobGroup',
     align: 'left',
     width: 100,
-  },
-  {
-    title: '调用目标',
-    dataIndex: 'invokeTarget',
-    align: 'left',
-    width: 150,
   },
   {
     title: '执行状态',
@@ -408,7 +408,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row>
+        <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="执行状态" name="statusFlag">
               <a-select

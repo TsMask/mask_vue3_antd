@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { viewTransitionTheme } from 'antdv-pro-layout';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
+import { viewTransitionTheme } from 'antdv-pro-layout';
 import { toggle, isFullscreen } from '@/utils/fullscreen-utils';
 import { useRouter } from 'vue-router';
 import useLayoutStore from '@/store/modules/layout';

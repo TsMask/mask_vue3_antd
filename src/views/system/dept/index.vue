@@ -217,7 +217,10 @@ const modalStateForm = Form.useForm(
  */
 function fnModalVisibleByVive(deptId: string | number) {
   if (!deptId) {
-    message.error(`部门记录存在错误`, 3);
+    message.error({
+      content: '获取部门信息失败',
+      duration: 3,
+    });
     return;
   }
   if (modalState.confirmLoading) return;
@@ -237,7 +240,10 @@ function fnModalVisibleByVive(deptId: string | number) {
         modalState.title = '部门信息';
         modalState.visibleByView = true;
       } else {
-        message.error(`获取部门信息失败`, 3);
+        message.error({
+          content: '获取部门信息失败',
+          duration: 3,
+        });
       }
     })
     .finally(() => {
@@ -287,7 +293,10 @@ function fnModalVisibleByEdit(
           modalState.title = '修改部门信息';
           modalState.visibleByEdit = true;
         } else {
-          message.error(`获取部门信息失败`, 3);
+          message.error({
+            content: '获取部门信息失败',
+            duration: 3,
+          });
         }
       })
       .finally(() => {
@@ -335,7 +344,10 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
+      message.error({
+        content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
+        duration: 3,
+      });
     });
 }
 
@@ -427,7 +439,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row>
+        <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="部门名称" name="deptName">
               <a-input

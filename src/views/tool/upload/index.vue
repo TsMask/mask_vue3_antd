@@ -1,8 +1,7 @@
 <script lang="ts" setup>
 import { reactive } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
-import { Modal } from 'ant-design-vue/es/components';
-import message from 'ant-design-vue/es/message';
+import { Modal, message } from 'ant-design-vue';
 import type { FileType, UploadFile } from 'ant-design-vue/es/upload/interface';
 import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface';
 import saveAs from 'file-saver';
@@ -94,11 +93,17 @@ function fnBeforeUpload(file: FileType) {
   if (state.loading) return false;
   const isJpgOrPng = ['image/jpeg', 'image/png'].includes(file.type);
   if (!isJpgOrPng) {
-    message.error('只支持上传图片格式（jpg、png）', 3);
+    message.error({
+      content: '只支持上传图片格式（jpg、png）',
+      duration: 3,
+    });
   }
   const isLt2M = file.size / 1024 / 1024 < 2;
   if (!isLt2M) {
-    message.error('图片文件大小必须小于 2MB', 3);
+    message.error({
+      content: '图片文件大小必须小于 2MB',
+      duration: 3,
+    });
   }
   return isJpgOrPng && isLt2M;
 }
@@ -118,7 +123,10 @@ function fnUpload(up: UploadRequestOption) {
       uploadFile(formData)
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
-            message.success('文件上传成功', 3);
+            message.success({
+              content: '文件上传成功！',
+              duration: 3,
+            });
             state.uploadFilePath = res.data.url;
             state.downloadFilePath = res.data.fileName;
           } else {
@@ -146,7 +154,10 @@ function fnUploadChunk(up: UploadRequestOption) {
       uploadFileChunk(fileData, 4, 'default')
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
-            message.success('文件上传成功', 3);
+            message.success({
+              content: '文件上传成功！',
+              duration: 3,
+            });
             if (item) {
               item.url = res.data.url;
               item.name = res.data.newFileName;

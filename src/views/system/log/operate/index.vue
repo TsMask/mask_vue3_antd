@@ -306,20 +306,24 @@ function fnCleanList() {
     content: `确认清空所有登录日志数据项?`,
     onOk() {
       const hide = message.loading('请稍等...', 0);
-      cleanSysLogOperate().then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: '清空成功',
-            duration: 3,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            duration: 3,
-          });
-        }
-      });
+      cleanSysLogOperate()
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: '清空成功',
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }
@@ -420,7 +424,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row  >
+        <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="模块名称" name="title">
               <a-input
@@ -642,7 +646,7 @@ onMounted(() => {
       @cancel="fnModalCancel"
     >
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
-        <a-row  >
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="日志编号" name="id">
               {{ modalState.form.id }}
@@ -656,7 +660,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row  >
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="业务类型" name="businessType">
               {{ modalState.form.title }} /
@@ -673,7 +677,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row  >
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="请求地址" name="operaUrl">
               {{ modalState.form.operaUrlMethod }}
@@ -688,7 +692,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row  >
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="请求耗时" name="costTime">
               {{ modalState.form.costTime }} ms

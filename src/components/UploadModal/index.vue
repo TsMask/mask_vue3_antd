@@ -46,7 +46,10 @@ function fnBeforeUpload(file: FileType) {
     const fileSize = file.size;
     const isLtM = fileSize / 1024 / 1024 < props.size;
     if (!isLtM) {
-      message.error(`上传文件大小必须小于 ${props.size}MB`, 3);
+      message.error({
+        content: `上传文件大小必须小于 ${props.size}MB`,
+        duration: 3,
+      });
       return false;
     }
   }
@@ -55,7 +58,10 @@ function fnBeforeUpload(file: FileType) {
     const fileName = file.name;
     const isAllowType = props.ext.some(v => fileName.endsWith(v));
     if (!isAllowType) {
-      message.error(`只支持上传文件格式 ${props.ext.join('、')}`, 3);
+      message.error({
+        content: `只支持上传文件格式 ${props.ext.join('、')}`,
+        duration: 3,
+      });
       return false;
     }
   }
@@ -93,7 +99,7 @@ function fnUpload(up: UploadRequestOption) {
         <p class="ant-upload-text">点击选择或将文件拖入边框区域进行上传</p>
         <p class="ant-upload-hint">
           <template v-if="props.size > 0">
-            允许上传文件大小 {{ props.size }} MB <br/>
+            允许上传文件大小 {{ props.size }} MB <br />
           </template>
           <template v-if="props.ext.length > 0">
             允许导入

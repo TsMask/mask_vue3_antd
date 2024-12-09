@@ -47,6 +47,8 @@ let queryParams = reactive({
   dictName: '',
   /**字典类型 */
   dictType: '',
+  /**数据标签 */
+  dataLabel: '',
   /**字典状态 */
   statusFlag: undefined,
   /**开始时间 */
@@ -64,6 +66,7 @@ function fnQueryReset() {
   Object.assign(queryParams, {
     dictName: '',
     dictType: '',
+    dataLabel: '',
     statusFlag: undefined,
     beginTime: undefined,
     endTime: undefined,
@@ -237,7 +240,10 @@ const modalStateForm = Form.useForm(
  */
 function fnModalVisibleByVive(dictId: string | number) {
   if (!dictId) {
-    message.error(`字典类型记录存在错误`, 2);
+    message.error({
+      content: '获取字典类型信息失败',
+      duration: 3,
+    });
     return;
   }
   if (modalState.confirmLoading) return;
@@ -251,7 +257,10 @@ function fnModalVisibleByVive(dictId: string | number) {
       modalState.title = '字典类型信息';
       modalState.visibleByView = true;
     } else {
-      message.error(`获取字典类型信息失败`, 2);
+      message.error({
+        content: '获取字典类型信息失败',
+        duration: 3,
+      });
     }
   });
 }
@@ -277,7 +286,10 @@ function fnModalVisibleByEdit(dictId?: string | number) {
         modalState.title = '修改字典类型';
         modalState.visibleByEdit = true;
       } else {
-        message.error(`获取字典类型信息失败`, 2);
+        message.error({
+          content: '获取字典类型信息失败',
+          duration: 3,
+        });
       }
     });
   }
@@ -317,7 +329,10 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
+      message.error({
+        content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
+        duration: 3,
+      });
     });
 }
 
@@ -491,7 +506,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row>
+        <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="字典名称" name="dictName">
               <a-input
@@ -502,11 +517,11 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="字典类型" name="dictType">
+            <a-form-item label="数据标签" name="dataLabel">
               <a-input
-                v-model:value="queryParams.dictType"
+                v-model:value="queryParams.dataLabel"
                 allow-clear
-                placeholder="请输入字典类型"
+                placeholder="请输入数据标签"
               ></a-input>
             </a-form-item>
           </a-col>
@@ -835,8 +850,8 @@ onMounted(() => {
         <a-form-item label="字典说明" name="remark">
           <a-textarea
             v-model:value="modalState.form.remark"
-            :auto-size="{ minRows: 4, maxRows: 6 }"
-            :maxlength="450"
+            :auto-size="{ minRows: 2, maxRows: 6 }"
+            :maxlength="480"
             :show-count="true"
             placeholder="请输入参数说明"
           />

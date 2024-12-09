@@ -245,7 +245,10 @@ const modalStateForm = Form.useForm(
  */
 function fnModalVisibleByVive(noticeId: string | number) {
   if (!noticeId) {
-    message.error(`公告记录存在错误`, 2);
+    message.error({
+      content: '获取公告信息失败',
+      duration: 3,
+    });
     return;
   }
   if (modalState.confirmLoading) return;
@@ -258,7 +261,10 @@ function fnModalVisibleByVive(noticeId: string | number) {
         modalState.title = '公告信息';
         modalState.visibleByView = true;
       } else {
-        message.error(`获取公告信息失败`, 2);
+        message.error({
+          content: '获取公告信息失败',
+          duration: 3,
+        });
       }
     })
     .finally(() => {
@@ -287,7 +293,10 @@ function fnModalVisibleByEdit(noticeId?: string | number) {
           modalState.title = '修改公告';
           modalState.visibleByEdit = true;
         } else {
-          message.error(`获取公告信息失败`, 3);
+          message.error({
+            content: '获取公告信息失败',
+            duration: 3,
+          });
         }
       })
       .finally(() => {
@@ -331,7 +340,10 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
+      message.error({
+        content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
+        duration: 3,
+      });
     });
 }
 
@@ -374,7 +386,7 @@ function fnRecordDelete(noticeId: string = '0') {
           }
         })
         .finally(() => {
-          hide;
+          hide();
         });
     },
   });
@@ -434,7 +446,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row>
+        <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="公告标题" name="noticeTitle">
               <a-input

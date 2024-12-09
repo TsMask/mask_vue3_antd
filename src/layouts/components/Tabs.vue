@@ -101,7 +101,7 @@ watch(router.currentRoute, v => tabsStore.tabOpen(v), { immediate: true });
       class="tabs"
       :class="{ 'tabs-fixed': fixedHeader }"
       :style="{ width: width, top: headerRender === false ? 0 : undefined }"
-      hide-add
+      :hide-add="true"
       tab-position="top"
       type="editable-card"
       :tab-bar-gutter="8"

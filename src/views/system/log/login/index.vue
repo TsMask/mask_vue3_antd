@@ -282,7 +282,6 @@ function fnUnlock() {
       const hide = message.loading('请稍等...', 0);
       unlock(username)
         .then(res => {
-          hide();
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
               content: `${username} 解锁成功`,

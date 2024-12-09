@@ -278,7 +278,10 @@ const modalStateForm = Form.useForm(
  */
 function fnModalVisibleByVive(menuId: string | number) {
   if (!menuId) {
-    message.error(`菜单记录存在错误`, 2);
+    message.error({
+      content: '获取菜单信息失败',
+      duration: 3,
+    });
     return;
   }
   if (modalState.confirmLoading) return;
@@ -292,7 +295,10 @@ function fnModalVisibleByVive(menuId: string | number) {
         modalState.title = '菜单信息';
         modalState.visibleByView = true;
       } else {
-        message.error(`获取菜单信息失败`, 2);
+        message.error({
+          content: '获取菜单信息失败',
+          duration: 3,
+        });
       }
     })
     .finally(() => {
@@ -331,7 +337,10 @@ function fnModalVisibleByEdit(
           modalState.title = '修改菜单信息';
           modalState.visibleByEdit = true;
         } else {
-          message.error(`获取菜单信息失败`, 2);
+          message.error({
+            content: '获取菜单信息失败',
+            duration: 3,
+          });
         }
       })
       .finally(() => {
@@ -388,7 +397,10 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
+      message.error({
+        content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
+        duration: 3,
+      });
     });
 }
 
@@ -487,7 +499,7 @@ onMounted(() => {
   <PageContainer :title="title">
     <template #content>
       <a-typography-paragraph>
-        动态路由菜单，根节点下不要创建菜单哦
+        动态路由菜单，根节点下创建菜单会用使用菜单编号作为菜单目录路径。
       </a-typography-paragraph>
     </template>
 
@@ -498,7 +510,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row>
+        <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="菜单名称" name="menuName">
               <a-input
@@ -783,7 +795,7 @@ onMounted(() => {
           </a-tag>
         </a-form-item>
 
-        <a-row>
+        <a-row v-if="modalState.form.menuType !== MENU_TYPE_BUTTON">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单图标" name="icon">
               <IconFont
@@ -792,12 +804,7 @@ onMounted(() => {
               ></IconFont>
             </a-form-item>
           </a-col>
-          <a-col
-            :lg="12"
-            :md="12"
-            :xs="24"
-            v-if="modalState.form.menuType !== MENU_TYPE_BUTTON"
-          >
+          <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="路由地址" name="menuPath">
               {{ modalState.form.menuPath }}
             </a-form-item>
@@ -819,6 +826,8 @@ onMounted(() => {
               </a-tag>
             </a-form-item>
           </a-col>
+        </a-row>
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="显示状态" name="visibleFlag">
               <a-tag color="default">
@@ -1036,7 +1045,32 @@ onMounted(() => {
                 </a-input>
               </a-form-item>
             </a-col>
+            <a-col :lg="12" :md="12" :xs="24">
+              <a-form-item label="显示状态" name="visibleFlag">
+                <a-select
+                  v-model:value="modalState.form.visibleFlag"
+                  default-value="0"
+                  placeholder="显示状态"
+                >
+                  <a-select-option key="0" value="0">隐藏</a-select-option>
+                  <a-select-option key="1" value="1">显示</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
           </template>
+
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="菜单状态" name="statusFlag">
+              <a-select
+                v-model:value="modalState.form.statusFlag"
+                default-value="0"
+                placeholder="菜单状态"
+                :options="dict.sysNormalDisable"
+              >
+              </a-select>
+            </a-form-item>
+          </a-col>
+
           <template v-if="modalState.form.menuType === MENU_TYPE_MENU">
             <a-col :lg="12" :md="12" :xs="24">
               <a-form-item label="内部地址" name="frameFlag">
@@ -1062,30 +1096,7 @@ onMounted(() => {
                 </a-select>
               </a-form-item>
             </a-col>
-            <a-col :lg="12" :md="12" :xs="24">
-              <a-form-item label="显示状态" name="visibleFlag">
-                <a-select
-                  v-model:value="modalState.form.visibleFlag"
-                  default-value="0"
-                  placeholder="显示状态"
-                >
-                  <a-select-option key="0" value="0">隐藏</a-select-option>
-                  <a-select-option key="1" value="1">显示</a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
           </template>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="菜单状态" name="statusFlag">
-              <a-select
-                v-model:value="modalState.form.statusFlag"
-                default-value="0"
-                placeholder="菜单状态"
-                :options="dict.sysNormalDisable"
-              >
-              </a-select>
-            </a-form-item>
-          </a-col>
         </a-row>
 
         <a-form-item
@@ -1158,8 +1169,8 @@ onMounted(() => {
         >
           <a-textarea
             v-model:value="modalState.form.remark"
-            :auto-size="{ minRows: 4, maxRows: 6 }"
-            :maxlength="450"
+            :auto-size="{ minRows: 2, maxRows: 6 }"
+            :maxlength="480"
             :show-count="true"
             placeholder="请输入菜单说明"
           />
