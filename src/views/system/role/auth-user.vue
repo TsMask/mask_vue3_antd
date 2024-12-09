@@ -213,12 +213,15 @@ function fnModalVisibleBySelectUser() {
  */
 function fnModalOk(userIds: string[] | number[]) {
   if (userIds.length <= 0) {
-    message.error(`请选择要分配的用户`, 2);
+    message.error({
+      content: '请选择要分配的用户',
+      duration: 3,
+    });
     return;
   }
   const hide = message.loading('请稍等...', 0);
   authUserChecked({
-    checked: true,
+    auth: true,
     userIds: userIds.join(','),
     roleId: roleId,
   })
@@ -255,7 +258,7 @@ function fnRecordDelete(userId: string | number) {
     content: `确认取消用户编号为 【${userId}】 的数据项授权?`,
     onOk() {
       const hide = message.loading('请稍等...', 0);
-      authUserChecked({ checked: false, userIds: userId, roleId: roleId })
+      authUserChecked({ auth: false, userIds: userId, roleId: roleId })
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
