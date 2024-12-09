@@ -13,16 +13,20 @@ import {
 } from '@/api/tool/file';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 
-let state = reactive<{
+type StateType = {
   /**上传状态 */
   loading: boolean;
+  /**上传资源地址 */
   uploadFilePath: string;
+  /**下载资源地址 */
   downloadFilePath: string;
   /*文件列表 */
   fileList: UploadFile<any>[];
-}>({
+};
+
+let state = reactive<StateType>({
   loading: false,
-  uploadFilePath: '',
+  uploadFilePath: '/src/assets/logo.png',
   downloadFilePath: '',
   fileList: [
     // {
@@ -38,9 +42,15 @@ let state = reactive<{
 
 /**下载文件 */
 function fnDownload() {
-  const hide = message.loading('请稍等...', 0);
   const filePath = state.downloadFilePath;
-  if (!filePath) return;
+  if (!filePath) {
+    message.warning({
+      content: '下载资源地址为空',
+      duration: 3,
+    });
+    return;
+  }
+  const hide = message.loading('请稍等...', 0);
   downloadFile(filePath)
     .then(res => {
       if (res.code === RESULT_CODE_SUCCESS) {
@@ -64,8 +74,15 @@ function fnDownload() {
 
 /**下载切片文件 */
 function fnDownloadChunk() {
-  const hide = message.loading('请稍等...', 0);
   const filePath = state.downloadFilePath;
+  if (!filePath) {
+    message.warning({
+      content: '下载资源地址为空',
+      duration: 3,
+    });
+    return;
+  }
+  const hide = message.loading('请稍等...', 0);
   downloadFileChunk(filePath, 5)
     .then(blob => {
       console.log(blob);
@@ -147,7 +164,7 @@ function fnUploadChunk(up: UploadRequestOption) {
   const item = state.fileList.find(f => f.name === fileData.name);
   Modal.confirm({
     title: '提示',
-    content: `确认要上传文件吗?`,
+    content: `确认要进行分片上传文件吗?`,
     onOk() {
       // 发送请求
       const hide = message.loading('请稍等...', 0);
@@ -183,16 +200,45 @@ function fnUploadChunk(up: UploadRequestOption) {
 </script>
 
 <template>
-  <PageContainer title="上传示例">
+  <PageContainer title="文件上传下载示例">
     <a-row :gutter="16">
       <a-col :lg="12" :md="12" :xs="24">
-        <a-card title="普通文件" style="margin-bottom: 16px">
+        <a-card title="小文件普通上传" style="margin-bottom: 16px">
+          <a-space direction="vertical" :size="16">
+            <a-upload
+              name="file"
+              list-type="picture"
+              :max-count="1"
+              :show-upload-list="false"
+              :before-upload="fnBeforeUpload"
+              :custom-request="fnUpload"
+            >
+              <a-button type="default" :loading="state.loading">
+                选择文件
+              </a-button>
+            </a-upload>
+            <a-image :width="128" :height="128" :src="state.uploadFilePath" />
+          </a-space>
+        </a-card>
+        <a-card title="大文件分片上传">
+          <a-upload
+            v-model:file-list="state.fileList"
+            name="file"
+            list-type="picture"
+            :custom-request="fnUploadChunk"
+          >
+            <a-button> 选择文件 </a-button>
+          </a-upload>
+        </a-card>
+      </a-col>
+      <a-col :lg="12" :md="12" :xs="24">
+        <a-card title="文件下载" style="margin-bottom: 16px">
           <a-row :gutter="8">
             <a-col :span="24" style="margin-bottom: 16px">
               <a-input
                 style="margin-bottom: 16px"
                 type="text"
-                placeholder="输入资源文件地址"
+                placeholder="输入资源地址，列如：/upload/default/2024/12/xxx.png"
                 v-model:value="state.downloadFilePath"
               >
                 <template #suffix>
@@ -203,7 +249,7 @@ function fnUploadChunk(up: UploadRequestOption) {
               </a-input>
               <a-input
                 type="text"
-                placeholder="输入资源文件地址"
+                placeholder="输入资源地址，列如：/upload/default/2024/12/xxx.png"
                 v-model:value="state.downloadFilePath"
               >
                 <template #suffix>
@@ -213,40 +259,7 @@ function fnUploadChunk(up: UploadRequestOption) {
                 </template>
               </a-input>
             </a-col>
-            <a-col :span="24">
-              <a-space direction="vertical" :size="16">
-                <a-upload
-                  name="file"
-                  list-type="picture"
-                  :max-count="1"
-                  :show-upload-list="false"
-                  :before-upload="fnBeforeUpload"
-                  :custom-request="fnUpload"
-                >
-                  <a-button type="default" :loading="state.loading">
-                    选择文件
-                  </a-button>
-                </a-upload>
-                <a-image
-                  :width="128"
-                  :height="128"
-                  :src="state.uploadFilePath"
-                />
-              </a-space>
-            </a-col>
           </a-row>
-        </a-card>
-      </a-col>
-      <a-col :lg="12" :md="12" :xs="24">
-        <a-card title="大文件分片上传" style="margin-bottom: 16px">
-          <a-upload
-            v-model:file-list="state.fileList"
-            name="file"
-            list-type="picture"
-            :custom-request="fnUploadChunk"
-          >
-            <a-button> 选择文件 </a-button>
-          </a-upload>
         </a-card>
       </a-col>
     </a-row>
