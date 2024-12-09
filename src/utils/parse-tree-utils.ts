@@ -126,7 +126,7 @@ export function parseDataToTreeExclude(
 }
 
 /**
- * 解析树结构数据转出一维id数组
+ * 解析树结构数据转出所有一维id数组
  *
  * @param data 数组数据
  * @param fieldId 读取节点字段 默认 'id'
@@ -158,7 +158,7 @@ export function parseTreeKeys(
 }
 
 /**
- * 解析树结构数据转出含子节点的一维id数组
+ * 解析树结构数据转出根节点的一维id数组
  *
  * @param data 数组数据
  * @param fieldId 读取节点字段 默认 'id'
@@ -183,6 +183,46 @@ export function parseTreeNodeKeys(
         componet(iterator[fieldChildren]);
       }
     }
+  }
+  return treeIds;
+}
+
+/**
+ * 解析树结构数据转出子节点关联根节点的一维id数组
+ *
+ * @param data 数组数据
+ * @param checkedKeys 子节点数组数据
+ * @param fieldId 读取节点字段 默认 'id'
+ * @param fieldChildren 读取子节点字段 默认 'children'
+ * @returns 层级数组
+ */
+export function parseTreeNodeKeysByChecked(
+  data: Record<string, any>[],
+  checkedKeys: (string | number)[],
+  fieldId: string = 'id',
+  fieldChildren: string = 'children'
+) {
+  // 节点id
+  let treeIds: (string | number)[] = [];
+  componet(data);
+  /**闭包递归函数 */
+  function componet(data: Record<string, any>[]) {
+    if (data.length <= 0) return false;
+    let hasKey = false;
+    for (const iterator of data) {
+      const key = iterator[fieldId];
+      if (checkedKeys.includes(key)) {
+        hasKey = true;
+      }
+      let nodes = iterator[fieldChildren];
+      if (Array.isArray(nodes) && nodes.length > 0) {
+        if (componet(nodes)) {
+          treeIds.push(key);
+          hasKey = true;
+        }
+      }
+    }
+    return hasKey;
   }
   return treeIds;
 }
