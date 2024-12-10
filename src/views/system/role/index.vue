@@ -5,9 +5,9 @@ import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue/lib';
-import { SizeType } from 'ant-design-vue/lib/config-provider';
-import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
-import { ColumnsType } from 'ant-design-vue/lib/table';
+import type { SizeType } from 'ant-design-vue/lib/config-provider';
+import type { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
+import type { ColumnsType } from 'ant-design-vue/lib/table';
 import {
   exportRole,
   addRole,
@@ -23,8 +23,12 @@ import { deptTreeRole } from '@/api/system/dept';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import useDictStore from '@/store/modules/dict';
-import { DataNode } from 'ant-design-vue/lib/tree';
-import { parseTreeKeys, parseTreeNodeKeys } from '@/utils/parse-tree-utils';
+import { DataNode } from 'ant-design-vue/es/tree';
+import {
+  parseTreeKeys,
+  parseTreeNodeKeys,
+  parseTreeNodeKeysByChecked,
+} from '@/utils/parse-tree-utils';
 import { hasPermissions } from '@/plugins/auth-user';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
 import { SYS_ROLE_SYSTEM_ID } from '@/constants/system-constants';
@@ -306,7 +310,10 @@ const modalStateForm = Form.useForm(
  */
 function fnModalVisibleByVive(roleId: string | number) {
   if (!roleId) {
-    message.error(`角色记录存在错误`, 2);
+    message.error({
+      content: '获取角色信息失败',
+      duration: 3,
+    });
     return;
   }
   if (modalState.confirmLoading) return;
@@ -324,12 +331,20 @@ function fnModalVisibleByVive(roleId: string | number) {
           menuTree.treeData = menus;
           modalState.menuTree.treeData = menus;
           modalState.menuTree.checkedKeys = checkedKeys;
-          modalState.form.menuIds = checkedKeys;
+          if (modalState.form.menuCheckStrictly === '1') {
+            const ids = parseTreeNodeKeysByChecked(menus, checkedKeys, 'id');
+            modalState.form.menuIds = ids.concat(checkedKeys);
+          } else {
+            modalState.form.menuIds = checkedKeys;
+          }
         }
         modalState.title = '角色信息';
         modalState.visibleByView = true;
       } else {
-        message.error(`获取角色信息失败`, 3);
+        message.error({
+          content: '获取角色信息失败',
+          duration: 3,
+        });
       }
     })
     .finally(() => {
@@ -386,12 +401,20 @@ function fnModalVisibleByEdit(roleId?: string | number) {
             menuTree.treeData = menus;
             modalState.menuTree.treeData = menus;
             modalState.menuTree.checkedKeys = checkedKeys;
-            modalState.form.menuIds = checkedKeys;
+            if (modalState.form.menuCheckStrictly === '1') {
+              const ids = parseTreeNodeKeysByChecked(menus, checkedKeys, 'id');
+              modalState.form.menuIds = ids.concat(checkedKeys);
+            } else {
+              modalState.form.menuIds = checkedKeys;
+            }
           }
           modalState.title = '修改角色信息';
           modalState.visibleByEdit = true;
         } else {
-          message.error(`获取角色信息失败`, 3);
+          message.error({
+            content: '获取角色信息失败',
+            duration: 3,
+          });
         }
       })
       .finally(() => {
@@ -435,7 +458,10 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
+      message.error({
+        content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
+        duration: 3,
+      });
     });
 }
 
@@ -550,7 +576,10 @@ function fnModalOkDataScope() {
  */
 function fnRecordDataScope(roleId: string | number) {
   if (!roleId) {
-    message.error(`角色记录存在错误`, 2);
+    message.error({
+      content: '获取角色信息失败',
+      duration: 3,
+    });
     return;
   }
   if (modalState.confirmLoading) return;
@@ -568,12 +597,20 @@ function fnRecordDataScope(roleId: string | number) {
           deptTree.treeData = depts;
           modalState.deptTree.treeData = depts;
           modalState.deptTree.checkedKeys = checkedKeys;
-          modalState.form.deptIds = checkedKeys;
+          if (modalState.form.deptCheckStrictly === '1') {
+            const ids = parseTreeNodeKeysByChecked(depts, checkedKeys, 'id');
+            modalState.form.deptIds = ids.concat(checkedKeys);
+          } else {
+            modalState.form.deptIds = checkedKeys;
+          }
         }
         modalState.title = '分配数据权限';
         modalState.visibleByDataScope = true;
       } else {
-        message.error(`获取角色信息失败`, 3);
+        message.error({
+          content: '获取角色信息失败',
+          duration: 3,
+        });
       }
     })
     .finally(() => {
@@ -1193,7 +1230,7 @@ onMounted(() => {
         >
           <a-textarea
             v-model:value="modalState.form.remark"
-            :auto-size="{ minRows: 4, maxRows: 6 }"
+            :auto-size="{ minRows: 2, maxRows: 6 }"
             :maxlength="450"
             :show-count="true"
             placeholder="请输入角色说明"
@@ -1241,7 +1278,13 @@ onMounted(() => {
             :tree-data="modalState.menuTree.treeData"
             :field-names="{ children: 'children', title: 'label', key: 'id' }"
             :height="256"
-            style="border: 1px solid #d9d9d9; margin-top: 4px"
+            style="
+              border-width: 1px;
+              border-style: solid;
+              border-color: #d9d9d9;
+              border-radius: 6px;
+              margin-top: 4px;
+            "
           >
           </a-tree>
         </a-form-item>
@@ -1361,7 +1404,13 @@ onMounted(() => {
             :tree-data="modalState.deptTree.treeData"
             :field-names="{ children: 'children', title: 'label', key: 'id' }"
             :height="256"
-            style="border: 1px solid #d9d9d9; margin-top: 4px"
+            style="
+              border-width: 1px;
+              border-style: solid;
+              border-color: #d9d9d9;
+              border-radius: 6px;
+              margin-top: 4px;
+            "
           >
           </a-tree>
         </a-form-item>
