@@ -1,38 +1,3 @@
-<template>
-  <a-modal
-    :destroyOnClose="true"
-    title="Cron表达式生成"
-    :visible="props.visible"
-    :body-style="{ padding: '0 24px' }"
-    @cancel="fnCronModal(false)"
-    @ok="fnCronModal(true)"
-  >
-    <a-tabs tab-position="top" type="line">
-      <a-tab-pane key="1" tab="秒">
-        <CronSecond v-model:value="cronValue.second"></CronSecond>
-      </a-tab-pane>
-      <a-tab-pane key="2" tab="分钟">
-        <CronMinute v-model:value="cronValue.minute"></CronMinute>
-      </a-tab-pane>
-      <a-tab-pane key="3" tab="小时">
-        <CronHour v-model:value="cronValue.hour"></CronHour>
-      </a-tab-pane>
-      <a-tab-pane key="4" tab="日">
-        <CronDay v-model:value="cronValue.day"></CronDay>
-      </a-tab-pane>
-      <a-tab-pane key="5" tab="月">
-        <CronMonth v-model:value="cronValue.month"></CronMonth>
-      </a-tab-pane>
-    </a-tabs>
-
-    <a-input
-      class="reultBox"
-      addon-before="表达式预览："
-      v-model:value="cronStr"
-      disabled
-    />
-  </a-modal>
-</template>
 <script lang="ts" setup>
 import CronSecond from './components/Second.vue';
 import CronMinute from './components/Minute.vue';
@@ -103,6 +68,42 @@ function fnCronModal(val: boolean) {
   }
 }
 </script>
+
+<template>
+  <a-modal
+    :destroyOnClose="true"
+    title="Cron表达式生成"
+    :visible="props.visible"
+    :body-style="{ padding: '0 24px' }"
+    @cancel="fnCronModal(false)"
+    @ok="fnCronModal(true)"
+  >
+    <a-tabs tab-position="top" type="line">
+      <a-tab-pane key="1" tab="秒">
+        <CronSecond v-model:value="cronValue.second"></CronSecond>
+      </a-tab-pane>
+      <a-tab-pane key="2" tab="分钟">
+        <CronMinute v-model:value="cronValue.minute"></CronMinute>
+      </a-tab-pane>
+      <a-tab-pane key="3" tab="小时">
+        <CronHour v-model:value="cronValue.hour"></CronHour>
+      </a-tab-pane>
+      <a-tab-pane key="4" tab="日">
+        <CronDay v-model:value="cronValue.day"></CronDay>
+      </a-tab-pane>
+      <a-tab-pane key="5" tab="月">
+        <CronMonth v-model:value="cronValue.month"></CronMonth>
+      </a-tab-pane>
+    </a-tabs>
+
+    <a-input
+      class="reultBox"
+      addon-before="表达式预览："
+      v-model:value="cronStr"
+      disabled
+    />
+  </a-modal>
+</template>
 
 <style lang="less" scoped>
 .reultBox {

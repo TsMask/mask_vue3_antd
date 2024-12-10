@@ -5,9 +5,7 @@ import { request } from '@/plugins/http-fetch';
  * @param query 查询参数
  * @returns bolb
  */
-export function exportJobLog(
-  query: Record<string, any>
-) {
+export function exportJobLog(query: Record<string, any>) {
   return request({
     url: '/monitor/job/log/export',
     method: 'GET',

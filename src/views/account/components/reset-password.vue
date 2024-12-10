@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { Modal, message } from 'ant-design-vue/lib';
 import { reactive } from 'vue';
+import { Modal, message } from 'ant-design-vue/lib';
 import { updateUserPassword } from '@/api/profile';
 import { regExpPassword } from '@/utils/regular-utils';
 import useUserStore from '@/store/modules/user';
@@ -59,7 +59,10 @@ function fnFinish() {
               },
             });
           } else {
-            message.error(`${res.msg}`, 3);
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
           }
         })
         .finally(() => {

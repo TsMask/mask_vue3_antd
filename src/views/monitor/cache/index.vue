@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted } from 'vue';
+import { PageContainer } from 'antdv-pro-layout';
+import { message } from 'ant-design-vue/lib';
+import type { ColumnsType } from 'ant-design-vue/lib/table/Table';
 import {
   listCacheName,
   listCacheKey,
@@ -9,9 +12,6 @@ import {
   clearCacheKey,
   clearCacheSafe,
 } from '@/api/monitor/cache';
-import { PageContainer } from 'antdv-pro-layout';
-import { ColumnsType } from 'ant-design-vue/lib/table/Table';
-import { message } from 'ant-design-vue/lib';
 import { hasPermissions } from '@/plugins/auth-user';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 const route = useRoute();
@@ -19,12 +19,9 @@ const route = useRoute();
 /**路由标题 */
 let title = ref<string>(route.meta.title ?? '标题');
 
-/**请求点击 */
-let isClick = ref<boolean>(false);
-
 /**缓存内容信息 */
 let cacheKeyInfo = reactive({
-  loading: true,
+  loading: false,
   data: {
     cacheKey: '',
     cacheName: '',
@@ -39,16 +36,16 @@ let cacheKeyInfo = reactive({
  */
 function fnCacheKeyInfo(cacheKey: string) {
   if (!hasPermissions(['monitor:cache:query'])) return;
-  if (isClick.value) return;
-  isClick.value = true;
   cacheKeyInfo.loading = true;
-  getCacheValue(cacheKeyTable.cacheName, cacheKey).then(res => {
-    isClick.value = false;
-    if (res.code === RESULT_CODE_SUCCESS) {
-      Object.assign(cacheKeyInfo.data, res.data);
+  getCacheValue(cacheKeyTable.cacheName, cacheKey)
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS) {
+        Object.assign(cacheKeyInfo.data, res.data);
+      }
+    })
+    .finally(() => {
       cacheKeyInfo.loading = false;
-    }
-  });
+    });
 }
 
 /**键名列表表格字段列 */
@@ -57,7 +54,7 @@ let cacheKeyTableColumns: ColumnsType = [
     title: '序号',
     dataIndex: 'num',
     width: 50,
-    align: 'center',
+    align: 'left',
     customRender(opt) {
       return opt.index + 1;
     },
@@ -84,7 +81,7 @@ let cacheKeyTableColumns: ColumnsType = [
   {
     title: '操作',
     key: 'option',
-    align: 'center',
+    align: 'left',
     width: 50,
   },
 ];
@@ -102,9 +99,7 @@ let cacheKeyTable = reactive({
  * @param cacheKey 键名列表中的缓存键名
  */
 function fnCacheKeyClear(cacheKey: string) {
-  if (isClick.value) return;
   const hide = message.loading('请稍等...', 0);
-  isClick.value = true;
   clearCacheKey(cacheKeyTable.cacheName, cacheKey)
     .then(res => {
       if (res.code === RESULT_CODE_SUCCESS) {
@@ -112,6 +107,7 @@ function fnCacheKeyClear(cacheKey: string) {
           content: `已删除缓存键名 ${cacheKey}`,
           duration: 3,
         });
+        fnCacheKeyList();
         // 缓存内容显示且是删除的缓存键名，需要进行加载显示
         if (!cacheKeyInfo.loading && cacheKeyInfo.data.cacheKey === cacheKey) {
           cacheKeyInfo.loading = true;
@@ -122,11 +118,9 @@ function fnCacheKeyClear(cacheKey: string) {
           duration: 3,
         });
       }
-      fnCacheKeyList();
     })
     .finally(() => {
       hide();
-      isClick.value = false;
     });
 }
 
@@ -136,25 +130,29 @@ function fnCacheKeyList(cacheName: string = 'load') {
     cacheName = cacheKeyTable.cacheName;
   }
   if (!cacheName) {
-    message.warning('请在缓存列表中选择数据项！', 3);
+    message.warning({
+      content: '请在缓存列表中选择数据项！',
+      duration: 3,
+    });
     return;
   }
-  if (isClick.value) return;
-  isClick.value = true;
+  if (cacheKeyTable.loading) return;
   cacheKeyTable.loading = true;
-  listCacheKey(cacheName).then(res => {
-    isClick.value = false;
-    if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      cacheKeyTable.cacheName = cacheName;
-      cacheKeyTable.data = res.data;
+  listCacheKey(cacheName)
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
+        cacheKeyTable.cacheName = cacheName;
+        cacheKeyTable.data = res.data;
+      }
+    })
+    .finally(() => {
       cacheKeyTable.loading = false;
-    }
-  });
+    });
 }
 
 /**缓存列表表格数据 */
 let cacheNameTable = reactive({
-  loading: true,
+  loading: false,
   data: [],
 });
 
@@ -164,7 +162,7 @@ let cacheNameTableColumns: ColumnsType = [
     title: '序号',
     dataIndex: 'num',
     width: 50,
-    align: 'center',
+    align: 'left',
     customRender(opt) {
       return opt.index + 1;
     },
@@ -198,15 +196,13 @@ let cacheNameTableColumns: ColumnsType = [
   {
     title: '操作',
     key: 'option',
-    align: 'center',
+    align: 'left',
     width: 50,
   },
 ];
 
 /**安全清理缓存 */
 function fnClearCacheSafe() {
-  if (isClick.value) return;
-  isClick.value = true;
   const hide = message.loading('请稍等...', 0);
   clearCacheSafe()
     .then(res => {
@@ -215,8 +211,9 @@ function fnClearCacheSafe() {
           content: '已完成安全清理缓存',
           duration: 3,
         });
-        cacheKeyTable.loading = true;
         cacheKeyInfo.loading = true;
+        cacheKeyTable.loading = true;
+        cacheKeyTable.data = [];
       } else {
         message.error({
           content: res.msg,
@@ -226,7 +223,6 @@ function fnClearCacheSafe() {
     })
     .finally(() => {
       hide();
-      isClick.value = false;
     });
 }
 
@@ -235,8 +231,6 @@ function fnClearCacheSafe() {
  * @param cacheName 缓存名称
  */
 function fnCacheNameClear(cacheName: string) {
-  if (isClick.value) return;
-  isClick.value = true;
   const hide = message.loading('请稍等...', 0);
   clearCacheName(cacheName)
     .then(res => {
@@ -262,22 +256,22 @@ function fnCacheNameClear(cacheName: string) {
     })
     .finally(() => {
       hide();
-      isClick.value = false;
     });
 }
 
 /**查询缓存名称列表 */
 function fnCacheNameList() {
-  if (isClick.value) return;
-  isClick.value = true;
+  if (cacheNameTable.loading) return;
   cacheNameTable.loading = true;
-  listCacheName().then(res => {
-    isClick.value = false;
-    if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      cacheNameTable.data = res.data;
+  listCacheName()
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS && res.data) {
+        cacheNameTable.data = res.data;
+      }
+    })
+    .finally(() => {
       cacheNameTable.loading = false;
-    }
-  });
+    });
 }
 
 onMounted(() => {
@@ -304,13 +298,13 @@ onMounted(() => {
         >
           <template #extra>
             <a-space :size="8" align="center">
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>刷新</template>
                 <a-button type="text" @click.prevent="fnCacheNameList">
                   <template #icon><ReloadOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip>
+              <a-tooltip placement="topRight">
                 <template #title>安全清理</template>
                 <a-popconfirm
                   placement="bottomRight"
@@ -401,7 +395,7 @@ onMounted(() => {
           :body-style="{ marginBottom: '24px', padding: 0 }"
         >
           <template #extra>
-            <a-tooltip>
+            <a-tooltip placement="topRight">
               <template #title>刷新</template>
               <a-button type="text" @click.prevent="fnCacheKeyList()">
                 <template #icon><ReloadOutlined /></template>

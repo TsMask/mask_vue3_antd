@@ -156,13 +156,13 @@ let tableColumns: ColumnsType = [
     title: '数据状态',
     dataIndex: 'statusFlag',
     key: 'statusFlag',
-    align: 'center',
+    align: 'left',
     width: 100,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
-    align: 'center',
+    align: 'left',
     width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';
@@ -298,7 +298,10 @@ function fnModalVisibleByEdit(dataId?: string | number) {
           modalState.title = '修改字典数据';
           modalState.visibleByEdit = true;
         } else {
-          message.error(`获取字典数据信息失败`, 2);
+          message.error({
+            content: '获取字典数据信息失败',
+            duration: 3,
+          });
         }
       })
       .finally(() => {
@@ -342,7 +345,10 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
+      message.error({
+        content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
+        duration: 3,
+      });
     });
 }
 
@@ -473,7 +479,10 @@ onMounted(() => {
         queryParams.dictType = res.data.dictType;
         fnGetList();
       } else {
-        message.error(`获取字典类型信息失败`, 3);
+        message.error({
+          content: '获取字典类型信息失败',
+          duration: 3,
+        });
       }
     });
   } else {
@@ -719,18 +728,21 @@ onMounted(() => {
         <a-row :gutter="16">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="字典类型" name="dictType">
-              {{
-                dict.sysDictType.find(
-                  item => item.value === modalState.form.dictType
-                )?.label
-              }}
+              <a-select
+                v-model:value="modalState.form.dictType"
+                default-value="sys_oper_type"
+                placeholder="字典类型"
+                :options="dict.sysDictType"
+                :disabled="true"
+              >
+              </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据状态" name="status">
+            <a-form-item label="数据状态" name="statusFlag">
               <DictTag
                 :options="dict.sysNormalDisable"
-                :value="modalState.form.status"
+                :value="modalState.form.statusFlag"
               />
             </a-form-item>
           </a-col>
@@ -914,8 +926,8 @@ onMounted(() => {
         >
           <a-textarea
             v-model:value="modalState.form.remark"
-            :auto-size="{ minRows: 4, maxRows: 6 }"
-            :maxlength="450"
+            :auto-size="{ minRows: 2, maxRows: 6 }"
+            :maxlength="480"
             :show-count="true"
             placeholder="请输入数据说明"
           />

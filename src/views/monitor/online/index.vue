@@ -96,7 +96,7 @@ let tableColumns: ColumnsType = [
   {
     title: '登录时间',
     dataIndex: 'loginTime',
-    align: 'center',
+    align: 'left',
     width: 150,
     customRender(opt) {
       if (+opt.value <= 0) return '';

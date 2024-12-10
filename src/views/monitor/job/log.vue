@@ -110,17 +110,17 @@ let tableColumns: ColumnsType = [
     width: 200,
   },
   {
+    title: '调用目标',
+    dataIndex: 'invokeTarget',
+    align: 'left',
+    width: 150,
+  },
+  {
     title: '任务组名',
     dataIndex: 'jobGroup',
     key: 'jobGroup',
     align: 'left',
     width: 100,
-  },
-  {
-    title: '调用目标',
-    dataIndex: 'invokeTarget',
-    align: 'left',
-    width: 150,
   },
   {
     title: '执行状态',

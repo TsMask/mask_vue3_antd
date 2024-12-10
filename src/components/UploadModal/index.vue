@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ProModal } from 'antdv-pro-modal';
 import { message } from 'ant-design-vue/lib';
-import { FileType } from 'ant-design-vue/lib/upload/interface';
-import { UploadRequestOption } from 'ant-design-vue/lib/vc-upload/interface';
+import type { FileType } from 'ant-design-vue/lib/upload/interface';
+import type { UploadRequestOption } from 'ant-design-vue/lib/vc-upload/interface';
 const emit = defineEmits(['upload', 'close', 'update:visible']);
 const props = defineProps({
   /**窗口标题 */
@@ -46,7 +46,10 @@ function fnBeforeUpload(file: FileType) {
     const fileSize = file.size;
     const isLtM = fileSize / 1024 / 1024 < props.size;
     if (!isLtM) {
-      message.error(`上传文件大小必须小于 ${props.size}MB`, 3);
+      message.error({
+        content: `上传文件大小必须小于 ${props.size}MB`,
+        duration: 3,
+      });
       return false;
     }
   }
@@ -55,7 +58,10 @@ function fnBeforeUpload(file: FileType) {
     const fileName = file.name;
     const isAllowType = props.ext.some(v => fileName.endsWith(v));
     if (!isAllowType) {
-      message.error(`只支持上传文件格式 ${props.ext.join('、')}`, 3);
+      message.error({
+        content: `只支持上传文件格式 ${props.ext.join('、')}`,
+        duration: 3,
+      });
       return false;
     }
   }

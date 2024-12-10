@@ -1,19 +1,32 @@
 <script setup lang="ts">
-import { ConfigProvider } from 'ant-design-vue/lib';
+import { ConfigProvider, message } from 'ant-design-vue/lib';
 import { usePrimaryColor } from '@/hooks/useTheme';
 import useAppStore from '@/store/modules/app';
 import zhCN from 'ant-design-vue/lib/locale/zh_CN';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
+import { onBeforeMount, onMounted } from 'vue';
 dayjs.locale('zh-cn'); // 默认中文
-usePrimaryColor(); // 载入用户自定义主题色
 const appStore = useAppStore();
-// 输出应用版本号
-console.info(
-  `%c ${appStore.appName} %c ${appStore.appCode} - ${appStore.appVersion} `,
-  'color: #fadfa3; background: #030307; padding: 4px 0;',
-  'color: #030307; background: #fadfa3; padding: 4px 0;'
-);
+
+onBeforeMount(() => {
+  // 全局message提示
+  message.config({
+    top: '100px', // 距离顶部位置100px
+    duration: 3,
+    maxCount: 15,
+  });
+  usePrimaryColor(); // 载入用户自定义主题色
+});
+
+onMounted(() => {
+  // 输出应用版本号
+  console.info(
+    `%c ${appStore.appName} %c ${appStore.appCode} - ${appStore.appVersion} `,
+    'color: #fadfa3; background: #030307; padding: 4px 0;',
+    'color: #030307; background: #fadfa3; padding: 4px 0;'
+  );
+});
 </script>
 
 <template>

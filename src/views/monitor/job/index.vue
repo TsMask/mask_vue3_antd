@@ -115,17 +115,17 @@ let tableColumns: ColumnsType = [
     width: 200,
   },
   {
+    title: '调用目标',
+    dataIndex: 'invokeTarget',
+    align: 'left',
+    width: 150,
+  },
+  {
     title: '任务组名',
     dataIndex: 'jobGroup',
     key: 'jobGroup',
     align: 'left',
     width: 100,
-  },
-  {
-    title: '调用目标',
-    dataIndex: 'invokeTarget',
-    align: 'left',
-    width: 150,
   },
   {
     title: 'cron表达式',
@@ -271,7 +271,10 @@ const modalStateForm = Form.useForm(
  */
 function fnModalVisibleByVive(jobId: string | number) {
   if (!jobId) {
-    message.error(`任务记录存在错误`, 2);
+    message.error({
+      content: '获取任务信息失败',
+      duration: 3,
+    });
     return;
   }
   if (modalState.confirmLoading) return;
@@ -284,7 +287,10 @@ function fnModalVisibleByVive(jobId: string | number) {
         modalState.title = '任务信息';
         modalState.visibleByView = true;
       } else {
-        message.error(`获取任务信息失败`, 2);
+        message.error({
+          content: '获取任务信息失败',
+          duration: 3,
+        });
       }
     })
     .finally(() => {
@@ -313,7 +319,10 @@ function fnModalVisibleByEdit(jobId?: string | number) {
           modalState.title = '修改任务';
           modalState.visibleByEdit = true;
         } else {
-          message.error(`获取任务信息失败`, 2);
+          message.error({
+            content: '获取任务信息失败',
+            duration: 3,
+          });
         }
       })
       .finally(() => {
@@ -357,7 +366,10 @@ function fnModalOk() {
         });
     })
     .catch(e => {
-      message.error(`请正确填写 ${e.errorFields.length} 处必填信息！`, 2);
+      message.error({
+        content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
+        duration: 3,
+      });
     });
 }
 

@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import { PageContainer } from 'antdv-pro-layout';
-import { message } from 'ant-design-vue/lib';
-import { getUserProfile } from '@/api/profile';
 import { reactive, ref, onMounted } from 'vue';
+import { message } from 'ant-design-vue/lib';
+import { PageContainer } from 'antdv-pro-layout';
+import { getUserProfile } from '@/api/profile';
 import { parseDateToStr } from '@/utils/date-utils';
 import useUserStore from '@/store/modules/user';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';

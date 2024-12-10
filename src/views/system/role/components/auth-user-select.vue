@@ -52,7 +52,7 @@ let queryParams = reactive({
 
 /**查询参数重置 */
 function fnQueryReset() {
-    Object.assign(queryParams, {
+  Object.assign(queryParams, {
     userName: '',
     phone: '',
     statusFlag: undefined,
@@ -181,7 +181,10 @@ function fnGetList(pageNum?: number) {
 function fnModalOk() {
   const userIds = tableState.selectedRowKeys;
   if (userIds.length <= 0) {
-    message.error(`请选择要分配的用户`, 2);
+    message.error({
+      content: '请选择要分配的用户',
+      duration: 3,
+    });
     return;
   }
   emit('update:visible', false);
@@ -301,7 +304,10 @@ watch(
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'statusFlag'">
-          <DictTag :options="dict.sysNormalDisable" :value="record.statusFlag" />
+          <DictTag
+            :options="dict.sysNormalDisable"
+            :value="record.statusFlag"
+          />
         </template>
       </template>
     </a-table>

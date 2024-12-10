@@ -306,20 +306,24 @@ function fnCleanList() {
     content: `确认清空所有登录日志数据项?`,
     onOk() {
       const hide = message.loading('请稍等...', 0);
-      cleanSysLogOperate().then(res => {
-        if (res.code === RESULT_CODE_SUCCESS) {
-          message.success({
-            content: '清空成功',
-            duration: 3,
-          });
-          fnGetList();
-        } else {
-          message.error({
-            content: `${res.msg}`,
-            duration: 3,
-          });
-        }
-      });
+      cleanSysLogOperate()
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: '清空成功',
+              duration: 3,
+            });
+            fnGetList();
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
     },
   });
 }

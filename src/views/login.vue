@@ -69,12 +69,18 @@ function fnFinish() {
     .fnLogin(form)
     .then(res => {
       if (res.code === RESULT_CODE_SUCCESS) {
-        message.success('登录成功', 3);
+        message.success({
+          content: '登录成功',
+          duration: 3,
+        });
         /**登录后重定向页面 */
         const redirectPath = (route.query && route.query.redirect) || '/index';
         router.push({ path: redirectPath as string });
       } else {
-        message.error(`${res.msg}`, 3);
+        message.error({
+          content: `${res.msg}`,
+          duration: 3,
+        });
       }
     })
     .finally(() => {
@@ -128,14 +134,20 @@ let smsState = reactive({
 function fnGetSmsCaptcha() {
   if (smsState.click) return;
   if (!validMobile(state.form.phone)) {
-    message.warning('请确认手机号码是否有效', 3);
+    message.warning({
+      content: '请确认手机号码是否有效！',
+      duration: 3,
+    });
     return;
   }
   smsState.click = true;
 
   setTimeout(() => {
     // start 得到发送结果启动定时
-    message.success('发送成功，请注意查看短信', 3);
+    message.success({
+      content: '发送成功，请注意查看短信！',
+      duration: 3,
+    });
     state.form.uuid = '短信校验id';
     smsInterval = setInterval(() => {
       if (smsState.time <= 0) {
