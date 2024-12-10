@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import { createFromIconfontCN } from '@ant-design/icons-vue';
+import { createVNode, isVNode } from 'vue';
 
 const props = defineProps({
   type: {
-    type: String,
+    type: [String, Object],
     default: '#',
   },
   size: {
@@ -17,14 +18,24 @@ const props = defineProps({
 const IconFont = createFromIconfontCN({
   scriptUrl: scriptUrl,
 });
+
+// 动态生成图标组件
+const renderIcon = () => {
+  if (isVNode(props.type)) {
+    return props.type;
+  }
+  if (props.type !== '#') {
+    return createVNode(IconFont, {
+      type: props.type,
+      style: { fontSize: `${props.size}px` },
+    });
+  }
+  return null; // 如果没有传入有效的 type，则返回 null
+};
 </script>
 
 <template>
-  <IconFont
-    v-if="type != '#'"
-    :type="props.type"
-    :style="{ fontSize: size + 'px' }"
-  ></IconFont>
+  <component :is="renderIcon()" />
 </template>
 
 <style lang="less" scoped></style>
