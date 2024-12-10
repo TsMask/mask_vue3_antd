@@ -5,9 +5,9 @@ import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue/lib';
-import { SizeType } from 'ant-design-vue/lib/config-provider';
-import { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
-import { ColumnsType } from 'ant-design-vue/lib/table';
+import type { SizeType } from 'ant-design-vue/lib/config-provider';
+import type { MenuInfo } from 'ant-design-vue/lib/menu/src/interface';
+import type { ColumnsType } from 'ant-design-vue/es/table';
 import UploadModal from '@/components/UploadModal/index.vue';
 import {
   importData,
@@ -36,6 +36,7 @@ import useUserStore from '@/store/modules/user';
 import { DataNode } from 'ant-design-vue/lib/tree';
 import { SYS_ROLE_SYSTEM_ID } from '@/constants/system-constants';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import { uploadFile } from '@/api/tool/file';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -668,7 +669,7 @@ type ModalUploadImportStateType = {
 
 /**对话框表格信息导入对象信息状态 */
 let uploadImportState: ModalUploadImportStateType = reactive({
-  visible: false,
+  open: false,
   title: '用户导入',
   loading: false,
   updateSupport: false,
@@ -690,17 +691,30 @@ function fnModalUploadImportClose() {
 
 /**对话框表格信息导入上传 */
 function fnModalUploadImportUpload(file: File) {
+  // 发送请求
   const hide = message.loading('正在上传并解析数据...', 0);
   uploadImportState.loading = true;
   let formData = new FormData();
   formData.append('file', file);
-  formData.append('updateSupport', `${uploadImportState.updateSupport}`);
-  importData(formData)
+  formData.append('subPath', 'import');
+  uploadFile(formData)
     .then(res => {
-      uploadImportState.msg = res.msg?.replaceAll(/<br\/>+/g, '\r');
+      if (res.code === RESULT_CODE_SUCCESS) {
+        return res.data.filePath;
+      }
+      return '';
     })
-    .catch((err: { code: number; msg: string }) => {
-      message.error(`上传失败 ${err.msg}`);
+    .then(filePath => {
+      if (filePath === '') return undefined;
+      return importData(filePath, uploadImportState.updateSupport);
+    })
+    .then(res => {
+      if (res === undefined) return;
+      if (res.code === RESULT_CODE_SUCCESS) {
+        uploadImportState.msg = res.msg?.replaceAll(/<br\/>+/g, '\r');
+      } else {
+        message.error(res.msg, 3);
+      }
     })
     .finally(() => {
       hide();
@@ -814,7 +828,7 @@ onMounted(() => {
     >
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="18" :md="12" :xs="24">
             <a-form-item label="部门名称" name="deptId">
               <a-tree-select
@@ -851,7 +865,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="登录账号" name="userName">
               <a-input
@@ -1037,7 +1051,7 @@ onMounted(() => {
                 <template #title>查看详情</template>
                 <a-button
                   type="link"
-                  @click.prevent="fnModalVisibleByVive(record.userId)"
+                  @click.prevent="fnModalOpenByVive(record.userId)"
                   v-perms:has="['system:user:query']"
                 >
                   <template #icon><ProfileOutlined /></template>
@@ -1097,7 +1111,7 @@ onMounted(() => {
       @cancel="fnModalCancel"
     >
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户编号" name="userId">
               {{ modalState.form.userId }}
@@ -1111,7 +1125,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="登录地址" name="loginIp">
               {{ modalState.form.loginIp }}
@@ -1125,7 +1139,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户头像" name="avatar">
               <a-avatar
@@ -1143,7 +1157,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户昵称" name="nickName">
               {{ modalState.form.nickName }}
@@ -1151,7 +1165,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户性别" name="sex">
               <DictTag
@@ -1170,7 +1184,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="手机号码" name="phone">
               {{ modalState.form.phone }}
@@ -1269,7 +1283,7 @@ onMounted(() => {
       :width="800"
       :keyboard="false"
       :mask-closable="false"
-      :visible="modalState.visibleByEdit"
+      :open="modalState.openByEdit"
       :title="modalState.title"
       :confirm-loading="modalState.confirmLoading"
       @ok="fnModalOk"
@@ -1319,7 +1333,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="用户昵称"
@@ -1336,7 +1350,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="用户性别" name="sex">
               <a-select
@@ -1361,7 +1375,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="手机号码"
@@ -1526,7 +1540,7 @@ onMounted(() => {
       :size="10"
     >
       <template #default>
-        <a-row :gutter="18" justify="space-between" align="middle">
+        <a-row justify="space-between" align="middle">
           <a-col :span="12">
             <a-checkbox v-model:checked="uploadImportState.updateSupport">
               是否更新已经存在的数据

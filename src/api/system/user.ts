@@ -5,12 +5,11 @@ import { request } from '@/plugins/http-fetch';
  * @param data 表单数据对象
  * @returns object
  */
-export function importData(data: FormData) {
+export function importData(filePath: string, update: boolean) {
   return request({
     url: '/system/user/import',
     method: 'POST',
-    data,
-    dataType: 'form-data',
+    data: { filePath, update },
   });
 }
 
