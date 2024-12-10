@@ -34,8 +34,8 @@ export function importTemplate() {
 export function exportUser(query: Record<string, any>) {
   return request({
     url: '/system/user/export',
-    method: 'POST',
-    data: query,
+    method: 'GET',
+    params: query,
     responseType: 'blob',
   });
 }
@@ -123,19 +123,16 @@ export function resetUserPwd(userId: string | number, password: string) {
 /**
  * 用户状态修改
  * @param userId 用户ID
- * @param status 变更状态值
+ * @param statusFlag 变更状态值
  * @returns object
  */
 export function changeUserStatus(
   userId: string | number,
-  status: string | number
+  statusFlag: string | number
 ) {
   return request({
     url: '/system/user/status',
     method: 'PUT',
-    data: {
-      userId,
-      status,
-    },
+    data: { userId, statusFlag },
   });
 }
