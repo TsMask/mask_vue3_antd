@@ -4,7 +4,7 @@
 ![Build Vite](https://img.shields.io/badge/Build-Vite-green.svg)
 ![Build Vue3](https://img.shields.io/badge/Build-Vue3-green.svg)
 ![Build MaskApi](https://img.shields.io/badge/Build-MaskApi-orange.svg)
-![Release V3.2.4](https://img.shields.io/badge/Release-V3.2.4-orange.svg)
+![Release V3.2.6](https://img.shields.io/badge/Release-V3.2.6-orange.svg)
 ![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 ## 简介
@@ -73,5 +73,6 @@ npm run build      # 构建生产项目代码
 13. 服务信息：监视当前系统CPU、内存、磁盘、堆栈空间等相关信息。
 14. 缓存信息：对系统的缓存信息查询，命令统计。
 
+> 本分支后续不再更新，请移步 [mask_vue3_antd](https://gitee.com/TsMask/mask_vue3_antd) 主分支  
 > 有任何问题或者建议，可以在 [_Issues_](https://gitee.com/TsMask/mask_vue3_antd/issues) 或通过QQ群：[_57242844_](https://jq.qq.com/?_wv=1027&k=z6Y4YQcB) 提出想法。  
 > 如果觉得项目对您有帮助，可以来个Star ⭐
