@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted } from 'vue';
-import { message } from 'ant-design-vue';
 import { PageContainer } from 'antdv-pro-layout';
+import { message } from 'ant-design-vue';
 import type { ColumnsType } from 'ant-design-vue/es/table/Table';
 import {
   listCacheName,
@@ -19,12 +19,9 @@ const route = useRoute();
 /**路由标题 */
 let title = ref<string>(route.meta.title ?? '标题');
 
-/**请求点击 */
-let isClick = ref<boolean>(false);
-
 /**缓存内容信息 */
 let cacheKeyInfo = reactive({
-  loading: true,
+  loading: false,
   data: {
     cacheKey: '',
     cacheName: '',
@@ -40,12 +37,15 @@ let cacheKeyInfo = reactive({
 function fnCacheKeyInfo(cacheKey: string) {
   if (!hasPermissions(['monitor:cache:query'])) return;
   cacheKeyInfo.loading = true;
-  getCacheValue(cacheKeyTable.cacheName, cacheKey).then(res => {
-    cacheKeyInfo.loading = false;
-    if (res.code === RESULT_CODE_SUCCESS) {
-      Object.assign(cacheKeyInfo.data, res.data);
-    }
-  });
+  getCacheValue(cacheKeyTable.cacheName, cacheKey)
+    .then(res => {
+      if (res.code === RESULT_CODE_SUCCESS) {
+        Object.assign(cacheKeyInfo.data, res.data);
+      }
+    })
+    .finally(() => {
+      cacheKeyInfo.loading = false;
+    });
 }
 
 /**键名列表表格字段列 */
@@ -54,7 +54,7 @@ let cacheKeyTableColumns: ColumnsType = [
     title: '序号',
     dataIndex: 'num',
     width: 50,
-    align: 'center',
+    align: 'left',
     customRender(opt) {
       return opt.index + 1;
     },
@@ -81,7 +81,7 @@ let cacheKeyTableColumns: ColumnsType = [
   {
     title: '操作',
     key: 'option',
-    align: 'center',
+    align: 'left',
     width: 50,
   },
 ];
@@ -152,7 +152,7 @@ function fnCacheKeyList(cacheName: string = 'load') {
 
 /**缓存列表表格数据 */
 let cacheNameTable = reactive({
-  loading: true,
+  loading: false,
   data: [],
 });
 
@@ -162,7 +162,7 @@ let cacheNameTableColumns: ColumnsType = [
     title: '序号',
     dataIndex: 'num',
     width: 50,
-    align: 'center',
+    align: 'left',
     customRender(opt) {
       return opt.index + 1;
     },
@@ -196,7 +196,7 @@ let cacheNameTableColumns: ColumnsType = [
   {
     title: '操作',
     key: 'option',
-    align: 'center',
+    align: 'left',
     width: 50,
   },
 ];
