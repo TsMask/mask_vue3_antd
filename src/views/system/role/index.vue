@@ -8,6 +8,7 @@ import { message, Modal, Form } from 'ant-design-vue';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import type { ColumnsType } from 'ant-design-vue/es/table';
+import type { DataNode } from 'ant-design-vue/es/tree';
 import {
   exportRole,
   addRole,
@@ -20,19 +21,18 @@ import {
 } from '@/api/system/role';
 import { menuTreeSelect, menuTreeSelectRole } from '@/api/system/menu';
 import { deptTreeRole } from '@/api/system/dept';
-import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/date-utils';
-import useDictStore from '@/store/modules/dict';
-import { DataNode } from 'ant-design-vue/es/tree';
 import {
   parseTreeKeys,
   parseTreeNodeKeys,
   parseTreeNodeKeysByChecked,
 } from '@/utils/parse-tree-utils';
+import { parseDateToStr } from '@/utils/date-utils';
 import { hasPermissions } from '@/plugins/auth-user';
+import { saveAs } from 'file-saver';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
 import { SYS_ROLE_SYSTEM_ID } from '@/constants/system-constants';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import useDictStore from '@/store/modules/dict';
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();

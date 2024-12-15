@@ -308,7 +308,7 @@ onMounted(() => {
                 <template #title>安全清理</template>
                 <a-popconfirm
                   placement="bottomRight"
-                  title="确认要执行可安全清理的缓存下所有键名吗?`"
+                  title="确认要执行可安全清理的缓存下所有键名吗?"
                   ok-text="确认"
                   cancel-text="取消"
                   @confirm="fnClearCacheSafe()"
@@ -373,7 +373,7 @@ onMounted(() => {
               <template v-if="column.key === 'option'">
                 <a-popconfirm
                   placement="topRight"
-                  title="确认要清理该缓存名称下的所有键名吗?`"
+                  title="确认要清理该缓存名称下的所有键名吗?"
                   ok-text="确认"
                   cancel-text="取消"
                   @confirm="fnCacheNameClear(record.cacheName)"
@@ -455,7 +455,7 @@ onMounted(() => {
               <template v-if="column.key === 'option'">
                 <a-popconfirm
                   placement="topRight"
-                  title="确认要删除该缓存键吗?`"
+                  title="确认要删除该缓存键吗?"
                   ok-text="确认"
                   cancel-text="取消"
                   @confirm="fnCacheKeyClear(record.cacheKey)"

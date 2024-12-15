@@ -8,6 +8,7 @@ import { message, Modal, Form } from 'ant-design-vue';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import type { ColumnsType } from 'ant-design-vue/es/table';
+import type { DataNode } from 'ant-design-vue/es/tree';
 import UploadModal from '@/components/UploadModal/index.vue';
 import {
   importData,
@@ -22,8 +23,8 @@ import {
   addUser,
 } from '@/api/system/user';
 import { deptTree } from '@/api/system/dept';
+import { uploadFile } from '@/api/tool/file';
 import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/date-utils';
 import {
   regExpPassword,
   regExpMobile,
@@ -31,12 +32,11 @@ import {
   regExpEmail,
   regExpUserName,
 } from '@/utils/regular-utils';
-import useDictStore from '@/store/modules/dict';
-import useUserStore from '@/store/modules/user';
-import { DataNode } from 'ant-design-vue/lib/tree';
+import { parseDateToStr } from '@/utils/date-utils';
 import { SYS_ROLE_SYSTEM_ID } from '@/constants/system-constants';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
-import { uploadFile } from '@/api/tool/file';
+import useDictStore from '@/store/modules/dict';
+import useUserStore from '@/store/modules/user';
 const { getDict } = useDictStore();
 const route = useRoute();
 
