@@ -46,10 +46,19 @@ export default defineConfig(({ mode }) => {
           chunkFileNames: 'js/[name].[hash].js',
           // 用于输出静态资源的块
           assetFileNames: 'assets/[name].[hash].[ext]',
-          manualChunks: id => {
-            if (id.indexOf('node_modules') !== -1) {
-              return 'vendor/index';
-            }
+          // 用于输出依赖库的块
+          manualChunks: {
+            chunkVue: ['vue', 'vue-router', 'pinia'],
+            chunkAntd: ['ant-design-vue', '@ant-design/icons-vue'],
+            chunkAntdPlugins: ['antdv-pro-layout', 'antdv-pro-modal'],
+            chunkEcharts: ['echarts'],
+            chunkUtil: [
+              'dayjs',
+              'nprogress',
+              'file-saver',
+              'js-base64',
+              'js-cookie',
+            ],
           },
         },
       },
