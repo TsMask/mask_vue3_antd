@@ -81,8 +81,6 @@ const FATCH_OPTIONS: OptionsType = {
   headers: {
     [APP_REQUEST_HEADER_CODE]: import.meta.env.VITE_APP_CODE,
     [APP_REQUEST_HEADER_VERSION]: import.meta.env.VITE_APP_VERSION,
-    // 使用apifoxmock.com时开启
-    apifoxToken: '0KoMW8oFm5ruPw8HtaAlcQZP2YsZkbS1',
   },
   dataType: 'json',
   responseType: 'json',
@@ -96,6 +94,15 @@ const FATCH_OPTIONS: OptionsType = {
 function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
   options.headers = Object.assign({}, options.headers);
   //console.log('请求前的拦截', options);
+
+  // 使用apifoxmock.com时开启
+  if (options.baseUrl?.includes('apifoxmock.com')) {
+    Reflect.set(
+      options.headers,
+      'apifoxToken',
+      '0KoMW8oFm5ruPw8HtaAlcQZP2YsZkbS1'
+    );
+  }
 
   // 给发送数据类型设置请求头
   if (options.dataType === 'json') {
