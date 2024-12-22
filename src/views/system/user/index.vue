@@ -271,10 +271,11 @@ let modalState: ModalStateType = reactive({
     phone: '',
     postIds: [],
     roleIds: [],
-    sex: '1',
+    sex: '0',
     statusFlag: '0',
     remark: '',
     createTime: 0,
+    avatar: '',
   },
   confirmLoading: false,
   options: {
@@ -408,6 +409,9 @@ function fnModalOpenByEdit(userId?: string | number) {
           Object.assign(modalState.form, user);
           modalState.form.roleIds = roleIds;
           modalState.form.postIds = postIds;
+          if (deptTreeData.value.length > 0) {
+            modalState.form.deptId = deptTreeData.value[0].id;
+          }
           modalState.title = '添加用户信息';
           modalState.openByEdit = true;
         } else {
