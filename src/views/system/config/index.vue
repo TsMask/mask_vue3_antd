@@ -855,7 +855,7 @@ onMounted(() => {
           <a-textarea
             v-model:value="modalState.form.remark"
             :auto-size="{ minRows: 2, maxRows: 6 }"
-            :maxlength="480"
+            :maxlength="200"
             :show-count="true"
             placeholder="请输入参数说明"
           />
