@@ -232,7 +232,7 @@ let modalState: ModalStateType = reactive({
   title: '菜单',
   form: {
     menuId: undefined,
-    parentId: '0',
+    parentId: 0,
     menuName: '',
     menuSort: 0,
     menuType: MENU_TYPE_BUTTON,

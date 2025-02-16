@@ -17,9 +17,9 @@ import {
 } from '@/api/system/dept';
 import { parseDateToStr } from '@/utils/date-utils';
 import { regExpMobile, regExpEmail } from '@/utils/regular-utils';
-import useDictStore from '@/store/modules/dict';
 import { parseDataToTree } from '@/utils/parse-tree-utils';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import useDictStore from '@/store/modules/dict';
 const { getDict } = useDictStore();
 const route = useRoute();
 
@@ -177,7 +177,7 @@ let modalState: ModalStateType = reactive({
     email: '',
     leader: '',
     deptSort: 0,
-    parentId: '100',
+    parentId: 100,
     ancestors: '',
     phone: '',
     statusFlag: '0',
@@ -229,9 +229,9 @@ function fnModalVisibleByVive(deptId: string | number) {
   getDept(deptId)
     .then(res => {
       if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        if (res.data.parentId === '0') {
+        if (res.data.parentId === 0) {
           modalState.treeData = [
-            { deptId: '0', parentId: '0', deptName: '根节点' },
+            { deptId: 0, parentId: 0, deptName: '根节点' },
           ];
         } else {
           modalState.treeData = treeDataAll;
@@ -284,7 +284,7 @@ function fnModalVisibleByEdit(
           ) {
             if (resArr[1].data.length === 0) {
               modalState.treeData = [
-                { deptId: '0', parentId: '0', deptName: '根节点' },
+                { deptId: 0, parentId: 0, deptName: '根节点' },
               ];
             } else {
               modalState.treeData = parseDataToTree(resArr[1].data, 'deptId');
@@ -597,7 +597,7 @@ onMounted(() => {
                   <template #icon><FormOutlined /></template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip placement="topRight" v-if="record.parentId !== '0'">
+              <a-tooltip placement="topRight" v-if="record.parentId !== 0">
                 <template #title>删除</template>
                 <a-button
                   type="link"

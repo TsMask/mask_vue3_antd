@@ -93,7 +93,7 @@ export function delConfig(configId: string | number) {
  * 刷新参数缓存
  * @returns object
  */
-export function refreshCache() {
+export function refreshConfig() {
   return request({
     url: '/system/config/refresh',
     method: 'PUT',
