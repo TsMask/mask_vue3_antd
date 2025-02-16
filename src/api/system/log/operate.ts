@@ -5,9 +5,7 @@ import { request } from '@/plugins/http-fetch';
  * @param query 查询参数
  * @returns bolb
  */
-export function exportSysLogOperate(
-  query: Record<string, any>
-) {
+export function exportSysLogOperate(query: Record<string, any>) {
   return request({
     url: '/system/log/operate/export',
     method: 'GET',
@@ -21,25 +19,11 @@ export function exportSysLogOperate(
  * @param query 查询参数
  * @returns object
  */
-export function listSysLogOperate(
-  query: Record<string, any>
-) {
+export function listSysLogOperate(query: Record<string, any>) {
   return request({
     url: '/system/log/operate/list',
     method: 'GET',
     params: query,
-  });
-}
-
-/**
- * 删除操作日志
- * @param operId 操作日志ID
- * @returns object
- */
-export function delSysLogOperate(operId: string) {
-  return request({
-    url: `/system/log/operate/${operId}`,
-    method: 'DELETE',
   });
 }
 

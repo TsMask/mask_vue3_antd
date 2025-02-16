@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Dayjs } from 'dayjs';
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue';
+import type { Dayjs } from 'dayjs';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import type { ColumnsType } from 'ant-design-vue/es/table';
@@ -19,9 +19,9 @@ import {
 } from '@/api/system/dict/type';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
-import useDictStore from '@/store/modules/dict';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import useDictStore from '@/store/modules/dict';
 const { getDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();

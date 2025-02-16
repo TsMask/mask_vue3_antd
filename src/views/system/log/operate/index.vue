@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import { Dayjs } from 'dayjs';
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
 import { message, Modal } from 'ant-design-vue';
+import type { Dayjs } from 'dayjs';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import type { ColumnsType } from 'ant-design-vue/es/table';
 import {
   exportSysLogOperate,
   listSysLogOperate,
-  delSysLogOperate,
   cleanSysLogOperate,
 } from '@/api/system/log/operate';
 import { saveAs } from 'file-saver';
@@ -269,36 +268,6 @@ function fnModalCancel() {
   modalState.visibleByView = false;
 }
 
-/**记录删除 */
-function fnRecordDelete() {
-  const ids = tableState.selectedRowKeys.join(',');
-  Modal.confirm({
-    title: '提示',
-    content: `确认删除访问编号为 【${ids}】 的数据项吗?`,
-    onOk() {
-      const hide = message.loading('请稍等...', 0);
-      delSysLogOperate(ids)
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: '删除成功',
-              duration: 3,
-            });
-            fnGetList();
-          } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-        });
-    },
-  });
-}
-
 /**列表清空 */
 function fnCleanList() {
   Modal.confirm({
@@ -507,16 +476,6 @@ onMounted(() => {
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button
-            type="default"
-            danger
-            :disabled="tableState.selectedRowKeys.length <= 0"
-            @click.prevent="fnRecordDelete()"
-            v-perms:has="['system:log:operate:remove']"
-          >
-            <template #icon><DeleteOutlined /></template>
-            删除
-          </a-button>
           <a-button
             type="dashed"
             danger

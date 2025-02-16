@@ -29,12 +29,12 @@ export function listData(query: Record<string, any>) {
 
 /**
  * 查询字典数据详细
- * @param dictCode 字典代码值
+ * @param dataId 字典代码值
  * @returns object
  */
-export function getData(dictCode: string | number) {
+export function getData(dataId: string | number) {
   return request({
-    url: `/system/dict/data/${dictCode}`,
+    url: `/system/dict/data/${dataId}`,
     method: 'GET',
   });
 }
@@ -67,12 +67,12 @@ export function updateData(data: Record<string, any>) {
 
 /**
  * 删除字典数据
- * @param dictCode 字典代码值
+ * @param dataId 字典代码值
  * @returns object
  */
-export function delData(dictCode: string | number) {
+export function delData(dataId: string | number) {
   return request({
-    url: `/system/dict/data/${dictCode}`,
+    url: `/system/dict/data/${dataId}`,
     method: 'DELETE',
   });
 }

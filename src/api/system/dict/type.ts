@@ -67,7 +67,7 @@ export function updateType(data: Record<string, any>) {
 
 /**
  * 删除字典类型
- * @param dictCode 字典代码值
+ * @param dataId 字典代码值
  * @returns object
  */
 export function delType(dictId: string | number) {

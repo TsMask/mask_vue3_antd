@@ -66,7 +66,7 @@ let dict: {
 /**查询参数 */
 let queryParams = reactive({
   /**字典名称 */
-  dictType: '',
+  dictType: undefined,
   /**数据标签 */
   dataLabel: '',
   /**数据状态 */
@@ -240,7 +240,7 @@ let modalState: ModalStateType = reactive({
   title: '字典数据',
   form: {
     dataId: undefined,
-    dictType: 'sys_oper_type',
+    dictType: undefined,
     dataLabel: '',
     dataSort: 0,
     dataValue: '',
@@ -258,6 +258,7 @@ let modalState: ModalStateType = reactive({
 const modalStateForm = Form.useForm(
   modalState.form,
   reactive({
+    dictType: [{ required: true, message: '请选择字典类型' }],
     dataLabel: [
       { required: true, min: 1, max: 50, message: '请正确输入数据标签' },
     ],
@@ -730,7 +731,6 @@ onMounted(() => {
             <a-form-item label="字典类型" name="dictType">
               <a-select
                 v-model:value="modalState.form.dictType"
-                default-value="sys_oper_type"
                 placeholder="字典类型"
                 :options="dict.sysDictType"
                 :disabled="true"
@@ -829,13 +829,16 @@ onMounted(() => {
       >
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典类型" name="dictType">
+            <a-form-item
+              label="字典类型"
+              name="dictType"
+              v-bind="modalStateForm.validateInfos.dictType"
+            >
               <a-select
                 v-model:value="modalState.form.dictType"
-                default-value="sys_oper_type"
                 placeholder="字典类型"
                 :options="dict.sysDictType"
-                :disabled="true"
+                :disabled="dictId !== '0'"
               >
               </a-select>
             </a-form-item>
