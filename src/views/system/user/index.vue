@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Dayjs } from 'dayjs';
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue';
+import type { Dayjs } from 'dayjs';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import type { ColumnsType } from 'ant-design-vue/es/table';
@@ -14,9 +14,9 @@ import {
   importData,
   importTemplate,
   exportUser,
-  changeUserStatus,
+  changeStatus,
   listUser,
-  resetUserPwd,
+  resetPassword,
   delUser,
   getUser,
   updateUser,
@@ -390,7 +390,7 @@ function fnModalOpenByEdit(userId?: string | number) {
     const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
     // 查询用户详细获取岗位和角色列表
-    getUser()
+    getUser(0)
       .then(res => {
         if (res.code === RESULT_CODE_SUCCESS && res.data) {
           const roles = res.data.roles.map((m: Record<string, any>) => {
@@ -532,7 +532,7 @@ function fnModalOkResetPwd() {
     .then(() => {
       const hide = message.loading('请稍等...', 0);
       modalState.confirmLoading = true;
-      resetUserPwd(modalState.form.userId, modalState.form.password)
+      resetPassword(modalState.form.userId, modalState.form.password)
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
@@ -584,7 +584,7 @@ function fnRecordStatus(row: Record<string, string>) {
     content: `确定要${text} ${row.userName} 用户吗?`,
     onOk() {
       const hide = message.loading('请稍等...', 0);
-      changeUserStatus(row.userId, row.statusFlag)
+      changeStatus(row.userId, row.statusFlag)
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({

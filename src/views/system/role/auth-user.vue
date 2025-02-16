@@ -222,8 +222,8 @@ function fnModalOk(userIds: string[] | number[]) {
   const hide = message.loading('请稍等...', 0);
   authUserChecked({
     auth: true,
-    userIds: userIds.join(','),
-    roleId: roleId,
+    userIds: userIds.map((v: any) => parseInt(v)),
+    roleId: parseInt(roleId),
   })
     .then(res => {
       if (res.code === RESULT_CODE_SUCCESS) {
@@ -250,15 +250,22 @@ function fnModalOk(userIds: string[] | number[]) {
  * @param userId 用户编号ID
  */
 function fnRecordDelete(userId: string | number) {
-  if (userId === '0') {
-    userId = tableState.selectedRowKeys.join(',');
+  let userIds: number[] = [];
+  if (userId === '0' || userId === 0) {
+    userIds = tableState.selectedRowKeys.map((v: any) => parseInt(v));
+  } else {
+    userIds = [Number(userId)];
   }
   Modal.confirm({
     title: '提示',
     content: `确认取消用户编号为 【${userId}】 的数据项授权?`,
     onOk() {
       const hide = message.loading('请稍等...', 0);
-      authUserChecked({ auth: false, userIds: userId, roleId: roleId })
+      authUserChecked({
+        auth: false,
+        userIds: userIds,
+        roleId: parseInt(roleId),
+      })
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({

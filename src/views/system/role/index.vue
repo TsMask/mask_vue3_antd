@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Dayjs } from 'dayjs';
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue';
+import type { Dayjs } from 'dayjs';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import type { ColumnsType } from 'ant-design-vue/es/table';
@@ -12,7 +12,7 @@ import type { DataNode } from 'ant-design-vue/es/tree';
 import {
   exportRole,
   addRole,
-  changeRoleStatus,
+  changeStatus,
   dataScope,
   delRole,
   getRole,
@@ -643,7 +643,7 @@ function fnRecordStatus(row: Record<string, string>) {
     content: `确定要${text} ${row.roleName} 角色吗?`,
     onOk() {
       const hide = message.loading('请稍等...', 0);
-      changeRoleStatus(row.roleId, row.statusFlag)
+      changeStatus(row.roleId, row.statusFlag)
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({

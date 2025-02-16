@@ -108,7 +108,7 @@ export function delUser(userId: string | number) {
  * @param password 密码
  * @returns object
  */
-export function resetUserPwd(userId: string | number, password: string) {
+export function resetPassword(userId: string | number, password: string) {
   return request({
     url: '/system/user/password',
     method: 'PUT',
@@ -125,7 +125,7 @@ export function resetUserPwd(userId: string | number, password: string) {
  * @param statusFlag 变更状态值
  * @returns object
  */
-export function changeUserStatus(
+export function changeStatus(
   userId: string | number,
   statusFlag: string | number
 ) {
