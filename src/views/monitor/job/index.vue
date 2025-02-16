@@ -15,8 +15,8 @@ import {
   addJob,
   updateJob,
   runJob,
-  changeJobStatus,
-  resetQueueJob,
+  changeStatus,
+  resetJob,
 } from '@/api/monitor/job';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
@@ -407,7 +407,7 @@ function fnRecordStatus(row: Record<string, string>) {
     content: `确定要${text} ${row.jobName} 任务吗?`,
     onOk() {
       const hide = message.loading('请稍等...', 0);
-      changeJobStatus(row.jobId, row.statusFlag)
+      changeStatus(row.jobId, row.statusFlag)
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
@@ -508,7 +508,7 @@ function fnResetQueueJob() {
     onOk() {
       // 发送请求
       const hide = message.loading('请稍等...', 0);
-      resetQueueJob()
+      resetJob()
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             message.success({
@@ -609,18 +609,7 @@ onMounted(() => {
 <template>
   <PageContainer :title="title">
     <template #content>
-      <a-typography-paragraph>
-        <a-typography-text code>Nodejs</a-typography-text>
-        使用
-        <a-typography-text code>Bull</a-typography-text>
-        基于
-        <a-typography-text code>Redis</a-typography-text>
-        的任务队列。
-        <a-typography-text code>Golang</a-typography-text>
-        使用
-        <a-typography-text code>Cron</a-typography-text>
-        定时任务管理。
-      </a-typography-paragraph>
+      <a-typography-paragraph> 单例任务，不支持并发 </a-typography-paragraph>
     </template>
 
     <a-card

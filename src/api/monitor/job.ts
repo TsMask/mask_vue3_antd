@@ -80,10 +80,10 @@ export function delJob(jobId: string | number) {
 /**
  * 任务状态修改
  * @param jobId 任务ID
- * @param status 变更状态值
+ * @param statusFlag 变更状态值
  * @returns
  */
-export function changeJobStatus(
+export function changeStatus(
   jobId: string | number,
   statusFlag: string | number
 ) {
@@ -113,7 +113,7 @@ export function runJob(jobId: string) {
  * 重置刷新队列
  * @returns object
  */
-export function resetQueueJob() {
+export function resetJob() {
   return request({
     url: '/monitor/job/reset',
     method: 'PUT',
