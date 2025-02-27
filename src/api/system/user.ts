@@ -10,6 +10,7 @@ export function importData(filePath: string, update: boolean) {
     url: '/system/user/import',
     method: 'POST',
     data: { filePath, update },
+    timeout: 60_000
   });
 }
 
@@ -36,6 +37,7 @@ export function exportUser(query: Record<string, any>) {
     method: 'GET',
     params: query,
     responseType: 'blob',
+    timeout: 60_000
   });
 }
 

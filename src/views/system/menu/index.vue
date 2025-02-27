@@ -25,7 +25,7 @@ import {
   MENU_PATH_INLINE,
   MENU_TYPE_DIR,
   MENU_TYPE_MENU,
-  MENU_TYPE_BUTTON,
+  MENU_TYPE_AUTH,
 } from '@/constants/menu-constants';
 import useDictStore from '@/store/modules/dict';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
@@ -204,7 +204,7 @@ function fnTreeDataChange(value: any) {
     modalState.form.menuType = MENU_TYPE_MENU;
   }
   if (menu.menuType === MENU_TYPE_MENU) {
-    modalState.form.menuType = MENU_TYPE_BUTTON;
+    modalState.form.menuType = MENU_TYPE_AUTH;
   }
   modalState.form.parentType = menu.menuType;
 }
@@ -235,7 +235,7 @@ let modalState: ModalStateType = reactive({
     parentId: 0,
     menuName: '',
     menuSort: 0,
-    menuType: MENU_TYPE_BUTTON,
+    menuType: MENU_TYPE_AUTH,
     component: '',
     menuPath: '',
     icon: '#',
@@ -364,7 +364,7 @@ function fnModalOk() {
     validateNames.push('menuPath');
     validateNames.push('perms');
   }
-  if (modalState.form.menuType === MENU_TYPE_BUTTON) {
+  if (modalState.form.menuType === MENU_TYPE_AUTH) {
     validateNames.push('perms');
   }
   modalStateForm
@@ -467,7 +467,7 @@ function fnGetList() {
             children: parseDataToTreeExclude(
               data,
               'menuType',
-              MENU_TYPE_BUTTON,
+              MENU_TYPE_AUTH,
               'menuId'
             ),
           },
@@ -688,7 +688,7 @@ onMounted(() => {
               </a-tooltip>
               <a-tooltip
                 placement="topRight"
-                v-if="record.menuType !== MENU_TYPE_BUTTON"
+                v-if="record.menuType !== MENU_TYPE_AUTH"
               >
                 <template #title>新增子菜单</template>
                 <a-button
@@ -788,14 +788,14 @@ onMounted(() => {
             菜单
           </a-tag>
           <a-tag
-            v-if="modalState.form.menuType === MENU_TYPE_BUTTON"
+            v-if="modalState.form.menuType === MENU_TYPE_AUTH"
             color="orange"
           >
-            按钮
+            权限
           </a-tag>
         </a-form-item>
 
-        <a-row v-if="modalState.form.menuType !== MENU_TYPE_BUTTON">
+        <a-row v-if="modalState.form.menuType !== MENU_TYPE_AUTH">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单图标" name="icon">
               <IconFont
@@ -811,7 +811,7 @@ onMounted(() => {
           </a-col>
         </a-row>
 
-        <a-row v-if="modalState.form.menuType !== MENU_TYPE_BUTTON">
+        <a-row v-if="modalState.form.menuType !== MENU_TYPE_AUTH">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="内部地址" name="frameFlag">
               <a-tag color="default">
@@ -979,14 +979,14 @@ onMounted(() => {
             >
               菜单
             </a-radio>
-            <a-radio :key="MENU_TYPE_BUTTON" :value="MENU_TYPE_BUTTON">
-              按钮
+            <a-radio :key="MENU_TYPE_AUTH" :value="MENU_TYPE_AUTH">
+              权限
             </a-radio>
           </a-radio-group>
         </a-form-item>
 
         <a-row>
-          <template v-if="modalState.form.menuType !== MENU_TYPE_BUTTON">
+          <template v-if="modalState.form.menuType !== MENU_TYPE_AUTH">
             <a-col :lg="12" :md="12" :xs="24">
               <a-form-item label="菜单图标" name="icon">
                 <a-select
@@ -1147,12 +1147,7 @@ onMounted(() => {
               <a-tooltip placement="topLeft">
                 <template #title>
                   <div>
-                    权限标识示例：monitor:server:query <br />
-                    后端控制器中使用权限标识，如： <br />
-                    @PreAuthorize({ hasPermissions: ['monitor:server:query'] })
-                    <br />
-                    前端vue页面中使用权限标识，如： <br />
-                    v-perms:has="['monitor:server:query']"
+                    权限标识示例：monitor:server:query
                   </div>
                 </template>
                 <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />

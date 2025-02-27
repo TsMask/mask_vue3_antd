@@ -1564,7 +1564,10 @@ onMounted(() => {
       <template #default>
         <a-row justify="space-between" align="middle">
           <a-col :span="12">
-            <a-checkbox v-model:checked="uploadImportState.updateSupport">
+            <a-checkbox
+              :disabled="uploadImportState.loading"
+              v-model:checked="uploadImportState.updateSupport"
+            >
               是否更新已经存在的数据
             </a-checkbox>
           </a-col>
