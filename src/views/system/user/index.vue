@@ -851,43 +851,6 @@ onMounted(() => {
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
-          <a-col :lg="18" :md="12" :xs="24">
-            <a-form-item label="部门名称" name="deptId">
-              <a-tree-select
-                v-model:value="queryParams.deptId"
-                placeholder="部门名称"
-                show-search
-                tree-default-expand-all
-                :tree-data="deptTreeData"
-                :field-names="{
-                  children: 'children',
-                  label: 'label',
-                  value: 'id',
-                }"
-                tree-node-label-prop="label"
-                tree-node-filter-prop="label"
-                style="width: 100%"
-                :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
-              >
-              </a-tree-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item>
-              <a-space :size="8">
-                <a-button type="primary" @click.prevent="fnGetList(1)">
-                  <template #icon><SearchOutlined /></template>
-                  搜索
-                </a-button>
-                <a-button type="default" @click.prevent="fnQueryReset">
-                  <template #icon><ClearOutlined /></template>
-                  重置
-                </a-button>
-              </a-space>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="登录账号" name="userName">
               <a-input
@@ -927,6 +890,43 @@ onMounted(() => {
                 :allow-clear="true"
                 style="width: 100%"
               ></a-range-picker>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :lg="16" :md="12" :xs="24">
+            <a-form-item label="部门名称" name="deptId">
+              <a-tree-select
+                v-model:value="queryParams.deptId"
+                placeholder="部门名称"
+                show-search
+                tree-default-expand-all
+                :tree-data="deptTreeData"
+                :field-names="{
+                  children: 'children',
+                  label: 'label',
+                  value: 'id',
+                }"
+                tree-node-label-prop="label"
+                tree-node-filter-prop="label"
+                style="width: 100%"
+                :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+              >
+              </a-tree-select>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="4" :md="12" :xs="24">
+            <a-form-item>
+              <a-space :size="8">
+                <a-button type="primary" @click.prevent="fnGetList(1)">
+                  <template #icon><SearchOutlined /></template>
+                  搜索
+                </a-button>
+                <a-button type="default" @click.prevent="fnQueryReset">
+                  <template #icon><ClearOutlined /></template>
+                  重置
+                </a-button>
+              </a-space>
             </a-form-item>
           </a-col>
         </a-row>
@@ -1248,7 +1248,7 @@ onMounted(() => {
             <a-form-item label="用户岗位" name="postIds">
               <a-select
                 :value="modalState.form.postIds"
-                disabled
+                :disabled="true"
                 mode="multiple"
                 placeholder="请选择用户岗位"
                 option-label-prop="postName"
