@@ -121,6 +121,9 @@ export async function uploadFileChunk(
     const chunksIndex = `${index}`;
     // 跳过已上传块
     if (resCheck.data.includes(chunksIndex)) {
+      uploadedSize += chunk.size;
+      uploadProgress = (uploadedSize / size) * 100;
+      console.log(`上传进度：${uploadProgress}%`);
       continue;
     }
 

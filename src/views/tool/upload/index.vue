@@ -145,7 +145,7 @@ function fnUpload(up: UploadRequestOption) {
               duration: 3,
             });
             state.uploadFilePath = res.data.url;
-            state.downloadFilePath = res.data.fileName;
+            state.downloadFilePath = res.data.filePath;
           } else {
             message.error(res.msg, 3);
           }
@@ -180,6 +180,7 @@ function fnUploadChunk(up: UploadRequestOption) {
               item.name = res.data.newFileName;
               item.percent = 100;
               item.status = 'done';
+              state.downloadFilePath = res.data.filePath;
             }
           } else {
             message.error(res.msg, 3);
