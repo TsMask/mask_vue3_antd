@@ -96,7 +96,7 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
   //console.log('请求前的拦截', options);
 
   // 使用apifoxmock.com时开启
-  if (options.baseUrl?.includes('apifoxmock.com')) {
+  if (import.meta.env.DEV || options.baseUrl?.includes('apifoxmock.com')) {
     Reflect.set(
       options.headers,
       'apifoxToken',

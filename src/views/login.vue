@@ -19,9 +19,9 @@ let state = reactive({
   /**表单属性 */
   form: {
     /**账号 */
-    username: 'system',
+    username: '',
     /**密码 */
-    password: 'Abcd@1234..',
+    password: '',
     /**手机号 */
     phone: '',
     /**验证码 */
@@ -164,6 +164,11 @@ function fnGetSmsCaptcha() {
 
 onMounted(() => {
   fnGetCaptcha();
+  // 开发环境自动填充账号密码登录信息
+  if (import.meta.env.DEV){
+    state.form.username = 'system';
+    state.form.password = 'Abcd@1234..';
+  }
 });
 
 onBeforeUnmount(() => {
