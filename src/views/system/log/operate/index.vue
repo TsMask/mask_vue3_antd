@@ -57,6 +57,10 @@ let queryParams = reactive({
   pageNum: 1,
   /**每页条数 */
   pageSize: 20,
+  /**排序字段 */
+  sortBy: '',
+  /**排序方向 */
+  sortOrder: '',
 });
 
 /**查询参数重置 */
@@ -71,6 +75,8 @@ function fnQueryReset() {
     endTime: undefined,
     pageNum: 1,
     pageSize: 20,
+    sortBy: undefined,
+    sortOrder: undefined,
   });
   queryRangePicker.value = undefined;
   tablePagination.current = 1;
@@ -130,6 +136,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'operaBy',
     align: 'left',
     width: 100,
+    sorter: true,
   },
   {
     title: '操作IP',
@@ -155,6 +162,7 @@ let tableColumns: ColumnsType = [
     dataIndex: 'operaTime',
     align: 'left',
     width: 150,
+    sorter: true,
     customRender(opt) {
       if (+opt.value <= 0) return '';
       return parseDateToStr(+opt.value);
@@ -166,6 +174,7 @@ let tableColumns: ColumnsType = [
     key: 'costTime',
     align: 'right',
     width: 100,
+    sorter: true,
     customRender(opt) {
       return `${opt.value} ms`;
     },
@@ -213,6 +222,13 @@ function fnTableSize({ key }: MenuInfo) {
 /**表格斑马纹 */
 function fnTableStriped(_record: unknown, index: number): any {
   return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
+}
+
+/**表格分页、排序、筛选变化时触发 */
+function fnTableChange(pagination: any, filters: any, sorter: any) {
+  queryParams.sortBy = sorter.order ? sorter.field : undefined;
+  queryParams.sortOrder = sorter.order;
+  fnGetList();
 }
 
 /**表格多选 */
@@ -563,6 +579,7 @@ onMounted(() => {
           selectedRowKeys: tableState.selectedRowKeys,
           onChange: fnTableSelectedRowKeys,
         }"
+        @change="fnTableChange"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'businessType'">
