@@ -33,7 +33,9 @@ import { MENU_PATH_INLINE } from '@/constants/menu-constants';
 import { SYS_ROLE_SYSTEM_ID } from '@/constants/system-constants';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 import useDictStore from '@/store/modules/dict';
+import useUserStore from '@/store/modules/user';
 const { getDict } = useDictStore();
+const userStore = useUserStore();
 const route = useRoute();
 const router = useRouter();
 const routePath = route.path;
@@ -958,6 +960,7 @@ onMounted(() => {
               v-if="
                 dict.sysNormalDisable.length > 0 &&
                 record.roleId !== SYS_ROLE_SYSTEM_ID &&
+                !userStore.roles.includes(record.roleKey) &&
                 hasPermissions(['system:role:edit'])
               "
               v-model:checked="record.statusFlag"
@@ -988,7 +991,10 @@ onMounted(() => {
               </a-tooltip>
               <a-tooltip
                 placement="topRight"
-                v-if="record.roleId !== SYS_ROLE_SYSTEM_ID"
+                v-if="
+                  record.roleId !== SYS_ROLE_SYSTEM_ID &&
+                  !userStore.roles.includes(record.roleKey)
+                "
               >
                 <template #title>编辑</template>
                 <a-button
@@ -1001,7 +1007,10 @@ onMounted(() => {
               </a-tooltip>
               <a-tooltip
                 placement="topRight"
-                v-if="record.roleId !== SYS_ROLE_SYSTEM_ID"
+                v-if="
+                  record.roleId !== SYS_ROLE_SYSTEM_ID &&
+                  !userStore.roles.includes(record.roleKey)
+                "
               >
                 <template #title>删除</template>
                 <a-button
@@ -1305,7 +1314,7 @@ onMounted(() => {
       @cancel="fnModalCancel"
     >
       <a-form name="modalStateFormByDataScope" layout="horizontal">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色编号" name="roleId">
               {{ modalState.form.roleId }}
