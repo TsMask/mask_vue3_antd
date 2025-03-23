@@ -1,4 +1,11 @@
-import { getToken, removeToken } from '@/plugins/auth-token';
+import {
+  getAccessToken,
+  setAccessToken,
+  delAccessToken,
+  getRefreshToken,
+  setRefreshToken,
+  delRefreshToken,
+} from '@/plugins/auth-token';
 import { sessionGetJSON, sessionSetJSON } from '@/utils/cache-session-utils';
 import { TOKEN_KEY, TOKEN_KEY_PREFIX } from '@/constants/token-constants';
 import { CACHE_SESSION_FATCH } from '@/constants/cache-keys-constants';
@@ -15,6 +22,7 @@ import {
   RESULT_MSG_SUCCESS,
   RESULT_MSG_TIMEOUT,
 } from '@/constants/result-constants';
+import { refreshToken } from '@/api/auth';
 
 /**响应结果类型 */
 export type ResultType = {
@@ -114,9 +122,13 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
   }
 
   // 是否需要设置 token
-  const token = getToken();
-  if (options.whithToken && token) {
-    Reflect.set(options.headers, TOKEN_KEY, TOKEN_KEY_PREFIX + token);
+  const accessToken = getAccessToken();
+  if (options.whithToken && accessToken) {
+    Reflect.set(
+      options.headers,
+      TOKEN_KEY,
+      TOKEN_KEY_PREFIX + ' ' + accessToken
+    );
   }
 
   // 是否需要防止数据重复提交
@@ -182,13 +194,25 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
   return options;
 }
 
-/**请求后的拦截 */
-function interceptorResponse(res: ResultType): ResultType | Promise<any> {
+/**响应前的拦截 */
+async function beforeResponse(
+  options: OptionsType,
+  res: ResultType
+): Promise<any> {
   //console.log('请求后的拦截', res);
-  // 登录失效时，移除授权令牌并重新刷新页面
+  // 登录失效时，移除访问令牌并重新请求
   if (res.code === 401) {
-    removeToken();
-    window.location.reload();
+    const result = await refreshToken(getRefreshToken());
+    // 更新访问令牌和刷新令牌
+    if (result.code === RESULT_CODE_SUCCESS) {
+      setAccessToken(result.data.accessToken, result.data.expiresIn);
+      setRefreshToken(result.data.refreshToken, result.data.refreshExpiresIn);
+      res = await request(options);
+    } else {
+      delAccessToken();
+      delRefreshToken();
+      window.location.reload();
+    }
   }
   return res;
 }
@@ -202,33 +226,35 @@ function interceptorResponse(res: ResultType): ResultType | Promise<any> {
  * @returns 返回 Promise<ResultType>
  */
 export async function request(options: OptionsType): Promise<ResultType> {
-  options = Object.assign({}, FATCH_OPTIONS, options);
+  let reqOptions = Object.assign({}, FATCH_OPTIONS, options);
 
   // 请求超时控制请求终止
   let timeoutId: any = null;
-  if (!options.signal) {
+  if (!reqOptions.signal) {
     const controller = new AbortController();
-    options.signal = controller.signal;
+    reqOptions.signal = controller.signal;
     timeoutId = setTimeout(() => {
       controller.abort(); // 终止请求
-    }, options.timeout);
+    }, reqOptions.timeout);
   }
 
   // 检查请求拦截
-  const beforeReq = beforeRequest(options);
+  const beforeReq = beforeRequest(reqOptions);
   if (beforeReq instanceof Promise) {
     return await beforeReq;
   }
-  options = beforeReq;
+  reqOptions = beforeReq;
 
   // 判断用户传递的URL是否http或/开头
-  if (!options.url.startsWith('http')) {
-    const uri = options.url.startsWith('/') ? options.url : `/${options.url}`;
-    options.url = options.baseUrl + uri;
+  if (!reqOptions.url.startsWith('http')) {
+    const uri = reqOptions.url.startsWith('/')
+      ? reqOptions.url
+      : `/${reqOptions.url}`;
+    reqOptions.url = reqOptions.baseUrl + uri;
   }
 
   try {
-    const res = await fetch(options.url, options);
+    const res = await fetch(reqOptions.url, reqOptions);
     // console.log('请求结果：', res);
     if (res.status === 500) {
       return {
@@ -238,7 +264,7 @@ export async function request(options: OptionsType): Promise<ResultType> {
     }
 
     // 根据响应数据类型返回
-    switch (options.responseType) {
+    switch (reqOptions.responseType) {
       case 'text': // 文本数据
         const str = await res.text();
         return {
@@ -248,11 +274,7 @@ export async function request(options: OptionsType): Promise<ResultType> {
       case 'json': // json格式数据
         const result = await res.json();
         // 请求后的拦截
-        const beforeRes = interceptorResponse(result);
-        if (beforeRes instanceof Promise) {
-          return await beforeRes;
-        }
-        return result;
+        return await beforeResponse(options, result);
       case 'blob': // 二进制数据则直接返回
       case 'arrayBuffer':
         const contentType = res.headers.get('content-type') || '';
@@ -261,7 +283,7 @@ export async function request(options: OptionsType): Promise<ResultType> {
           return result as ResultType;
         }
         const data =
-          options.responseType === 'blob'
+          reqOptions.responseType === 'blob'
             ? await res.blob()
             : await res.arrayBuffer();
         return {
@@ -290,4 +312,18 @@ export async function request(options: OptionsType): Promise<ResultType> {
     clearTimeout(timeoutId); // 清除超时计时器
     timeoutId = null;
   }
+}
+
+async function reloadRefreshToken() {
+  const res = await refreshToken(getRefreshToken());
+  // 更新访问令牌和刷新令牌
+  if (res.code === RESULT_CODE_SUCCESS) {
+    setAccessToken(res.data.accessToken, res.data.expiresIn);
+    setRefreshToken(res.data.refreshToken, res.data.refreshExpiresIn);
+  } else {
+    delAccessToken();
+    delRefreshToken();
+    window.location.reload();
+  }
+  return res;
 }

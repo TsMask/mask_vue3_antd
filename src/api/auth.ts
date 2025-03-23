@@ -1,12 +1,28 @@
 import { request } from '@/plugins/http-fetch';
 
-// 登录方法
+/**
+ * 登录方法
+ * @param data 数据
+ * @returns 结果
+ */
 export function login(data: Record<string, string>) {
   return request({
-    url: '/login',
+    url: '/auth/login',
     method: 'POST',
     data: data,
     whithToken: false,
+  });
+}
+
+/**
+ * 退出方法
+ * @returns object
+ */
+export function logout() {
+  return request({
+    url: '/auth/logout',
+    method: 'POST',
+    repeatSubmit: false,
   });
 }
 
@@ -17,9 +33,23 @@ export function login(data: Record<string, string>) {
  */
 export function register(data: Record<string, any>) {
   return request({
-    url: '/register',
+    url: '/auth/register',
     method: 'POST',
     data: data,
+    whithToken: false,
+  });
+}
+
+/**
+ * 刷新登录令牌
+ * @param data 数据
+ * @returns 结果
+ */
+export function refreshToken(refreshToken: string) {
+  return request({
+    url: '/auth/refresh-token',
+    method: 'POST',
+    data: { refreshToken },
     whithToken: false,
   });
 }
@@ -36,16 +66,15 @@ export function getInfo() {
 }
 
 /**
- * 退出方法
+ * 获取路由
  * @returns object
  */
-export function logout() {
+export const getRouter = () => {
   return request({
-    url: '/logout',
-    method: 'POST',
-    repeatSubmit: false,
+    url: '/router',
+    method: 'GET',
   });
-}
+};
 
 /**
  * 获取验证码

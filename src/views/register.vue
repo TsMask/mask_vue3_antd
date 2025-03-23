@@ -2,7 +2,7 @@
 import { GlobalFooter } from 'antdv-pro-layout';
 import { Modal, message } from 'ant-design-vue';
 import { reactive, onMounted, toRaw } from 'vue';
-import { getCaptchaImage, register } from '@/api/login';
+import { getCaptchaImage, register } from '@/api/auth';
 import { regExpPassword, regExpUserName } from '@/utils/regular-utils';
 import { useRouter } from 'vue-router';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';

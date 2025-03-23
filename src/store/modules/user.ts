@@ -1,16 +1,18 @@
 import defaultAvatar from '@/assets/images/default_avatar.png';
 import useLayoutStore from './layout';
-import { login, logout, getInfo } from '@/api/login';
-import { getToken, setToken, removeToken } from '@/plugins/auth-token';
+import { login, logout, getInfo } from '@/api/auth';
+import {
+  delAccessToken,
+  delRefreshToken,
+  setAccessToken,
+  setRefreshToken,
+} from '@/plugins/auth-token';
 import { defineStore } from 'pinia';
-import { TOKEN_RESPONSE_FIELD } from '@/constants/token-constants';
 import { validHttp } from '@/utils/regular-utils';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 
 /**用户信息类型 */
 type UserInfo = {
-  /**授权凭证 */
-  token: string;
   /**用户ID */
   userId: string;
   /**登录账号 */
@@ -49,7 +51,6 @@ function parseAvatar(avatar: string): string {
 
 const useUserStore = defineStore('user', {
   state: (): UserInfo => ({
-    token: getToken(),
     userId: '',
     userName: '',
     roles: [],
@@ -113,9 +114,8 @@ const useUserStore = defineStore('user', {
     async fnLogin(loginBody: Record<string, string>) {
       const res = await login(loginBody);
       if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        const token = res.data[TOKEN_RESPONSE_FIELD];
-        setToken(token);
-        this.token = token;
+        setAccessToken(res.data.accessToken, res.data.expiresIn);
+        setRefreshToken(res.data.refreshToken, res.data.refreshExpiresIn);
       }
       return res;
     },
@@ -154,7 +154,8 @@ const useUserStore = defineStore('user', {
       }
       // 网络错误时退出登录状态
       if (res.code === 500) {
-        removeToken();
+        delAccessToken();
+        delRefreshToken();
         window.location.reload();
       }
       return res;
@@ -166,10 +167,10 @@ const useUserStore = defineStore('user', {
       } catch (error) {
         throw error;
       } finally {
-        this.token = '';
         this.roles = [];
         this.permissions = [];
-        removeToken();
+        delAccessToken();
+        delRefreshToken();
       }
     },
   },

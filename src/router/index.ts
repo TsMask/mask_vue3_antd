@@ -5,7 +5,7 @@ import {
 } from 'vue-router';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
-import { getToken } from '@/plugins/auth-token';
+import { getAccessToken } from '@/plugins/auth-token';
 import { validHttp } from '@/utils/regular-utils';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
@@ -57,10 +57,10 @@ router.afterEach((to, from, failure) => {
 /**全局路由-前置守卫 */
 router.beforeEach(async (to, from, next) => {
   NProgress.start();
-  const token = getToken();
+  const accessToken = getAccessToken();
 
   // 没有token
-  if (!token) {
+  if (!accessToken) {
     if (WHITE_LIST.includes(to.path)) {
       // 在免登录白名单，直接进入
       next();
@@ -73,7 +73,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 有Token
-  if (token) {
+  if (accessToken) {
     // 防止重复访问登录页面
     if (to.path === '/login') {
       next({ name: 'Index' });

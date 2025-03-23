@@ -5,7 +5,7 @@ import {
   RouteMeta,
   RouteRecordRaw,
 } from 'vue-router';
-import { getRouters } from '@/api/router';
+import { getRouter } from '@/api/auth';
 import BasicLayout from '@/layouts/BasicLayout.vue';
 import BlankLayout from '@/layouts/BlankLayout.vue';
 import LinkLayout from '@/layouts/LinkLayout.vue';
@@ -46,7 +46,7 @@ const useRouterStore = defineStore('router', {
      * @returns 生成的路由菜单
      */
     async generateRoutes() {
-      const res = await getRouters();
+      const res = await getRouter();
       if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
         const buildRoutes = buildRouters(res.data.concat());
         this.buildRouterData = buildRoutes;

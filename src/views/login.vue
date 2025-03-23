@@ -3,7 +3,7 @@ import { GlobalFooter } from 'antdv-pro-layout';
 import { message } from 'ant-design-vue';
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import useUserStore from '@/store/modules/user';
-import { getCaptchaImage } from '@/api/login';
+import { getCaptchaImage } from '@/api/auth';
 import { regExpMobile, validMobile } from '@/utils/regular-utils';
 import { useRouter, useRoute } from 'vue-router';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
