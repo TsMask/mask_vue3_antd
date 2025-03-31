@@ -205,7 +205,7 @@ async function beforeResponse(
     const result = await refreshToken(getRefreshToken());
     // 更新访问令牌和刷新令牌
     if (result.code === RESULT_CODE_SUCCESS) {
-      setAccessToken(result.data.accessToken, result.data.expiresIn);
+      setAccessToken(result.data.accessToken, result.data.refreshExpiresIn);
       setRefreshToken(result.data.refreshToken, result.data.refreshExpiresIn);
       res = await request(options);
     } else {
@@ -318,7 +318,7 @@ async function reloadRefreshToken() {
   const res = await refreshToken(getRefreshToken());
   // 更新访问令牌和刷新令牌
   if (res.code === RESULT_CODE_SUCCESS) {
-    setAccessToken(res.data.accessToken, res.data.expiresIn);
+    setAccessToken(res.data.accessToken, res.data.refreshExpiresIn);
     setRefreshToken(res.data.refreshToken, res.data.refreshExpiresIn);
   } else {
     delAccessToken();
