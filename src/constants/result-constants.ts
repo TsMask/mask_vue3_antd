@@ -1,11 +1,11 @@
 /**响应-code正常成功 */
-export const RESULT_CODE_SUCCESS = 200;
+export const RESULT_CODE_SUCCESS = 200001;
 
 /**响应-msg正常成功 */
 export const RESULT_MSG_SUCCESS = 'success';
 
 /**响应-code错误失败 */
-export const RESULT_CODE_ERROR = 400;
+export const RESULT_CODE_ERROR = 400001;
 
 /**响应-msg错误失败 */
 export const RESULT_MSG_ERROR = 'error';

@@ -201,7 +201,7 @@ async function beforeResponse(
 ): Promise<any> {
   //console.log('请求后的拦截', res);
   // 登录失效时，移除访问令牌并重新请求
-  if (res.code === 401) {
+  if (res.code === 401001) {
     const result = await refreshToken(getRefreshToken());
     // 更新访问令牌和刷新令牌
     if (result.code === RESULT_CODE_SUCCESS) {
@@ -312,18 +312,4 @@ export async function request(options: OptionsType): Promise<ResultType> {
     clearTimeout(timeoutId); // 清除超时计时器
     timeoutId = null;
   }
-}
-
-async function reloadRefreshToken() {
-  const res = await refreshToken(getRefreshToken());
-  // 更新访问令牌和刷新令牌
-  if (res.code === RESULT_CODE_SUCCESS) {
-    setAccessToken(res.data.accessToken, res.data.refreshExpiresIn);
-    setRefreshToken(res.data.refreshToken, res.data.refreshExpiresIn);
-  } else {
-    delAccessToken();
-    delRefreshToken();
-    window.location.reload();
-  }
-  return res;
 }
