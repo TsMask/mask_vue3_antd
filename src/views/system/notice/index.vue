@@ -655,7 +655,7 @@ onMounted(() => {
       @cancel="fnModalCancel"
     >
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="公告类型" name="noticeType">
               <DictTag
@@ -715,7 +715,7 @@ onMounted(() => {
         :label-col="{ span: 6 }"
         :label-wrap="true"
       >
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="公告类型"

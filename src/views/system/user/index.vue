@@ -893,7 +893,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="16">
+        <a-row>
           <a-col :lg="16" :md="12" :xs="24">
             <a-form-item label="部门名称" name="deptId">
               <a-tree-select
@@ -1317,7 +1317,7 @@ onMounted(() => {
         :label-col="{ span: 6 }"
         :label-wrap="true"
       >
-        <a-row :gutter="16" v-if="!modalState.form.userId">
+        <a-row v-if="!modalState.form.userId">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item
               label="登录账号"

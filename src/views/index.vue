@@ -68,7 +68,7 @@ function goTarget(type: string) {
       </a-col>
       <a-col :lg="8" :md="8" :xs="24">
         <a-card title="快速开始" style="margin-bottom: 16px">
-          <a-row :gutter="16" :wrap="true">
+          <a-row :wrap="true">
             <a-col :lg="4" :md="12" :xs="12">
               <a-button
                 type="link"
