@@ -102,6 +102,10 @@ function fnGetCaptcha() {
   getCaptchaImage()
     .then(res => {
       if (res.code !== RESULT_CODE_SUCCESS) {
+        message.warning({
+          content: `${res.msg}`,
+          duration: 3,
+        });
         return;
       }
       const { enabled, img, uuid } = res.data;
@@ -165,7 +169,7 @@ function fnGetSmsCaptcha() {
 onMounted(() => {
   fnGetCaptcha();
   // 开发环境自动填充账号密码登录信息
-  if (import.meta.env.DEV){
+  if (import.meta.env.DEV) {
     state.form.username = 'system';
     state.form.password = 'Abcd@1234..';
   }
