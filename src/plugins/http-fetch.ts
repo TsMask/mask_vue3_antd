@@ -199,7 +199,7 @@ async function beforeResponse(
   options: OptionsType,
   res: ResultType
 ): Promise<any> {
-  //console.log('请求后的拦截', res);
+  // console.log('请求后的拦截', res);
   // 登录失效时，移除访问令牌并重新请求
   if (res.code === 401001) {
     const result = await refreshToken(getRefreshToken());
@@ -207,12 +207,17 @@ async function beforeResponse(
     if (result.code === RESULT_CODE_SUCCESS) {
       setAccessToken(result.data.accessToken, result.data.refreshExpiresIn);
       setRefreshToken(result.data.refreshToken, result.data.refreshExpiresIn);
-      res = await request(options);
+      return await request(options);
     } else {
       delAccessToken();
       delRefreshToken();
       window.location.reload();
     }
+  }
+  if ([401002, 401003].includes(res.code)) {
+    delAccessToken();
+    delRefreshToken();
+    window.location.reload();
   }
   return res;
 }
