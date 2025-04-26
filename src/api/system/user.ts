@@ -10,7 +10,7 @@ export function importData(filePath: string, update: boolean) {
     url: '/system/user/import',
     method: 'POST',
     data: { filePath, update },
-    timeout: 60_000
+    timeout: 60_000,
   });
 }
 
@@ -37,7 +37,7 @@ export function exportUser(query: Record<string, any>) {
     method: 'GET',
     params: query,
     responseType: 'blob',
-    timeout: 60_000
+    timeout: 60_000,
   });
 }
 
@@ -135,5 +135,17 @@ export function changeStatus(
     url: '/system/user/status',
     method: 'PUT',
     data: { userId, statusFlag },
+  });
+}
+
+/**
+ * 解锁用户登录状态
+ * @param userName 登录账号
+ * @returns object
+ */
+export function unlock(userName: string) {
+  return request({
+    url: `/system/user/unlock/${userName}`,
+    method: 'PUT',
   });
 }

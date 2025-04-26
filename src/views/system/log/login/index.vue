@@ -11,7 +11,6 @@ import {
   exportSysLogLogin,
   listSysLogLogin,
   cleanSysLogLogin,
-  unlock,
 } from '@/api/system/log/login';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
@@ -87,10 +86,6 @@ type TabeStateType = {
   seached: boolean;
   /**记录数据 */
   data: object[];
-  /**勾选记录 */
-  selectedRowKeys: (string | number)[];
-  /**勾选单个的登录账号 */
-  selectedUserName: string;
 };
 
 /**表格状态 */
@@ -100,8 +95,6 @@ let tableState: TabeStateType = reactive({
   striped: false,
   seached: false,
   data: [],
-  selectedRowKeys: [],
-  selectedUserName: '',
 });
 
 /**表格字段列 */
@@ -165,6 +158,7 @@ let tableColumns: ColumnsType = [
     title: '登录信息',
     dataIndex: 'msg',
     align: 'left',
+    ellipsis: true,
   },
 ];
 
@@ -213,20 +207,6 @@ function fnTableChange(pagination: any, filters: any, sorter: any) {
   fnGetList();
 }
 
-/**表格多选 */
-function fnTableSelectedRows(
-  _: (string | number)[],
-  rows: Record<string, string>[]
-) {
-  tableState.selectedRowKeys = rows.map(item => item.loginId);
-  // 针对单个登录账号解锁
-  if (rows.length === 1) {
-    tableState.selectedUserName = rows[0].userName;
-  } else {
-    tableState.selectedUserName = '';
-  }
-}
-
 /**列表清空 */
 function fnCleanList() {
   Modal.confirm({
@@ -242,35 +222,6 @@ function fnCleanList() {
               duration: 3,
             });
             fnGetList();
-          } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-        });
-    },
-  });
-}
-
-/**登录账号解锁 */
-function fnUnlock() {
-  const username = tableState.selectedUserName;
-  Modal.confirm({
-    title: '提示',
-    content: `确认解锁用户 【${username}】 数据项?`,
-    onOk() {
-      const hide = message.loading('请稍等...', 0);
-      unlock(username)
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `${username} 解锁成功`,
-              duration: 3,
-            });
           } else {
             message.error({
               content: `${res.msg}`,
@@ -336,10 +287,6 @@ function fnGetList(pageNum?: number) {
 
   listSysLogLogin(toRaw(queryParams)).then(res => {
     if (res.code === RESULT_CODE_SUCCESS) {
-      // 取消勾选
-      if (tableState.selectedRowKeys.length > 0) {
-        tableState.selectedRowKeys = [];
-      }
       const { total, rows } = res.data;
       tablePagination.total = total;
       tableState.data = rows;
@@ -442,15 +389,6 @@ onMounted(() => {
       <template #title>
         <a-space :size="8" align="center">
           <a-button
-            type="primary"
-            :disabled="!tableState.selectedUserName"
-            @click.prevent="fnUnlock()"
-            v-perms:has="['system:log:login:unlock']"
-          >
-            <template #icon><UnlockOutlined /></template>
-            解锁
-          </a-button>
-          <a-button
             type="dashed"
             danger
             @click.prevent="fnCleanList()"
@@ -521,7 +459,7 @@ onMounted(() => {
       <!-- 表格列表 -->
       <a-table
         class="table"
-        row-key="loginId"
+        row-key="id"
         :columns="tableColumns"
         :loading="tableState.loading"
         :data-source="tableState.data"
@@ -532,11 +470,6 @@ onMounted(() => {
           scrollToFirstRowOnChange: true,
         }"
         :pagination="tablePagination"
-        :row-selection="{
-          type: 'checkbox',
-          selectedRowKeys: tableState.selectedRowKeys,
-          onChange: fnTableSelectedRows,
-        }"
         @change="fnTableChange"
       >
         <template #bodyCell="{ column, record }">

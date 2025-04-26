@@ -21,6 +21,7 @@ import {
   getUser,
   updateUser,
   addUser,
+  unlock,
 } from '@/api/system/user';
 import { deptTree } from '@/api/system/dept';
 import { uploadFile } from '@/api/tool/file';
@@ -817,6 +818,34 @@ function fnGetDeptTree() {
   });
 }
 
+/**登录账号解锁 */
+function fnUnlock(username: string) {
+  Modal.confirm({
+    title: '提示',
+    content: `确认解锁用户 【${username}】 数据项?`,
+    onOk() {
+      const hide = message.loading('请稍等...', 0);
+      unlock(username)
+        .then(res => {
+          if (res.code === RESULT_CODE_SUCCESS) {
+            message.success({
+              content: `${username} 解锁成功`,
+              duration: 3,
+            });
+          } else {
+            message.error({
+              content: `${res.msg}`,
+              duration: 3,
+            });
+          }
+        })
+        .finally(() => {
+          hide();
+        });
+    },
+  });
+}
+
 onMounted(() => {
   // 初始字典数据
   Promise.allSettled([
@@ -1116,6 +1145,19 @@ onMounted(() => {
                   v-perms:has="['system:user:resetPwd']"
                 >
                   <template #icon><SecurityScanOutlined /></template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip
+                placement="topRight"
+                v-if="!record.roleIds?.includes(SYS_ROLE_SYSTEM_ID)"
+              >
+                <template #title>解锁</template>
+                <a-button
+                  type="link"
+                  @click.prevent="fnUnlock(record.userName)"
+                  v-perms:has="['system:user:unlock']"
+                >
+                  <template #icon><UnlockOutlined /></template>
                 </a-button>
               </a-tooltip>
             </a-space>

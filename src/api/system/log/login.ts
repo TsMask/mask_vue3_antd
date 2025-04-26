@@ -37,15 +37,3 @@ export function cleanSysLogLogin() {
     method: 'DELETE',
   });
 }
-
-/**
- * 解锁用户登录状态
- * @param userName 登录账号
- * @returns object
- */
-export function unlock(userName: string) {
-  return request({
-    url: `/system/log/login/unlock/${userName}`,
-    method: 'PUT',
-  });
-}

@@ -96,8 +96,6 @@ type TabeStateType = {
   seached: boolean;
   /**记录数据 */
   data: object[];
-  /**勾选记录 */
-  selectedRowKeys: (string | number)[];
 };
 
 /**表格状态 */
@@ -107,7 +105,6 @@ let tableState: TabeStateType = reactive({
   striped: false,
   seached: false,
   data: [],
-  selectedRowKeys: [],
 });
 
 /**表格字段列 */
@@ -229,11 +226,6 @@ function fnTableChange(pagination: any, filters: any, sorter: any) {
   queryParams.sortBy = sorter.order ? sorter.field : undefined;
   queryParams.sortOrder = sorter.order;
   fnGetList();
-}
-
-/**表格多选 */
-function fnTableSelectedRowKeys(keys: (string | number)[]) {
-  tableState.selectedRowKeys = keys;
 }
 
 /**对话框对象信息状态类型 */
@@ -364,10 +356,6 @@ function fnGetList(pageNum?: number) {
 
   listSysLogOperate(toRaw(queryParams)).then(res => {
     if (res.code === RESULT_CODE_SUCCESS) {
-      // 取消勾选
-      if (tableState.selectedRowKeys.length > 0) {
-        tableState.selectedRowKeys = [];
-      }
       const { total, rows } = res.data;
       tablePagination.total = total;
       tableState.data = rows;
@@ -574,11 +562,6 @@ onMounted(() => {
           scrollToFirstRowOnChange: true,
         }"
         :pagination="tablePagination"
-        :row-selection="{
-          type: 'checkbox',
-          selectedRowKeys: tableState.selectedRowKeys,
-          onChange: fnTableSelectedRowKeys,
-        }"
         @change="fnTableChange"
       >
         <template #bodyCell="{ column, record }">
