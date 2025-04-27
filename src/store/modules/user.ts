@@ -9,7 +9,7 @@ import {
 } from '@/plugins/auth-token';
 import { defineStore } from 'pinia';
 import { validHttp } from '@/utils/regular-utils';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import { RESULT_CODE_EXCEPTION, RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 
 /**用户信息类型 */
 type UserInfo = {
@@ -153,7 +153,7 @@ const useUserStore = defineStore('user', {
         useLayoutStore().changeWaterMark(waterMarkContent);
       }
       // 网络错误时退出登录状态
-      if (res.code === 500) {
+      if (res.code === RESULT_CODE_EXCEPTION) {
         delAccessToken();
         delRefreshToken();
         window.location.reload();

@@ -15,6 +15,7 @@ import {
 } from '@/constants/app-constants';
 import {
   RESULT_CODE_ERROR,
+  RESULT_CODE_EXCEPTION,
   RESULT_CODE_SUCCESS,
   RESULT_MSG_NOT_TYPE,
   RESULT_MSG_RESUBMIT,
@@ -263,7 +264,7 @@ export async function request(options: OptionsType): Promise<ResultType> {
     // console.log('请求结果：', res);
     if (res.status === 500) {
       return {
-        code: RESULT_CODE_ERROR,
+        code: RESULT_CODE_EXCEPTION,
         msg: RESULT_MSG_SERVER_ERROR,
       };
     }
