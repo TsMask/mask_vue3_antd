@@ -922,7 +922,7 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row>
+        <a-row :gutter="16">
           <a-col :lg="16" :md="12" :xs="24">
             <a-form-item label="部门名称" name="deptId">
               <a-tree-select
