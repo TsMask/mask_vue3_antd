@@ -55,7 +55,7 @@ router.afterEach((to, from, failure) => {
 });
 
 /**全局路由-前置守卫 */
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, from) => {
   NProgress.start();
   const accessToken = getAccessToken();
 
@@ -63,12 +63,10 @@ router.beforeEach(async (to, from, next) => {
   if (!accessToken) {
     if (WHITE_LIST.includes(to.path)) {
       // 在免登录白名单，直接进入
-      next();
       return;
     } else {
       // 否则全部重定向到登录页
-      next(`/login?redirect=${encodeURIComponent(to.fullPath)}`);
-      return;
+      return `/login?redirect=${encodeURIComponent(to.fullPath)}`;
     }
   }
 
@@ -76,17 +74,14 @@ router.beforeEach(async (to, from, next) => {
   if (accessToken) {
     // 防止重复访问登录页面
     if (to.path === '/login') {
-      next({ name: 'Index' });
-      return;
+      return { name: 'Index' };
     } else if (WHITE_LIST.includes(to.path)) {
       // 在免登录白名单，直接进入
-      next();
       return;
     } else {
       // 判断当前用户是否有角色信息
       const user = useUserStore();
       if (Array.isArray(user.roles) && user.roles.length > 0) {
-        next();
         return;
       }
       try {
@@ -104,13 +99,11 @@ router.beforeEach(async (to, from, next) => {
           }
         }
         // 刷新替换原先路由，确保addRoutes已完成
-        next({ ...to, replace: true });
-        return;
+        return { ...to, replace: true };
       } catch (error: any) {
         console.error(`[${to.path}]: ${error.message}`);
         await user.fnLogOut();
-        next({ name: 'Login' });
-        return;
+        return { name: 'Login' };
       }
     }
   }
