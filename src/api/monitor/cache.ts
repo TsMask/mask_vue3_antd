@@ -29,7 +29,7 @@ export function listCacheName() {
  */
 export function listCacheKey(cacheName: string) {
   return request({
-    url: `/monitor/cache//keys`,
+    url: `/monitor/cache/keys`,
     method: 'GET',
     params: { cacheName },
   });
