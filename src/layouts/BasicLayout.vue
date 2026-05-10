@@ -116,15 +116,9 @@ tabsStore.clear();
 
 <template>
   <a-watermark :content="waterMarkContent" :z-index="100">
-    <ProLayout
-      v-model:collapsed="layoutState.collapsed"
-      v-model:selectedKeys="layoutState.selectedKeys"
-      v-model:openKeys="layoutState.openKeys"
-      :menu-data="menuData"
-      :breadcrumb="{ routes: breadcrumb }"
-      v-bind="proConfig"
-      :iconfont-url="scriptUrl"
-    >
+    <ProLayout v-model:collapsed="layoutState.collapsed" v-model:selectedKeys="layoutState.selectedKeys"
+      v-model:openKeys="layoutState.openKeys" :menu-data="menuData" :breadcrumb="{ routes: breadcrumb }"
+      v-bind="proConfig" :iconfont-url="scriptUrl">
       <!--插槽-菜单头-->
       <template #menuHeaderRender>
         <RouterLink :to="{ name: 'Index' }" :replace="true">
@@ -143,11 +137,7 @@ tabsStore.clear();
 
       <!--插槽-导航标签项-->
       <template #tabRender="{ width, fixedHeader, headerRender }">
-        <Tabs
-          :width="width"
-          :fixed-header="fixedHeader"
-          :header-render="headerRender"
-        />
+        <Tabs :width="width" :fixed-header="fixedHeader" :header-render="headerRender" />
       </template>
 
       <!--插槽-页面路由导航面包屑-->
@@ -164,36 +154,30 @@ tabsStore.clear();
       <RouterView v-slot="{ Component, route }">
         <transition name="slide-left" mode="out-in">
           <KeepAlive :include="tabsStore.getCaches">
-            <component
-              :is="fnComponentSetName(Component, route)"
-              :key="route.path"
-            />
+            <component :is="fnComponentSetName(Component, route)" :key="route.path" />
           </KeepAlive>
         </transition>
       </RouterView>
 
       <!--插槽-内容底部-->
       <template #footerRender>
-        <GlobalFooter
-          :links="[
-            {
-              blankTarget: true,
-              title: '开发手册',
-              href: 'https://juejin.cn/column/7188761626017792056',
-            },
-            {
-              blankTarget: true,
-              title: '开源仓库',
-              href: 'https://gitee.com/TsMask/',
-            },
-            {
-              blankTarget: true,
-              title: '接口文档',
-              href: 'https://mask-api-midwayjs.apifox.cn/',
-            },
-          ]"
-          copyright="Copyright © 2023 Gitee For TsMask"
-        >
+        <GlobalFooter :links="[
+          {
+            blankTarget: true,
+            title: '开发手册',
+            href: 'https://juejin.cn/column/7188761626017792056',
+          },
+          {
+            blankTarget: true,
+            title: '开源仓库',
+            href: 'https://gitee.com/TsMask/',
+          },
+          {
+            blankTarget: true,
+            title: '接口文档',
+            href: 'https://mask-api-midwayjs.apifox.cn/',
+          },
+        ]" copyright="Copyright © 2023-2026 Gitee For TsMask">
         </GlobalFooter>
       </template>
     </ProLayout>

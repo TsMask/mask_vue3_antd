@@ -122,8 +122,7 @@ onMounted(() => {
   <div class="container">
     <div class="top">
       <div class="header">
-        <a href="/" target="_self"
-          ><img src="@/assets/logo.png" class="logo" alt="logo" />
+        <a href="/" target="_self"><img src="@/assets/logo.png" class="logo" alt="logo" />
           <span class="title">Mask Antd Vue3</span>
         </a>
       </div>
@@ -132,131 +131,78 @@ onMounted(() => {
 
     <a-card :bordered="true" class="main">
       <a-form :model="state.form" name="stateForm" @finish="fnFinish">
-        <a-form-item
-          name="username"
-          :rules="[
-            {
-              required: true,
-              pattern: regExpUserName,
-              message: '账号只能包含大写小写字母，数字，且不少于4位',
-            },
-          ]"
-        >
-          <a-input
-            v-model:value="state.form.username"
-            size="large"
-            placeholder="登录账号"
-            :maxlength="30"
-          >
+        <a-form-item name="username" :rules="[
+          {
+            required: true,
+            pattern: regExpUserName,
+            message: '账号只能包含大写小写字母，数字，且不少于4位',
+          },
+        ]">
+          <a-input v-model:value="state.form.username" size="large" placeholder="登录账号" :maxlength="30">
             <template #prefix>
               <UserOutlined class="prefix-icon" />
             </template>
           </a-input>
         </a-form-item>
-        <a-form-item
-          name="password"
-          :rules="[
-            {
-              required: true,
-              pattern: regExpPassword,
-              message: '密码至少包含大小写字母、数字、特殊符号，且不少于6位',
-            },
-          ]"
-        >
-          <a-input-password
-            v-model:value="state.form.password"
-            size="large"
-            placeholder="登录密码"
-            :maxlength="26"
-          >
+        <a-form-item name="password" :rules="[
+          {
+            required: true,
+            pattern: regExpPassword,
+            message: '密码至少包含大小写字母、数字、特殊符号，且不少于6位',
+          },
+        ]">
+          <a-input-password v-model:value="state.form.password" size="large" placeholder="登录密码" :maxlength="26">
             <template #prefix>
               <LockOutlined class="prefix-icon" />
             </template>
           </a-input-password>
         </a-form-item>
-        <a-form-item
-          name="confirmPassword"
-          :rules="[
-            {
-              required: true,
-              min: 6,
-              max: 26,
-              validator: fnEqualToPassword,
-            },
-          ]"
-        >
-          <a-input-password
-            v-model:value="state.form.confirmPassword"
-            size="large"
-            placeholder="确认登录密码"
-            :maxlength="26"
-          >
+        <a-form-item name="confirmPassword" :rules="[
+          {
+            required: true,
+            min: 6,
+            max: 26,
+            validator: fnEqualToPassword,
+          },
+        ]">
+          <a-input-password v-model:value="state.form.confirmPassword" size="large" placeholder="确认登录密码"
+            :maxlength="26">
             <template #prefix>
               <LockOutlined class="prefix-icon" />
             </template>
           </a-input-password>
         </a-form-item>
 
-        <a-form-item
-          v-if="state.captcha.enabled"
-          name="code"
-          :rules="[{ required: true, min: 1, message: '请输入正确验证码' }]"
-        >
+        <a-form-item v-if="state.captcha.enabled" name="code"
+          :rules="[{ required: true, min: 1, message: '请输入正确验证码' }]">
           <a-input-group compact>
-            <a-input
-              v-model:value="state.form.code"
-              size="large"
-              placeholder="验证码"
-              :maxlength="6"
-              style="width: calc(100% - 120px)"
-            >
+            <a-input v-model:value="state.form.code" size="large" placeholder="验证码" :maxlength="6"
+              style="width: calc(100% - 120px)">
               <template #prefix>
                 <RobotOutlined class="prefix-icon" />
               </template>
             </a-input>
-            <a-image
-              alt="验证码"
-              style="cursor: pointer; border-radius: inherit"
-              width="120px"
-              height="40px"
-              :preview="false"
-              :src="state.captcha.codeImg"
-              :fallback="state.captcha.codeImgFall"
-              @click="fnGetCaptcha"
-            />
+            <a-image alt="验证码" style="cursor: pointer; border-radius: inherit" width="120px" height="40px"
+              :preview="false" :src="state.captcha.codeImg" :fallback="state.captcha.codeImgFall"
+              @click="fnGetCaptcha" />
           </a-input-group>
         </a-form-item>
 
-        <a-button
-          block
-          type="primary"
-          size="large"
-          html-type="submit"
-          :loading="state.formClick"
-        >
+        <a-button block type="primary" size="large" html-type="submit" :loading="state.formClick">
           注册
         </a-button>
-        <a-button
-          block
-          type="default"
-          size="large"
-          style="margin-top: 16px"
-          @click="() => router.push({ name: 'Login' })"
-        >
+        <a-button block type="default" size="large" style="margin-top: 16px"
+          @click="() => router.push({ name: 'Login' })">
           使用已有账号登录
         </a-button>
       </a-form>
     </a-card>
 
-    <GlobalFooter
-      class="footer"
-      :links="[
-        { blankTarget: false, title: '帮助', href: '/' },
-        { blankTarget: false, title: '隐私', href: '/' },
-        { blankTarget: false, title: '条款', href: '/' },
-      ]"
-      copyright="Copyright © 2023 Gitee For TsMask"
-    >
+    <GlobalFooter class="footer" :links="[
+      { blankTarget: false, title: '帮助', href: '/' },
+      { blankTarget: false, title: '隐私', href: '/' },
+      { blankTarget: false, title: '条款', href: '/' },
+    ]" copyright="Copyright © 2023-2026 Gitee For TsMask">
     </GlobalFooter>
   </div>
 </template>
@@ -283,6 +229,7 @@ onMounted(() => {
   .header {
     height: 44px;
     line-height: 44px;
+
     .logo {
       height: 44px;
       margin-right: 16px;
@@ -290,6 +237,7 @@ onMounted(() => {
       border-style: none;
       border-radius: 6.66px;
     }
+
     .title {
       position: relative;
       top: 2px;

@@ -186,8 +186,7 @@ onBeforeUnmount(() => {
   <div class="container">
     <div class="top">
       <div class="header">
-        <a href="/" target="_self"
-          ><img src="@/assets/logo.png" class="logo" alt="logo" />
+        <a href="/" target="_self"><img src="@/assets/logo.png" class="logo" alt="logo" />
           <span class="title">Mask Antd Vue3</span>
         </a>
       </div>
@@ -196,99 +195,58 @@ onBeforeUnmount(() => {
 
     <a-card :bordered="true" class="main">
       <a-form :model="state.form" name="StateForm" @finish="fnFinish">
-        <a-tabs
-          v-model:activeKey="activeKey"
-          tabPosition="top"
-          type="line"
-          :centered="true"
-          :destroy-inactive-tab-pane="true"
-        >
+        <a-tabs v-model:activeKey="activeKey" tabPosition="top" type="line" :centered="true"
+          :destroy-inactive-tab-pane="true">
           <a-tab-pane key="username" tab="账号密码登录">
-            <a-form-item
-              name="username"
-              :rules="[
-                {
-                  required: true,
-                  min: 2,
-                  max: 30,
-                  message: '请输入正确登录账号',
-                },
-              ]"
-            >
-              <a-input
-                v-model:value="state.form.username"
-                size="large"
-                placeholder="登录账号"
-                :maxlength="30"
-              >
+            <a-form-item name="username" :rules="[
+              {
+                required: true,
+                min: 2,
+                max: 30,
+                message: '请输入正确登录账号',
+              },
+            ]">
+              <a-input v-model:value="state.form.username" size="large" placeholder="登录账号" :maxlength="30">
                 <template #prefix>
                   <UserOutlined class="prefix-icon" />
                 </template>
               </a-input>
             </a-form-item>
 
-            <a-form-item
-              name="password"
-              :rules="[
-                {
-                  required: true,
-                  min: 6,
-                  max: 26,
-                  message: '请输入正确登录密码',
-                },
-              ]"
-            >
-              <a-input-password
-                v-model:value="state.form.password"
-                size="large"
-                placeholder="登录密码"
-                :maxlength="26"
-              >
+            <a-form-item name="password" :rules="[
+              {
+                required: true,
+                min: 6,
+                max: 26,
+                message: '请输入正确登录密码',
+              },
+            ]">
+              <a-input-password v-model:value="state.form.password" size="large" placeholder="登录密码" :maxlength="26">
                 <template #prefix>
                   <LockOutlined class="prefix-icon" />
                 </template>
               </a-input-password>
             </a-form-item>
 
-            <a-form-item
-              v-if="state.captcha.enabled"
-              name="code"
-              :rules="[{ required: true, min: 1, message: '请输入正确验证码' }]"
-            >
+            <a-form-item v-if="state.captcha.enabled" name="code"
+              :rules="[{ required: true, min: 1, message: '请输入正确验证码' }]">
               <a-input-group compact>
-                <a-input
-                  v-model:value="state.form.code"
-                  size="large"
-                  placeholder="验证码"
-                  :maxlength="6"
-                  style="width: calc(100% - 120px)"
-                >
+                <a-input v-model:value="state.form.code" size="large" placeholder="验证码" :maxlength="6"
+                  style="width: calc(100% - 120px)">
                   <template #prefix>
                     <RobotOutlined class="prefix-icon" />
                   </template>
                 </a-input>
-                <a-image
-                  alt="验证码"
-                  style="cursor: pointer; border-radius: inherit"
-                  width="120px"
-                  height="40px"
-                  :preview="false"
-                  :src="state.captcha.codeImg"
-                  :fallback="state.captcha.codeImgFall"
-                  @click="fnGetCaptcha"
-                />
+                <a-image alt="验证码" style="cursor: pointer; border-radius: inherit" width="120px" height="40px"
+                  :preview="false" :src="state.captcha.codeImg" :fallback="state.captcha.codeImgFall"
+                  @click="fnGetCaptcha" />
               </a-input-group>
             </a-form-item>
 
             <a-form-item>
               <a-space direction="horizontal" :size="8">
-                <a-button
-                  size="small"
-                  type="link"
-                  target="_self"
-                  title="注册账号"
-                  @click="() => router.push({ name: 'Register' })"
-                >
+                <a-button size="small" type="link" target="_self" title="注册账号"
+                  @click="() => router.push({ name: 'Register' })">
                   注册账号
                 </a-button>
                 <a-button size="small" type="link">忘记密码</a-button>
@@ -297,49 +255,28 @@ onBeforeUnmount(() => {
           </a-tab-pane>
 
           <a-tab-pane key="phone" tab="手机号登录">
-            <a-form-item
-              name="phone"
-              :rules="[
-                {
-                  required: true,
-                  pattern: regExpMobile,
-                  message: '请输入正确的手机号码',
-                },
-              ]"
-            >
-              <a-input
-                v-model:value="state.form.phone"
-                size="large"
-                placeholder="手机号码"
-                :maxlength="11"
-              >
+            <a-form-item name="phone" :rules="[
+              {
+                required: true,
+                pattern: regExpMobile,
+                message: '请输入正确的手机号码',
+              },
+            ]">
+              <a-input v-model:value="state.form.phone" size="large" placeholder="手机号码" :maxlength="11">
                 <template #prefix>
                   <MobileOutlined class="prefix-icon" />
                 </template>
               </a-input>
             </a-form-item>
-            <a-form-item
-              name="code"
-              :rules="[
-                { required: true, min: 4, message: '请输入正确的验证码' },
-              ]"
-            >
-              <a-input
-                v-model:value="state.form.code"
-                size="large"
-                placeholder="验证码"
-                :maxlength="6"
-              >
+            <a-form-item name="code" :rules="[
+              { required: true, min: 4, message: '请输入正确的验证码' },
+            ]">
+              <a-input v-model:value="state.form.code" size="large" placeholder="验证码" :maxlength="6">
                 <template #prefix>
                   <RobotOutlined class="prefix-icon" />
                 </template>
                 <template #suffix>
-                  <a-button
-                    size="small"
-                    type="link"
-                    :disabled="smsState.click"
-                    @click="fnGetSmsCaptcha"
-                  >
+                  <a-button size="small" type="link" :disabled="smsState.click" @click="fnGetSmsCaptcha">
                     {{ smsState.click ? `${smsState.time} s` : '获取验证码' }}
                   </a-button>
                 </template>
@@ -348,13 +285,7 @@ onBeforeUnmount(() => {
           </a-tab-pane>
         </a-tabs>
 
-        <a-button
-          block
-          type="primary"
-          size="large"
-          html-type="submit"
-          :loading="state.formClick"
-        >
+        <a-button block type="primary" size="large" html-type="submit" :loading="state.formClick">
           登录
         </a-button>
 
@@ -364,9 +295,7 @@ onBeforeUnmount(() => {
             <a-tooltip title="微信扫一扫登录" placement="bottom">
               <a-button shape="circle" size="middle" type="link">
                 <template #icon>
-                  <WechatOutlined
-                    :style="{ color: '#52c41a', fontSize: '18px' }"
-                  />
+                  <WechatOutlined :style="{ color: '#52c41a', fontSize: '18px' }" />
                 </template>
               </a-button>
             </a-tooltip>
@@ -382,15 +311,11 @@ onBeforeUnmount(() => {
       </a-form>
     </a-card>
 
-    <GlobalFooter
-      class="footer"
-      :links="[
-        { blankTarget: false, title: '帮助', href: '/' },
-        { blankTarget: false, title: '隐私', href: '/' },
-        { blankTarget: false, title: '条款', href: '/' },
-      ]"
-      copyright="Copyright © 2023 Gitee For TsMask"
-    >
+    <GlobalFooter class="footer" :links="[
+      { blankTarget: false, title: '帮助', href: '/' },
+      { blankTarget: false, title: '隐私', href: '/' },
+      { blankTarget: false, title: '条款', href: '/' },
+    ]" copyright="Copyright © 2023-2026 Gitee For TsMask">
     </GlobalFooter>
   </div>
 </template>
@@ -406,6 +331,7 @@ onBeforeUnmount(() => {
   background-position: center 110px;
   background-size: 100%;
 }
+
 [data-theme='dark'] .container {
   background-color: #141414;
 }
@@ -420,6 +346,7 @@ onBeforeUnmount(() => {
   .header {
     height: 44px;
     line-height: 44px;
+
     .logo {
       height: 44px;
       margin-right: 16px;
@@ -427,6 +354,7 @@ onBeforeUnmount(() => {
       border-style: none;
       border-radius: 6.66px;
     }
+
     .title {
       position: relative;
       top: 2px;
@@ -450,6 +378,7 @@ onBeforeUnmount(() => {
 [data-theme='dark'] .top .header .title {
   color: rgba(255, 255, 255, 0.85);
 }
+
 [data-theme='dark'] .top .desc {
   color: rgba(255, 255, 255, 0.45);
 }
@@ -470,6 +399,7 @@ onBeforeUnmount(() => {
   bottom: 0;
   width: 100%;
 }
+
 [data-theme='dark'] .footer {
   color: rgba(255, 255, 255, 0.85);
 }
