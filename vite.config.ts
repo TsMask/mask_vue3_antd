@@ -2,7 +2,6 @@ import vue from '@vitejs/plugin-vue';
 import { defineConfig, loadEnv } from 'vite';
 import Components from 'unplugin-vue-components/vite';
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers';
-import Compression from 'vite-plugin-compression';
 import path from 'path';
 
 // https://vitejs.dev/config/
@@ -36,9 +35,8 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       sourcemap: false,
-      chunkSizeWarningLimit: 500, // 调整区块大小警告限制（以kB为单位）
-      rollupOptions: {
-        // 输出格式 [name]表示文件名 [hash]表示文件内容hash值 [ext]表示拓展名
+      chunkSizeWarningLimit: 1200, // 调整区块大小警告限制（以kB为单位）
+      rolldownOptions: {
         output: {
           // 用于从入口点创建的块
           entryFileNames: '[name].[hash].js',
@@ -47,17 +45,30 @@ export default defineConfig(({ mode }) => {
           // 用于输出静态资源的块
           assetFileNames: 'assets/[name].[hash].[ext]',
           // 用于输出依赖库的块
-          manualChunks: {
-            chunkVue: ['vue', 'vue-router', 'pinia'],
-            chunkAntd: ['ant-design-vue', '@ant-design/icons-vue'],
-            chunkAntdPlugins: ['antdv-pro-layout', 'antdv-pro-modal'],
-            chunkEcharts: ['echarts'],
-            chunkUtil: [
-              'dayjs',
-              'nprogress',
-              'file-saver',
-              'js-base64',
-              'js-cookie',
+          codeSplitting: {
+            groups: [
+              {
+                name: 'chunkVue',
+                test: /node_modules\/(vue|vue-router|pinia)\//,
+              },
+              {
+                name: 'chunkAntdIcons',
+                test: /node_modules\/@ant-design\/icons-vue\//,
+              },
+              { name: 'chunkAntd', test: /node_modules\/ant-design-vue\// },
+              {
+                name: 'chunkAntdLayout',
+                test: /node_modules\/antdv-pro-layout\//,
+              },
+              {
+                name: 'chunkAntdModal',
+                test: /node_modules\/antdv-pro-modal\//,
+              },
+              { name: 'chunkEcharts', test: /node_modules\/echarts\// },
+              {
+                name: 'chunkUtil',
+                test: /node_modules\/(dayjs|nprogress|file-saver|js-base64|js-cookie)\//,
+              },
             ],
           },
         },
@@ -81,13 +92,6 @@ export default defineConfig(({ mode }) => {
             cjs: false,
           }),
         ],
-      }),
-      // gzip静态压缩文件
-      Compression({
-        verbose: false,
-        algorithm: 'gzip',
-        ext: '.gz',
-        disable: true, // 是否禁用
       }),
     ],
   };
