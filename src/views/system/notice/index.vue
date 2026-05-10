@@ -439,51 +439,31 @@ onMounted(() => {
       </a-typography-paragraph>
     </template>
 
-    <a-card
-      v-show="tableState.seached"
-      :bordered="false"
-      :body-style="{ marginBottom: '24px', paddingBottom: 0 }"
-    >
+    <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="公告标题" name="noticeTitle">
-              <a-input
-                v-model:value="queryParams.noticeTitle"
-                allow-clear
-                placeholder="请输入公告标题"
-              ></a-input>
+              <a-input v-model:value="queryParams.noticeTitle" allow-clear placeholder="请输入公告标题"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="创建者" name="createBy">
-              <a-input
-                v-model:value="queryParams.createBy"
-                allow-clear
-                placeholder="请输入创建者"
-              ></a-input>
+              <a-input v-model:value="queryParams.createBy" allow-clear placeholder="请输入创建者"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="公告类型" name="noticeType">
-              <a-select
-                v-model:value="queryParams.noticeType"
-                allow-clear
-                placeholder="请选择公告类型"
-                :options="dict.sysNoticeType"
-              >
+              <a-select v-model:value="queryParams.noticeType" allow-clear placeholder="请选择公告类型"
+                :options="dict.sysNoticeType">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="公告状态" name="statusFlag">
-              <a-select
-                v-model:value="queryParams.statusFlag"
-                allow-clear
-                placeholder="请选择公告状态"
-                :options="dict.sysNoticeStatus"
-              >
+              <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择公告状态"
+                :options="dict.sysNoticeStatus">
               </a-select>
             </a-form-item>
           </a-col>
@@ -491,11 +471,15 @@ onMounted(() => {
             <a-form-item>
               <a-space :size="8">
                 <a-button type="primary" @click.prevent="fnGetList(1)">
-                  <template #icon><SearchOutlined /></template>
+                  <template #icon>
+                    <SearchOutlined />
+                  </template>
                   搜索
                 </a-button>
                 <a-button type="default" @click.prevent="fnQueryReset">
-                  <template #icon><ClearOutlined /></template>
+                  <template #icon>
+                    <ClearOutlined />
+                  </template>
                   重置
                 </a-button>
               </a-space>
@@ -509,22 +493,17 @@ onMounted(() => {
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button
-            type="primary"
-            @click.prevent="fnModalVisibleByEdit()"
-            v-perms:has="['system:notice:add']"
-          >
-            <template #icon><PlusOutlined /></template>
+          <a-button type="primary" @click.prevent="fnModalVisibleByEdit()" v-perms:has="['system:notice:add']">
+            <template #icon>
+              <PlusOutlined />
+            </template>
             新建
           </a-button>
-          <a-button
-            type="default"
-            danger
-            :disabled="tableState.selectedRowKeys.length <= 0"
-            @click.prevent="fnRecordDelete()"
-            v-perms:has="['system:notice:remove']"
-          >
-            <template #icon><DeleteOutlined /></template>
+          <a-button type="default" danger :disabled="tableState.selectedRowKeys.length <= 0"
+            @click.prevent="fnRecordDelete()" v-perms:has="['system:notice:remove']">
+            <template #icon>
+              <DeleteOutlined />
+            </template>
             删除
           </a-button>
         </a-space>
@@ -535,39 +514,30 @@ onMounted(() => {
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch
-              v-model:checked="tableState.seached"
-              checked-children="显"
-              un-checked-children="隐"
-              size="small"
-            />
+            <a-switch v-model:checked="tableState.seached" checked-children="显" un-checked-children="隐" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
-            <a-switch
-              v-model:checked="tableState.striped"
-              checked-children="开"
-              un-checked-children="关"
-              size="small"
-            />
+            <a-switch v-model:checked="tableState.striped" checked-children="开" un-checked-children="关" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
             <a-button type="text" @click.prevent="fnGetList()">
-              <template #icon><ReloadOutlined /></template>
+              <template #icon>
+                <ReloadOutlined />
+              </template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon><ColumnHeightOutlined /></template>
+                <template #icon>
+                  <ColumnHeightOutlined />
+                </template>
               </a-button>
               <template #overlay>
-                <a-menu
-                  :selected-keys="[tableState.size as string]"
-                  @click="fnTableSize"
-                >
+                <a-menu :selected-keys="[tableState.size as string]" @click="fnTableSize">
                   <a-menu-item key="default">默认</a-menu-item>
                   <a-menu-item key="middle">中等</a-menu-item>
                   <a-menu-item key="small">紧凑</a-menu-item>
@@ -579,65 +549,50 @@ onMounted(() => {
       </template>
 
       <!-- 表格列表 -->
-      <a-table
-        class="table"
-        row-key="noticeId"
-        :columns="tableColumns"
-        :loading="tableState.loading"
-        :data-source="tableState.data"
-        :size="tableState.size"
-        :row-class-name="fnTableStriped"
-        :pagination="tablePagination"
-        :scroll="{
+      <a-table class="table" row-key="noticeId" :columns="tableColumns" :loading="tableState.loading"
+        :data-source="tableState.data" :size="tableState.size" :row-class-name="fnTableStriped"
+        :pagination="tablePagination" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
-        }"
-        :row-selection="{
+        }" :row-selection="{
           type: 'checkbox',
           selectedRowKeys: tableState.selectedRowKeys,
           onChange: fnTableSelectedRowKeys,
-        }"
-      >
+        }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'noticeType'">
             <DictTag :options="dict.sysNoticeType" :value="record.noticeType" />
           </template>
           <template v-if="column.key === 'statusFlag'">
-            <DictTag
-              :options="dict.sysNoticeStatus"
-              :value="record.statusFlag"
-            />
+            <DictTag :options="dict.sysNoticeStatus" :value="record.statusFlag" />
           </template>
           <template v-if="column.key === 'noticeId'">
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
-                <a-button
-                  type="link"
-                  @click.prevent="fnModalVisibleByVive(record.noticeId)"
-                  v-perms:has="['system:notice:query']"
-                >
-                  <template #icon><ProfileOutlined /></template>
+                <a-button type="link" @click.prevent="fnModalVisibleByVive(record.noticeId)"
+                  v-perms:has="['system:notice:query']">
+                  <template #icon>
+                    <ProfileOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
-                <a-button
-                  type="link"
-                  @click.prevent="fnModalVisibleByEdit(record.noticeId)"
-                  v-perms:has="['system:notice:edit']"
-                >
-                  <template #icon><FormOutlined /></template>
+                <a-button type="link" @click.prevent="fnModalVisibleByEdit(record.noticeId)"
+                  v-perms:has="['system:notice:edit']">
+                  <template #icon>
+                    <FormOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>删除</template>
-                <a-button
-                  type="link"
-                  @click.prevent="fnRecordDelete(record.noticeId)"
-                  v-perms:has="['system:notice:remove']"
-                >
-                  <template #icon><DeleteOutlined /></template>
+                <a-button type="link" @click.prevent="fnRecordDelete(record.noticeId)"
+                  v-perms:has="['system:notice:remove']">
+                  <template #icon>
+                    <DeleteOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
             </a-space>
@@ -647,48 +602,29 @@ onMounted(() => {
     </a-card>
 
     <!-- 详情框 -->
-    <ProModal
-      :drag="true"
-      :width="800"
-      :open="modalState.visibleByView"
-      :title="modalState.title"
-      @cancel="fnModalCancel"
-    >
+    <ProModal :drag="true" :width="800" :open="modalState.visibleByView" :title="modalState.title"
+      @cancel="fnModalCancel">
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="公告类型" name="noticeType">
-              <DictTag
-                :options="dict.sysNoticeType"
-                :value="modalState.form.noticeType"
-              />
+              <DictTag :options="dict.sysNoticeType" :value="modalState.form.noticeType" />
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="公告状态" name="statusFlag">
-              <DictTag
-                :options="dict.sysNoticeStatus"
-                :value="modalState.form.statusFlag"
-              />
+              <DictTag :options="dict.sysNoticeStatus" :value="modalState.form.statusFlag" />
             </a-form-item>
           </a-col>
         </a-row>
 
-        <a-form-item
-          label="公告标题"
-          name="noticeTitle"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
+        <a-form-item label="公告标题" name="noticeTitle" :label-col="{ span: 3 }" :label-wrap="true">
           {{ modalState.form.noticeTitle }}
         </a-form-item>
-        <a-form-item
-          label="公告内容"
-          name="noticeContent"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          {{ modalState.form.noticeContent }}
+        <a-form-item label="公告内容" name="noticeContent" :label-col="{ span: 3 }" :label-wrap="true">
+
+          <a-textarea v-model:value="modalState.form.noticeContent" :auto-size="{ minRows: 2, maxRows: 12 }"
+            placeholder="公告内容" :disabled="true" />
         </a-form-item>
       </a-form>
       <template #footer>
@@ -697,81 +633,36 @@ onMounted(() => {
     </ProModal>
 
     <!-- 新增框或修改框 -->
-    <ProModal
-      :drag="true"
-      :destroyOnClose="true"
-      :width="800"
-      :keyboard="false"
-      :mask-closable="false"
-      :open="modalState.visibleByEdit"
-      :title="modalState.title"
-      :confirm-loading="modalState.confirmLoading"
-      @ok="fnModalOk"
-      @cancel="fnModalCancel"
-    >
-      <a-form
-        name="modalStateForm"
-        layout="horizontal"
-        :label-col="{ span: 6 }"
-        :label-wrap="true"
-      >
+    <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
+      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="modalState.confirmLoading"
+      @ok="fnModalOk" @cancel="fnModalCancel">
+      <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="公告类型"
-              name="noticeType"
-              v-bind="modalStateForm.validateInfos.noticeType"
-            >
-              <a-select
-                v-model:value="modalState.form.noticeType"
-                default-value="1"
-                placeholder="公告类型"
-                :options="dict.sysNoticeType"
-              >
+            <a-form-item label="公告类型" name="noticeType" v-bind="modalStateForm.validateInfos.noticeType">
+              <a-select v-model:value="modalState.form.noticeType" default-value="1" placeholder="公告类型"
+                :options="dict.sysNoticeType">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="公告状态" name="statusFlag">
-              <a-select
-                v-model:value="modalState.form.statusFlag"
-                default-value="0"
-                placeholder="公告状态"
-                :options="dict.sysNoticeStatus"
-              >
+              <a-select v-model:value="modalState.form.statusFlag" default-value="0" placeholder="公告状态"
+                :options="dict.sysNoticeStatus">
               </a-select>
             </a-form-item>
           </a-col>
         </a-row>
 
-        <a-form-item
-          label="公告标题"
-          name="noticeTitle"
-          v-bind="modalStateForm.validateInfos.noticeTitle"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-input
-            v-model:value="modalState.form.noticeTitle"
-            allow-clear
-            placeholder="请输入公告标题"
-            :maxlength="50"
-          ></a-input>
+        <a-form-item label="公告标题" name="noticeTitle" v-bind="modalStateForm.validateInfos.noticeTitle"
+          :label-col="{ span: 3 }" :label-wrap="true">
+          <a-input v-model:value="modalState.form.noticeTitle" allow-clear placeholder="请输入公告标题"
+            :maxlength="50"></a-input>
         </a-form-item>
-        <a-form-item
-          label="公告内容"
-          name="noticeContent"
-          v-bind="modalStateForm.validateInfos.noticeContent"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-textarea
-            v-model:value="modalState.form.noticeContent"
-            :auto-size="{ minRows: 4, maxRows: 14 }"
-            :maxlength="3000"
-            :show-count="true"
-            placeholder="请输入公告内容"
-          />
+        <a-form-item label="公告内容" name="noticeContent" v-bind="modalStateForm.validateInfos.noticeContent"
+          :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea v-model:value="modalState.form.noticeContent" :auto-size="{ minRows: 4, maxRows: 14 }"
+            :maxlength="3000" :show-count="true" placeholder="请输入公告内容" />
         </a-form-item>
       </a-form>
     </ProModal>
