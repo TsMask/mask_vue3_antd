@@ -579,6 +579,13 @@ function fnGetList(pageNum?: number) {
       const { total, rows } = res.data;
       tablePagination.total = total;
       tableState.data = rows;
+      // 删除后修正页码
+      if (rows.length === 0 && tablePagination.current > 1) {
+        tablePagination.current -= 1;
+        queryParams.pageNum = tablePagination.current;
+        fnGetList();
+        return;
+      }
       tableState.loading = false;
     }
   });

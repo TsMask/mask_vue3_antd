@@ -1,14 +1,12 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
-import { message, Modal, Form } from 'ant-design-vue';
-import type { SizeType } from 'ant-design-vue/es/config-provider';
-import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
+import { message, Form } from 'ant-design-vue';
 import type { ColumnsType } from 'ant-design-vue/es/table';
 import IconFont from '@/components/IconFont/index.vue';
 import { iconFonts } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import { useRoute } from 'vue-router';
-import { reactive, ref, onMounted, toRaw } from 'vue';
+import { reactive, ref, toRaw, onMounted } from 'vue';
 import {
   addMenu,
   delMenu,
@@ -27,94 +25,55 @@ import {
   MENU_TYPE_MENU,
   MENU_TYPE_AUTH,
 } from '@/constants/menu-constants';
-import useDictStore from '@/store/modules/dict';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
-const { getDict } = useDictStore();
+import { useTableUI } from '@/hooks/useTableUI';
+import { useMessageAction } from '@/hooks/useMessageAction';
+import { useDictSetup } from '@/hooks/useDictSetup';
+import { useQueryParams } from '@/hooks/useQueryParams';
+
 const route = useRoute();
 
-/**字体图标可选择数据 */
-let icons = reactive(iconFonts.map(item => ({ value: item, label: item })));
+const icons = reactive(iconFonts.map((item) => ({ value: item, label: item })));
 
-/**路由标题 */
-let title = ref<string>(route.meta.title ?? '标题');
+const title = ref<string>(route.meta.title ?? '标题');
 
-/**字典数据 */
-let dict: {
-  /**菜单状态 */
-  sysNormalDisable: DictType[];
-} = reactive({
-  sysNormalDisable: [],
+const { dict, loadDicts } = useDictSetup({
+  sysNormalDisable: 'sys_normal_disable',
 });
 
-/**查询参数 */
-let queryParams = reactive({
-  /**菜单名称 */
-  menuName: '',
-  /**状态 */
-  statusFlag: undefined,
-});
+const { withLoading, confirmAndRun } = useMessageAction();
 
-/**查询参数重置 */
-function fnQueryReset() {
-  Object.assign(queryParams, {
-    menuName: '',
-    statusFlag: undefined,
-  });
-  fnGetList();
+const { queryParams, resetQuery } = useQueryParams(
+  { menuName: '', statusFlag: undefined as string | undefined },
+  () => fetchList(),
+);
+
+const {
+  tableState,
+  setTableSize,
+  rowClassName,
+} = useTableUI();
+
+tableState.seached = false;
+const expandedRowKeysAll = ref<string[]>([]);
+const expandedRowKeys = ref<(string | number)[]>([]);
+const expandedRowAll = ref(false);
+
+/** 展开/折叠所有树形表格行 */
+function handleExpandAll(checked: boolean | string | number) {
+  expandedRowAll.value = !!checked;
+  expandedRowKeys.value = checked ? expandedRowKeysAll.value : [];
 }
 
-/**表格全展开行key */
-let expandedRowKeys: string[] = [];
+/** 同步展开行键列表（受控模式） */
+function handleExpandedRowsChange(rows: (string | number)[]) {
+  expandedRowKeys.value = rows;
+}
 
-/**表格状态类型 */
-type TabeStateType = {
-  /**加载等待 */
-  loading: boolean;
-  /**紧凑型 */
-  size: SizeType;
-  /**斑马纹 */
-  striped: boolean;
-  /**搜索栏 */
-  seached: boolean;
-  /**记录数据 */
-  data: object[];
-  /**全展开 */
-  expandedRowAll: boolean;
-  /**展开行key */
-  expandedRowKeys: (string | number)[];
-};
-
-/**表格状态 */
-let tableState: TabeStateType = reactive({
-  loading: false,
-  size: 'middle',
-  striped: false,
-  seached: false,
-  data: [],
-  expandedRowAll: false,
-  expandedRowKeys: [],
-});
-
-/**表格字段列 */
-let tableColumns: ColumnsType = [
-  {
-    title: '菜单名称',
-    dataIndex: 'menuName',
-    align: 'left',
-    width: 200,
-  },
-  {
-    title: '菜单编号',
-    dataIndex: 'menuId',
-    align: 'left',
-    width: 100,
-  },
-  {
-    title: '菜单排序',
-    dataIndex: 'menuSort',
-    align: 'left',
-    width: 100,
-  },
+const tableColumns: ColumnsType = [
+  { title: '菜单名称', dataIndex: 'menuName', align: 'left', width: 200 },
+  { title: '菜单编号', dataIndex: 'menuId', align: 'left', width: 100 },
+  { title: '菜单排序', dataIndex: 'menuSort', align: 'left', width: 100 },
   {
     title: '菜单图标',
     dataIndex: 'icon',
@@ -122,18 +81,8 @@ let tableColumns: ColumnsType = [
     align: 'left',
     width: 100,
   },
-  {
-    title: '权限标识',
-    dataIndex: 'perms',
-    align: 'left',
-    width: 200,
-  },
-  {
-    title: '组件路径',
-    dataIndex: 'component',
-    align: 'left',
-    width: 200,
-  },
+  { title: '权限标识', dataIndex: 'perms', align: 'left', width: 200 },
+  { title: '组件路径', dataIndex: 'component', align: 'left', width: 200 },
   {
     title: '显示状态',
     dataIndex: 'visibleFlag',
@@ -158,101 +107,21 @@ let tableColumns: ColumnsType = [
       return parseDateToStr(+opt.value);
     },
   },
-  {
-    title: '操作',
-    key: 'menuId',
-    align: 'left',
-  },
+  { title: '操作', key: 'menuId', align: 'left' },
 ];
 
-/**表格紧凑型变更操作 */
-function fnTableSize({ key }: MenuInfo) {
-  tableState.size = key as SizeType;
-}
-
-/**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number): any {
-  return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
-}
-
-/**表格展开行key */
-function fnTableExpandedRowsAll(checked: boolean | string | number) {
-  tableState.expandedRowKeys = checked ? expandedRowKeys : [];
-}
-
-/**表格展开行key */
-function fnTableExpandedRowsChange(expandedRows: (string | number)[]) {
-  tableState.expandedRowKeys = expandedRows;
-}
-
-/**初始菜单原始数据 */
 let menuListData: Record<string, any>[] = [];
-
-/**初始上级菜单选择树 */
 let treeDataAll: Record<string, any>[] = [];
 
-/**
- * 获取选择上级菜单值
- * @param value 菜单选中值
- */
-function fnTreeDataChange(value: any) {
-  if (!value) return;
-  const menu = menuListData.find(m => m.menuId === value);
-  if (!menu) return;
-  // 限制可选类型
-  if (menu.menuType === MENU_TYPE_DIR) {
-    modalState.form.menuType = MENU_TYPE_MENU;
-  }
-  if (menu.menuType === MENU_TYPE_MENU) {
-    modalState.form.menuType = MENU_TYPE_AUTH;
-  }
-  modalState.form.parentType = menu.menuType;
-}
-
-/**对话框对象信息状态类型 */
-type ModalStateType = {
-  /**详情框是否显示 */
-  visibleByView: boolean;
-  /**新增框或修改框是否显示 */
-  visibleByEdit: boolean;
-  /**标题 */
-  title: string;
-  /**表单数据 */
-  form: Record<string, any>;
-  /**确定按钮 loading */
-  confirmLoading: boolean;
-  /**上级菜单选择树 */
-  treeData: Record<string, any>[];
-};
-
-/**对话框对象信息状态 */
-let modalState: ModalStateType = reactive({
+const modalState = reactive({
   visibleByView: false,
   visibleByEdit: false,
   title: '菜单',
-  form: {
-    menuId: undefined,
-    parentId: 0,
-    menuName: '',
-    menuSort: 0,
-    menuType: MENU_TYPE_AUTH,
-    component: '',
-    menuPath: '',
-    icon: '#',
-    perms: '',
-    frameFlag: '1',
-    cacheFlag: '0',
-    visibleFlag: '0',
-    statusFlag: '0',
-    createTime: 0,
-    remark: '',
-    parentType: '', // 标记禁止菜单类型添加目录和菜单
-  },
+  form: {} as Record<string, any>,
   confirmLoading: false,
-  treeData: [],
+  treeData: [] as Record<string, any>[],
 });
 
-/**对话框内表单属性和校验规则 */
 const modalStateForm = Form.useForm(
   modalState.form,
   reactive({
@@ -272,16 +141,48 @@ const modalStateForm = Form.useForm(
   })
 );
 
-/**
- * 对话框弹出显示为 查看
- * @param menuId 菜单编号id
- */
-function fnModalVisibleByVive(menuId: string | number) {
+/** 获取菜单表单默认值 */
+function getDefaultForm() {
+  return {
+    menuId: undefined,
+    parentId: 0,
+    menuName: '',
+    menuSort: 0,
+    menuType: MENU_TYPE_AUTH,
+    component: '',
+    menuPath: '',
+    icon: '#',
+    perms: '',
+    frameFlag: '1',
+    cacheFlag: '0',
+    visibleFlag: '0',
+    statusFlag: '0',
+    createTime: 0,
+    remark: '',
+    parentType: '',
+  };
+}
+
+Object.assign(modalState.form, getDefaultForm());
+
+/** 上级菜单选择变化时，自动推断子菜单类型（目录->菜单，菜单->权限） */
+function handleTreeDataChange(value: any) {
+  if (!value) return;
+  const menu = menuListData.find((m) => m.menuId === value);
+  if (!menu) return;
+  if (menu.menuType === MENU_TYPE_DIR) {
+    modalState.form.menuType = MENU_TYPE_MENU;
+  }
+  if (menu.menuType === MENU_TYPE_MENU) {
+    modalState.form.menuType = MENU_TYPE_AUTH;
+  }
+  modalState.form.parentType = menu.menuType;
+}
+
+/** 打开菜单详情弹窗，根据 menuId 查询并展示数据 */
+function handleView(menuId: string | number) {
   if (!menuId) {
-    message.error({
-      content: '获取菜单信息失败',
-      duration: 3,
-    });
+    message.error({ content: '获取菜单信息失败', duration: 3 });
     return;
   }
   if (modalState.confirmLoading) return;
@@ -289,16 +190,13 @@ function fnModalVisibleByVive(menuId: string | number) {
   modalState.confirmLoading = true;
   modalState.treeData = treeDataAll;
   getMenu(menuId)
-    .then(res => {
+    .then((res) => {
       if (res.code === RESULT_CODE_SUCCESS && res.data) {
         Object.assign(modalState.form, res.data);
         modalState.title = '菜单信息';
         modalState.visibleByView = true;
       } else {
-        message.error({
-          content: '获取菜单信息失败',
-          duration: 3,
-        });
+        message.error({ content: '获取菜单信息失败', duration: 3 });
       }
     })
     .finally(() => {
@@ -308,18 +206,19 @@ function fnModalVisibleByVive(menuId: string | number) {
 }
 
 /**
- * 对话框弹出显示为 新增或者修改
- * @param menuId 菜单编号id, 不传为新增
- * @param parentId 上级菜单id
+ * 打开新增或编辑弹窗
+ * @param menuId - 菜单编号，有则为编辑模式
+ * @param parentId - 新增子菜单时的父菜单编号
+ * @param parentType - 父菜单类型，用于推断可用的子菜单类型
  */
-function fnModalVisibleByEdit(
+function handleEdit(
   menuId?: string | number,
   parentId?: string | number,
-  parentType?: string | number
+  parentType?: string | number,
 ) {
   modalState.treeData = treeDataAll;
   if (!menuId) {
-    modalStateForm.resetFields();
+    Object.assign(modalState.form, getDefaultForm());
     if (parentId) {
       modalState.form.parentId = parentId;
       modalState.form.parentType = parentType;
@@ -331,16 +230,13 @@ function fnModalVisibleByEdit(
     const hide = message.loading('正在打开...', 0);
     modalState.confirmLoading = true;
     getMenu(menuId)
-      .then(res => {
+      .then((res) => {
         if (res.code === RESULT_CODE_SUCCESS && res.data) {
           Object.assign(modalState.form, res.data);
           modalState.title = '修改菜单信息';
           modalState.visibleByEdit = true;
         } else {
-          message.error({
-            content: '获取菜单信息失败',
-            duration: 3,
-          });
+          message.error({ content: '获取菜单信息失败', duration: 3 });
         }
       })
       .finally(() => {
@@ -350,116 +246,52 @@ function fnModalVisibleByEdit(
   }
 }
 
-/**
- * 对话框弹出确认执行函数
- * 进行表达规则校验
- */
-function fnModalOk() {
-  let validateNames = ['parentId', 'menuName'];
-  if (modalState.form.menuType === MENU_TYPE_DIR) {
-    validateNames.push('menuPath');
-  }
-  if (modalState.form.menuType === MENU_TYPE_MENU) {
-    validateNames.push('component');
-    validateNames.push('menuPath');
-    validateNames.push('perms');
-  }
-  if (modalState.form.menuType === MENU_TYPE_AUTH) {
-    validateNames.push('perms');
-  }
-  modalStateForm
-    .validate(validateNames)
-    .then(() => {
-      const hide = message.loading('请稍等...', 0);
-      modalState.confirmLoading = true;
-      const form = toRaw(modalState.form);
-      const menu = form.menuId ? updateMenu(form) : addMenu(form);
-      menu
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `${modalState.title}成功`,
-              duration: 3,
-            });
-            treeDataAll = [];
-            fnGetList();
-            fnModalCancel();
-          } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-          modalState.confirmLoading = false;
-        });
-    })
-    .catch(e => {
-      message.error({
-        content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
-        duration: 3,
-      });
-    });
-}
-
-/**
- * 对话框弹出关闭执行函数
- * 进行表达规则校验
- */
-function fnModalCancel() {
+/** 关闭菜单详情/编辑弹窗 */
+function handleCancel() {
   modalState.visibleByEdit = false;
   modalState.visibleByView = false;
-  modalStateForm.resetFields();
 }
 
-/**
- * 菜单删除
- * @param menuId 菜单编号id
- */
-function fnRecordDelete(menuId: string | number) {
-  Modal.confirm({
-    title: '提示',
-    content: `确认删除菜单编号为 【${menuId}】 的数据项?`,
-    onOk() {
-      const hide = message.loading('请稍等...', 0);
-      delMenu(menuId)
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `删除成功`,
-              duration: 3,
-            });
-            fnGetList();
-          } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-        });
-    },
+/** 提交新增/编辑菜单，成功则清空树形缓存并刷新列表 */
+async function handleSubmit() {
+  modalState.confirmLoading = true;
+  try {
+    const form = toRaw(modalState.form);
+    const res = await withLoading(
+      (form.menuId ? updateMenu : addMenu)(form),
+      { successText: modalState.title + '成功' },
+    );
+    if (res.code === RESULT_CODE_SUCCESS) {
+      treeDataAll = [];
+      fetchList();
+      handleCancel();
+    }
+  } finally {
+    modalState.confirmLoading = false;
+  }
+}
+
+/** 删除单个菜单，操作前需二次确认 */
+function handleDelete(menuId: string | number) {
+  confirmAndRun({
+    content: '确认删除菜单编号为【' + menuId + '】的数据项?',
+    onOk: () => delMenu(menuId),
+    successText: '删除成功',
+    onSuccess: () => fetchList(),
   });
 }
 
-/**查询菜单列表 */
-function fnGetList() {
+/** 查询菜单树形列表，首次加载时构建父节点树和展开键列表 */
+function fetchList() {
   if (tableState.loading) return;
   tableState.loading = true;
-  listMenu(toRaw(queryParams)).then(res => {
+  listMenu(toRaw(queryParams)).then((res) => {
     if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
       menuListData = JSON.parse(JSON.stringify(res.data));
-      // 初始上级菜单和展开编号key
       if (treeDataAll.length <= 0) {
-        // 解除可变副作用
         const data: Record<string, any>[] = JSON.parse(
-          JSON.stringify(res.data)
+          JSON.stringify(res.data),
         );
-        // 转换树状数据
         treeDataAll = [
           {
             menuId: '0',
@@ -468,15 +300,15 @@ function fnGetList() {
               data,
               'menuType',
               MENU_TYPE_AUTH,
-              'menuId'
+              'menuId',
             ),
           },
         ];
-        // 展开编号key
-        expandedRowKeys = [...new Set(data.map(item => item.parentId))];
-        fnTableExpandedRowsAll(tableState.expandedRowAll);
+        expandedRowKeysAll.value = [
+          ...new Set(data.map((item) => item.parentId)),
+        ];
+        handleExpandAll(expandedRowAll.value);
       }
-      // 解析生成菜单树结构
       tableState.data = parseDataToTree(res.data, 'menuId');
     }
     tableState.loading = false;
@@ -484,17 +316,11 @@ function fnGetList() {
 }
 
 onMounted(() => {
-  // 初始字典数据
-  Promise.allSettled([getDict('sys_normal_disable')]).then(resArr => {
-    if (resArr[0].status === 'fulfilled') {
-      dict.sysNormalDisable = resArr[0].value;
-    }
-  });
-  // 获取列表数据
-  fnGetList();
+  loadDicts();
+  fetchList();
 });
 </script>
-
+﻿
 <template>
   <PageContainer :title="title">
     <template #content>
@@ -534,11 +360,11 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fnGetList()">
+                <a-button type="primary" @click.prevent="fetchList()">
                   <template #icon><SearchOutlined /></template>
                   搜索
                 </a-button>
-                <a-button type="default" @click.prevent="fnQueryReset">
+                <a-button type="default" @click.prevent="resetQuery">
                   <template #icon><ClearOutlined /></template>
                   重置
                 </a-button>
@@ -555,7 +381,7 @@ onMounted(() => {
         <a-space :size="8" align="center">
           <a-button
             type="primary"
-            @click.prevent="fnModalVisibleByEdit()"
+            @click.prevent="handleEdit()"
             v-perms:has="['system:menu:add']"
           >
             <template #icon><PlusOutlined /></template>
@@ -570,11 +396,11 @@ onMounted(() => {
           <a-tooltip placement="topRight">
             <template #title>展开/折叠</template>
             <a-switch
-              v-model:checked="tableState.expandedRowAll"
+              v-model:checked="expandedRowAll"
               checked-children="展"
               un-checked-children="折"
               size="small"
-              @change="fnTableExpandedRowsAll"
+              @change="handleExpandAll"
             />
           </a-tooltip>
           <a-tooltip placement="topRight">
@@ -597,7 +423,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fnGetList()">
+            <a-button type="text" @click.prevent="fetchList()">
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
@@ -610,7 +436,7 @@ onMounted(() => {
               <template #overlay>
                 <a-menu
                   :selected-keys="[tableState.size as string]"
-                  @click="fnTableSize"
+                  @click="setTableSize"
                 >
                   <a-menu-item key="default">默认</a-menu-item>
                   <a-menu-item key="middle">中等</a-menu-item>
@@ -629,15 +455,15 @@ onMounted(() => {
         :loading="tableState.loading"
         :data-source="tableState.data"
         :size="tableState.size"
-        :row-class-name="fnTableStriped"
+        :row-class-name="rowClassName"
         :pagination="false"
         :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
         }"
         children-column-name="children"
-        :expanded-row-keys="tableState.expandedRowKeys"
-        @expandedRowsChange="fnTableExpandedRowsChange"
+        :expanded-row-keys="expandedRowKeys"
+        @expandedRowsChange="handleExpandedRowsChange"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'icon'">
@@ -660,7 +486,7 @@ onMounted(() => {
                 <template #title>查看详情</template>
                 <a-button
                   type="link"
-                  @click.prevent="fnModalVisibleByVive(record.menuId)"
+                  @click.prevent="handleView(record.menuId)"
                   v-perms:has="['system:menu:query']"
                 >
                   <template #icon><ProfileOutlined /></template>
@@ -670,7 +496,7 @@ onMounted(() => {
                 <template #title>编辑</template>
                 <a-button
                   type="link"
-                  @click.prevent="fnModalVisibleByEdit(record.menuId)"
+                  @click.prevent="handleEdit(record.menuId)"
                   v-perms:has="['system:menu:edit']"
                 >
                   <template #icon><FormOutlined /></template>
@@ -680,7 +506,7 @@ onMounted(() => {
                 <template #title>删除</template>
                 <a-button
                   type="link"
-                  @click.prevent="fnRecordDelete(record.menuId)"
+                  @click.prevent="handleDelete(record.menuId)"
                   v-perms:has="['system:menu:remove']"
                 >
                   <template #icon><DeleteOutlined /></template>
@@ -694,7 +520,7 @@ onMounted(() => {
                 <a-button
                   type="link"
                   @click.prevent="
-                    fnModalVisibleByEdit(
+                    handleEdit(
                       undefined,
                       record.menuId,
                       record.menuType
@@ -717,7 +543,7 @@ onMounted(() => {
       :width="800"
       :open="modalState.visibleByView"
       :title="modalState.title"
-      @cancel="fnModalCancel"
+      @cancel="handleCancel"
     >
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
@@ -880,7 +706,7 @@ onMounted(() => {
         </a-form-item>
       </a-form>
       <template #footer>
-        <a-button key="cancel" @click="fnModalCancel">关闭</a-button>
+        <a-button key="cancel" @click="handleCancel">关闭</a-button>
       </template>
     </ProModal>
 
@@ -894,8 +720,8 @@ onMounted(() => {
       :open="modalState.visibleByEdit"
       :title="modalState.title"
       :confirm-loading="modalState.confirmLoading"
-      @ok="fnModalOk"
-      @cancel="fnModalCancel"
+      @ok="handleSubmit"
+      @cancel="handleCancel"
     >
       <a-form
         name="modalStateForm"
@@ -925,7 +751,7 @@ onMounted(() => {
             tree-node-filter-prop="menuName"
             style="width: 100%"
             :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
-            @change="fnTreeDataChange"
+            @change="handleTreeDataChange"
           >
           </a-tree-select>
         </a-form-item>

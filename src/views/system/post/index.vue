@@ -1,12 +1,10 @@
-<script setup lang="ts">
-import { useRoute } from 'vue-router';
-import { reactive, ref, onMounted, toRaw } from 'vue';
-import { PageContainer } from 'antdv-pro-layout';
-import { ProModal } from 'antdv-pro-modal';
-import { message, Modal, Form } from 'ant-design-vue';
-import type { SizeType } from 'ant-design-vue/es/config-provider';
-import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
-import type { ColumnsType } from 'ant-design-vue/es/table';
+﻿<script setup lang="ts">
+import { useRoute } from "vue-router";
+import { ref, toRaw, onMounted } from "vue";
+import { PageContainer } from "antdv-pro-layout";
+import { ProModal } from "antdv-pro-modal";
+import { message } from "ant-design-vue";
+import type { ColumnsType } from "ant-design-vue/es/table";
 import {
   exportPost,
   listPost,
@@ -14,428 +12,232 @@ import {
   delPost,
   getPost,
   updatePost,
-} from '@/api/system/post';
-import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/date-utils';
-import useDictStore from '@/store/modules/dict';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
-const { getDict } = useDictStore();
+} from "@/api/system/post";
+import { saveAs } from "file-saver";
+import { parseDateToStr } from "@/utils/date-utils";
+import { RESULT_CODE_SUCCESS } from "@/constants/result-constants";
+import { useQueryParams } from "@/hooks/useQueryParams";
+import { usePagination } from "@/hooks/usePagination";
+import { useTableUI } from "@/hooks/useTableUI";
+import { useCrudModal } from "@/hooks/useCrudModal";
+import { useMessageAction } from "@/hooks/useMessageAction";
+import { useDictSetup } from "@/hooks/useDictSetup";
+
 const route = useRoute();
 
 /**路由标题 */
-let title = ref<string>(route.meta.title ?? '标题');
+const title = ref<string>(route.meta.title ?? "标题");
 
 /**字典数据 */
-let dict: {
-  /**状态 */
-  sysNormalDisable: DictType[];
-} = reactive({
-  sysNormalDisable: [],
+const { dict, loadDicts } = useDictSetup({
+  sysNormalDisable: "sys_normal_disable",
 });
+
+/**操作反馈 */
+const { withLoading, confirmAndRun } = useMessageAction();
 
 /**查询参数 */
-let queryParams = reactive({
-  /**岗位编码 */
-  postCode: '',
-  /**岗位名称 */
-  postName: '',
-  /**岗位状态 */
-  statusFlag: undefined,
-  /**当前页数 */
-  pageNum: 1,
-  /**每页条数 */
-  pageSize: 20,
-});
-
-/**查询参数重置 */
-function fnQueryReset() {
-  Object.assign(queryParams, {
-    postCode: '',
-    postName: '',
-    statusFlag: undefined,
+const { queryParams, resetQuery } = useQueryParams(
+  {
+    postCode: "",
+    postName: "",
+    statusFlag: undefined as string | undefined,
     pageNum: 1,
     pageSize: 20,
-  });
-  tablePagination.current = 1;
-  tablePagination.pageSize = 20;
-  fnGetList();
-}
+  },
+  () => {
+    resetPage();
+    fetchList();
+  },
+);
 
-/**表格状态类型 */
-type TabeStateType = {
-  /**加载等待 */
-  loading: boolean;
-  /**紧凑型 */
-  size: SizeType;
-  /**斑马纹 */
-  striped: boolean;
-  /**搜索栏 */
-  seached: boolean;
-  /**记录数据 */
-  data: object[];
-  /**勾选记录 */
-  selectedRowKeys: (string | number)[];
-};
+/**表格UI */
+const {
+  tableState,
+  setTableSize,
+  rowClassName,
+  setSelectedRowKeys,
+  clearSelection,
+} = useTableUI();
 
-/**表格状态 */
-let tableState: TabeStateType = reactive({
-  loading: false,
-  size: 'middle',
-  striped: false,
-  seached: false,
-  data: [],
-  selectedRowKeys: [],
+/**分页 */
+const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
+  onChange: (page, pageSize) => {
+    queryParams.pageNum = page;
+    queryParams.pageSize = pageSize;
+    fetchList();
+  },
+});
+
+/**弹窗 */
+const {
+  modal: modalState,
+  formCtl: modalStateForm,
+  openView,
+  openEdit,
+  close: handleCancel,
+} = useCrudModal({
+  initForm: () => ({
+    postId: undefined as string | number | undefined,
+    postName: "",
+    postCode: "",
+    postSort: 0,
+    statusFlag: "0",
+    remark: "",
+    createTime: 0,
+  }),
+  rules: {
+    postName: [
+      { required: true, min: 1, max: 50, message: "请输入岗位编码" },
+    ],
+    postCode: [
+      { required: true, min: 1, max: 50, message: "请输入岗位名称" },
+    ],
+  },
 });
 
 /**表格字段列 */
-let tableColumns: ColumnsType = [
+const tableColumns: ColumnsType = [
   {
-    title: '岗位编号',
-    dataIndex: 'postId',
-    align: 'left',
+    title: "岗位编号",
+    dataIndex: "postId",
+    align: "left",
     width: 100,
   },
   {
-    title: '岗位编码',
-    dataIndex: 'postCode',
-    align: 'left',
+    title: "岗位编码",
+    dataIndex: "postCode",
+    align: "left",
     width: 100,
   },
   {
-    title: '岗位名称',
-    dataIndex: 'postName',
-    align: 'left',
+    title: "岗位名称",
+    dataIndex: "postName",
+    align: "left",
     width: 200,
   },
   {
-    title: '岗位排序',
-    dataIndex: 'postSort',
-    align: 'left',
+    title: "岗位排序",
+    dataIndex: "postSort",
+    align: "left",
     width: 100,
   },
   {
-    title: '岗位状态',
-    dataIndex: 'statusFlag',
-    key: 'statusFlag',
-    align: 'left',
+    title: "岗位状态",
+    dataIndex: "statusFlag",
+    key: "statusFlag",
+    align: "left",
     width: 100,
   },
   {
-    title: '创建时间',
-    dataIndex: 'createTime',
-    align: 'left',
+    title: "创建时间",
+    dataIndex: "createTime",
+    align: "left",
     width: 150,
     customRender(opt) {
-      if (+opt.value <= 0) return '';
+      if (+opt.value <= 0) return "";
       return parseDateToStr(+opt.value);
     },
   },
   {
-    title: '操作',
-    key: 'postId',
-    align: 'left',
+    title: "操作",
+    key: "postId",
+    align: "left",
   },
 ];
 
-/**表格分页器参数 */
-let tablePagination = reactive({
-  /**当前页数 */
-  current: 1,
-  /**每页条数 */
-  pageSize: 20,
-  /**默认的每页条数 */
-  defaultPageSize: 20,
-  /**指定每页可以显示多少条 */
-  pageSizeOptions: ['10', '20', '50', '100'],
-  /**只有一页时是否隐藏分页器 */
-  hideOnSinglePage: false,
-  /**是否可以快速跳转至某页 */
-  showQuickJumper: true,
-  /**是否可以改变 pageSize */
-  showSizeChanger: true,
-  /**数据总数 */
-  total: 0,
-  showTotal: (total: number) => `总共 ${total} 条`,
-  onChange: (page: number, pageSize: number) => {
-    tablePagination.current = page;
-    tablePagination.pageSize = pageSize;
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
-    fnGetList();
-  },
-});
-
-/**表格紧凑型变更操作 */
-function fnTableSize({ key }: MenuInfo) {
-  tableState.size = key as SizeType;
+/** 打开岗位详情弹窗，根据岗位编号查询并展示数据 */
+function handleView(postId: string | number) {
+  openView(postId, getPost, "岗位信息");
 }
 
-/**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number): any {
-  return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
+/** 打开新增或编辑弹窗，有 postId 则回填数据，否则为新增 */
+function handleEdit(postId?: string | number) {
+  openEdit(postId, getPost, "添加岗位信息", "修改岗位信息");
 }
 
-/**表格多选 */
-function fnTableSelectedRowKeys(keys: (string | number)[]) {
-  tableState.selectedRowKeys = keys;
-}
-
-/**对话框对象信息状态类型 */
-type ModalStateType = {
-  /**详情框是否显示 */
-  visibleByView: boolean;
-  /**新增框或修改框是否显示 */
-  visibleByEdit: boolean;
-  /**标题 */
-  title: string;
-  /**表单数据 */
-  form: Record<string, any>;
-  /**确定按钮 loading */
-  confirmLoading: boolean;
-};
-
-/**对话框对象信息状态 */
-let modalState: ModalStateType = reactive({
-  visibleByView: false,
-  visibleByEdit: false,
-  title: '岗位',
-  form: {
-    postId: undefined,
-    postName: '',
-    postCode: '',
-    postSort: 0,
-    statusFlag: '0',
-    remark: '',
-    createTime: 0,
-  },
-  confirmLoading: false,
-});
-
-/**对话框内表单属性和校验规则 */
-const modalStateForm = Form.useForm(
-  modalState.form,
-  reactive({
-    postName: [
-      { required: true, min: 1, max: 50, message: '请正确输入岗位编码' },
-    ],
-    postCode: [
-      { required: true, min: 1, max: 50, message: '请正确输入岗位名称' },
-    ],
-  })
-);
-
-/**
- * 对话框弹出显示为 查看
- * @param postId 岗位编号id
- */
-function fnModalVisibleByVive(postId: string | number) {
-  if (!postId) {
+/** 校验表单后提交新增/编辑，成功则刷新列表并关闭弹窗 */
+async function handleSubmit() {
+  try {
+    await modalStateForm.validate();
+  } catch (e: any) {
     message.error({
-      content: '获取岗位信息失败',
+      content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
       duration: 3,
     });
     return;
   }
-  if (modalState.confirmLoading) return;
-  const hide = message.loading('正在打开...', 0);
   modalState.confirmLoading = true;
-  getPost(postId)
-    .then(res => {
-      if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        Object.assign(modalState.form, res.data);
-        modalState.title = '岗位信息';
-        modalState.visibleByView = true;
-      } else {
-        message.error({
-          content: '获取岗位信息失败',
-          duration: 3,
-        });
-      }
-    })
-    .finally(() => {
-      hide();
-      modalState.confirmLoading = false;
-    });
-}
-
-/**
- * 对话框弹出显示为 新增或者修改
- * @param postId 岗位编号id, 不传为新增
- */
-function fnModalVisibleByEdit(postId?: string | number) {
-  if (!postId) {
-    modalStateForm.resetFields();
-    modalState.title = '添加岗位信息';
-    modalState.visibleByEdit = true;
-  } else {
-    if (modalState.confirmLoading) return;
-    const hide = message.loading('正在打开...', 0);
-    modalState.confirmLoading = true;
-    getPost(postId)
-      .then(res => {
-        if (res.code === RESULT_CODE_SUCCESS && res.data) {
-          Object.assign(modalState.form, res.data);
-          modalState.title = '修改岗位信息';
-          modalState.visibleByEdit = true;
-        } else {
-          message.error({
-            content: '获取岗位信息失败',
-            duration: 3,
-          });
-        }
-      })
-      .finally(() => {
-        hide();
-        modalState.confirmLoading = false;
-      });
+  try {
+    const form = toRaw(modalState.form);
+    const res = await withLoading(
+      (form.postId ? updatePost : addPost)(form),
+      { successText: `${modalState.title}成功` },
+    );
+    if (res.code === RESULT_CODE_SUCCESS) {
+      fetchList(1);
+      handleCancel();
+    }
+  } finally {
+    modalState.confirmLoading = false;
   }
 }
 
-/**
- * 对话框弹出确认执行函数
- * 进行表达规则校验
- */
-function fnModalOk() {
-  modalStateForm
-    .validate()
-    .then(() => {
-      const hide = message.loading('请稍等...', 0);
-      modalState.confirmLoading = true;
-      const form = toRaw(modalState.form);
-      const post = form.postId ? updatePost(form) : addPost(form);
-      post
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `${modalState.title}成功`,
-              duration: 3,
-            });
-            fnGetList(1);
-            fnModalCancel();
-          } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-          modalState.confirmLoading = false;
-        });
-    })
-    .catch(e => {
-      message.error({
-        content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
-        duration: 3,
-      });
-    });
-}
-
-/**
- * 对话框弹出关闭执行函数
- * 进行表达规则校验
- */
-function fnModalCancel() {
-  modalState.visibleByEdit = false;
-  modalState.visibleByView = false;
-  modalStateForm.resetFields();
-}
-
-/**
- * 岗位删除
- * @param postId 岗位编号ID
- */
-function fnRecordDelete(postId: string = '0') {
-  if (postId === '0') {
-    postId = tableState.selectedRowKeys.join(',');
+/** 删除岗位（单条或批量），支持从选中行键列表批量删除 */
+function handleDelete(postId: string = "0") {
+  if (postId === "0") {
+    postId = tableState.selectedRowKeys.join(",");
   }
-  Modal.confirm({
-    title: '提示',
-    content: `确认删除岗位编号为 【${postId}】 的数据项?`,
-    onOk() {
-      const hide = message.loading('请稍等...', 0);
-      delPost(postId)
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `删除成功`,
-              duration: 3,
-            });
-            fnGetList();
-          } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-        });
+  confirmAndRun({
+    content: `确认删除岗位编号为【${postId}】的数据项?`,
+    onOk: () => delPost(postId),
+    successText: "删除成功",
+    onSuccess: () => fetchList(),
+  });
+}
+
+/** 根据当前搜索条件导出岗位列表 xlsx 文件 */
+function handleExport() {
+  confirmAndRun({
+    content: "确认根据搜索条件导出xlsx表格文件吗",
+    onOk: () => exportPost(toRaw(queryParams)),
+    successText: "已导出完成",
+    onSuccess: (res) => {
+      saveAs(res.data, `post_${Date.now()}.xlsx`);
     },
   });
 }
 
-/**列表导出 */
-function fnExportList() {
-  Modal.confirm({
-    title: '提示',
-    content: `确认根据搜索条件导出xlsx表格文件吗?`,
-    onOk() {
-      const hide = message.loading('请稍等...', 0);
-      exportPost(toRaw(queryParams))
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `已完成导出`,
-              duration: 3,
-            });
-            saveAs(res.data, `post_${Date.now()}.xlsx`);
-          } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-        });
-    },
-  });
-}
-
-/**查询岗位列表, pageNum初始页数 */
-function fnGetList(pageNum?: number) {
+/** 查询岗位列表，支持指定页码；删除后自动修正空页 */
+async function fetchList(pageNum?: number) {
   if (tableState.loading) return;
   tableState.loading = true;
   if (pageNum) {
     queryParams.pageNum = pageNum;
   }
-  listPost(toRaw(queryParams)).then(res => {
+  try {
+    const res = await listPost(toRaw(queryParams));
     if (res.code === RESULT_CODE_SUCCESS) {
-      // 取消勾选
-      if (tableState.selectedRowKeys.length > 0) {
-        tableState.selectedRowKeys = [];
+      clearSelection();
+      setTotal(res.data.total);
+      tableState.data = res.data.rows;
+      if (fixPageAfterDelete(res.data.rows.length)) {
+        queryParams.pageNum = pagination.current;
+        const res2 = await listPost(toRaw(queryParams));
+        if (res2.code === RESULT_CODE_SUCCESS) {
+          setTotal(res2.data.total);
+          tableState.data = res2.data.rows;
+        }
       }
-      const { total, rows } = res.data;
-      tablePagination.total = total;
-      tableState.data = rows;
     }
+  } finally {
     tableState.loading = false;
-  });
+  }
 }
 
 onMounted(() => {
-  // 初始字典数据
-  Promise.allSettled([getDict('sys_normal_disable')]).then(resArr => {
-    if (resArr[0].status === 'fulfilled') {
-      dict.sysNormalDisable = resArr[0].value;
-    }
-  });
-  // 获取列表数据
-  fnGetList();
+  loadDicts();
+  fetchList();
 });
 </script>
 
@@ -485,11 +287,11 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fnGetList(1)">
+                <a-button type="primary" @click.prevent="fetchList(1)">
                   <template #icon><SearchOutlined /></template>
                   搜索</a-button
                 >
-                <a-button type="default" @click.prevent="fnQueryReset">
+                <a-button type="default" @click.prevent="resetQuery">
                   <template #icon><ClearOutlined /></template>
                   重置</a-button
                 >
@@ -501,12 +303,12 @@ onMounted(() => {
     </a-card>
 
     <a-card :bordered="false" :body-style="{ padding: '0px' }">
-      <!-- 插槽-卡片左侧侧 -->
+      <!-- 插槽-卡片左侧 -->
       <template #title>
         <a-space :size="8" align="center">
           <a-button
             type="primary"
-            @click.prevent="fnModalVisibleByEdit()"
+            @click.prevent="handleEdit()"
             v-perms:has="['system:post:add']"
           >
             <template #icon><PlusOutlined /></template>
@@ -516,7 +318,7 @@ onMounted(() => {
             type="default"
             danger
             :disabled="tableState.selectedRowKeys.length <= 0"
-            @click.prevent="fnRecordDelete()"
+            @click.prevent="handleDelete()"
             v-perms:has="['system:post:remove']"
           >
             <template #icon><DeleteOutlined /></template>
@@ -524,7 +326,7 @@ onMounted(() => {
           </a-button>
           <a-button
             type="dashed"
-            @click.prevent="fnExportList()"
+            @click.prevent="handleExport()"
             v-perms:has="['system:post:export']"
           >
             <template #icon><ExportOutlined /></template>
@@ -540,8 +342,8 @@ onMounted(() => {
             <template #title>搜索栏</template>
             <a-switch
               v-model:checked="tableState.seached"
-              checked-children="显"
-              un-checked-children="隐"
+              checked-children="是"
+              un-checked-children="否"
               size="small"
             />
           </a-tooltip>
@@ -556,7 +358,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fnGetList()">
+            <a-button type="text" @click.prevent="fetchList()">
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
@@ -569,7 +371,7 @@ onMounted(() => {
               <template #overlay>
                 <a-menu
                   :selected-keys="[tableState.size as string]"
-                  @click="fnTableSize"
+                  @click="setTableSize"
                 >
                   <a-menu-item key="default">默认</a-menu-item>
                   <a-menu-item key="middle">中等</a-menu-item>
@@ -589,8 +391,8 @@ onMounted(() => {
         :loading="tableState.loading"
         :data-source="tableState.data"
         :size="tableState.size"
-        :row-class-name="fnTableStriped"
-        :pagination="tablePagination"
+        :row-class-name="rowClassName"
+        :pagination="pagination"
         :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
@@ -598,7 +400,7 @@ onMounted(() => {
         :row-selection="{
           type: 'checkbox',
           selectedRowKeys: tableState.selectedRowKeys,
-          onChange: fnTableSelectedRowKeys,
+          onChange: setSelectedRowKeys,
         }"
       >
         <template #bodyCell="{ column, record }">
@@ -614,7 +416,7 @@ onMounted(() => {
                 <template #title>查看详情</template>
                 <a-button
                   type="link"
-                  @click.prevent="fnModalVisibleByVive(record.postId)"
+                  @click.prevent="handleView(record.postId)"
                   v-perms:has="['system:post:query']"
                 >
                   <template #icon><ProfileOutlined /></template>
@@ -624,7 +426,7 @@ onMounted(() => {
                 <template #title>编辑</template>
                 <a-button
                   type="link"
-                  @click.prevent="fnModalVisibleByEdit(record.postId)"
+                  @click.prevent="handleEdit(record.postId)"
                   v-perms:has="['system:post:edit']"
                 >
                   <template #icon><FormOutlined /></template>
@@ -634,7 +436,7 @@ onMounted(() => {
                 <template #title>删除</template>
                 <a-button
                   type="link"
-                  @click.prevent="fnRecordDelete(record.postId)"
+                  @click.prevent="handleDelete(record.postId)"
                   v-perms:has="['system:post:remove']"
                 >
                   <template #icon><DeleteOutlined /></template>
@@ -652,7 +454,7 @@ onMounted(() => {
       :width="800"
       :open="modalState.visibleByView"
       :title="modalState.title"
-      @cancel="fnModalCancel"
+      @cancel="handleCancel"
     >
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
@@ -711,7 +513,7 @@ onMounted(() => {
         </a-form-item>
       </a-form>
       <template #footer>
-        <a-button key="cancel" @click="fnModalCancel">关闭</a-button>
+        <a-button key="cancel" @click="handleCancel">关闭</a-button>
       </template>
     </ProModal>
 
@@ -725,8 +527,8 @@ onMounted(() => {
       :open="modalState.visibleByEdit"
       :title="modalState.title"
       :confirm-loading="modalState.confirmLoading"
-      @ok="fnModalOk"
-      @cancel="fnModalCancel"
+      @ok="handleSubmit"
+      @cancel="handleCancel"
     >
       <a-form
         name="modalStateForm"
@@ -818,3 +620,4 @@ onMounted(() => {
   padding: 0 24px;
 }
 </style>
+

@@ -1,13 +1,11 @@
-<script setup lang="ts">
-import { useRoute } from 'vue-router';
-import { reactive, ref, onMounted, toRaw } from 'vue';
-import { PageContainer } from 'antdv-pro-layout';
-import { ProModal } from 'antdv-pro-modal';
-import { message, Modal, Form } from 'ant-design-vue';
-import type { Dayjs } from 'dayjs';
-import type { SizeType } from 'ant-design-vue/es/config-provider';
-import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
-import type { ColumnsType } from 'ant-design-vue/es/table';
+﻿<script setup lang="ts">
+import { useRoute } from "vue-router";
+import { ref, toRaw, onMounted } from "vue";
+import { PageContainer } from "antdv-pro-layout";
+import { ProModal } from "antdv-pro-modal";
+import { message } from "ant-design-vue";
+import type { Dayjs } from "dayjs";
+import type { ColumnsType } from "ant-design-vue/es/table";
 import {
   exportConfig,
   listConfig,
@@ -16,473 +14,233 @@ import {
   addConfig,
   updateConfig,
   refreshConfig,
-} from '@/api/system/config';
-import { saveAs } from 'file-saver';
-import { parseDateToStr } from '@/utils/date-utils';
-import useDictStore from '@/store/modules/dict';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
-const { getDict } = useDictStore();
+} from "@/api/system/config";
+import { saveAs } from "file-saver";
+import { parseDateToStr } from "@/utils/date-utils";
+import { RESULT_CODE_SUCCESS } from "@/constants/result-constants";
+import { useQueryParams } from "@/hooks/useQueryParams";
+import { usePagination } from "@/hooks/usePagination";
+import { useTableUI } from "@/hooks/useTableUI";
+import { useCrudModal } from "@/hooks/useCrudModal";
+import { useMessageAction } from "@/hooks/useMessageAction";
+import { useDictSetup } from "@/hooks/useDictSetup";
+
 const route = useRoute();
 
-/**路由标题 */
-let title = ref<string>(route.meta.title ?? '标题');
+const title = ref<string>(route.meta.title ?? "标题");
 
-/**字典数据 */
-let dict: {
-  /**系统内置 */
-  sysYesNo: DictType[];
-} = reactive({
-  sysYesNo: [],
+const { dict, loadDicts } = useDictSetup({
+  sysYesNo: "sys_yes_no",
 });
 
-/**开始结束时间 */
-let queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
+const { withLoading, confirmAndRun } = useMessageAction();
 
-/**查询参数 */
-let queryParams = reactive({
-  /**参数名称 */
-  configName: '',
-  /**参数键名 */
-  configKey: '',
-  /**系统内置 */
-  configType: undefined,
-  /**开始时间 */
-  beginTime: undefined as undefined | number,
-  /**结束时间 */
-  endTime: undefined as undefined | number,
-  /**当前页数 */
-  pageNum: 1,
-  /**每页条数 */
-  pageSize: 20,
-});
+const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
-/**查询参数重置 */
-function fnQueryReset() {
-  Object.assign(queryParams, {
-    configName: '',
-    configKey: '',
-    configType: undefined,
-    beginTime: undefined,
-    endTime: undefined,
+const { queryParams, resetQuery: baseResetQuery } = useQueryParams(
+  {
+    configName: "",
+    configKey: "",
+    configType: undefined as string | undefined,
+    beginTime: undefined as number | undefined,
+    endTime: undefined as number | undefined,
     pageNum: 1,
     pageSize: 20,
-  });
+  },
+  () => {
+    resetPage();
+    fetchList();
+  },
+);
+
+/** 重置查询条件，清空日期选择器后恢复默认参数并重新查询 */
+function resetQuery() {
   queryRangePicker.value = undefined;
-  tablePagination.current = 1;
-  tablePagination.pageSize = 20;
-  fnGetList();
+  baseResetQuery();
 }
 
-/**表格状态类型 */
-type TabeStateType = {
-  /**加载等待 */
-  loading: boolean;
-  /**紧凑型 */
-  size: SizeType;
-  /**斑马纹 */
-  striped: boolean;
-  /**搜索栏 */
-  seached: boolean;
-  /**记录数据 */
-  data: object[];
-  /**勾选记录 */
-  selectedRowKeys: (string | number)[];
-};
+const {
+  tableState,
+  setTableSize,
+  rowClassName,
+  setSelectedRowKeys,
+  clearSelection,
+} = useTableUI();
 
-/**表格状态 */
-let tableState: TabeStateType = reactive({
-  loading: false,
-  size: 'middle',
-  striped: false,
-  seached: false,
-  data: [],
-  selectedRowKeys: [],
+const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
+  onChange: (page, pageSize) => {
+    queryParams.pageNum = page;
+    queryParams.pageSize = pageSize;
+    fetchList();
+  },
 });
 
-/**表格字段列 */
-let tableColumns: ColumnsType = [
+const {
+  modal: modalState,
+  formCtl: modalStateForm,
+  openView,
+  openEdit,
+  close: handleCancel,
+} = useCrudModal({
+  initForm: () => ({
+    configId: undefined as string | number | undefined,
+    configName: "",
+    configKey: "",
+    configValue: "",
+    configType: "N",
+    remark: undefined as string | undefined,
+  }),
+  rules: {
+    configName: [
+      { required: true, min: 1, max: 50, message: "请输入参数名称" },
+    ],
+    configKey: [
+      { required: true, min: 1, max: 50, message: "请输入参数键名" },
+    ],
+    configValue: [
+      { required: true, min: 1, max: 50, message: "请输入参数键值" },
+    ],
+  },
+});
+
+const tableColumns: ColumnsType = [
+  { title: "参数编号", dataIndex: "configId", align: "left", width: 100 },
+  { title: "参数名称", dataIndex: "configName", align: "left", width: 200 },
+  { title: "参数键名", dataIndex: "configKey", align: "left", width: 200 },
+  { title: "参数键值", dataIndex: "configValue", align: "left", width: 100 },
   {
-    title: '参数编号',
-    dataIndex: 'configId',
-    align: 'left',
+    title: "系统内置",
+    dataIndex: "configType",
+    key: "configType",
+    align: "left",
     width: 100,
   },
   {
-    title: '参数名称',
-    dataIndex: 'configName',
-    align: 'left',
-    width: 200,
-  },
-  {
-    title: '参数键名',
-    dataIndex: 'configKey',
-    align: 'left',
-    width: 200,
-  },
-  {
-    title: '参数键值',
-    dataIndex: 'configValue',
-    align: 'left',
-    width: 100,
-  },
-  {
-    title: '系统内置',
-    dataIndex: 'configType',
-    key: 'configType',
-    align: 'left',
-    width: 100,
-  },
-  {
-    title: '创建时间',
-    dataIndex: 'createTime',
-    align: 'left',
+    title: "创建时间",
+    dataIndex: "createTime",
+    align: "left",
     width: 150,
     customRender(opt) {
-      if (+opt.value <= 0) return '';
+      if (+opt.value <= 0) return "";
       return parseDateToStr(+opt.value);
     },
   },
-  {
-    title: '操作',
-    key: 'configId',
-    align: 'left',
-  },
+  { title: "操作", key: "configId", align: "left" },
 ];
 
-/**表格分页器参数 */
-let tablePagination = reactive({
-  /**当前页数 */
-  current: 1,
-  /**每页条数 */
-  pageSize: 20,
-  /**默认的每页条数 */
-  defaultPageSize: 20,
-  /**指定每页可以显示多少条 */
-  pageSizeOptions: ['10', '20', '50', '100'],
-  /**只有一页时是否隐藏分页器 */
-  hideOnSinglePage: false,
-  /**是否可以快速跳转至某页 */
-  showQuickJumper: true,
-  /**是否可以改变 pageSize */
-  showSizeChanger: true,
-  /**数据总数 */
-  total: 0,
-  showTotal: (total: number) => `总共 ${total} 条`,
-  onChange: (page: number, pageSize: number) => {
-    tablePagination.current = page;
-    tablePagination.pageSize = pageSize;
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
-    fnGetList();
-  },
-});
-
-/**表格紧凑型变更操作 */
-function fnTableSize({ key }: MenuInfo) {
-  tableState.size = key as SizeType;
+/** 打开参数配置详情弹窗，根据 configId 查询并展示数据 */
+function handleView(configId: string | number) {
+  openView(configId, getConfig, "参数配置信息");
 }
 
-/**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number): any {
-  return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
+/** 打开新增或编辑弹窗，有 configId 则回填数据，否则为新增 */
+function handleEdit(configId?: string | number) {
+  openEdit(configId, getConfig, "添加参数配置", "修改参数配置");
 }
 
-/**表格多选 */
-function fnTableSelectedRowKeys(keys: (string | number)[]) {
-  tableState.selectedRowKeys = keys;
-}
-
-/**对话框对象信息状态类型 */
-type ModalStateType = {
-  /**详情框是否显示 */
-  visibleByView: boolean;
-  /**新增框或修改框是否显示 */
-  visibleByEdit: boolean;
-  /**标题 */
-  title: string;
-  /**表单数据 */
-  form: Record<string, any>;
-  /**确定按钮 loading */
-  confirmLoading: boolean;
-};
-
-/**对话框对象信息状态 */
-let modalState: ModalStateType = reactive({
-  visibleByView: false,
-  visibleByEdit: false,
-  title: '参数配置',
-  form: {
-    configId: undefined,
-    configName: '',
-    configKey: '',
-    configValue: '',
-    configType: 'N',
-    remark: undefined,
-  },
-  confirmLoading: false,
-});
-
-/**对话框内表单属性和校验规则 */
-const modalStateForm = Form.useForm(
-  modalState.form,
-  reactive({
-    configName: [
-      { required: true, min: 1, max: 50, message: '请正确输入参数名称' },
-    ],
-    configKey: [
-      { required: true, min: 1, max: 50, message: '请正确输入参数键名' },
-    ],
-    configValue: [
-      { required: true, min: 1, max: 50, message: '请正确输入参数键值' },
-    ],
-  })
-);
-
-/**
- * 对话框弹出显示为 查看
- * @param configId 参数编号id
- */
-function fnModalVisibleByVive(configId: string | number) {
-  if (!configId) {
+/** 校验表单后提交新增/编辑，成功则刷新列表并关闭弹窗 */
+async function handleSubmit() {
+  try {
+    await modalStateForm.validate();
+  } catch (e: any) {
     message.error({
-      content: '获取参数配置信息失败',
+      content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
       duration: 3,
     });
     return;
   }
-  getConfig(configId).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      Object.assign(modalState.form, res.data);
-      modalState.title = '参数配置信息';
-      modalState.visibleByView = true;
-    } else {
-      message.error({
-        content: '获取参数配置信息失败',
-        duration: 3,
-      });
+  modalState.confirmLoading = true;
+  try {
+    const form = toRaw(modalState.form);
+    const res = await withLoading(
+      (form.configId ? updateConfig : addConfig)(form),
+      { successText: `${modalState.title}成功` },
+    );
+    if (res.code === RESULT_CODE_SUCCESS) {
+      fetchList(1);
+      handleCancel();
     }
-  });
-}
-
-/**
- * 对话框弹出显示为 新增或者修改
- * @param configId 参数编号id, 不传为新增
- */
-function fnModalVisibleByEdit(configId?: string | number) {
-  if (!configId) {
-    modalStateForm.resetFields();
-    modalState.title = '添加参数配置';
-    modalState.visibleByEdit = true;
-  } else {
-    if (modalState.confirmLoading) return;
-    const hide = message.loading('正在打开...', 0);
-    modalState.confirmLoading = true;
-    getConfig(configId)
-      .then(res => {
-        if (res.code === RESULT_CODE_SUCCESS && res.data) {
-          Object.assign(modalState.form, res.data);
-          modalState.title = '修改参数配置';
-          modalState.visibleByEdit = true;
-        } else {
-          message.error({
-            content: '获取参数配置信息失败',
-            duration: 3,
-          });
-        }
-      })
-      .finally(() => {
-        hide();
-        modalState.confirmLoading = false;
-      });
+  } finally {
+    modalState.confirmLoading = false;
   }
 }
 
-/**
- * 对话框弹出确认执行函数
- * 进行表达规则校验
- */
-function fnModalOk() {
-  modalStateForm
-    .validate()
-    .then(() => {
-      const form = toRaw(modalState.form);
-      const config = form.configId ? updateConfig(form) : addConfig(form);
-      const hide = message.loading('请稍等...', 0);
-      modalState.confirmLoading = true;
-      config
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `${modalState.title}成功`,
-              duration: 3,
-            });
-            fnGetList(1);
-            fnModalCancel();
-          } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-          modalState.confirmLoading = false;
-        });
-    })
-    .catch(e => {
-      message.error({
-        content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
-        duration: 3,
-      });
-    });
-}
-
-/**
- * 对话框弹出关闭执行函数
- * 进行表达规则校验
- */
-function fnModalCancel() {
-  modalState.visibleByEdit = false;
-  modalState.visibleByView = false;
-  modalStateForm.resetFields();
-}
-
-/**
- * 参数配置删除
- * @param configId 参数编号ID
- */
-function fnRecordDelete(configId: string = '0') {
-  if (configId === '0') {
-    configId = tableState.selectedRowKeys.join(',');
+/** 删除参数配置（单条或批量），支持从选中行键列表批量删除 */
+function handleDelete(configId: string = "0") {
+  if (configId === "0") {
+    configId = tableState.selectedRowKeys.join(",");
   }
-  Modal.confirm({
-    title: '提示',
-    content: `确认删除参数编号为 【${configId}】 的数据项?`,
-    onOk() {
-      const hide = message.loading('请稍等...', 0);
-      delConfig(configId)
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `删除成功`,
-              duration: 3,
-            });
-            fnGetList();
-          } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-        });
+  confirmAndRun({
+    content: `确认删除参数编号为【${configId}】的数据项?`,
+    onOk: () => delConfig(configId),
+    successText: "删除成功",
+    onSuccess: () => fetchList(),
+  });
+}
+
+/** 根据当前搜索条件导出参数配置列表 xlsx 文件 */
+function handleExport() {
+  confirmAndRun({
+    content: "确认根据搜索条件导出xlsx表格文件吗",
+    onOk: () => exportConfig(toRaw(queryParams)),
+    successText: "已导出完成",
+    onSuccess: (res) => {
+      saveAs(res.data, `config_${Date.now()}.xlsx`);
     },
   });
 }
 
-/**列表导出 */
-function fnExportList() {
-  Modal.confirm({
-    title: '提示',
-    content: `确认根据搜索条件导出xlsx表格文件吗?`,
-    onOk() {
-      const hide = message.loading('请稍等...', 0);
-      exportConfig(toRaw(queryParams))
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `已完成导出`,
-              duration: 3,
-            });
-            saveAs(res.data, `config_${Date.now()}.xlsx`);
-          } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-        });
-    },
+/** 刷新系统参数配置缓存 */
+function handleRefreshConfig() {
+  confirmAndRun({
+    content: "确定要刷新参数配置缓存吗?",
+    onOk: () => refreshConfig(),
+    successText: "刷新缓存成功",
   });
 }
 
-/**刷新缓存 */
-function fnRefreshConfig() {
-  Modal.confirm({
-    title: '提示',
-    content: `确定要刷新参数配置缓存吗?`,
-    onOk() {
-      const hide = message.loading('请稍等...', 0);
-      refreshConfig()
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `刷新缓存成功`,
-              duration: 3,
-            });
-          } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-        });
-    },
-  });
-}
-
-/**查询参数配置列表, pageNum初始页数 */
-function fnGetList(pageNum?: number) {
+/** 查询参数配置列表，支持指定页码；处理日期范围筛选及删除后空页修正 */
+async function fetchList(pageNum?: number) {
   if (tableState.loading) return;
   tableState.loading = true;
   if (pageNum) {
     queryParams.pageNum = pageNum;
   }
 
-  // 时间范围
   if (
     Array.isArray(queryRangePicker.value) &&
     queryRangePicker.value.length > 0
   ) {
-    queryParams.beginTime = queryRangePicker.value[0].startOf('day').valueOf();
-    queryParams.endTime = queryRangePicker.value[1].endOf('day').valueOf();
+    queryParams.beginTime = queryRangePicker.value[0].startOf("day").valueOf();
+    queryParams.endTime = queryRangePicker.value[1].endOf("day").valueOf();
   } else {
     queryParams.beginTime = undefined;
     queryParams.endTime = undefined;
   }
 
-  listConfig(toRaw(queryParams)).then(res => {
+  try {
+    const res = await listConfig(toRaw(queryParams));
     if (res.code === RESULT_CODE_SUCCESS) {
-      // 取消勾选
-      if (tableState.selectedRowKeys.length > 0) {
-        tableState.selectedRowKeys = [];
+      clearSelection();
+      setTotal(res.data.total);
+      tableState.data = res.data.rows;
+      if (fixPageAfterDelete(res.data.rows.length)) {
+        queryParams.pageNum = pagination.current;
+        const res2 = await listConfig(toRaw(queryParams));
+        if (res2.code === RESULT_CODE_SUCCESS) {
+          setTotal(res2.data.total);
+          tableState.data = res2.data.rows;
+        }
       }
-      const { total, rows } = res.data;
-      tablePagination.total = total;
-      tableState.data = rows;
     }
+  } finally {
     tableState.loading = false;
-  });
+  }
 }
 
 onMounted(() => {
-  // 初始字典数据
-  Promise.allSettled([getDict('sys_yes_no')]).then(resArr => {
-    if (resArr[0].status === 'fulfilled') {
-      dict.sysYesNo = resArr[0].value;
-    }
-  });
-  // 获取列表数据
-  fnGetList();
+  loadDicts();
+  fetchList();
 });
 </script>
 
@@ -494,62 +252,44 @@ onMounted(() => {
       </a-typography-paragraph>
     </template>
 
-    <a-card
-      v-show="tableState.seached"
-      :bordered="false"
-      :body-style="{ marginBottom: '24px', paddingBottom: 0 }"
-    >
-      <!-- 表格搜索栏 -->
+    <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="参数名称" name="configName">
-              <a-input
-                v-model:value="queryParams.configName"
-                allow-clear
-                placeholder="请输入参数名称"
-              ></a-input>
+              <a-input v-model:value="queryParams.configName" allow-clear placeholder="请输入参数名称"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="参数键名" name="configKey">
-              <a-input
-                v-model:value="queryParams.configKey"
-                allow-clear
-                placeholder="请输入参数键名"
-              ></a-input>
+              <a-input v-model:value="queryParams.configKey" allow-clear placeholder="请输入参数键名"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="4" :md="12" :xs="24">
             <a-form-item label="系统内置" name="configType">
-              <a-select
-                v-model:value="queryParams.configType"
-                allow-clear
-                placeholder="请选择"
-                :options="dict.sysYesNo"
-              >
+              <a-select v-model:value="queryParams.configType" allow-clear placeholder="请选择" :options="dict.sysYesNo">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="8" :md="12" :xs="24">
             <a-form-item label="创建时间" name="queryRangePicker">
-              <a-range-picker
-                v-model:value="queryRangePicker"
-                :bordered="true"
-                :allow-clear="true"
-                style="width: 100%"
-              ></a-range-picker>
+              <a-range-picker v-model:value="queryRangePicker" :bordered="true" :allow-clear="true"
+                style="width: 100%"></a-range-picker>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fnGetList(1)">
-                  <template #icon><SearchOutlined /></template>
+                <a-button type="primary" @click.prevent="fetchList(1)">
+                  <template #icon>
+                    <SearchOutlined />
+                  </template>
                   搜索
                 </a-button>
-                <a-button type="default" @click.prevent="fnQueryReset">
-                  <template #icon><ClearOutlined /></template>
+                <a-button type="default" @click.prevent="resetQuery">
+                  <template #icon>
+                    <ClearOutlined />
+                  </template>
                   重置
                 </a-button>
               </a-space>
@@ -560,85 +300,64 @@ onMounted(() => {
     </a-card>
 
     <a-card :bordered="false" :body-style="{ padding: '0px' }">
-      <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button
-            type="primary"
-            @click.prevent="fnModalVisibleByEdit()"
-            v-perms:has="['system:config:add']"
-          >
-            <template #icon><PlusOutlined /></template>
+          <a-button type="primary" @click.prevent="handleEdit()" v-perms:has="['system:config:add']">
+            <template #icon>
+              <PlusOutlined />
+            </template>
             新建
           </a-button>
-          <a-button
-            type="default"
-            danger
-            :disabled="tableState.selectedRowKeys.length <= 0"
-            @click.prevent="fnRecordDelete()"
-            v-perms:has="['system:config:remove']"
-          >
-            <template #icon><DeleteOutlined /></template>
+          <a-button type="default" danger :disabled="tableState.selectedRowKeys.length <= 0"
+            @click.prevent="handleDelete()" v-perms:has="['system:config:remove']">
+            <template #icon>
+              <DeleteOutlined />
+            </template>
             删除
           </a-button>
-          <a-button
-            type="dashed"
-            danger
-            @click.prevent="fnRefreshConfig"
-            v-perms:has="['system:config:remove']"
-          >
-            <template #icon><SyncOutlined /></template>
+          <a-button type="dashed" danger @click.prevent="handleRefreshConfig" v-perms:has="['system:config:remove']">
+            <template #icon>
+              <SyncOutlined />
+            </template>
             刷新缓存
           </a-button>
-          <a-button
-            type="dashed"
-            @click.prevent="fnExportList()"
-            v-perms:has="['system:config:export']"
-          >
-            <template #icon><ExportOutlined /></template>
+          <a-button type="dashed" @click.prevent="handleExport()" v-perms:has="['system:config:export']">
+            <template #icon>
+              <ExportOutlined />
+            </template>
             导出
           </a-button>
         </a-space>
       </template>
 
-      <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch
-              v-model:checked="tableState.seached"
-              checked-children="显"
-              un-checked-children="隐"
-              size="small"
-            />
+            <a-switch v-model:checked="tableState.seached" checked-children="是" un-checked-children="否" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
-            <a-switch
-              v-model:checked="tableState.striped"
-              checked-children="开"
-              un-checked-children="关"
-              size="small"
-            />
+            <a-switch v-model:checked="tableState.striped" checked-children="开" un-checked-children="关" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fnGetList()">
-              <template #icon><ReloadOutlined /></template>
+            <a-button type="text" @click.prevent="fetchList()">
+              <template #icon>
+                <ReloadOutlined />
+              </template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon><ColumnHeightOutlined /></template>
+                <template #icon>
+                  <ColumnHeightOutlined />
+                </template>
               </a-button>
               <template #overlay>
-                <a-menu
-                  :selected-keys="[tableState.size as string]"
-                  @click="fnTableSize"
-                >
+                <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
                   <a-menu-item key="default">默认</a-menu-item>
                   <a-menu-item key="middle">中等</a-menu-item>
                   <a-menu-item key="small">紧凑</a-menu-item>
@@ -649,26 +368,16 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <!-- 表格列表 -->
-      <a-table
-        class="table"
-        row-key="configId"
-        :columns="tableColumns"
-        :loading="tableState.loading"
-        :data-source="tableState.data"
-        :size="tableState.size"
-        :row-class-name="fnTableStriped"
-        :pagination="tablePagination"
+      <a-table class="table" row-key="configId" :columns="tableColumns" :loading="tableState.loading"
+        :data-source="tableState.data" :size="tableState.size" :row-class-name="rowClassName" :pagination="pagination"
         :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
-        }"
-        :row-selection="{
+        }" :row-selection="{
           type: 'checkbox',
           selectedRowKeys: tableState.selectedRowKeys,
-          onChange: fnTableSelectedRowKeys,
-        }"
-      >
+          onChange: setSelectedRowKeys,
+        }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'configType'">
             <DictTag :options="dict.sysYesNo" :value="record.configType" />
@@ -677,32 +386,28 @@ onMounted(() => {
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
-                <a-button
-                  type="link"
-                  @click.prevent="fnModalVisibleByVive(record.configId)"
-                  v-perms:has="['system:config:query']"
-                >
-                  <template #icon><ProfileOutlined /></template>
+                <a-button type="link" @click.prevent="handleView(record.configId)"
+                  v-perms:has="['system:config:query']">
+                  <template #icon>
+                    <ProfileOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
-                <a-button
-                  type="link"
-                  @click.prevent="fnModalVisibleByEdit(record.configId)"
-                  v-perms:has="['system:config:edit']"
-                >
-                  <template #icon><FormOutlined /></template>
+                <a-button type="link" @click.prevent="handleEdit(record.configId)" v-perms:has="['system:config:edit']">
+                  <template #icon>
+                    <FormOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>删除</template>
-                <a-button
-                  type="link"
-                  @click.prevent="fnRecordDelete(record.configId)"
-                  v-perms:has="['system:config:remove']"
-                >
-                  <template #icon><DeleteOutlined /></template>
+                <a-button type="link" @click.prevent="handleDelete(record.configId)"
+                  v-perms:has="['system:config:remove']">
+                  <template #icon>
+                    <DeleteOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
             </a-space>
@@ -712,13 +417,8 @@ onMounted(() => {
     </a-card>
 
     <!-- 详情框 -->
-    <ProModal
-      :drag="true"
-      :width="800"
-      :open="modalState.visibleByView"
-      :title="modalState.title"
-      @cancel="fnModalCancel"
-    >
+    <ProModal :drag="true" :width="800" :open="modalState.visibleByView" :title="modalState.title"
+      @cancel="handleCancel">
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
@@ -728,10 +428,7 @@ onMounted(() => {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="系统内置" name="configType">
-              <DictTag
-                :options="dict.sysYesNo"
-                :value="modalState.form.configType"
-              />
+              <DictTag :options="dict.sysYesNo" :value="modalState.form.configType" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -747,116 +444,53 @@ onMounted(() => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item
-          label="参数说明"
-          name="remark"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-textarea
-            :value="modalState.form.remark"
-            :auto-size="{ minRows: 2, maxRows: 6 }"
-            :disabled="true"
-            style="color: rgba(0, 0, 0, 0.85)"
-          />
+        <a-form-item label="参数说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea :value="modalState.form.remark" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
+            style="color: rgba(0, 0, 0, 0.85)" />
         </a-form-item>
       </a-form>
       <template #footer>
-        <a-button key="cancel" @click="fnModalCancel">关闭</a-button>
+        <a-button key="cancel" @click="handleCancel">关闭</a-button>
       </template>
     </ProModal>
 
     <!-- 新增框或修改框 -->
-    <ProModal
-      :drag="true"
-      :destroyOnClose="true"
-      :width="800"
-      :keyboard="false"
-      :mask-closable="false"
-      :open="modalState.visibleByEdit"
-      :title="modalState.title"
-      :confirm-loading="modalState.confirmLoading"
-      @ok="fnModalOk"
-      @cancel="fnModalCancel"
-    >
-      <a-form
-        name="modalStateForm"
-        layout="horizontal"
-        :label-col="{ span: 6 }"
-        :label-wrap="true"
-      >
+    <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
+      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="modalState.confirmLoading"
+      @ok="handleSubmit" @cancel="handleCancel">
+      <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="参数名称"
-              name="configName"
-              v-bind="modalStateForm.validateInfos.configName"
-            >
-              <a-input
-                v-model:value="modalState.form.configName"
-                allow-clear
-                placeholder="请输入参数名称"
-                :maxlength="45"
-              ></a-input>
+            <a-form-item label="参数名称" name="configName" v-bind="modalStateForm.validateInfos.configName">
+              <a-input v-model:value="modalState.form.configName" allow-clear placeholder="请输入参数名称"
+                :maxlength="45"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="系统内置" name="configType">
-              <a-select
-                v-model:value="modalState.form.configType"
-                default-value="N"
-                placeholder="系统内置"
-                :options="dict.sysYesNo"
-              >
+              <a-select v-model:value="modalState.form.configType" default-value="N" placeholder="系统内置"
+                :options="dict.sysYesNo">
               </a-select>
             </a-form-item>
           </a-col>
         </a-row>
-
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="参数键名"
-              name="configKey"
-              v-bind="modalStateForm.validateInfos.configKey"
-            >
-              <a-input
-                v-model:value="modalState.form.configKey"
-                allow-clear
-                placeholder="请输入参数名称"
-                :maxlength="45"
-              ></a-input>
+            <a-form-item label="参数键名" name="configKey" v-bind="modalStateForm.validateInfos.configKey">
+              <a-input v-model:value="modalState.form.configKey" allow-clear placeholder="请输入参数键名"
+                :maxlength="45"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="参数键值"
-              name="configValue"
-              v-bind="modalStateForm.validateInfos.configValue"
-            >
-              <a-input
-                v-model:value="modalState.form.configValue"
-                allow-clear
-                placeholder="请输入参数键值"
-                :maxlength="45"
-              ></a-input>
+            <a-form-item label="参数键值" name="configValue" v-bind="modalStateForm.validateInfos.configValue">
+              <a-input v-model:value="modalState.form.configValue" allow-clear placeholder="请输入参数键值"
+                :maxlength="45"></a-input>
             </a-form-item>
           </a-col>
         </a-row>
-
-        <a-form-item
-          label="参数说明"
-          name="remark"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-textarea
-            v-model:value="modalState.form.remark"
-            :auto-size="{ minRows: 2, maxRows: 6 }"
-            :maxlength="200"
-            :show-count="true"
-            placeholder="请输入参数说明"
-          />
+        <a-form-item label="参数说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea v-model:value="modalState.form.remark" :auto-size="{ minRows: 2, maxRows: 6 }" :maxlength="200"
+            :show-count="true" placeholder="请输入参数说明" />
         </a-form-item>
       </a-form>
     </ProModal>
