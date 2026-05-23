@@ -8,7 +8,7 @@ import {
 } from '@/plugins/auth-token';
 import { sessionGetJSON, sessionSetJSON } from '@/utils/cache-session-utils';
 import { TOKEN_KEY, TOKEN_KEY_PREFIX } from '@/constants/token-constants';
-import { CACHE_SESSION_FATCH } from '@/constants/cache-keys-constants';
+import { CACHE_SESSION_FETCH } from '@/constants/cache-keys-constants';
 import {
   APP_REQUEST_HEADER_CODE,
   APP_REQUEST_HEADER_VERSION,
@@ -25,64 +25,64 @@ import {
 } from '@/constants/result-constants';
 import { refreshToken } from '@/api/auth';
 
-/**响应结果类型 */
+/** 响应结果类型 */
 export type ResultType = {
-  /**响应码 */
+  /** 响应码 */
   code: number;
-  /**信息 */
+  /** 信息 */
   msg: string;
-  /**数据 */
+  /** 数据 */
   data?: any;
-  /**未知属性 */
+  /** 未知属性 */
   [key: string]: any;
 };
 
-/**防止重复提交类型 */
+/** 防止重复提交类型 */
 type RepeatSubmitType = {
-  /**请求地址 */
+  /** 请求地址 */
   url: string;
-  /**请求数据 */
+  /** 请求数据 */
   data: string;
-  /**请求时间 */
+  /** 请求时间 */
   time: number;
 };
 
-/**请求参数类型 */
+/** 请求参数类型 */
 type OptionsType = {
-  /**请求的根域名地址-不带/后缀 */
+  /** 请求的根域名地址-不带/后缀 */
   baseUrl?: string;
-  /**超时时间，毫秒 */
+  /** 超时时间，毫秒 */
   timeout?: number;
-  /**请求地址 */
+  /** 请求地址 */
   url: string;
-  /**请求方法 */
+  /** 请求方法 */
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  /**请求头 */
+  /** 请求头 */
   headers?: HeadersInit;
-  /**地址栏参数 */
+  /** 地址栏参数 */
   params?: Record<string, string | number | boolean | undefined>;
-  /**发送数据 */
+  /** 发送数据 */
   data?: Record<string, any> | FormData | object;
-  /**请求数据类型 */
+  /** 请求数据类型 */
   dataType?: 'form-data' | 'json';
-  /**响应数据类型 */
+  /** 响应数据类型 */
   responseType?: 'text' | 'json' | 'blob' | 'arrayBuffer';
-  /**请求缓存策略 */
+  /** 请求缓存策略 */
   cache?: RequestCache;
-  /**请求的凭证，如 omit、same-origin、include */
+  /** 请求的凭据 */
   credentials?: RequestCredentials;
-  /**请求体 */
+  /** 请求体 */
   body?: BodyInit;
-  /**防止数据重复提交 */
+  /** 防止数据重复提交 */
   repeatSubmit?: boolean;
-  /**携带授权Token请求头 */
-  whithToken?: boolean;
-  /**控制请求终止，设置timeout无效 */
+  /** 携带授权Token请求头 */
+  withToken?: boolean;
+  /** 控制请求终止 */
   signal?: AbortSignal;
 };
 
-/**默认请求参数 */
-const FATCH_OPTIONS: OptionsType = {
+/** 默认请求参数 */
+const FETCH_OPTIONS: OptionsType = {
   baseUrl: import.meta.env.VITE_API_BASE_URL,
   timeout: 10 * 1000,
   url: '',
@@ -96,13 +96,66 @@ const FATCH_OPTIONS: OptionsType = {
   cache: 'no-cache',
   credentials: undefined,
   repeatSubmit: true,
-  whithToken: true,
+  withToken: true,
 };
 
-/**请求前的拦截 */
-function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
+// ==================== Token 刷新队列 ====================
+
+/** 是否正在刷新token */
+let isRefreshingToken = false;
+/** 等待token刷新完成的请求队列 */
+let pendingRequestsQueue: Array<{
+  /** 刷新成功后重放请求的函数 */
+  resolve: (value: ResultType | PromiseLike<ResultType>) => void;
+  /** 刷新失败后拒绝请求的函数 */
+  reject: (reason?: any) => void;
+  /** 待重放的请求参数 */
+  options: OptionsType;
+}> = [];
+
+/**
+ * 处理token刷新队列
+ * 刷新完成后重放所有等待中的请求，或全部拒绝
+ *
+ * @param isSuccess - 刷新是否成功
+ * @param refreshResult - 刷新接口返回的结果
+ */
+function processPendingQueue(isSuccess: boolean, refreshResult?: ResultType) {
+  const queue = pendingRequestsQueue;
+  pendingRequestsQueue = [];
+  isRefreshingToken = false;
+
+  if (isSuccess) {
+    // 刷新成功，重放所有等待中的请求
+    for (const { resolve, options } of queue) {
+      resolve(request(options));
+    }
+  } else {
+    // 刷新失败，拒绝所有等待中的请求，跳转登录
+    const error: ResultType = {
+      code: RESULT_CODE_ERROR,
+      msg: refreshResult?.msg || '登录已过期，请重新登录',
+    };
+    for (const { reject } of queue) {
+      reject(error);
+    }
+    delAccessToken();
+    delRefreshToken();
+    window.location.reload();
+  }
+}
+
+// ==================== 请求前拦截 ====================
+
+/**
+ * 请求前的拦截处理
+ * 负责设置请求头、token注入、参数序列化、防重复提交
+ *
+ * @param options - 请求参数
+ * @returns 处理后的请求参数，或防重复提交被触发时的错误结果
+ */
+function beforeRequest(options: OptionsType): OptionsType | Promise<ResultType> {
   options.headers = Object.assign({}, options.headers);
-  //console.log('请求前的拦截', options);
 
   // 使用apifoxmock.com时开启
   if (import.meta.env.DEV || options.baseUrl?.includes('apifoxmock.com')) {
@@ -124,7 +177,7 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
 
   // 是否需要设置 token
   const accessToken = getAccessToken();
-  if (options.whithToken && accessToken) {
+  if (options.withToken && accessToken) {
     Reflect.set(
       options.headers,
       TOKEN_KEY,
@@ -144,7 +197,7 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
       data: JSON.stringify(options.data) || '',
       time: Date.now(),
     };
-    const sessionObj: RepeatSubmitType = sessionGetJSON(CACHE_SESSION_FATCH);
+    const sessionObj: RepeatSubmitType = sessionGetJSON(CACHE_SESSION_FETCH);
     if (sessionObj) {
       const { url, data, time } = sessionObj;
       const interval = 3 * 1000; // 间隔时间(ms)，小于此时间视为重复提交
@@ -159,10 +212,10 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
           msg: RESULT_MSG_RESUBMIT,
         });
       } else {
-        sessionSetJSON(CACHE_SESSION_FATCH, requestObj);
+        sessionSetJSON(CACHE_SESSION_FETCH, requestObj);
       }
     } else {
-      sessionSetJSON(CACHE_SESSION_FATCH, requestObj);
+      sessionSetJSON(CACHE_SESSION_FETCH, requestObj);
     }
   }
 
@@ -172,7 +225,7 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
     const queryParams: string[] = [];
     for (const key in params) {
       const value = params[key];
-      // 空字符或未定义的值不作为参数发送
+      // 空字符串或未定义的值不作为参数发送
       if (value === '' || value === undefined) continue;
       const str = `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
       queryParams.push(str);
@@ -186,7 +239,7 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
 
   if (options.method === 'GET') return options;
 
-  // 非get参数提交
+  // 非GET参数提交
   if (options.data instanceof FormData) {
     options.body = options.data;
   } else {
@@ -195,47 +248,99 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<any> {
   return options;
 }
 
-/**响应前的拦截 */
+// ==================== 响应后拦截 ====================
+
+/**
+ * 响应后的拦截处理
+ * 统一处理token过期刷新（带并发队列），其他错误码直接透传给调用方
+ *
+ * @param options - 请求参数（用于token刷新后重放）
+ * @param res - 响应结果
+ * @returns 处理后的响应结果
+ */
 async function beforeResponse(
   options: OptionsType,
   res: ResultType
-): Promise<any> {
-  // console.log('请求后的拦截', res);
-  // 登录失效时，移除访问令牌并重新请求
+): Promise<ResultType> {
+  // 登录过期时，刷新token并重放请求
   if (res.code === 401001) {
-    const result = await refreshToken(getRefreshToken());
-    // 更新访问令牌和刷新令牌
-    if (result.code === RESULT_CODE_SUCCESS) {
-      setAccessToken(result.data.accessToken, result.data.refreshExpiresIn);
-      setRefreshToken(result.data.refreshToken, result.data.refreshExpiresIn);
-      return await request(options);
-    } else {
-      delAccessToken();
-      delRefreshToken();
-      window.location.reload();
+    // 如果已经在刷新中，将当前请求加入等待队列
+    if (isRefreshingToken) {
+      return new Promise<ResultType>((resolve, reject) => {
+        pendingRequestsQueue.push({ resolve, reject, options });
+      });
+    }
+
+    // 标记开始刷新，锁定后续401请求进入队列
+    isRefreshingToken = true;
+
+    try {
+      const result = await refreshToken(getRefreshToken());
+      if (result.code === RESULT_CODE_SUCCESS) {
+        // 刷新成功，更新token
+        setAccessToken(result.data.accessToken, result.data.refreshExpiresIn);
+        setRefreshToken(result.data.refreshToken, result.data.refreshExpiresIn);
+        // 重放当前请求
+        const retriedResult = await request(options);
+        // 释放队列中的等待请求
+        processPendingQueue(true);
+        return retriedResult;
+      } else {
+        // 刷新失败，拒绝所有等待请求
+        processPendingQueue(false, result);
+        return {
+          code: RESULT_CODE_ERROR,
+          msg: result.msg || '登录已过期，请重新登录',
+        };
+      }
+    } catch (error: any) {
+      // 刷新接口本身异常
+      processPendingQueue(false, { code: RESULT_CODE_ERROR, msg: error?.message });
+      return {
+        code: RESULT_CODE_ERROR,
+        msg: '登录已过期，请重新登录',
+      };
     }
   }
+
+  // 其他登录失效码，清除token并跳转登录
   if ([401002, 401003].includes(res.code)) {
     delAccessToken();
     delRefreshToken();
     window.location.reload();
   }
+
   return res;
 }
 
+// ==================== 通用HTTP请求 ====================
+
 /**
- * 请求http
+ * 通用HTTP请求函数
  *
- * @param options 请求参数
+ * 封装fetch API，统一处理请求拦截、响应拦截、超时控制、token刷新等逻辑。
  *
- * responseType改变响应结果类型
- * @returns 返回 Promise<ResultType>
+ * @param options - 请求参数
+ * @returns 响应结果，始终返回 ResultType，不会抛出业务异常
+ *
+ * @example
+ * ```ts
+ * // 基本请求
+ * const res = await request({ url: '/api/user', method: 'GET' });
+ * if (isSuccess(res)) { console.log(res.data); }
+ *
+ * // 带查询参数
+ * const res = await request({ url: '/api/list', method: 'GET', params: { page: 1 } });
+ *
+ * // POST提交
+ * const res = await request({ url: '/api/user', method: 'POST', data: { name: 'test' } });
+ * ```
  */
 export async function request(options: OptionsType): Promise<ResultType> {
-  let reqOptions = Object.assign({}, FATCH_OPTIONS, options);
+  const reqOptions = Object.assign({}, FETCH_OPTIONS, options);
 
   // 请求超时控制请求终止
-  let timeoutId: any = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
   if (!reqOptions.signal) {
     const controller = new AbortController();
     reqOptions.signal = controller.signal;
@@ -247,11 +352,13 @@ export async function request(options: OptionsType): Promise<ResultType> {
   // 检查请求拦截
   const beforeReq = beforeRequest(reqOptions);
   if (beforeReq instanceof Promise) {
+    // 防重复提交被触发，直接返回错误
+    clearTimeout(timeoutId!);
     return await beforeReq;
   }
-  reqOptions = beforeReq;
+  Object.assign(reqOptions, beforeReq);
 
-  // 判断用户传递的URL是否http或/开头
+  // 判断用户传递的URL是否http或https开头
   if (!reqOptions.url.startsWith('http')) {
     const uri = reqOptions.url.startsWith('/')
       ? reqOptions.url
@@ -261,32 +368,54 @@ export async function request(options: OptionsType): Promise<ResultType> {
 
   try {
     const res = await fetch(reqOptions.url, reqOptions);
-    // console.log('请求结果：', res);
-    if (res.status === 500) {
-      return {
-        code: RESULT_CODE_EXCEPTION,
-        msg: RESULT_MSG_SERVER_ERROR,
-      };
-    }
 
     // 根据响应数据类型返回
     switch (reqOptions.responseType) {
-      case 'text': // 文本数据
+      case 'text': {
         const str = await res.text();
         return {
           code: RESULT_CODE_SUCCESS,
           msg: str,
         };
-      case 'json': // json格式数据
-        const result = await res.json();
-        // 请求后的拦截
-        return await beforeResponse(options, result);
-      case 'blob': // 二进制数据则直接返回
-      case 'arrayBuffer':
+      }
+      case 'json': {
+        // 尝试解析JSON，处理非2xx状态码的业务错误
+        let result: ResultType;
+        try {
+          result = await res.json();
+        } catch {
+          // 响应体非JSON格式（如HTML错误页）
+          return {
+            code: RESULT_CODE_EXCEPTION,
+            msg: res.ok
+              ? RESULT_MSG_SERVER_ERROR
+              : `请求失败(${res.status})`,
+          };
+        }
+        if (!res.ok) {
+          // HTTP状态码非2xx，但后端可能在body中返回了业务错误信息
+          return {
+            code: result.code || RESULT_CODE_EXCEPTION,
+            msg: result.msg || `请求失败(${res.status})`,
+            data: result.data,
+          };
+        }
+        // 请求后的拦截（token刷新等）
+        return await beforeResponse(reqOptions, result);
+      }
+      case 'blob':
+      case 'arrayBuffer': {
         const contentType = res.headers.get('content-type') || '';
         if (contentType.startsWith('application/json')) {
+          // 二进制响应但内容是JSON（可能是错误响应）
           const result = await res.json();
           return result as ResultType;
+        }
+        if (!res.ok) {
+          return {
+            code: RESULT_CODE_EXCEPTION,
+            msg: `请求失败(${res.status})`,
+          };
         }
         const data =
           reqOptions.responseType === 'blob'
@@ -299,6 +428,7 @@ export async function request(options: OptionsType): Promise<ResultType> {
           status: res.status,
           headers: res.headers,
         };
+      }
       default:
         return {
           code: RESULT_CODE_ERROR,
@@ -306,16 +436,55 @@ export async function request(options: OptionsType): Promise<ResultType> {
         };
     }
   } catch (error: any) {
-    // 请求被终止时
+    // 请求被终止时（超时或手动取消）
     if (error.name === 'AbortError') {
       return {
         code: RESULT_CODE_ERROR,
         msg: RESULT_MSG_TIMEOUT,
       };
     }
-    throw error;
+    // 网络断开等其他错误
+    return {
+      code: RESULT_CODE_EXCEPTION,
+      msg: RESULT_MSG_SERVER_ERROR,
+    };
   } finally {
-    clearTimeout(timeoutId); // 清除超时计时器
-    timeoutId = null;
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
   }
+}
+
+// ==================== 响应结果工具函数 ====================
+
+/**
+ * 判断请求是否成功
+ * @param res - 请求响应结果
+ * @returns 是否成功
+ */
+export function isSuccess(res: ResultType): boolean {
+  return res.code === RESULT_CODE_SUCCESS;
+}
+
+/**
+ * 安全获取响应数据
+ * @param res - 请求响应结果
+ * @returns 响应数据，失败时返回 undefined
+ */
+export function unwrapData<T = any>(res: ResultType): T | undefined {
+  return res.code === RESULT_CODE_SUCCESS ? (res.data as T) : undefined;
+}
+
+/**
+ * 获取响应数据，失败时抛出异常
+ * @param res - 请求响应结果
+ * @returns 响应数据
+ * @throws 响应失败时抛出错误
+ */
+export function unwrapDataOrThrow<T = any>(res: ResultType): T {
+  if (res.code !== RESULT_CODE_SUCCESS) {
+    throw new Error(res.msg || '请求失败');
+  }
+  return res.data as T;
 }

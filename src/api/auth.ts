@@ -10,7 +10,7 @@ export function login(data: Record<string, string>) {
     url: '/auth/login',
     method: 'POST',
     data: data,
-    whithToken: false,
+    withToken: false,
   });
 }
 
@@ -36,7 +36,7 @@ export function register(data: Record<string, any>) {
     url: '/auth/register',
     method: 'POST',
     data: data,
-    whithToken: false,
+    withToken: false,
   });
 }
 
@@ -50,7 +50,7 @@ export function refreshToken(refreshToken: string) {
     url: '/auth/refresh-token',
     method: 'POST',
     data: { refreshToken },
-    whithToken: false,
+    withToken: false,
   });
 }
 
@@ -84,6 +84,6 @@ export function getCaptchaImage() {
   return request({
     url: '/captcha-image',
     method: 'GET',
-    whithToken: false,
+    withToken: false,
   });
 }

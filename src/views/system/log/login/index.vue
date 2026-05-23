@@ -1,185 +1,91 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { useRoute } from "vue-router";
-import { ref, toRaw, onMounted } from "vue";
+import { ref, toRaw, computed, onMounted } from "vue";
+import { useQueryClient } from "@tanstack/vue-query";
 import { PageContainer } from "antdv-pro-layout";
 import type { Dayjs } from "dayjs";
 import type { ColumnsType } from "ant-design-vue/es/table";
-import {
-  exportSysLogLogin,
-  listSysLogLogin,
-  cleanSysLogLogin,
-} from "@/api/system/log/login";
+import { exportSysLogLogin, listSysLogLogin, cleanSysLogLogin } from "@/api/system/log/login";
 import { saveAs } from "file-saver";
 import { parseDateToStr } from "@/utils/date-utils";
-import { RESULT_CODE_SUCCESS } from "@/constants/result-constants";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { usePagination } from "@/hooks/usePagination";
 import { useTableUI } from "@/hooks/useTableUI";
-import { useMessageAction } from "@/hooks/useMessageAction";
 import { useDictSetup } from "@/hooks/useDictSetup";
+import { useListQuery } from "@/hooks/useListQuery";
+import { confirmAndRun } from "@/hooks/useMutationAction";
 
 const route = useRoute();
-
+const queryClient = useQueryClient();
 const title = ref<string>(route.meta.title ?? "标题");
 
-const { dict, loadDicts } = useDictSetup({
-  sysCommonStatus: "sys_common_status",
-});
-
-const { confirmAndRun } = useMessageAction();
+const { dict, loadDicts } = useDictSetup({ sysCommonStatus: "sys_common_status" });
 
 const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
-const { queryParams, resetQuery: baseResetQuery } = useQueryParams(
-  {
-    loginIp: "",
-    userName: "",
-    statusFlag: undefined as string | undefined,
-    beginTime: undefined as number | undefined,
-    endTime: undefined as number | undefined,
-    pageNum: 1,
-    pageSize: 20,
-    sortBy: "",
-    sortOrder: "",
-  },
-  () => {
-    resetPage();
-    fetchList();
-  },
-);
-
-/** 重置查询条件，清空日期选择器后恢复默认参数并重新查询 */
-function resetQuery() {
-  queryRangePicker.value = undefined;
-  baseResetQuery();
-}
-
-const {
-  tableState,
-  setTableSize,
-  rowClassName,
-} = useTableUI();
-
-const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
-  onChange: (page, pageSize) => {
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
-    fetchList();
-  },
-});
-
-const tableColumns: ColumnsType = [
-  { title: "日志编号", dataIndex: "id", align: "left", width: 100 },
-  {
-    title: "登录账号",
-    dataIndex: "userName",
-    align: "left",
-    width: 150,
-    sorter: true,
-  },
-  { title: "登录IP", dataIndex: "loginIp", align: "left", width: 150 },
-  {
-    title: "登录地点",
-    dataIndex: "loginLocation",
-    align: "left",
-    width: 150,
-  },
-  { title: "操作系统", dataIndex: "os", align: "left", width: 150 },
-  { title: "浏览器", dataIndex: "browser", align: "left", width: 200 },
-  {
-    title: "登录状态",
-    dataIndex: "statusFlag",
-    key: "statusFlag",
-    align: "left",
-    width: 100,
-  },
-  {
-    title: "登录时间",
-    dataIndex: "loginTime",
-    align: "left",
-    width: 150,
-    sorter: true,
-    customRender(opt) {
-      if (+opt.value <= 0) return "";
-      return parseDateToStr(+opt.value);
-    },
-  },
-  { title: "登录信息", dataIndex: "msg", align: "left", ellipsis: true },
-];
-
-/** 表格排序变化回调，同步排序参数并重新查询 */
-function handleTableChange(_pagination: any, _filters: any, sorter: any) {
-  queryParams.sortBy = sorter.order ? sorter.field : undefined;
-  queryParams.sortOrder = sorter.order;
-  fetchList();
-}
-
-/** 清空所有登录日志，操作前需二次确认 */
-function handleCleanList() {
-  confirmAndRun({
-    content: "确认清空所有登录日志数据项?",
-    onOk: () => cleanSysLogLogin(),
-    successText: "清空成功",
-    onSuccess: () => fetchList(),
-  });
-}
-
-/** 根据当前搜索条件导出登录日志列表 xlsx 文件 */
-function handleExport() {
-  confirmAndRun({
-    content: "确认根据搜索条件导出xlsx表格文件吗",
-    onOk: () => exportSysLogLogin(toRaw(queryParams)),
-    successText: "已导出完成",
-    onSuccess: (res) => {
-      saveAs(res.data, `sys_log_login_${Date.now()}.xlsx`);
-    },
-  });
-}
-
-/** 查询登录日志列表，支持指定页码；处理日期范围筛选及删除后空页修正 */
-async function fetchList(pageNum?: number) {
-  if (tableState.loading) return;
-  tableState.loading = true;
-  if (pageNum) {
-    queryParams.pageNum = pageNum;
-  }
-
-  if (
-    Array.isArray(queryRangePicker.value) &&
-    queryRangePicker.value.length > 0
-  ) {
+function syncDateRange() {
+  if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
     queryParams.beginTime = queryRangePicker.value[0].startOf("day").valueOf();
     queryParams.endTime = queryRangePicker.value[1].endOf("day").valueOf();
   } else {
     queryParams.beginTime = undefined;
     queryParams.endTime = undefined;
   }
-
-  try {
-    const res = await listSysLogLogin(toRaw(queryParams));
-    if (res.code === RESULT_CODE_SUCCESS) {
-      setTotal(res.data.total);
-      tableState.data = res.data.rows;
-      if (fixPageAfterDelete(res.data.rows.length)) {
-        queryParams.pageNum = pagination.current;
-        const res2 = await listSysLogLogin(toRaw(queryParams));
-        if (res2.code === RESULT_CODE_SUCCESS) {
-          setTotal(res2.data.total);
-          tableState.data = res2.data.rows;
-        }
-      }
-    }
-  } finally {
-    tableState.loading = false;
-  }
 }
 
-onMounted(() => {
-  loadDicts();
-  fetchList();
-});
-</script>
+const { queryParams, resetQuery: baseResetQuery } = useQueryParams(
+  { loginIp: "", userName: "", statusFlag: undefined as string | undefined, beginTime: undefined as number | undefined, endTime: undefined as number | undefined, pageNum: 1, pageSize: 20, sortBy: "", sortOrder: "" },
+  () => { resetPage(); },
+);
 
+function resetQuery() { queryRangePicker.value = undefined; baseResetQuery(); }
+
+const { pagination, resetPage } = usePagination({
+  onChange: (page, pageSize) => { queryParams.pageNum = page; queryParams.pageSize = pageSize; },
+});
+
+const { listData, total, isFetching, refetch } = useListQuery({
+  queryKey: computed(() => { syncDateRange(); return ["logLoginList", { ...queryParams }]; }),
+  queryFn: () => listSysLogLogin(toRaw(queryParams)),
+});
+
+const { tableState, setTableSize, rowClassName } = useTableUI();
+
+const tableColumns: ColumnsType = [
+  { title: "日志编号", dataIndex: "id", align: "left", width: 100 },
+  { title: "登录账号", dataIndex: "userName", align: "left", width: 150, sorter: true },
+  { title: "登录IP", dataIndex: "loginIp", align: "left", width: 150 },
+  { title: "登录地点", dataIndex: "loginLocation", align: "left", width: 150 },
+  { title: "操作系统", dataIndex: "os", align: "left", width: 150 },
+  { title: "浏览器", dataIndex: "browser", align: "left", width: 200 },
+  { title: "登录状态", dataIndex: "statusFlag", key: "statusFlag", align: "left", width: 100 },
+  { title: "登录时间", dataIndex: "loginTime", align: "left", width: 150, sorter: true, customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); } },
+  { title: "登录信息", dataIndex: "msg", align: "left", ellipsis: true },
+];
+
+function handleTableChange(_pagination: any, _filters: any, sorter: any) {
+  queryParams.sortBy = sorter.order ? sorter.field : undefined;
+  queryParams.sortOrder = sorter.order;
+  refetch();
+}
+
+function handleCleanList() {
+  confirmAndRun({
+    content: "确认清空所有登录日志数据项?",
+    action: () => cleanSysLogLogin(), variables: undefined as any, successText: "清空成功", invalidateKeys: [["logLoginList"]],
+  });
+}
+
+function handleExport() {
+  confirmAndRun({
+    content: "确认根据搜索条件导出xlsx表格文件吗",
+    action: () => exportSysLogLogin(toRaw(queryParams)), variables: undefined as any, successText: "已导出完成",
+    onSuccess: (res) => { saveAs(res.data, `sys_log_login_${Date.now()}.xlsx`); },
+  });
+}
+
+onMounted(() => { loadDicts(); });
+</script>
 <template>
   <PageContainer :title="title">
     <template #content>
@@ -219,7 +125,7 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fetchList(1)">
+                <a-button type="primary" @click.prevent="refetch">
                   <template #icon><SearchOutlined /></template>
                   搜索
                 </a-button>
@@ -260,7 +166,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList()">
+            <a-button type="text" @click.prevent="refetch">
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
@@ -282,8 +188,8 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="id" :columns="tableColumns" :loading="tableState.loading"
-        :data-source="tableState.data" :size="tableState.size" :row-class-name="rowClassName"
+      <a-table class="table" row-key="id" :columns="tableColumns" :loading="isFetching"
+        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName"
         :scroll="{
           x: tableColumns.length * 160,
           scrollToFirstRowOnChange: true,

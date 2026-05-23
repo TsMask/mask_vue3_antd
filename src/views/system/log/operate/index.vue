@@ -1,223 +1,103 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { useRoute } from "vue-router";
-import { ref, reactive, toRaw, onMounted } from "vue";
+import { ref, toRaw, computed, onMounted } from "vue";
+import { useQueryClient } from "@tanstack/vue-query";
 import { PageContainer } from "antdv-pro-layout";
 import { ProModal } from "antdv-pro-modal";
 import type { Dayjs } from "dayjs";
 import type { ColumnsType } from "ant-design-vue/es/table";
-import {
-  exportSysLogOperate,
-  listSysLogOperate,
-  cleanSysLogOperate,
-} from "@/api/system/log/operate";
+import { exportSysLogOperate, listSysLogOperate, cleanSysLogOperate } from "@/api/system/log/operate";
 import { saveAs } from "file-saver";
 import { parseDateToStr } from "@/utils/date-utils";
-import { RESULT_CODE_SUCCESS } from "@/constants/result-constants";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { usePagination } from "@/hooks/usePagination";
 import { useTableUI } from "@/hooks/useTableUI";
-import { useMessageAction } from "@/hooks/useMessageAction";
 import { useDictSetup } from "@/hooks/useDictSetup";
+import { useListQuery } from "@/hooks/useListQuery";
+import { confirmAndRun } from "@/hooks/useMutationAction";
 
 const route = useRoute();
-
+const queryClient = useQueryClient();
 const title = ref<string>(route.meta.title ?? "标题");
 
-const { dict, loadDicts } = useDictSetup({
-  sysBusinessType: "sys_opera_type",
-  sysCommonStatus: "sys_common_status",
-});
-
-const { confirmAndRun } = useMessageAction();
+const { dict, loadDicts } = useDictSetup({ sysOperType: "sys_opera_type", sysCommonStatus: "sys_common_status" });
 
 const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
-const { queryParams, resetQuery: baseResetQuery } = useQueryParams(
-  {
-    title: "",
-    operaBy: "",
-    operaIp: "",
-    businessType: undefined as string | undefined,
-    statusFlag: undefined as string | undefined,
-    beginTime: undefined as number | undefined,
-    endTime: undefined as number | undefined,
-    pageNum: 1,
-    pageSize: 20,
-    sortBy: "",
-    sortOrder: "",
-  },
-  () => {
-    resetPage();
-    fetchList();
-  },
-);
-
-function resetQuery() {
-  queryRangePicker.value = undefined;
-  baseResetQuery();
-}
-
-const {
-  tableState,
-  setTableSize,
-  rowClassName,
-} = useTableUI();
-
-const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
-  onChange: (page, pageSize) => {
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
-    fetchList();
-  },
-});
-
-const tableColumns: ColumnsType = [
-  { title: "日志编号", dataIndex: "id", align: "left", width: 100 },
-  { title: "模块名称", dataIndex: "title", align: "left", width: 200 },
-  {
-    title: "业务类型",
-    dataIndex: "businessType",
-    key: "businessType",
-    align: "left",
-    width: 100,
-  },
-  {
-    title: "操作人员",
-    dataIndex: "operaBy",
-    align: "left",
-    width: 100,
-    sorter: true,
-  },
-  { title: "操作IP", dataIndex: "operaIp", align: "left", width: 120 },
-  {
-    title: "请求方式",
-    dataIndex: "operaUrlMethod",
-    align: "left",
-    width: 100,
-  },
-  {
-    title: "操作状态",
-    dataIndex: "statusFlag",
-    key: "statusFlag",
-    align: "left",
-    width: 100,
-  },
-  {
-    title: "操作日期",
-    dataIndex: "operaTime",
-    align: "left",
-    width: 150,
-    sorter: true,
-    customRender(opt) {
-      if (+opt.value <= 0) return "";
-      return parseDateToStr(+opt.value);
-    },
-  },
-  {
-    title: "消耗时间",
-    dataIndex: "costTime",
-    key: "costTime",
-    align: "right",
-    width: 100,
-    sorter: true,
-    customRender(opt) {
-      return `${opt.value} ms`;
-    },
-  },
-  { title: "操作", key: "id", align: "left" },
-];
-
-const modalState = reactive({
-  visibleByView: false,
-  title: "操作日志",
-  form: {} as Record<string, any>,
-});
-
-/** 直接从行数据打开操作日志详情弹窗（无需再次请求接口） */
-function handleView(row: Record<string, string>) {
-  Object.assign(modalState.form, row);
-  modalState.title = "操作日志信息";
-  modalState.visibleByView = true;
-}
-
-/** 关闭操作日志详情弹窗 */
-function handleCancel() {
-  modalState.visibleByView = false;
-}
-
-/** 表格排序变化回调，同步排序参数并重新查询 */
-function handleTableChange(_pagination: any, _filters: any, sorter: any) {
-  queryParams.sortBy = sorter.order ? sorter.field : undefined;
-  queryParams.sortOrder = sorter.order;
-  fetchList();
-}
-
-/** 清空所有操作日志，操作前需二次确认 */
-function handleCleanList() {
-  confirmAndRun({
-    content: "确认清空所有操作日志数据项?",
-    onOk: () => cleanSysLogOperate(),
-    successText: "清空成功",
-    onSuccess: () => fetchList(),
-  });
-}
-
-/** 根据当前搜索条件导出操作日志列表 xlsx 文件 */
-function handleExport() {
-  confirmAndRun({
-    content: "确认根据搜索条件导出xlsx表格文件吗",
-    onOk: () => exportSysLogOperate(toRaw(queryParams)),
-    successText: "已导出完成",
-    onSuccess: (res) => {
-      saveAs(res.data, `sys_log_operate_${Date.now()}.xlsx`);
-    },
-  });
-}
-
-/** 查询操作日志列表，支持指定页码；处理日期范围筛选及删除后空页修正 */
-async function fetchList(pageNum?: number) {
-  if (tableState.loading) return;
-  tableState.loading = true;
-  if (pageNum) {
-    queryParams.pageNum = pageNum;
-  }
-
-  if (
-    Array.isArray(queryRangePicker.value) &&
-    queryRangePicker.value.length > 0
-  ) {
+function syncDateRange() {
+  if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
     queryParams.beginTime = queryRangePicker.value[0].startOf("day").valueOf();
     queryParams.endTime = queryRangePicker.value[1].endOf("day").valueOf();
   } else {
     queryParams.beginTime = undefined;
     queryParams.endTime = undefined;
   }
-
-  try {
-    const res = await listSysLogOperate(toRaw(queryParams));
-    if (res.code === RESULT_CODE_SUCCESS) {
-      setTotal(res.data.total);
-      tableState.data = res.data.rows;
-      if (fixPageAfterDelete(res.data.rows.length)) {
-        queryParams.pageNum = pagination.current;
-        const res2 = await listSysLogOperate(toRaw(queryParams));
-        if (res2.code === RESULT_CODE_SUCCESS) {
-          setTotal(res2.data.total);
-          tableState.data = res2.data.rows;
-        }
-      }
-    }
-  } finally {
-    tableState.loading = false;
-  }
 }
 
-onMounted(() => {
-  loadDicts();
-  fetchList();
-});
-</script>
+const { queryParams, resetQuery: baseResetQuery } = useQueryParams(
+  { operIp: "", operaBy: "", operaIp: "", title: "", businessType: undefined as string | undefined, statusFlag: undefined as string | undefined, beginTime: undefined as number | undefined, endTime: undefined as number | undefined, pageNum: 1, pageSize: 20, sortBy: "", sortOrder: "" },
+  () => { resetPage(); },
+);
 
+function resetQuery() { queryRangePicker.value = undefined; baseResetQuery(); }
+
+const { pagination, resetPage } = usePagination({
+  onChange: (page, pageSize) => { queryParams.pageNum = page; queryParams.pageSize = pageSize; },
+});
+
+const { listData, total, isFetching, refetch } = useListQuery({
+  queryKey: computed(() => { syncDateRange(); return ["logOperateList", { ...queryParams }]; }),
+  queryFn: () => listSysLogOperate(toRaw(queryParams)),
+});
+
+const { tableState, setTableSize, rowClassName, setSelectedRowKeys } = useTableUI();
+
+const tableColumns: ColumnsType = [
+  { title: "日志编号", dataIndex: "operId", align: "left", width: 100 },
+  { title: "系统模块", dataIndex: "title", align: "left", width: 150 },
+  { title: "操作类型", dataIndex: "businessType", key: "businessType", align: "left", width: 100 },
+  { title: "操作人员", dataIndex: "operName", align: "left", width: 100 },
+  { title: "操作地址", dataIndex: "operIp", align: "left", width: 150 },
+  { title: "操作状态", dataIndex: "statusFlag", key: "statusFlag", align: "left", width: 100 },
+  { title: "操作时间", dataIndex: "operTime", align: "left", width: 150, sorter: true, customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); } },
+  { title: "操作", key: "operId", align: "left" },
+];
+
+/** 详情弹窗状态 */
+const visibleByView = ref(false);
+const detailForm = ref<Record<string, any>>({});
+
+/** 打开详情弹窗 */
+function handleView(row: Record<string, any>) {
+  detailForm.value = row;
+  visibleByView.value = true;
+}
+
+function handleTableChange(_pagination: any, _filters: any, sorter: any) {
+  queryParams.sortBy = sorter.order ? sorter.field : undefined;
+  queryParams.sortOrder = sorter.order;
+  refetch();
+}
+
+
+
+function handleCleanList() {
+  confirmAndRun({
+    content: "确认清空所有操作日志数据项?",
+    action: () => cleanSysLogOperate(), variables: undefined as any, successText: "清空成功", invalidateKeys: [["logOperateList"]],
+  });
+}
+
+function handleExport() {
+  confirmAndRun({
+    content: "确认根据搜索条件导出xlsx表格文件吗",
+    action: () => exportSysLogOperate(toRaw(queryParams)), variables: undefined as any, successText: "已导出完成",
+    onSuccess: (res) => { saveAs(res.data, `sys_log_operate_${Date.now()}.xlsx`); },
+  });
+}
+
+onMounted(() => { loadDicts(); });
+</script>
 <template>
   <PageContainer :title="title">
     <template #content>
@@ -242,7 +122,7 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="操作IP" name="operaIp">
               <a-input v-model:value="queryParams.operaIp" allow-clear placeholder="请输入操作IP"
-                @keyup.enter.native="fetchList()"></a-input>
+                @keyup.enter="refetch"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
@@ -268,7 +148,7 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fetchList(1)">
+                <a-button type="primary" @click.prevent="refetch">
                   <template #icon><SearchOutlined /></template>
                   搜索
                 </a-button>
@@ -309,7 +189,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList()">
+            <a-button type="text" @click.prevent="refetch">
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
@@ -331,8 +211,8 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="id" :columns="tableColumns" :loading="tableState.loading"
-        :data-source="tableState.data" :size="tableState.size" :row-class-name="rowClassName"
+      <a-table class="table" row-key="id" :columns="tableColumns" :loading="isFetching"
+        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName"
         :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
@@ -360,19 +240,19 @@ onMounted(() => {
     </a-card>
 
     <!-- 详情框 -->
-    <ProModal :drag="true" :width="800" :open="modalState.visibleByView" :title="modalState.title"
-      @cancel="handleCancel">
+    <ProModal :drag="true" :width="800" :open="visibleByView" :title="'操作日志信息'"
+      @cancel="visibleByView = false">
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="日志编号" name="id">
-              {{ modalState.form.id }}
+              {{ detailForm.id }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="执行状态" name="statusFlag">
-              <a-tag :color="+modalState.form.statusFlag ? 'success' : 'error'">
-                {{ ['失败', '正常'][+modalState.form.statusFlag] }}
+              <a-tag :color="+detailForm.statusFlag ? 'success' : 'error'">
+                {{ ['失败', '正常'][+detailForm.statusFlag] }}
               </a-tag>
             </a-form-item>
           </a-col>
@@ -380,28 +260,28 @@ onMounted(() => {
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="业务类型" name="businessType">
-              {{ modalState.form.title }} /
-              <DictTag :options="dict.sysBusinessType" :value="modalState.form.businessType" />
+              {{ detailForm.title }} /
+              <DictTag :options="dict.sysBusinessType" :value="detailForm.businessType" />
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="操作人员" name="operaBy">
-              {{ modalState.form.operaBy }} / {{ modalState.form.operaIp }} /
-              {{ modalState.form.operaLocation }}
+              {{ detailForm.operaBy }} / {{ detailForm.operaIp }} /
+              {{ detailForm.operaLocation }}
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="请求地址" name="operaUrl">
-              {{ modalState.form.operaUrlMethod }}
-              {{ modalState.form.operaUrl }}
+              {{ detailForm.operaUrlMethod }}
+              {{ detailForm.operaUrl }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="操作时间" name="operaTime">
-              <span v-if="+modalState.form.operaTime > 0">
-                {{ parseDateToStr(+modalState.form.operaTime) }}
+              <span v-if="+detailForm.operaTime > 0">
+                {{ parseDateToStr(+detailForm.operaTime) }}
               </span>
             </a-form-item>
           </a-col>
@@ -409,26 +289,26 @@ onMounted(() => {
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="请求耗时" name="costTime">
-              {{ modalState.form.costTime }} ms
+              {{ detailForm.costTime }} ms
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="操作方法" name="operaMethod">
-              {{ modalState.form.operaMethod }}
+              {{ detailForm.operaMethod }}
             </a-form-item>
           </a-col>
         </a-row>
         <a-form-item label="请求参数" name="operaParam" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea v-model:value="modalState.form.operaParam" :auto-size="{ minRows: 2, maxRows: 6 }"
+          <a-textarea v-model:value="detailForm.operaParam" :auto-size="{ minRows: 2, maxRows: 6 }"
             placeholder="请求参数" :disabled="true" />
         </a-form-item>
         <a-form-item label="操作信息" name="operaMsg" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea v-model:value="modalState.form.operaMsg" :auto-size="{ minRows: 2, maxRows: 6 }"
+          <a-textarea v-model:value="detailForm.operaMsg" :auto-size="{ minRows: 2, maxRows: 6 }"
             placeholder="操作信息" :disabled="true" />
         </a-form-item>
       </a-form>
       <template #footer>
-        <a-button key="cancel" @click="handleCancel">关闭</a-button>
+        <a-button key="cancel" @click="visibleByView = false">关闭</a-button>
       </template>
     </ProModal>
   </PageContainer>

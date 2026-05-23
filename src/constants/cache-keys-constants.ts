@@ -1,5 +1,5 @@
 /**会话缓存-网络请求 */
-export const CACHE_SESSION_FATCH = 'cache:session:fatch';
+export const CACHE_SESSION_FETCH = 'cache:session:fetch';
 
 /**本地缓存-布局设置 */
 export const CACHE_LOCAL_PROCONFIG = 'cache:local:proConfig';

@@ -1,246 +1,98 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { useRoute } from "vue-router";
-import { ref, toRaw, onMounted } from "vue";
+import { ref, toRaw, computed, onMounted } from "vue";
+import { useQueryClient } from "@tanstack/vue-query";
 import { PageContainer } from "antdv-pro-layout";
 import { ProModal } from "antdv-pro-modal";
 import { message } from "ant-design-vue";
 import type { ColumnsType } from "ant-design-vue/es/table";
-import {
-  exportPost,
-  listPost,
-  addPost,
-  delPost,
-  getPost,
-  updatePost,
-} from "@/api/system/post";
+import { exportPost, listPost, addPost, delPost, getPost, updatePost } from "@/api/system/post";
 import { saveAs } from "file-saver";
 import { parseDateToStr } from "@/utils/date-utils";
-import { RESULT_CODE_SUCCESS } from "@/constants/result-constants";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { usePagination } from "@/hooks/usePagination";
 import { useTableUI } from "@/hooks/useTableUI";
 import { useCrudModal } from "@/hooks/useCrudModal";
-import { useMessageAction } from "@/hooks/useMessageAction";
 import { useDictSetup } from "@/hooks/useDictSetup";
+import { useListQuery } from "@/hooks/useListQuery";
+import { useMutationAction, confirmAndRun } from "@/hooks/useMutationAction";
 
 const route = useRoute();
-
-/**路由标题 */
+const queryClient = useQueryClient();
 const title = ref<string>(route.meta.title ?? "标题");
 
-/**字典数据 */
-const { dict, loadDicts } = useDictSetup({
-  sysNormalDisable: "sys_normal_disable",
-});
+const { dict, loadDicts } = useDictSetup({ sysNormalDisable: "sys_normal_disable" });
 
-/**操作反馈 */
-const { withLoading, confirmAndRun } = useMessageAction();
-
-/**查询参数 */
 const { queryParams, resetQuery } = useQueryParams(
-  {
-    postCode: "",
-    postName: "",
-    statusFlag: undefined as string | undefined,
-    pageNum: 1,
-    pageSize: 20,
-  },
-  () => {
-    resetPage();
-    fetchList();
-  },
+  { postCode: "", postName: "", statusFlag: undefined as string | undefined, pageNum: 1, pageSize: 20 },
+  () => { resetPage(); },
 );
 
-/**表格UI */
-const {
-  tableState,
-  setTableSize,
-  rowClassName,
-  setSelectedRowKeys,
-  clearSelection,
-} = useTableUI();
-
-/**分页 */
-const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
-  onChange: (page, pageSize) => {
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
-    fetchList();
-  },
+const { pagination, resetPage } = usePagination({
+  onChange: (page, pageSize) => { queryParams.pageNum = page; queryParams.pageSize = pageSize; },
 });
 
-/**弹窗 */
-const {
-  modal: modalState,
-  formCtl: modalStateForm,
-  openView,
-  openEdit,
-  close: handleCancel,
-} = useCrudModal({
+const { listData, total, isFetching, refetch } = useListQuery({
+  queryKey: computed(() => ["postList", { ...queryParams }]),
+  queryFn: () => listPost(toRaw(queryParams)),
+});
+
+const { tableState, setTableSize, rowClassName, setSelectedRowKeys } = useTableUI();
+
+const { modal: modalState, formCtl: modalStateForm, openView, openEdit, close: handleCancel } = useCrudModal({
   initForm: () => ({
-    postId: undefined as string | number | undefined,
-    postName: "",
-    postCode: "",
-    postSort: 0,
-    statusFlag: "0",
-    remark: "",
-    createTime: 0,
+    postId: undefined as string | number | undefined, postCode: "", postName: "", postSort: 0, statusFlag: "0", remark: undefined as string | undefined, createTime: 0,
   }),
   rules: {
-    postName: [
-      { required: true, min: 1, max: 50, message: "请输入岗位编码" },
-    ],
-    postCode: [
-      { required: true, min: 1, max: 50, message: "请输入岗位名称" },
-    ],
+    postCode: [{ required: true, min: 1, max: 50, message: "请输入岗位编码" }],
+    postName: [{ required: true, min: 1, max: 50, message: "请输入岗位名称" }],
+    postSort: [{ required: true, message: "请输入岗位排序" }],
   },
 });
 
-/**表格字段列 */
+const { mutate: submitMutate, isLoading: isSubmitting } = useMutationAction({
+  mutationFn: (form: Record<string, any>) => form.postId ? updatePost(form) : addPost(form),
+  successText: "操作成功",
+  invalidateKeys: [["postList"]],
+  onSuccess() { handleCancel(); queryParams.pageNum = 1; },
+});
+
 const tableColumns: ColumnsType = [
-  {
-    title: "岗位编号",
-    dataIndex: "postId",
-    align: "left",
-    width: 100,
-  },
-  {
-    title: "岗位编码",
-    dataIndex: "postCode",
-    align: "left",
-    width: 100,
-  },
-  {
-    title: "岗位名称",
-    dataIndex: "postName",
-    align: "left",
-    width: 200,
-  },
-  {
-    title: "岗位排序",
-    dataIndex: "postSort",
-    align: "left",
-    width: 100,
-  },
-  {
-    title: "岗位状态",
-    dataIndex: "statusFlag",
-    key: "statusFlag",
-    align: "left",
-    width: 100,
-  },
-  {
-    title: "创建时间",
-    dataIndex: "createTime",
-    align: "left",
-    width: 150,
-    customRender(opt) {
-      if (+opt.value <= 0) return "";
-      return parseDateToStr(+opt.value);
-    },
-  },
-  {
-    title: "操作",
-    key: "postId",
-    align: "left",
-  },
+  { title: "岗位编号", dataIndex: "postId", align: "left", width: 100 },
+  { title: "岗位编码", dataIndex: "postCode", align: "left", width: 200 },
+  { title: "岗位名称", dataIndex: "postName", align: "left", width: 200 },
+  { title: "岗位排序", dataIndex: "postSort", align: "left", width: 100 },
+  { title: "状态", dataIndex: "statusFlag", key: "statusFlag", align: "left", width: 100 },
+  { title: "创建时间", dataIndex: "createTime", align: "left", width: 150, customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); } },
+  { title: "操作", key: "postId", align: "left" },
 ];
 
-/** 打开岗位详情弹窗，根据岗位编号查询并展示数据 */
-function handleView(postId: string | number) {
-  openView(postId, getPost, "岗位信息");
-}
+function handleView(postId: string | number) { openView(postId, getPost, "岗位信息"); }
+function handleEdit(postId?: string | number) { openEdit(postId, getPost, "添加岗位", "修改岗位"); }
 
-/** 打开新增或编辑弹窗，有 postId 则回填数据，否则为新增 */
-function handleEdit(postId?: string | number) {
-  openEdit(postId, getPost, "添加岗位信息", "修改岗位信息");
-}
-
-/** 校验表单后提交新增/编辑，成功则刷新列表并关闭弹窗 */
 async function handleSubmit() {
-  try {
-    await modalStateForm.validate();
-  } catch (e: any) {
-    message.error({
-      content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
-      duration: 3,
-    });
-    return;
-  }
-  modalState.confirmLoading = true;
-  try {
-    const form = toRaw(modalState.form);
-    const res = await withLoading(
-      (form.postId ? updatePost : addPost)(form),
-      { successText: `${modalState.title}成功` },
-    );
-    if (res.code === RESULT_CODE_SUCCESS) {
-      fetchList(1);
-      handleCancel();
-    }
-  } finally {
-    modalState.confirmLoading = false;
-  }
+  try { await modalStateForm.validate(); } catch (e: any) { message.error({ content: `请正确填写 ${e.errorFields.length} 处必填信息！`, duration: 3 }); return; }
+  submitMutate(toRaw(modalState.form));
 }
 
-/** 删除岗位（单条或批量），支持从选中行键列表批量删除 */
 function handleDelete(postId: string = "0") {
-  if (postId === "0") {
-    postId = tableState.selectedRowKeys.join(",");
-  }
+  if (postId === "0") postId = tableState.selectedRowKeys.join(",");
   confirmAndRun({
     content: `确认删除岗位编号为【${postId}】的数据项?`,
-    onOk: () => delPost(postId),
-    successText: "删除成功",
-    onSuccess: () => fetchList(),
+    action: (id) => delPost(id), variables: postId, successText: "删除成功", invalidateKeys: [["postList"]],
   });
 }
 
-/** 根据当前搜索条件导出岗位列表 xlsx 文件 */
 function handleExport() {
   confirmAndRun({
     content: "确认根据搜索条件导出xlsx表格文件吗",
-    onOk: () => exportPost(toRaw(queryParams)),
-    successText: "已导出完成",
-    onSuccess: (res) => {
-      saveAs(res.data, `post_${Date.now()}.xlsx`);
-    },
+    action: () => exportPost(toRaw(queryParams)), variables: undefined as any, successText: "已导出完成",
+    onSuccess: (res) => { saveAs(res.data, `post_${Date.now()}.xlsx`); },
   });
 }
 
-/** 查询岗位列表，支持指定页码；删除后自动修正空页 */
-async function fetchList(pageNum?: number) {
-  if (tableState.loading) return;
-  tableState.loading = true;
-  if (pageNum) {
-    queryParams.pageNum = pageNum;
-  }
-  try {
-    const res = await listPost(toRaw(queryParams));
-    if (res.code === RESULT_CODE_SUCCESS) {
-      clearSelection();
-      setTotal(res.data.total);
-      tableState.data = res.data.rows;
-      if (fixPageAfterDelete(res.data.rows.length)) {
-        queryParams.pageNum = pagination.current;
-        const res2 = await listPost(toRaw(queryParams));
-        if (res2.code === RESULT_CODE_SUCCESS) {
-          setTotal(res2.data.total);
-          tableState.data = res2.data.rows;
-        }
-      }
-    }
-  } finally {
-    tableState.loading = false;
-  }
-}
-
-onMounted(() => {
-  loadDicts();
-  fetchList();
-});
+onMounted(() => { loadDicts(); });
 </script>
-
 <template>
   <PageContainer :title="title">
     <template #content>
@@ -287,7 +139,7 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fetchList(1)">
+                <a-button type="primary" @click.prevent="refetch">
                   <template #icon><SearchOutlined /></template>
                   搜索</a-button
                 >
@@ -358,7 +210,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList()">
+            <a-button type="text" @click.prevent="refetch">
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
@@ -388,8 +240,8 @@ onMounted(() => {
         class="table"
         row-key="postId"
         :columns="tableColumns"
-        :loading="tableState.loading"
-        :data-source="tableState.data"
+        :loading="isFetching"
+        :data-source="listData"
         :size="tableState.size"
         :row-class-name="rowClassName"
         :pagination="pagination"
@@ -526,7 +378,7 @@ onMounted(() => {
       :mask-closable="false"
       :open="modalState.visibleByEdit"
       :title="modalState.title"
-      :confirm-loading="modalState.confirmLoading"
+      :confirm-loading="isSubmitting"
       @ok="handleSubmit"
       @cancel="handleCancel"
     >

@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@ant-design/icons-vue": "7.0.1",
+    "@tanstack/vue-query": "^5.100.13",
     "ant-design-vue": "4.2.6",
     "antdv-pro-layout": "4.2.1",
     "antdv-pro-modal": "4.1.0",

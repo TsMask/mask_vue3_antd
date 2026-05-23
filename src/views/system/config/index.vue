@@ -1,6 +1,7 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { useRoute } from "vue-router";
-import { ref, toRaw, onMounted } from "vue";
+import { ref, toRaw, computed, onMounted } from "vue";
+import { useQueryClient } from "@tanstack/vue-query";
 import { PageContainer } from "antdv-pro-layout";
 import { ProModal } from "antdv-pro-modal";
 import { message } from "ant-design-vue";
@@ -17,26 +18,29 @@ import {
 } from "@/api/system/config";
 import { saveAs } from "file-saver";
 import { parseDateToStr } from "@/utils/date-utils";
-import { RESULT_CODE_SUCCESS } from "@/constants/result-constants";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { usePagination } from "@/hooks/usePagination";
 import { useTableUI } from "@/hooks/useTableUI";
 import { useCrudModal } from "@/hooks/useCrudModal";
-import { useMessageAction } from "@/hooks/useMessageAction";
 import { useDictSetup } from "@/hooks/useDictSetup";
+import { useListQuery } from "@/hooks/useListQuery";
+import { useMutationAction, confirmAndRun } from "@/hooks/useMutationAction";
 
 const route = useRoute();
+const queryClient = useQueryClient();
 
+/** 路由标题 */
 const title = ref<string>(route.meta.title ?? "标题");
 
+/** 字典数据初始化 */
 const { dict, loadDicts } = useDictSetup({
   sysYesNo: "sys_yes_no",
 });
 
-const { withLoading, confirmAndRun } = useMessageAction();
-
+/** 时间范围选择器 */
 const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
+/** 查询参数 */
 const { queryParams, resetQuery: baseResetQuery } = useQueryParams(
   {
     configName: "",
@@ -49,32 +53,52 @@ const { queryParams, resetQuery: baseResetQuery } = useQueryParams(
   },
   () => {
     resetPage();
-    fetchList();
   },
 );
 
-/** 重置查询条件，清空日期选择器后恢复默认参数并重新查询 */
+/** 重置查询条件，清空日期选择器后恢复默认参数 */
 function resetQuery() {
   queryRangePicker.value = undefined;
   baseResetQuery();
 }
 
+/** 同步日期范围到查询参数 */
+function syncDateRange() {
+  if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
+    queryParams.beginTime = queryRangePicker.value[0].startOf("day").valueOf();
+    queryParams.endTime = queryRangePicker.value[1].endOf("day").valueOf();
+  } else {
+    queryParams.beginTime = undefined;
+    queryParams.endTime = undefined;
+  }
+}
+
+/** 分页管理 */
+const { pagination, resetPage } = usePagination({
+  onChange: (page, pageSize) => {
+    queryParams.pageNum = page;
+    queryParams.pageSize = pageSize;
+  },
+});
+
+/** 列表数据查询 */
+const { listData, total, isFetching, refetch } = useListQuery({
+  queryKey: computed(() => {
+    syncDateRange();
+    return ["configList", { ...queryParams }];
+  }),
+  queryFn: () => listConfig(toRaw(queryParams)),
+});
+
+/** 表格UI状态 */
 const {
   tableState,
   setTableSize,
   rowClassName,
   setSelectedRowKeys,
-  clearSelection,
 } = useTableUI();
 
-const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
-  onChange: (page, pageSize) => {
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
-    fetchList();
-  },
-});
-
+/** CRUD 弹窗管理 */
 const {
   modal: modalState,
   formCtl: modalStateForm,
@@ -103,6 +127,19 @@ const {
   },
 });
 
+/** 新增/编辑 mutation */
+const { mutate: submitMutate, isLoading: isSubmitting } = useMutationAction({
+  mutationFn: (form: Record<string, any>) =>
+    form.configId ? updateConfig(form) : addConfig(form),
+  successText: "操作成功",
+  invalidateKeys: [["configList"]],
+  onSuccess() {
+    handleCancel();
+    queryParams.pageNum = 1;
+  },
+});
+
+/** 表格字段列 */
 const tableColumns: ColumnsType = [
   { title: "参数编号", dataIndex: "configId", align: "left", width: 100 },
   { title: "参数名称", dataIndex: "configName", align: "left", width: 200 },
@@ -128,17 +165,17 @@ const tableColumns: ColumnsType = [
   { title: "操作", key: "configId", align: "left" },
 ];
 
-/** 打开参数配置详情弹窗，根据 configId 查询并展示数据 */
+/** 打开参数配置详情弹窗 */
 function handleView(configId: string | number) {
   openView(configId, getConfig, "参数配置信息");
 }
 
-/** 打开新增或编辑弹窗，有 configId 则回填数据，否则为新增 */
+/** 打开新增或编辑弹窗 */
 function handleEdit(configId?: string | number) {
   openEdit(configId, getConfig, "添加参数配置", "修改参数配置");
 }
 
-/** 校验表单后提交新增/编辑，成功则刷新列表并关闭弹窗 */
+/** 校验表单后提交新增/编辑 */
 async function handleSubmit() {
   try {
     await modalStateForm.validate();
@@ -149,40 +186,30 @@ async function handleSubmit() {
     });
     return;
   }
-  modalState.confirmLoading = true;
-  try {
-    const form = toRaw(modalState.form);
-    const res = await withLoading(
-      (form.configId ? updateConfig : addConfig)(form),
-      { successText: `${modalState.title}成功` },
-    );
-    if (res.code === RESULT_CODE_SUCCESS) {
-      fetchList(1);
-      handleCancel();
-    }
-  } finally {
-    modalState.confirmLoading = false;
-  }
+  const form = toRaw(modalState.form);
+  submitMutate(form);
 }
 
-/** 删除参数配置（单条或批量），支持从选中行键列表批量删除 */
+/** 删除参数配置（单条或批量） */
 function handleDelete(configId: string = "0") {
   if (configId === "0") {
     configId = tableState.selectedRowKeys.join(",");
   }
   confirmAndRun({
     content: `确认删除参数编号为【${configId}】的数据项?`,
-    onOk: () => delConfig(configId),
+    action: (id) => delConfig(id),
+    variables: configId,
     successText: "删除成功",
-    onSuccess: () => fetchList(),
+    invalidateKeys: [["configList"]],
   });
 }
 
-/** 根据当前搜索条件导出参数配置列表 xlsx 文件 */
+/** 导出参数配置列表 */
 function handleExport() {
   confirmAndRun({
     content: "确认根据搜索条件导出xlsx表格文件吗",
-    onOk: () => exportConfig(toRaw(queryParams)),
+    action: () => exportConfig(toRaw(queryParams)),
+    variables: undefined as any,
     successText: "已导出完成",
     onSuccess: (res) => {
       saveAs(res.data, `config_${Date.now()}.xlsx`);
@@ -194,53 +221,14 @@ function handleExport() {
 function handleRefreshConfig() {
   confirmAndRun({
     content: "确定要刷新参数配置缓存吗?",
-    onOk: () => refreshConfig(),
+    action: () => refreshConfig(),
+    variables: undefined as any,
     successText: "刷新缓存成功",
   });
 }
 
-/** 查询参数配置列表，支持指定页码；处理日期范围筛选及删除后空页修正 */
-async function fetchList(pageNum?: number) {
-  if (tableState.loading) return;
-  tableState.loading = true;
-  if (pageNum) {
-    queryParams.pageNum = pageNum;
-  }
-
-  if (
-    Array.isArray(queryRangePicker.value) &&
-    queryRangePicker.value.length > 0
-  ) {
-    queryParams.beginTime = queryRangePicker.value[0].startOf("day").valueOf();
-    queryParams.endTime = queryRangePicker.value[1].endOf("day").valueOf();
-  } else {
-    queryParams.beginTime = undefined;
-    queryParams.endTime = undefined;
-  }
-
-  try {
-    const res = await listConfig(toRaw(queryParams));
-    if (res.code === RESULT_CODE_SUCCESS) {
-      clearSelection();
-      setTotal(res.data.total);
-      tableState.data = res.data.rows;
-      if (fixPageAfterDelete(res.data.rows.length)) {
-        queryParams.pageNum = pagination.current;
-        const res2 = await listConfig(toRaw(queryParams));
-        if (res2.code === RESULT_CODE_SUCCESS) {
-          setTotal(res2.data.total);
-          tableState.data = res2.data.rows;
-        }
-      }
-    }
-  } finally {
-    tableState.loading = false;
-  }
-}
-
 onMounted(() => {
   loadDicts();
-  fetchList();
 });
 </script>
 
@@ -280,16 +268,12 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fetchList(1)">
-                  <template #icon>
-                    <SearchOutlined />
-                  </template>
+                <a-button type="primary" @click.prevent="refetch">
+                  <template #icon><SearchOutlined /></template>
                   搜索
                 </a-button>
                 <a-button type="default" @click.prevent="resetQuery">
-                  <template #icon>
-                    <ClearOutlined />
-                  </template>
+                  <template #icon><ClearOutlined /></template>
                   重置
                 </a-button>
               </a-space>
@@ -303,28 +287,20 @@ onMounted(() => {
       <template #title>
         <a-space :size="8" align="center">
           <a-button type="primary" @click.prevent="handleEdit()" v-perms:has="['system:config:add']">
-            <template #icon>
-              <PlusOutlined />
-            </template>
+            <template #icon><PlusOutlined /></template>
             新建
           </a-button>
           <a-button type="default" danger :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="handleDelete()" v-perms:has="['system:config:remove']">
-            <template #icon>
-              <DeleteOutlined />
-            </template>
+            <template #icon><DeleteOutlined /></template>
             删除
           </a-button>
           <a-button type="dashed" danger @click.prevent="handleRefreshConfig" v-perms:has="['system:config:remove']">
-            <template #icon>
-              <SyncOutlined />
-            </template>
+            <template #icon><SyncOutlined /></template>
             刷新缓存
           </a-button>
           <a-button type="dashed" @click.prevent="handleExport()" v-perms:has="['system:config:export']">
-            <template #icon>
-              <ExportOutlined />
-            </template>
+            <template #icon><ExportOutlined /></template>
             导出
           </a-button>
         </a-space>
@@ -334,7 +310,7 @@ onMounted(() => {
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch v-model:checked="tableState.seached" checked-children="是" un-checked-children="否" size="small" />
+            <a-switch v-model:checked="tableState.seached" checked-children="显" un-checked-children="隐" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
@@ -342,19 +318,15 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList()">
-              <template #icon>
-                <ReloadOutlined />
-              </template>
+            <a-button type="text" @click.prevent="refetch">
+              <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon>
-                  <ColumnHeightOutlined />
-                </template>
+                <template #icon><ColumnHeightOutlined /></template>
               </a-button>
               <template #overlay>
                 <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
@@ -368,8 +340,8 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="configId" :columns="tableColumns" :loading="tableState.loading"
-        :data-source="tableState.data" :size="tableState.size" :row-class-name="rowClassName" :pagination="pagination"
+      <a-table class="table" row-key="configId" :columns="tableColumns" :loading="isFetching"
+        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName" :pagination="pagination"
         :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
@@ -388,26 +360,20 @@ onMounted(() => {
                 <template #title>查看详情</template>
                 <a-button type="link" @click.prevent="handleView(record.configId)"
                   v-perms:has="['system:config:query']">
-                  <template #icon>
-                    <ProfileOutlined />
-                  </template>
+                  <template #icon><ProfileOutlined /></template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
                 <a-button type="link" @click.prevent="handleEdit(record.configId)" v-perms:has="['system:config:edit']">
-                  <template #icon>
-                    <FormOutlined />
-                  </template>
+                  <template #icon><FormOutlined /></template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>删除</template>
                 <a-button type="link" @click.prevent="handleDelete(record.configId)"
                   v-perms:has="['system:config:remove']">
-                  <template #icon>
-                    <DeleteOutlined />
-                  </template>
+                  <template #icon><DeleteOutlined /></template>
                 </a-button>
               </a-tooltip>
             </a-space>
@@ -456,7 +422,7 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
-      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="modalState.confirmLoading"
+      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="isSubmitting"
       @ok="handleSubmit" @cancel="handleCancel">
       <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>

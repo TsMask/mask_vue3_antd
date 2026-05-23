@@ -1,6 +1,7 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { useRoute } from "vue-router";
-import { ref, toRaw, onMounted } from "vue";
+import { ref, toRaw, computed, onMounted } from "vue";
+import { useQueryClient } from "@tanstack/vue-query";
 import { PageContainer } from "antdv-pro-layout";
 import { ProModal } from "antdv-pro-modal";
 import { message } from "ant-design-vue";
@@ -13,25 +14,27 @@ import {
   updateNotice,
 } from "@/api/system/notice";
 import { parseDateToStr } from "@/utils/date-utils";
-import { RESULT_CODE_SUCCESS } from "@/constants/result-constants";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { usePagination } from "@/hooks/usePagination";
 import { useTableUI } from "@/hooks/useTableUI";
 import { useCrudModal } from "@/hooks/useCrudModal";
-import { useMessageAction } from "@/hooks/useMessageAction";
 import { useDictSetup } from "@/hooks/useDictSetup";
+import { useListQuery, invalidateList } from "@/hooks/useListQuery";
+import { useMutationAction, confirmAndRun } from "@/hooks/useMutationAction";
 
 const route = useRoute();
+const queryClient = useQueryClient();
 
+/** 路由标题 */
 const title = ref<string>(route.meta.title ?? "标题");
 
+/** 字典数据初始化 */
 const { dict, loadDicts } = useDictSetup({
   sysNoticeType: "sys_notice_type",
   sysNoticeStatus: "sys_notice_status",
 });
 
-const { withLoading, confirmAndRun } = useMessageAction();
-
+/** 查询参数 */
 const { queryParams, resetQuery } = useQueryParams(
   {
     noticeTitle: "",
@@ -43,26 +46,35 @@ const { queryParams, resetQuery } = useQueryParams(
   },
   () => {
     resetPage();
-    fetchList();
   },
 );
 
+/** 分页管理 */
+const { pagination, resetPage } = usePagination({
+  onChange: (page, pageSize) => {
+    queryParams.pageNum = page;
+    queryParams.pageSize = pageSize;
+  },
+});
+
+/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
+const { listData, total, isFetching, refetch } = useListQuery({
+  queryKey: computed(() => [
+    "noticeList",
+    { ...queryParams, beginTime: undefined, endTime: undefined },
+  ]),
+  queryFn: () => listNotice(toRaw(queryParams)),
+});
+
+/** 表格UI状态 */
 const {
   tableState,
   setTableSize,
   rowClassName,
   setSelectedRowKeys,
-  clearSelection,
 } = useTableUI();
 
-const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
-  onChange: (page, pageSize) => {
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
-    fetchList();
-  },
-});
-
+/** CRUD 弹窗管理 */
 const {
   modal: modalState,
   formCtl: modalStateForm,
@@ -99,6 +111,20 @@ const {
   },
 });
 
+/** 新增/编辑 mutation */
+const { mutate: submitMutate, isLoading: isSubmitting } = useMutationAction({
+  mutationFn: (form: Record<string, any>) =>
+    form.noticeId ? updateNotice(form) : addNotice(form),
+  successText: "操作成功",
+  invalidateKeys: [["noticeList"]],
+  onSuccess() {
+    handleCancel();
+    // 编辑成功后重置到第1页
+    queryParams.pageNum = 1;
+  },
+});
+
+/** 表格字段列 */
 const tableColumns: ColumnsType = [
   { title: "公告编号", dataIndex: "noticeId", align: "left", width: 100 },
   { title: "公告标题", dataIndex: "noticeTitle", align: "left", width: 300 },
@@ -130,17 +156,17 @@ const tableColumns: ColumnsType = [
   { title: "操作", key: "noticeId", align: "left" },
 ];
 
-/** 打开公告详情弹窗，根据公告编号查询并展示数据 */
+/** 打开公告详情弹窗 */
 function handleView(noticeId: string | number) {
   openView(noticeId, getNotice, "公告信息");
 }
 
-/** 打开新增或编辑弹窗，有 noticeId 则回填数据，否则为新增 */
+/** 打开新增或编辑弹窗 */
 function handleEdit(noticeId?: string | number) {
   openEdit(noticeId, getNotice, "添加公告", "修改公告");
 }
 
-/** 校验表单后提交新增/编辑，成功则刷新列表并关闭弹窗 */
+/** 校验表单后提交新增/编辑 */
 async function handleSubmit() {
   try {
     await modalStateForm.validate();
@@ -151,65 +177,26 @@ async function handleSubmit() {
     });
     return;
   }
-  modalState.confirmLoading = true;
-  try {
-    const form = toRaw(modalState.form);
-    const res = await withLoading(
-      (form.noticeId ? updateNotice : addNotice)(form),
-      { successText: `${modalState.title}成功` },
-    );
-    if (res.code === RESULT_CODE_SUCCESS) {
-      fetchList(1);
-      handleCancel();
-    }
-  } finally {
-    modalState.confirmLoading = false;
-  }
+  const form = toRaw(modalState.form);
+  submitMutate(form);
 }
 
-/** 删除公告（单条或批量），支持从选中行键列表批量删除 */
+/** 删除公告（单条或批量） */
 function handleDelete(noticeId: string = "0") {
   if (noticeId === "0") {
     noticeId = tableState.selectedRowKeys.join(",");
   }
   confirmAndRun({
     content: `确认删除公告编号为【${noticeId}】的数据项?`,
-    onOk: () => delNotice(noticeId),
+    action: (id) => delNotice(id),
+    variables: noticeId,
     successText: "删除成功",
-    onSuccess: () => fetchList(),
+    invalidateKeys: [["noticeList"]],
   });
-}
-
-/** 查询公告列表，支持指定页码；删除后自动修正空页 */
-async function fetchList(pageNum?: number) {
-  if (tableState.loading) return;
-  tableState.loading = true;
-  if (pageNum) {
-    queryParams.pageNum = pageNum;
-  }
-  try {
-    const res = await listNotice(toRaw(queryParams));
-    if (res.code === RESULT_CODE_SUCCESS) {
-      clearSelection();
-      setTotal(res.data.total);
-      tableState.data = res.data.rows;
-      if (fixPageAfterDelete(res.data.rows.length)) {
-        queryParams.pageNum = pagination.current;
-        const res2 = await listNotice(toRaw(queryParams));
-        if (res2.code === RESULT_CODE_SUCCESS) {
-          setTotal(res2.data.total);
-          tableState.data = res2.data.rows;
-        }
-      }
-    }
-  } finally {
-    tableState.loading = false;
-  }
 }
 
 onMounted(() => {
   loadDicts();
-  fetchList();
 });
 </script>
 
@@ -251,7 +238,7 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fetchList(1)">
+                <a-button type="primary" @click.prevent="refetch">
                   <template #icon><SearchOutlined /></template>
                   搜索
                 </a-button>
@@ -285,7 +272,7 @@ onMounted(() => {
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch v-model:checked="tableState.seached" checked-children="是" un-checked-children="否" size="small" />
+            <a-switch v-model:checked="tableState.seached" checked-children="显" un-checked-children="隐" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
@@ -293,7 +280,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList()">
+            <a-button type="text" @click.prevent="refetch">
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
@@ -315,8 +302,8 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="noticeId" :columns="tableColumns" :loading="tableState.loading"
-        :data-source="tableState.data" :size="tableState.size" :row-class-name="rowClassName"
+      <a-table class="table" row-key="noticeId" :columns="tableColumns" :loading="isFetching"
+        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName"
         :pagination="pagination" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
@@ -392,7 +379,7 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
-      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="modalState.confirmLoading"
+      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="isSubmitting"
       @ok="handleSubmit" @cancel="handleCancel">
       <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
@@ -435,5 +422,3 @@ onMounted(() => {
   padding: 0 24px;
 }
 </style>
-
-
