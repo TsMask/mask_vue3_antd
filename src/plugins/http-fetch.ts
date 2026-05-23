@@ -406,8 +406,25 @@ export async function request(options: OptionsType): Promise<ResultType> {
       case 'arrayBuffer': {
         const contentType = res.headers.get('content-type') || '';
         if (contentType.startsWith('application/json')) {
-          const result = await res.json();
-          return result as ResultType;
+          let result: ResultType;
+          try {
+            result = await res.json();
+          } catch {
+            return {
+              code: RESULT_CODE_EXCEPTION,
+              msg: res.ok ? RESULT_MSG_SERVER_ERROR : `请求失败(${res.status})`,
+            };
+          }
+          if (!res.ok) {
+            // 非2xx JSON响应走完整错误处理（含token刷新）
+            return {
+              code: result.code || RESULT_CODE_EXCEPTION,
+              msg: result.msg || `请求失败(${res.status})`,
+              data: result.data,
+            };
+          }
+          // 2xx JSON响应（如分片校验返回），走 beforeResponse 处理 token 刷新
+          return await beforeResponse(reqOptions, result);
         }
         if (!res.ok) {
           return {
