@@ -1,51 +1,33 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { PageContainer } from 'antdv-pro-layout';
-import { message, Modal } from 'ant-design-vue';
-import type { SizeType } from 'ant-design-vue/es/config-provider';
-import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import type { ColumnsType } from 'ant-design-vue/es/table';
 import { forceLogout, listOnline } from '@/api/monitor/online';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 import { parseDateToStr } from '@/utils/date-utils';
+import { useTableUI } from '@/hooks/useTableUI';
+import { useMessageAction } from '@/hooks/useMessageAction';
 const route = useRoute();
 
-/**路由标题 */
+/** 路由标题 */
 let title = ref<string>(route.meta.title ?? '标题');
 
-/**查询参数 */
+/** 查询参数 */
 let queryParams = reactive({
-  /**登录主机 */
+  /** 登录主机 */
   loginIp: '',
-  /**登录账号 */
+  /** 登录账号 */
   userName: '',
 });
 
-/**表格状态类型 */
-type TabeStateType = {
-  /**加载等待 */
-  loading: boolean;
-  /**紧凑型 */
-  size: SizeType;
-  /**斑马纹 */
-  striped: boolean;
-  /**搜索栏 */
-  seached: boolean;
-  /**记录数据 */
-  data: object[];
-};
+/** 表格UI状态：loading/size/striped/seached/data */
+const { tableState, setTableSize, rowClassName } = useTableUI();
 
-/**表格状态 */
-let tableState: TabeStateType = reactive({
-  loading: false,
-  size: 'middle',
-  striped: false,
-  seached: false,
-  data: [],
-});
+/** 通用操作反馈：带loading的异步操作、二次确认 */
+const { confirmAndRun } = useMessageAction();
 
-/**表格字段列 */
+/** 表格字段列 */
 let tableColumns: ColumnsType = [
   {
     title: '序号',
@@ -116,23 +98,23 @@ let tableColumns: ColumnsType = [
   },
 ];
 
-/**表格分页器参数 */
+/** 表格分页器参数 */
 let tablePagination = {
-  /**当前页数 */
+  /** 当前页数 */
   current: 1,
-  /**每页条数 */
+  /** 每页条数 */
   pageSize: 20,
-  /**默认的每页条数 */
+  /** 默认的每页条数 */
   defaultPageSize: 20,
-  /**指定每页可以显示多少条 */
+  /** 指定每页可以显示多少条 */
   pageSizeOptions: ['10', '20', '50', '100'],
-  /**只有一页时是否隐藏分页器 */
+  /** 只有一页时是否隐藏分页器 */
   hideOnSinglePage: true,
-  /**是否可以快速跳转至某页 */
+  /** 是否可以快速跳转至某页 */
   showQuickJumper: true,
-  /**是否可以改变 pageSize */
+  /** 是否可以改变 pageSize */
   showSizeChanger: true,
-  /**数据总数 */
+  /** 数据总数 */
   total: 0,
   showTotal: (total: number) => `总共 ${total} 条`,
   onChange: (page: number, pageSize: number) => {
@@ -141,27 +123,17 @@ let tablePagination = {
   },
 };
 
-/**表格紧凑型变更操作 */
-function fnTableSize({ key }: MenuInfo) {
-  tableState.size = key as SizeType;
-}
-
-/**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number): any {
-  return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
-}
-
-/**查询参数重置 */
-function fnQueryReset() {
+/** 查询参数重置 */
+function handleResetQuery() {
   queryParams.loginIp = '';
   queryParams.userName = '';
   tablePagination.current = 1;
   tablePagination.pageSize = 20;
-  fnGetList();
+  fetchList();
 }
 
 /** 查询在线用户列表 */
-function fnGetList() {
+function fetchList() {
   if (tableState.loading) return;
   tableState.loading = true;
   listOnline(queryParams).then(res => {
@@ -173,36 +145,17 @@ function fnGetList() {
 }
 
 /** 强退按钮操作 */
-function fnForceLogout(row: Record<string, string>) {
-  Modal.confirm({
-    title: '提示',
+function handleForceLogout(row: Record<string, string>) {
+  confirmAndRun({
     content: `确认强退登录账号为 ${row.userName} 的用户?`,
-    onOk() {
-      const hide = message.loading('请稍等...', 0);
-      forceLogout(row.tokenId)
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `已强退用户 ${row.userName}`,
-              duration: 3,
-            });
-          } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-          fnGetList();
-        });
-    },
+    onOk: () => forceLogout(row.tokenId),
+    successText: `已强退用户 ${row.userName}`,
+    onSuccess: () => fetchList(),
   });
 }
 
 onMounted(() => {
-  fnGetList();
+  fetchList();
 });
 </script>
 
@@ -218,42 +171,32 @@ onMounted(() => {
       </a-typography-paragraph>
     </template>
 
-    <a-card
-      v-show="tableState.seached"
-      :bordered="false"
-      :body-style="{ marginBottom: '24px', paddingBottom: 0 }"
-    >
+    <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="登录账号" name="userName">
-              <a-input
-                v-model:value="queryParams.userName"
-                allow-clear
-                :maxlength="30"
-                placeholder="请输入登录账号"
-              ></a-input>
+              <a-input v-model:value="queryParams.userName" allow-clear :maxlength="30" placeholder="请输入登录账号"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="登录IP" name="ipaddr">
-              <a-input
-                v-model:value="queryParams.loginIp"
-                allow-clear
-                :maxlength="128"
-                placeholder="请输入登录IP"
-              ></a-input> </a-form-item
-          ></a-col>
+              <a-input v-model:value="queryParams.loginIp" allow-clear :maxlength="128" placeholder="请输入登录IP"></a-input>
+            </a-form-item></a-col>
           <a-col :lg="12" :md="24" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fnGetList">
-                  <template #icon><SearchOutlined /></template>
+                <a-button type="primary" @click.prevent="fetchList">
+                  <template #icon>
+                    <SearchOutlined />
+                  </template>
                   搜索
                 </a-button>
-                <a-button type="default" @click.prevent="fnQueryReset">
-                  <template #icon><ClearOutlined /></template>
+                <a-button type="default" @click.prevent="handleResetQuery">
+                  <template #icon>
+                    <ClearOutlined />
+                  </template>
                   重置
                 </a-button>
               </a-space>
@@ -274,39 +217,30 @@ onMounted(() => {
         <a-space :size="8" align="center">
           <a-tooltip>
             <template #title>搜索栏</template>
-            <a-switch
-              v-model:checked="tableState.seached"
-              checked-children="显"
-              un-checked-children="隐"
-              size="small"
-            />
+            <a-switch v-model:checked="tableState.seached" checked-children="显" un-checked-children="隐" size="small" />
           </a-tooltip>
           <a-tooltip>
             <template #title>表格斑马纹</template>
-            <a-switch
-              v-model:checked="tableState.striped"
-              checked-children="开"
-              un-checked-children="关"
-              size="small"
-            />
+            <a-switch v-model:checked="tableState.striped" checked-children="开" un-checked-children="关" size="small" />
           </a-tooltip>
           <a-tooltip>
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fnGetList">
-              <template #icon><ReloadOutlined /></template>
+            <a-button type="text" @click.prevent="fetchList">
+              <template #icon>
+                <ReloadOutlined />
+              </template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon><ColumnHeightOutlined /></template>
+                <template #icon>
+                  <ColumnHeightOutlined />
+                </template>
               </a-button>
               <template #overlay>
-                <a-menu
-                  :selected-keys="[tableState.size as string]"
-                  @click="fnTableSize"
-                >
+                <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
                   <a-menu-item key="default">默认</a-menu-item>
                   <a-menu-item key="middle">中等</a-menu-item>
                   <a-menu-item key="small">紧凑</a-menu-item>
@@ -318,29 +252,19 @@ onMounted(() => {
       </template>
 
       <!-- 表格列表 -->
-      <a-table
-        class="table"
-        row-key="tokenId"
-        :columns="tableColumns"
-        :loading="tableState.loading"
-        :data-source="tableState.data"
-        :size="tableState.size"
-        :row-class-name="fnTableStriped"
-        :pagination="tablePagination"
-        :scroll="{
+      <a-table class="table" row-key="tokenId" :columns="tableColumns" :loading="tableState.loading"
+        :data-source="tableState.data" :size="tableState.size" :row-class-name="rowClassName"
+        :pagination="tablePagination" :scroll="{
           x: tableColumns.length * 150,
           scrollToFirstRowOnChange: true,
-        }"
-      >
+        }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'tokenId'">
-            <a-button
-              type="link"
-              danger
-              @click.prevent="fnForceLogout(record)"
-              v-perms:has="['monitor:online:forceLogout']"
-            >
-              <template #icon><LogoutOutlined /></template>
+            <a-button type="link" danger @click.prevent="handleForceLogout(record)"
+              v-perms:has="['monitor:online:forceLogout']">
+              <template #icon>
+                <LogoutOutlined />
+              </template>
               强退
             </a-button>
           </template>

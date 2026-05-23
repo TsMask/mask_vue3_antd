@@ -1,12 +1,10 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
 import { reactive, ref, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue';
 import type { Dayjs } from 'dayjs';
-import type { SizeType } from 'ant-design-vue/es/config-provider';
-import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import type { ColumnsType } from 'ant-design-vue/es/table';
 import type { DataNode } from 'ant-design-vue/es/tree';
 import {
@@ -32,122 +30,69 @@ import { saveAs } from 'file-saver';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
 import { SYS_ROLE_SYSTEM_ID } from '@/constants/system-constants';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
-import useDictStore from '@/store/modules/dict';
+import { useTableUI } from '@/hooks/useTableUI';
+import { usePagination } from '@/hooks/usePagination';
+import { useDictSetup } from '@/hooks/useDictSetup';
+import { useQueryParams } from '@/hooks/useQueryParams';
+import { useMessageAction } from '@/hooks/useMessageAction';
 import useUserStore from '@/store/modules/user';
-const { getDict } = useDictStore();
 const userStore = useUserStore();
 const route = useRoute();
 const router = useRouter();
 const routePath = route.path;
 
-/**路由标题 */
-let title = ref<string>(route.meta.title ?? '标题');
+/** 路由标题 */
+const title = ref<string>(route.meta.title ?? '标题');
 
-/**字典数据 */
-let dict: {
-  /**状态 */
-  sysNormalDisable: DictType[];
-} = reactive({
-  sysNormalDisable: [],
+/** 字典数据初始化 */
+const { dict, loadDicts } = useDictSetup({
+  sysNormalDisable: 'sys_normal_disable',
 });
 
-/**开始结束时间 */
+/** 通用操作反馈 */
+const { withLoading, confirmAndRun } = useMessageAction();
+
+/** 开始结束时间 */
 let queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
-/**查询参数 */
-let queryParams = reactive({
-  /**角色名称 */
-  roleName: '',
-  /**角色键值 */
-  roleKey: '',
-  /**角色状态 */
-  statusFlag: undefined,
-  /**开始时间 */
-  beginTime: undefined as undefined | number,
-  /**结束时间 */
-  endTime: undefined as undefined | number,
-  /**当前页数 */
-  pageNum: 1,
-  /**每页条数 */
-  pageSize: 20,
-});
-
-/**查询参数重置 */
-function fnQueryReset() {
-  Object.assign(queryParams, {
+/** 查询参数 */
+const { queryParams, resetQuery } = useQueryParams(
+  {
     roleName: '',
     roleKey: '',
     statusFlag: undefined,
-    beginTime: undefined,
-    endTime: undefined,
+    beginTime: undefined as undefined | number,
+    endTime: undefined as undefined | number,
     pageNum: 1,
     pageSize: 20,
-  });
-  queryRangePicker.value = undefined;
-  tablePagination.current = 1;
-  tablePagination.pageSize = 20;
-  fnGetList();
-}
+  },
+  () => {
+    queryRangePicker.value = undefined;
+    resetPage();
+    fetchList();
+  },
+);
 
-/**表格状态类型 */
-type TabeStateType = {
-  /**加载等待 */
-  loading: boolean;
-  /**紧凑型 */
-  size: SizeType;
-  /**斑马纹 */
-  striped: boolean;
-  /**搜索栏 */
-  seached: boolean;
-  /**记录数据 */
-  data: object[];
-  /**勾选记录 */
-  selectedRowKeys: (string | number)[];
-};
-
-/**表格状态 */
-let tableState: TabeStateType = reactive({
-  loading: false,
-  size: 'middle',
-  striped: false,
-  seached: false,
-  data: [],
-  selectedRowKeys: [],
+/** 分页管理 */
+const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
+  onChange: (page, pageSize) => {
+    queryParams.pageNum = page;
+    queryParams.pageSize = pageSize;
+    fetchList();
+  },
 });
 
-/**表格字段列 */
+/** 表格UI状态 */
+const { tableState, setTableSize, rowClassName, setSelectedRowKeys, clearSelection } =
+  useTableUI();
+
+/** 表格字段列 */
 let tableColumns: ColumnsType = [
-  {
-    title: '角色编号',
-    dataIndex: 'roleId',
-    align: 'left',
-    width: 100,
-  },
-  {
-    title: '角色名称',
-    dataIndex: 'roleName',
-    align: 'left',
-    width: 100,
-  },
-  {
-    title: '角色键值',
-    dataIndex: 'roleKey',
-    align: 'left',
-    width: 100,
-  },
-  {
-    title: '角色顺序',
-    dataIndex: 'roleSort',
-    align: 'left',
-    width: 100,
-  },
-  {
-    title: '角色状态',
-    dataIndex: 'statusFlag',
-    key: 'statusFlag',
-    align: 'left',
-    width: 100,
-  },
+  { title: '角色编号', dataIndex: 'roleId', align: 'left', width: 100 },
+  { title: '角色名称', dataIndex: 'roleName', align: 'left', width: 100 },
+  { title: '角色键值', dataIndex: 'roleKey', align: 'left', width: 100 },
+  { title: '角色顺序', dataIndex: 'roleSort', align: 'left', width: 100 },
+  { title: '角色状态', dataIndex: 'statusFlag', key: 'statusFlag', align: 'left', width: 100 },
   {
     title: '创建时间',
     dataIndex: 'createTime',
@@ -158,57 +103,10 @@ let tableColumns: ColumnsType = [
       return parseDateToStr(+opt.value);
     },
   },
-  {
-    title: '操作',
-    key: 'roleId',
-    align: 'left',
-  },
+  { title: '操作', key: 'roleId', align: 'left' },
 ];
 
-/**表格分页器参数 */
-let tablePagination = reactive({
-  /**当前页数 */
-  current: 1,
-  /**每页条数 */
-  pageSize: 20,
-  /**默认的每页条数 */
-  defaultPageSize: 20,
-  /**指定每页可以显示多少条 */
-  pageSizeOptions: ['10', '20', '50', '100'],
-  /**只有一页时是否隐藏分页器 */
-  hideOnSinglePage: false,
-  /**是否可以快速跳转至某页 */
-  showQuickJumper: true,
-  /**是否可以改变 pageSize */
-  showSizeChanger: true,
-  /**数据总数 */
-  total: 0,
-  showTotal: (total: number) => `总共 ${total} 条`,
-  onChange: (page: number, pageSize: number) => {
-    tablePagination.current = page;
-    tablePagination.pageSize = pageSize;
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
-    fnGetList();
-  },
-});
-
-/**表格紧凑型变更操作 */
-function fnTableSize({ key }: MenuInfo) {
-  tableState.size = key as SizeType;
-}
-
-/**表格斑马纹 */
-function fnTableStriped(_record: unknown, index: number): any {
-  return tableState.striped && index % 2 === 1 ? 'table-striped' : undefined;
-}
-
-/**表格多选 */
-function fnTableSelectedRowKeys(keys: (string | number)[]) {
-  tableState.selectedRowKeys = keys;
-}
-
-/**数据范围选项 */
+/** 数据范围选项 */
 const dataScopeOptions = ref<{ value: string; label: string }[]>([
   { value: '1', label: '全部数据权限' },
   { value: '2', label: '自定数据权限' },
@@ -218,451 +116,311 @@ const dataScopeOptions = ref<{ value: string; label: string }[]>([
 ]);
 
 type TreeDataType = {
-  /**树结构数据 */
   treeData: DataNode[];
-  /**选中复选框的树节点 */
-  checkedKeys: string[] | number[];
-  /**展开指定的树节点 */
-  expandedKeys: string[] | number[];
+  checkedKeys: (string | number)[];
+  expandedKeys: (string | number)[];
 };
 
-/**初始菜单树数据 */
-let menuTree: TreeDataType = {
-  treeData: [],
-  checkedKeys: [],
-  expandedKeys: [],
-};
+/** 菜单树和部门树的初始缓存 */
+let menuTreeCache: TreeDataType = { treeData: [], checkedKeys: [], expandedKeys: [] };
+let deptTreeCache: TreeDataType = { treeData: [], checkedKeys: [], expandedKeys: [] };
 
-/**初始部门树数据 */
-let deptTree: TreeDataType = {
-  treeData: [],
-  checkedKeys: [],
-  expandedKeys: [],
-};
+// ==================== 弹窗状态 ====================
 
-/**对话框对象信息状态类型 */
-type ModalStateType = {
-  /**详情框是否显示 */
-  visibleByView: boolean;
-  /**新增框或修改框是否显示 */
-  visibleByEdit: boolean;
-  /**分配角色数据权限修改框是否显示 */
-  visibleByDataScope: boolean;
-  /**标题 */
-  title: string;
-  /**表单数据 */
-  form: Record<string, any>;
-  /**确定按钮 loading */
-  confirmLoading: boolean;
-  /**菜单树结构 */
-  menuTree: TreeDataType;
-  /**部门树结构 */
-  deptTree: TreeDataType;
-};
+let visibleByView = ref(false);
+let visibleByEdit = ref(false);
+let visibleByDataScope = ref(false);
+let modalTitle = ref('角色');
+let confirmLoading = ref(false);
 
-/**对话框对象信息状态 */
-let modalState: ModalStateType = reactive({
-  visibleByView: false,
-  visibleByEdit: false,
-  visibleByDataScope: false,
-  title: '角色',
-  form: {
-    roleId: undefined,
-    roleName: '',
-    roleKey: '',
-    roleSort: 0,
-    statusFlag: '0',
-    menuIds: [],
-    deptIds: [],
-    remark: '',
-    dataScope: '5',
-    deptCheckStrictly: '1',
-    menuCheckStrictly: '1',
-    createTime: 0,
-  },
-  confirmLoading: false,
-  menuTree: {
-    treeData: [],
-    checkedKeys: [],
-    expandedKeys: [],
-  },
-  deptTree: {
-    treeData: [],
-    checkedKeys: [],
-    expandedKeys: [],
-  },
+const form = reactive({
+  roleId: undefined as string | number | undefined,
+  roleName: '',
+  roleKey: '',
+  roleSort: 0,
+  statusFlag: '0',
+  menuIds: [] as (string | number)[],
+  deptIds: [] as (string | number)[],
+  remark: '',
+  dataScope: '5',
+  deptCheckStrictly: '1',
+  menuCheckStrictly: '1',
+  createTime: 0,
 });
 
-/**对话框内表单属性和校验规则 */
-const modalStateForm = Form.useForm(
-  modalState.form,
+const formCtl = Form.useForm(
+  form,
   reactive({
-    roleName: [
-      { required: true, min: 1, max: 30, message: '请正确输入角色名称' },
-    ],
-    roleKey: [
-      { required: true, min: 1, max: 50, message: '请正确输入角色键值' },
-    ],
-  })
+    roleName: [{ required: true, min: 1, max: 30, message: '请正确输入角色名称' }],
+    roleKey: [{ required: true, min: 1, max: 50, message: '请正确输入角色键值' }],
+  }),
 );
 
-/**
- * 对话框弹出显示为 查看
- * @param roleId 角色编号ID
- */
-function fnModalVisibleByVive(roleId: string | number) {
-  if (!roleId) {
-    message.error({
-      content: '获取角色信息失败',
-      duration: 3,
-    });
-    return;
-  }
-  if (modalState.confirmLoading) return;
+let menuTreeState = reactive<TreeDataType>({
+  treeData: [],
+  checkedKeys: [],
+  expandedKeys: [],
+});
+
+let deptTreeState = reactive<TreeDataType>({
+  treeData: [],
+  checkedKeys: [],
+  expandedKeys: [],
+});
+
+// ==================== 弹窗操作 ====================
+
+/** 打开详情弹窗 */
+async function handleView(roleId: string | number) {
+  if (!roleId || confirmLoading.value) return;
+  confirmLoading.value = true;
   const hide = message.loading('正在打开...', 0);
-  modalState.confirmLoading = true;
-  // 查询角色详细同时根据角色ID查询菜单下拉树结构
-  Promise.all([getRole(roleId), menuTreeSelectRole(roleId)])
-    .then(resArr => {
-      if (resArr[0].code === RESULT_CODE_SUCCESS && resArr[0].data) {
-        Object.assign(modalState.form, resArr[0].data);
-        if (resArr[1].code === RESULT_CODE_SUCCESS && resArr[1].data) {
-          const { menus, checkedKeys } = resArr[1].data;
-          menuTree.checkedKeys = parseTreeKeys(menus, 'id');
-          menuTree.expandedKeys = parseTreeNodeKeys(menus, 'id');
-          menuTree.treeData = menus;
-          modalState.menuTree.treeData = menus;
-          modalState.menuTree.checkedKeys = checkedKeys;
-          if (modalState.form.menuCheckStrictly === '1') {
-            const ids = parseTreeNodeKeysByChecked(menus, checkedKeys, 'id');
-            modalState.form.menuIds = ids.concat(checkedKeys);
-          } else {
-            modalState.form.menuIds = checkedKeys;
-          }
+  try {
+    const [roleRes, menuRes] = await Promise.all([
+      getRole(roleId),
+      menuTreeSelectRole(roleId),
+    ]);
+    if (roleRes.code === RESULT_CODE_SUCCESS && roleRes.data) {
+      Object.assign(form, roleRes.data);
+      if (menuRes.code === RESULT_CODE_SUCCESS && menuRes.data) {
+        const { menus, checkedKeys } = menuRes.data;
+        menuTreeCache.checkedKeys = parseTreeKeys(menus, 'id');
+        menuTreeCache.expandedKeys = parseTreeNodeKeys(menus, 'id');
+        menuTreeCache.treeData = menus;
+        menuTreeState.treeData = menus;
+        menuTreeState.checkedKeys = checkedKeys;
+        if (form.menuCheckStrictly === '1') {
+          const ids = parseTreeNodeKeysByChecked(menus, checkedKeys, 'id');
+          form.menuIds = ids.concat(checkedKeys);
+        } else {
+          form.menuIds = checkedKeys;
         }
-        modalState.title = '角色信息';
-        modalState.visibleByView = true;
-      } else {
-        message.error({
-          content: '获取角色信息失败',
-          duration: 3,
-        });
       }
-    })
-    .finally(() => {
-      hide();
-      modalState.confirmLoading = false;
-    });
+      modalTitle.value = '角色信息';
+      visibleByView.value = true;
+    }
+  } finally {
+    hide();
+    confirmLoading.value = false;
+  }
 }
 
-/**
- * 对话框弹出显示为 新增或者修改
- * @param roleId 角色编号ID, 不传为新增
- */
-function fnModalVisibleByEdit(roleId?: string | number) {
+/** 打开新增/编辑弹窗 */
+async function handleOpenEdit(roleId?: string | number) {
   if (!roleId) {
-    modalStateForm.resetFields();
-    if (menuTree.treeData.length > 0) {
-      modalState.menuTree.treeData = menuTree.treeData;
-      modalState.title = '添加角色信息';
-      modalState.visibleByEdit = true;
+    formCtl.resetFields();
+    if (menuTreeCache.treeData.length > 0) {
+      menuTreeState.treeData = menuTreeCache.treeData;
+      modalTitle.value = '添加角色信息';
+      visibleByEdit.value = true;
     } else {
-      if (modalState.confirmLoading) return;
+      if (confirmLoading.value) return;
+      confirmLoading.value = true;
       const hide = message.loading('正在打开...', 0);
-      modalState.confirmLoading = true;
-      // 查询菜单下拉树结构
-      menuTreeSelect()
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
-            menuTree.checkedKeys = parseTreeKeys(res.data, 'id');
-            menuTree.expandedKeys = parseTreeNodeKeys(res.data, 'id');
-            menuTree.treeData = res.data;
-            modalState.menuTree.treeData = res.data;
-            modalState.title = '添加角色信息';
-            modalState.visibleByEdit = true;
-          }
-        })
-        .finally(() => {
-          hide();
-          modalState.confirmLoading = false;
-        });
+      try {
+        const res = await menuTreeSelect();
+        if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
+          menuTreeCache.checkedKeys = parseTreeKeys(res.data, 'id');
+          menuTreeCache.expandedKeys = parseTreeNodeKeys(res.data, 'id');
+          menuTreeCache.treeData = res.data;
+          menuTreeState.treeData = res.data;
+          modalTitle.value = '添加角色信息';
+          visibleByEdit.value = true;
+        }
+      } finally {
+        hide();
+        confirmLoading.value = false;
+      }
     }
   } else {
-    if (modalState.confirmLoading) return;
+    if (confirmLoading.value) return;
+    confirmLoading.value = true;
     const hide = message.loading('正在打开...', 0);
-    modalState.confirmLoading = true;
-    // 查询角色详细同时根据角色ID查询菜单下拉树结构
-    Promise.all([getRole(roleId), menuTreeSelectRole(roleId)])
-      .then(resArr => {
-        if (resArr[0].code === RESULT_CODE_SUCCESS && resArr[0].data) {
-          Object.assign(modalState.form, resArr[0].data);
-          if (resArr[1].code === RESULT_CODE_SUCCESS && resArr[1].data) {
-            const { menus, checkedKeys } = resArr[1].data;
-            menuTree.checkedKeys = parseTreeKeys(menus, 'id');
-            menuTree.expandedKeys = parseTreeNodeKeys(menus, 'id');
-            menuTree.treeData = menus;
-            modalState.menuTree.treeData = menus;
-            modalState.menuTree.checkedKeys = checkedKeys;
-            if (modalState.form.menuCheckStrictly === '1') {
-              const ids = parseTreeNodeKeysByChecked(menus, checkedKeys, 'id');
-              modalState.form.menuIds = ids.concat(checkedKeys);
-            } else {
-              modalState.form.menuIds = checkedKeys;
-            }
-          }
-          modalState.title = '修改角色信息';
-          modalState.visibleByEdit = true;
-        } else {
-          message.error({
-            content: '获取角色信息失败',
-            duration: 3,
-          });
-        }
-      })
-      .finally(() => {
-        hide();
-        modalState.confirmLoading = false;
-      });
-  }
-}
-
-/**
- * 对话框弹出确认执行函数
- * 进行表达规则校验
- */
-function fnModalOk() {
-  modalStateForm
-    .validate()
-    .then(() => {
-      const hide = message.loading('请稍等...', 0);
-      modalState.confirmLoading = true;
-      const form = toRaw(modalState.form);
-      const role = form.roleId ? updateRole(form) : addRole(form);
-      role
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `${modalState.title}成功`,
-              duration: 3,
-            });
-            fnGetList(1);
-            fnModalCancel();
+    try {
+      const [roleRes, menuRes] = await Promise.all([
+        getRole(roleId),
+        menuTreeSelectRole(roleId),
+      ]);
+      if (roleRes.code === RESULT_CODE_SUCCESS && roleRes.data) {
+        Object.assign(form, roleRes.data);
+        if (menuRes.code === RESULT_CODE_SUCCESS && menuRes.data) {
+          const { menus, checkedKeys } = menuRes.data;
+          menuTreeCache.checkedKeys = parseTreeKeys(menus, 'id');
+          menuTreeCache.expandedKeys = parseTreeNodeKeys(menus, 'id');
+          menuTreeCache.treeData = menus;
+          menuTreeState.treeData = menus;
+          menuTreeState.checkedKeys = checkedKeys;
+          if (form.menuCheckStrictly === '1') {
+            const ids = parseTreeNodeKeysByChecked(menus, checkedKeys, 'id');
+            form.menuIds = ids.concat(checkedKeys);
           } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
+            form.menuIds = checkedKeys;
           }
-        })
-        .finally(() => {
-          hide();
-          modalState.confirmLoading = false;
-        });
-    })
-    .catch(e => {
-      message.error({
-        content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
-        duration: 3,
-      });
-    });
-}
-
-/**
- * 对话框弹出关闭执行函数
- * 进行表达规则校验
- */
-function fnModalCancel() {
-  modalState.visibleByEdit = false;
-  modalState.visibleByView = false;
-  modalState.visibleByDataScope = false;
-  modalStateForm.resetFields();
-  modalState.menuTree.checkedKeys = [];
-  modalState.menuTree.expandedKeys = [];
-  modalState.deptTree.checkedKeys = [];
-  modalState.deptTree.expandedKeys = [];
-}
-
-/**
- * 对话框表单树勾选事件
- */
-function fnModalTreeChecked(keys: any, info: any, type: 'menu' | 'dept') {
-  let ids = Array.isArray(keys) ? keys : keys.checked;
-  if (type === 'menu') {
-    if (modalState.form.menuCheckStrictly === '1') {
-      ids = ids.concat(info.halfCheckedKeys);
-    }
-    modalState.form.menuIds = ids;
-  }
-  if (type === 'dept') {
-    if (modalState.form.deptCheckStrictly === '1') {
-      ids = ids.concat(info.halfCheckedKeys);
-    }
-    modalState.form.deptIds = ids;
-  }
-}
-
-/**
- * 对话框表单树（展开/折叠）事件
- */
-function fnModalExpandedKeys(checked: boolean, type: 'menu' | 'dept') {
-  if (type === 'menu') {
-    modalState.menuTree.expandedKeys = checked ? menuTree.expandedKeys : [];
-  }
-  if (type === 'dept') {
-    modalState.deptTree.expandedKeys = checked ? deptTree.expandedKeys : [];
-  }
-}
-
-/**
- * 对话框表单树（全选/全不选）事件
- */
-function fnModalCheckedKeys(checked: boolean, type: 'menu' | 'dept') {
-  if (type === 'menu') {
-    modalState.menuTree.checkedKeys = checked ? menuTree.checkedKeys : [];
-    modalState.form.menuIds = modalState.menuTree.checkedKeys;
-  }
-  if (type === 'dept') {
-    modalState.deptTree.checkedKeys = checked ? deptTree.checkedKeys : [];
-    modalState.form.deptIds = modalState.deptTree.checkedKeys;
-  }
-}
-
-/**
- * 对话框表单树（父子联动）事件
- */
-function fnModalCheckStrictly(checked: boolean, type: 'menu' | 'dept') {
-  if (type === 'menu') {
-    modalState.form.menuCheckStrictly = checked ? '1' : '0';
-  }
-  if (type === 'dept') {
-    modalState.form.deptCheckStrictly = checked ? '1' : '0';
-  }
-}
-
-/**
- * 对话框弹出分配数据权限确认执行函数
- */
-function fnModalOkDataScope() {
-  if (modalState.confirmLoading) return;
-  const hide = message.loading('请稍等...', 0);
-  modalState.confirmLoading = true;
-  const fromInfo = toRaw(modalState.form);
-  if (fromInfo.dataScope !== '2') {
-    fromInfo.deptIds = [];
-  }
-  dataScope(fromInfo)
-    .then(res => {
-      if (res.code === RESULT_CODE_SUCCESS) {
-        message.success({
-          content: `${modalState.title}成功`,
-          duration: 3,
-        });
-        modalState.visibleByDataScope = false;
-        modalStateForm.resetFields();
-      } else {
-        message.error({
-          content: `${res.msg}`,
-          duration: 3,
-        });
+        }
+        modalTitle.value = '修改角色信息';
+        visibleByEdit.value = true;
       }
-    })
-    .finally(() => {
+    } finally {
       hide();
-      modalState.confirmLoading = false;
-    });
+      confirmLoading.value = false;
+    }
+  }
 }
 
-/**
- * 角色分配数据权限
- * @param roleId 角色编号ID
- */
-function fnRecordDataScope(roleId: string | number) {
-  if (!roleId) {
-    message.error({
-      content: '获取角色信息失败',
-      duration: 3,
-    });
+/** 表单提交确认 */
+async function handleSubmit() {
+  try {
+    await formCtl.validate();
+  } catch (e: any) {
+    message.error({ content: `请正确填写 ${e.errorFields.length} 处必填信息！`, duration: 3 });
     return;
   }
-  if (modalState.confirmLoading) return;
-  const hide = message.loading('正在打开...', 0);
-  modalState.confirmLoading = true;
-  // 查询角色详细同时根据角色ID查询部门树结构
-  Promise.all([getRole(roleId), deptTreeRole(roleId)])
-    .then(resArr => {
-      if (resArr[0].code === RESULT_CODE_SUCCESS && resArr[0].data) {
-        Object.assign(modalState.form, resArr[0].data);
-        if (resArr[1].code === RESULT_CODE_SUCCESS && resArr[1].data) {
-          const { depts, checkedKeys } = resArr[1].data;
-          deptTree.checkedKeys = parseTreeKeys(depts, 'id');
-          deptTree.expandedKeys = parseTreeNodeKeys(depts, 'id');
-          deptTree.treeData = depts;
-          modalState.deptTree.treeData = depts;
-          modalState.deptTree.checkedKeys = checkedKeys;
-          if (modalState.form.deptCheckStrictly === '1') {
-            const ids = parseTreeNodeKeysByChecked(depts, checkedKeys, 'id');
-            modalState.form.deptIds = ids.concat(checkedKeys);
-          } else {
-            modalState.form.deptIds = checkedKeys;
-          }
-        }
-        modalState.title = '分配数据权限';
-        modalState.visibleByDataScope = true;
-      } else {
-        message.error({
-          content: '获取角色信息失败',
-          duration: 3,
-        });
-      }
-    })
-    .finally(() => {
-      hide();
-      modalState.confirmLoading = false;
-    });
+  const hide = message.loading('请稍等...', 0);
+  confirmLoading.value = true;
+  try {
+    const formRaw = toRaw(form);
+    const res = formRaw.roleId ? await updateRole(formRaw) : await addRole(formRaw);
+    if (res.code === RESULT_CODE_SUCCESS) {
+      message.success({ content: `${modalTitle.value}成功`, duration: 3 });
+      fetchList(1);
+      handleCloseModal();
+    } else {
+      message.error({ content: res.msg, duration: 3 });
+    }
+  } finally {
+    hide();
+    confirmLoading.value = false;
+  }
 }
 
-/**
- * 角色分配用户跳转
- * @param roleId 角色编号ID
- */
-function fnRecordAuthUser(row: Record<string, string>) {
+/** 关闭所有弹窗 */
+function handleCloseModal() {
+  visibleByEdit.value = false;
+  visibleByView.value = false;
+  visibleByDataScope.value = false;
+  formCtl.resetFields();
+  menuTreeState.checkedKeys = [];
+  menuTreeState.expandedKeys = [];
+  deptTreeState.checkedKeys = [];
+  deptTreeState.expandedKeys = [];
+}
+
+/** 树节点勾选事件 */
+function handleTreeCheck(keys: any, info: any, type: 'menu' | 'dept') {
+  let ids = Array.isArray(keys) ? keys : keys.checked;
+  if (type === 'menu') {
+    if (form.menuCheckStrictly === '1') ids = ids.concat(info.halfCheckedKeys);
+    form.menuIds = ids;
+  }
+  if (type === 'dept') {
+    if (form.deptCheckStrictly === '1') ids = ids.concat(info.halfCheckedKeys);
+    form.deptIds = ids;
+  }
+}
+
+/** 树展开/折叠 */
+function handleTreeExpand(checked: boolean, type: 'menu' | 'dept') {
+  if (type === 'menu') menuTreeState.expandedKeys = checked ? menuTreeCache.expandedKeys : [];
+  if (type === 'dept') deptTreeState.expandedKeys = checked ? deptTreeCache.expandedKeys : [];
+}
+
+/** 树全选/全不选 */
+function handleTreeCheckAll(checked: boolean, type: 'menu' | 'dept') {
+  if (type === 'menu') {
+    menuTreeState.checkedKeys = checked ? menuTreeCache.checkedKeys : [];
+    form.menuIds = menuTreeState.checkedKeys;
+  }
+  if (type === 'dept') {
+    deptTreeState.checkedKeys = checked ? deptTreeCache.checkedKeys : [];
+    form.deptIds = deptTreeState.checkedKeys;
+  }
+}
+
+/** 树父子联动切换 */
+function handleTreeCheckStrictly(checked: boolean, type: 'menu' | 'dept') {
+  if (type === 'menu') form.menuCheckStrictly = checked ? '1' : '0';
+  if (type === 'dept') form.deptCheckStrictly = checked ? '1' : '0';
+}
+
+// ==================== 数据权限 ====================
+
+/** 分配数据权限确认 */
+async function handleDataScopeSubmit() {
+  if (confirmLoading.value) return;
+  const hide = message.loading('请稍等...', 0);
+  confirmLoading.value = true;
+  try {
+    const formRaw = toRaw(form);
+    if (formRaw.dataScope !== '2') formRaw.deptIds = [];
+    const res = await dataScope(formRaw);
+    if (res.code === RESULT_CODE_SUCCESS) {
+      message.success({ content: `${modalTitle.value}成功`, duration: 3 });
+      visibleByDataScope.value = false;
+      formCtl.resetFields();
+    } else {
+      message.error({ content: res.msg, duration: 3 });
+    }
+  } finally {
+    hide();
+    confirmLoading.value = false;
+  }
+}
+
+/** 打开分配数据权限弹窗 */
+async function handleOpenDataScope(roleId: string | number) {
+  if (!roleId || confirmLoading.value) return;
+  confirmLoading.value = true;
+  const hide = message.loading('正在打开...', 0);
+  try {
+    const [roleRes, deptRes] = await Promise.all([
+      getRole(roleId),
+      deptTreeRole(roleId),
+    ]);
+    if (roleRes.code === RESULT_CODE_SUCCESS && roleRes.data) {
+      Object.assign(form, roleRes.data);
+      if (deptRes.code === RESULT_CODE_SUCCESS && deptRes.data) {
+        const { depts, checkedKeys } = deptRes.data;
+        deptTreeCache.checkedKeys = parseTreeKeys(depts, 'id');
+        deptTreeCache.expandedKeys = parseTreeNodeKeys(depts, 'id');
+        deptTreeCache.treeData = depts;
+        deptTreeState.treeData = depts;
+        deptTreeState.checkedKeys = checkedKeys;
+        if (form.deptCheckStrictly === '1') {
+          const ids = parseTreeNodeKeysByChecked(depts, checkedKeys, 'id');
+          form.deptIds = ids.concat(checkedKeys);
+        } else {
+          form.deptIds = checkedKeys;
+        }
+      }
+      modalTitle.value = '分配数据权限';
+      visibleByDataScope.value = true;
+    }
+  } finally {
+    hide();
+    confirmLoading.value = false;
+  }
+}
+
+// ==================== 列表操作 ====================
+
+/** 角色分配用户跳转 */
+function handleAuthUser(row: Record<string, string>) {
   router.push({
     path: `${routePath}${MENU_PATH_INLINE}/auth-user/${row.roleId}`,
-    query: {
-      roleName: row.roleName,
-    },
+    query: { roleName: row.roleName },
   });
 }
 
-/**
- * 角色状态修改
- * @param row 角色记录对象
- */
-function fnRecordStatus(row: Record<string, string>) {
+/** 角色状态修改 */
+function handleStatusChange(row: Record<string, string>) {
   const text = row.statusFlag === '1' ? '启用' : '停用';
   Modal.confirm({
     title: '提示',
     content: `确定要${text} ${row.roleName} 角色吗?`,
     onOk() {
-      const hide = message.loading('请稍等...', 0);
-      changeStatus(row.roleId, row.statusFlag)
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `${row.roleName} ${text}成功`,
-              duration: 3,
-            });
-            fnGetList();
-          } else {
-            message.error({
-              content: `${row.roleName} ${text}失败`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-        });
+      return withLoading(changeStatus(row.roleId, row.statusFlag), {
+        successText: `${row.roleName} ${text}成功`,
+      }).then(() => fetchList());
     },
     onCancel() {
       row.statusFlag = row.statusFlag === '1' ? '0' : '1';
@@ -670,104 +428,51 @@ function fnRecordStatus(row: Record<string, string>) {
   });
 }
 
-/**
- * 角色删除
- * @param roleId 角色编号ID
- */
-function fnRecordDelete(roleId: string = '0') {
+/** 角色删除 */
+function handleDelete(roleId: string = '0') {
   if (roleId === '0') {
     roleId = tableState.selectedRowKeys.join(',');
   }
-  Modal.confirm({
-    title: '提示',
+  confirmAndRun({
     content: `确认删除角色编号为 【${roleId}】 的数据项?`,
-    onOk() {
-      const hide = message.loading('请稍等...', 0);
-      delRole(roleId)
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `删除成功`,
-              duration: 3,
-            });
-            fnGetList();
-          } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-        });
-    },
+    onOk: () => delRole(roleId),
+    successText: '删除成功',
+    onSuccess: () => fetchList(),
   });
 }
 
-/**列表导出 */
-function fnExportList() {
-  Modal.confirm({
-    title: '提示',
-    content: `确认根据搜索条件导出xlsx表格文件吗?`,
-    onOk() {
-      const hide = message.loading('请稍等...', 0);
-      exportRole(toRaw(queryParams))
-        .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: `已完成导出`,
-              duration: 3,
-            });
-            saveAs(res.data, `role_${Date.now()}.xlsx`);
-          } else {
-            message.error({
-              content: `${res.msg}`,
-              duration: 3,
-            });
-          }
-        })
-        .finally(() => {
-          hide();
-        });
-    },
+/** 列表导出 */
+function handleExport() {
+  confirmAndRun({
+    content: '确认根据搜索条件导出xlsx表格文件吗?',
+    onOk: () => exportRole(toRaw(queryParams)),
+    successText: '已完成导出',
+    onSuccess: (res) => { saveAs(res.data, `role_${Date.now()}.xlsx`); },
   });
 }
 
-/**查询角色列表, pageNum初始页数 */
-function fnGetList(pageNum?: number) {
+/** 查询角色列表 */
+function fetchList(pageNum?: number) {
   if (tableState.loading) return;
   tableState.loading = true;
-  if (pageNum) {
-    queryParams.pageNum = pageNum;
-  }
-
+  if (pageNum) queryParams.pageNum = pageNum;
   // 时间范围
-  if (
-    Array.isArray(queryRangePicker.value) &&
-    queryRangePicker.value.length > 0
-  ) {
+  if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
     queryParams.beginTime = queryRangePicker.value[0].startOf('day').valueOf();
     queryParams.endTime = queryRangePicker.value[1].endOf('day').valueOf();
   } else {
     queryParams.beginTime = undefined;
     queryParams.endTime = undefined;
   }
-
   listRole(toRaw(queryParams)).then(res => {
     if (res.code === RESULT_CODE_SUCCESS) {
-      // 取消勾选
-      if (tableState.selectedRowKeys.length > 0) {
-        tableState.selectedRowKeys = [];
-      }
+      clearSelection();
       const { total, rows } = res.data;
-      tablePagination.total = total;
+      setTotal(total);
       tableState.data = rows;
-      // 删除后修正页码
-      if (rows.length === 0 && tablePagination.current > 1) {
-        tablePagination.current -= 1;
-        queryParams.pageNum = tablePagination.current;
-        fnGetList();
+      // 删除后修正页码，避免空页面
+      if (fixPageAfterDelete(rows.length)) {
+        fetchList();
         return;
       }
     }
@@ -776,17 +481,10 @@ function fnGetList(pageNum?: number) {
 }
 
 onMounted(() => {
-  // 初始字典数据
-  Promise.allSettled([getDict('sys_normal_disable')]).then(resArr => {
-    if (resArr[0].status === 'fulfilled') {
-      dict.sysNormalDisable = resArr[0].value;
-    }
-  });
-  // 获取列表数据
-  fnGetList();
+  loadDicts();
+  fetchList();
 });
 </script>
-
 <template>
   <PageContainer :title="title">
     <template #content>
@@ -795,62 +493,46 @@ onMounted(() => {
       </a-typography-paragraph>
     </template>
 
-    <a-card
-      v-show="tableState.seached"
-      :bordered="false"
-      :body-style="{ marginBottom: '24px', paddingBottom: 0 }"
-    >
+    <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="角色名称" name="roleName">
-              <a-input
-                v-model:value="queryParams.roleName"
-                allow-clear
-                placeholder="请输入角色名称"
-              ></a-input>
+              <a-input v-model:value="queryParams.roleName" allow-clear placeholder="请输入角色名称"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="角色键值" name="roleKey">
-              <a-input
-                v-model:value="queryParams.roleKey"
-                allow-clear
-                placeholder="请输入角色键值"
-              ></a-input>
+              <a-input v-model:value="queryParams.roleKey" allow-clear placeholder="请输入角色键值"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="4" :md="12" :xs="24">
             <a-form-item label="角色状态" name="statusFlag">
-              <a-select
-                v-model:value="queryParams.statusFlag"
-                allow-clear
-                placeholder="请选择"
-                :options="dict.sysNormalDisable"
-              >
+              <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择"
+                :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="8" :md="12" :xs="24">
             <a-form-item label="创建时间" name="queryRangePicker">
-              <a-range-picker
-                v-model:value="queryRangePicker"
-                :bordered="true"
-                :allow-clear="true"
-                style="width: 100%"
-              ></a-range-picker>
+              <a-range-picker v-model:value="queryRangePicker" :bordered="true" :allow-clear="true"
+                style="width: 100%"></a-range-picker>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fnGetList(1)">
-                  <template #icon><SearchOutlined /></template>
+                <a-button type="primary" @click.prevent="fetchList(1)">
+                  <template #icon>
+                    <SearchOutlined />
+                  </template>
                   搜索
                 </a-button>
-                <a-button type="default" @click.prevent="fnQueryReset">
-                  <template #icon><ClearOutlined /></template>
+                <a-button type="default" @click.prevent="resetQuery">
+                  <template #icon>
+                    <ClearOutlined />
+                  </template>
                   重置
                 </a-button>
               </a-space>
@@ -864,30 +546,23 @@ onMounted(() => {
       <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button
-            type="primary"
-            @click.prevent="fnModalVisibleByEdit()"
-            v-perms:has="['system:role:add']"
-          >
-            <template #icon><PlusOutlined /></template>
+          <a-button type="primary" @click.prevent="handleOpenEdit()" v-perms:has="['system:role:add']">
+            <template #icon>
+              <PlusOutlined />
+            </template>
             新建
           </a-button>
-          <a-button
-            type="default"
-            danger
-            :disabled="tableState.selectedRowKeys.length <= 0"
-            @click.prevent="fnRecordDelete()"
-            v-perms:has="['system:role:remove']"
-          >
-            <template #icon><DeleteOutlined /></template>
+          <a-button type="default" danger :disabled="tableState.selectedRowKeys.length <= 0"
+            @click.prevent="handleDelete()" v-perms:has="['system:role:remove']">
+            <template #icon>
+              <DeleteOutlined />
+            </template>
             删除
           </a-button>
-          <a-button
-            type="dashed"
-            @click.prevent="fnExportList()"
-            v-perms:has="['system:role:export']"
-          >
-            <template #icon><ExportOutlined /></template>
+          <a-button type="dashed" @click.prevent="handleExport()" v-perms:has="['system:role:export']">
+            <template #icon>
+              <ExportOutlined />
+            </template>
             导出
           </a-button>
         </a-space>
@@ -898,39 +573,30 @@ onMounted(() => {
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch
-              v-model:checked="tableState.seached"
-              checked-children="显"
-              un-checked-children="隐"
-              size="small"
-            />
+            <a-switch v-model:checked="tableState.seached" checked-children="显" un-checked-children="隐" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
-            <a-switch
-              v-model:checked="tableState.striped"
-              checked-children="开"
-              un-checked-children="关"
-              size="small"
-            />
+            <a-switch v-model:checked="tableState.striped" checked-children="开" un-checked-children="关" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fnGetList()">
-              <template #icon><ReloadOutlined /></template>
+            <a-button type="text" @click.prevent="fetchList()">
+              <template #icon>
+                <ReloadOutlined />
+              </template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon><ColumnHeightOutlined /></template>
+                <template #icon>
+                  <ColumnHeightOutlined />
+                </template>
               </a-button>
               <template #overlay>
-                <a-menu
-                  :selected-keys="[tableState.size as string]"
-                  @click="fnTableSize"
-                >
+                <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
                   <a-menu-item key="default">默认</a-menu-item>
                   <a-menu-item key="middle">中等</a-menu-item>
                   <a-menu-item key="small">紧凑</a-menu-item>
@@ -942,116 +608,75 @@ onMounted(() => {
       </template>
 
       <!-- 表格列表 -->
-      <a-table
-        class="table"
-        row-key="roleId"
-        :columns="tableColumns"
-        :loading="tableState.loading"
-        :data-source="tableState.data"
-        :size="tableState.size"
-        :row-class-name="fnTableStriped"
-        :pagination="tablePagination"
+      <a-table class="table" row-key="roleId" :columns="tableColumns" :loading="tableState.loading"
+        :data-source="tableState.data" :size="tableState.size" :row-class-name="rowClassName" :pagination="pagination"
         :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
-        }"
-        :row-selection="{
+        }" :row-selection="{
           type: 'checkbox',
           selectedRowKeys: tableState.selectedRowKeys,
-          onChange: fnTableSelectedRowKeys,
-        }"
-      >
+          onChange: setSelectedRowKeys,
+        }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'statusFlag'">
-            <a-switch
-              v-if="
-                dict.sysNormalDisable.length > 0 &&
-                record.roleId !== SYS_ROLE_SYSTEM_ID &&
-                !userStore.roles.includes(record.roleKey) &&
-                hasPermissions(['system:role:edit'])
-              "
-              v-model:checked="record.statusFlag"
-              checked-value="1"
-              :checked-children="dict.sysNormalDisable[0].label"
-              un-checked-value="0"
-              :un-checked-children="dict.sysNormalDisable[1].label"
-              size="small"
-              @change="fnRecordStatus(record)"
-            />
-            <DictTag
-              v-else
-              :options="dict.sysNormalDisable"
-              :value="record.statusFlag"
-            />
+            <a-switch v-if="
+              dict.sysNormalDisable.length > 0 &&
+              record.roleId !== SYS_ROLE_SYSTEM_ID &&
+              !userStore.roles.includes(record.roleKey) &&
+              hasPermissions(['system:role:edit'])
+            " v-model:checked="record.statusFlag" checked-value="1" :checked-children="dict.sysNormalDisable[0].label"
+              un-checked-value="0" :un-checked-children="dict.sysNormalDisable[1].label" size="small"
+              @change="handleStatusChange(record)" />
+            <DictTag v-else :options="dict.sysNormalDisable" :value="record.statusFlag" />
           </template>
           <template v-if="column.key === 'roleId'">
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
-                <a-button
-                  type="link"
-                  @click.prevent="fnModalVisibleByVive(record.roleId)"
-                  v-perms:has="['system:role:query']"
-                >
-                  <template #icon><ProfileOutlined /></template>
+                <a-button type="link" @click.prevent="handleView(record.roleId)" v-perms:has="['system:role:query']">
+                  <template #icon>
+                    <ProfileOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip
-                placement="topRight"
-                v-if="
-                  record.roleId !== SYS_ROLE_SYSTEM_ID &&
-                  !userStore.roles.includes(record.roleKey)
-                "
-              >
+              <a-tooltip placement="topRight" v-if="
+                record.roleId !== SYS_ROLE_SYSTEM_ID &&
+                !userStore.roles.includes(record.roleKey)
+              ">
                 <template #title>编辑</template>
-                <a-button
-                  type="link"
-                  @click.prevent="fnModalVisibleByEdit(record.roleId)"
-                  v-perms:has="['system:role:edit']"
-                >
-                  <template #icon><FormOutlined /></template>
+                <a-button type="link" @click.prevent="handleOpenEdit(record.roleId)" v-perms:has="['system:role:edit']">
+                  <template #icon>
+                    <FormOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip
-                placement="topRight"
-                v-if="
-                  record.roleId !== SYS_ROLE_SYSTEM_ID &&
-                  !userStore.roles.includes(record.roleKey)
-                "
-              >
+              <a-tooltip placement="topRight" v-if="
+                record.roleId !== SYS_ROLE_SYSTEM_ID &&
+                !userStore.roles.includes(record.roleKey)
+              ">
                 <template #title>删除</template>
-                <a-button
-                  type="link"
-                  @click.prevent="fnRecordDelete(record.roleId)"
-                  v-perms:has="['system:role:remove']"
-                >
-                  <template #icon><DeleteOutlined /></template>
+                <a-button type="link" @click.prevent="handleDelete(record.roleId)" v-perms:has="['system:role:remove']">
+                  <template #icon>
+                    <DeleteOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip
-                placement="topRight"
-                v-if="record.roleId !== SYS_ROLE_SYSTEM_ID"
-              >
+              <a-tooltip placement="topRight" v-if="record.roleId !== SYS_ROLE_SYSTEM_ID">
                 <template #title>分配数据权限</template>
-                <a-button
-                  type="link"
-                  @click.prevent="fnRecordDataScope(record.roleId)"
-                  v-perms:has="['system:role:edit']"
-                >
-                  <template #icon><SecurityScanOutlined /></template>
+                <a-button type="link" @click.prevent="handleOpenDataScope(record.roleId)"
+                  v-perms:has="['system:role:edit']">
+                  <template #icon>
+                    <SecurityScanOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip
-                placement="topRight"
-                v-if="record.roleId !== SYS_ROLE_SYSTEM_ID"
-              >
+              <a-tooltip placement="topRight" v-if="record.roleId !== SYS_ROLE_SYSTEM_ID">
                 <template #title>分配用户</template>
-                <a-button
-                  type="link"
-                  @click.prevent="fnRecordAuthUser(record)"
-                  v-perms:has="['system:role:auth']"
-                >
-                  <template #icon><TeamOutlined /></template>
+                <a-button type="link" @click.prevent="handleAuthUser(record)" v-perms:has="['system:role:auth']">
+                  <template #icon>
+                    <TeamOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
             </a-space>
@@ -1061,24 +686,18 @@ onMounted(() => {
     </a-card>
 
     <!-- 详情框 -->
-    <ProModal
-      :drag="true"
-      :width="800"
-      :open="modalState.visibleByView"
-      :title="modalState.title"
-      @cancel="fnModalCancel"
-    >
+    <ProModal :drag="true" :width="800" :open="visibleByView" :title="modalTitle" @cancel="handleCloseModal">
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色编号" name="roleId">
-              {{ modalState.form.roleId }}
+              {{ form.roleId }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="创建时间" name="createTime">
-              <span v-if="+modalState.form.createTime > 0">
-                {{ parseDateToStr(+modalState.form.createTime) }}
+              <span v-if="+form.createTime > 0">
+                {{ parseDateToStr(+form.createTime) }}
               </span>
             </a-form-item>
           </a-col>
@@ -1086,112 +705,60 @@ onMounted(() => {
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色顺序" name="roleSort">
-              {{ modalState.form.roleSort }}
+              {{ form.roleSort }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色状态" name="statusFlag">
-              <DictTag
-                :options="dict.sysNormalDisable"
-                :value="modalState.form.statusFlag"
-              />
+              <DictTag :options="dict.sysNormalDisable" :value="form.statusFlag" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色名称" name="roleName">
-              {{ modalState.form.roleName }}
+              {{ form.roleName }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色键值" name="roleKey">
-              {{ modalState.form.roleKey }}
+              {{ form.roleKey }}
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item
-          label="角色说明"
-          name="remark"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-textarea
-            :value="modalState.form.remark"
-            :auto-size="{ minRows: 2, maxRows: 6 }"
-            :disabled="true"
-            style="color: rgba(0, 0, 0, 0.85)"
-          />
+        <a-form-item label="角色说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea :value="form.remark" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
+            style="color: rgba(0, 0, 0, 0.85)" />
         </a-form-item>
 
-        <a-form-item
-          label="菜单权限"
-          name="menuCheckStrictly"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-tree
-            disabled
-            checkable
-            :selectable="false"
-            v-model:expanded-keys="modalState.menuTree.expandedKeys"
-            v-model:checked-keys="modalState.menuTree.checkedKeys"
-            :check-strictly="modalState.form.menuCheckStrictly === '0'"
-            :tree-data="modalState.menuTree.treeData"
-            :field-names="{ children: 'children', title: 'label', key: 'id' }"
-            :height="256"
-            style="border: 1px solid #d9d9d9; margin-top: 4px"
-          >
+        <a-form-item label="菜单权限" name="menuCheckStrictly" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-tree disabled checkable :selectable="false" v-model:expanded-keys="menuTreeState.expandedKeys"
+            v-model:checked-keys="menuTreeState.checkedKeys" :check-strictly="form.menuCheckStrictly === '0'"
+            :tree-data="menuTreeState.treeData" :field-names="{ children: 'children', title: 'label', key: 'id' }"
+            :height="256" style="border: 1px solid #d9d9d9; margin-top: 4px">
           </a-tree>
         </a-form-item>
       </a-form>
       <template #footer>
-        <a-button key="cancel" @click="fnModalCancel">关闭</a-button>
+        <a-button key="cancel" @click="handleCloseModal">关闭</a-button>
       </template>
     </ProModal>
 
     <!-- 新增框或修改框 -->
-    <ProModal
-      :drag="true"
-      :destroyOnClose="true"
-      :width="800"
-      :keyboard="false"
-      :mask-closable="false"
-      :open="modalState.visibleByEdit"
-      :title="modalState.title"
-      :confirm-loading="modalState.confirmLoading"
-      @ok="fnModalOk"
-      @cancel="fnModalCancel"
-    >
-      <a-form
-        name="modalStateFormByEdit"
-        layout="horizontal"
-        :label-col="{ span: 6 }"
-        :label-wrap="true"
-      >
+    <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
+      :open="visibleByEdit" :title="modalTitle" :confirm-loading="confirmLoading" @ok="handleSubmit"
+      @cancel="handleCloseModal">
+      <a-form name="formCtlByEdit" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="角色名称"
-              name="roleName"
-              v-bind="modalStateForm.validateInfos.roleName"
-            >
-              <a-input
-                v-model:value="modalState.form.roleName"
-                allow-clear
-                placeholder="请输入角色名称"
-                :maxlength="50"
-              ></a-input>
+            <a-form-item label="角色名称" name="roleName" v-bind="formCtl.validateInfos.roleName">
+              <a-input v-model:value="form.roleName" allow-clear placeholder="请输入角色名称" :maxlength="50"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色状态" name="statusFlag">
-              <a-select
-                v-model:value="modalState.form.statusFlag"
-                default-value="0"
-                placeholder="角色状态"
-                :options="dict.sysNormalDisable"
-              >
+              <a-select v-model:value="form.statusFlag" default-value="0" placeholder="角色状态"
+                :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
           </a-col>
@@ -1199,17 +766,8 @@ onMounted(() => {
 
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="角色键值"
-              name="roleKey"
-              v-bind="modalStateForm.validateInfos.roleKey"
-            >
-              <a-input
-                v-model:value="modalState.form.roleKey"
-                allow-clear
-                placeholder="请输入角色键值"
-                :maxlength="50"
-              >
+            <a-form-item label="角色键值" name="roleKey" v-bind="formCtl.validateInfos.roleKey">
+              <a-input v-model:value="form.roleKey" allow-clear placeholder="请输入角色键值" :maxlength="50">
                 <template #prefix>
                   <a-tooltip placement="topLeft">
                     <template #title>
@@ -1227,110 +785,63 @@ onMounted(() => {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色顺序" name="roleSort">
-              <a-input-number
-                v-model:value="modalState.form.roleSort"
-                :min="0"
-                :max="9999"
-                :step="1"
-                placeholder="排序值"
-              ></a-input-number>
+              <a-input-number v-model:value="form.roleSort" :min="0" :max="9999" :step="1"
+                placeholder="排序值"></a-input-number>
             </a-form-item>
           </a-col>
         </a-row>
 
-        <a-form-item
-          label="角色说明"
-          name="remark"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-textarea
-            v-model:value="modalState.form.remark"
-            :auto-size="{ minRows: 2, maxRows: 6 }"
-            :maxlength="200"
-            :show-count="true"
-            placeholder="请输入角色说明"
-          />
+        <a-form-item label="角色说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea v-model:value="form.remark" :auto-size="{ minRows: 2, maxRows: 6 }" :maxlength="200"
+            :show-count="true" placeholder="请输入角色说明" />
         </a-form-item>
 
-        <a-form-item
-          label="菜单权限"
-          name="menuCheckStrictly"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
+        <a-form-item label="菜单权限" name="menuCheckStrictly" :label-col="{ span: 3 }" :label-wrap="true">
           <a-space :size="12" align="center">
-            <a-checkbox
-              id="menu_1"
-              :checked="modalState.menuTree.expandedKeys.length > 0"
-              @change="(e:any) => fnModalExpandedKeys(e.target.checked, 'menu')"
-            >
+            <a-checkbox id="menu_1" :checked="menuTreeState.expandedKeys.length > 0"
+              @change="(e: any) => handleTreeExpand(e.target.checked, 'menu')">
               展开/折叠
             </a-checkbox>
-            <a-checkbox
-              id="menu_2"
-              :checked="modalState.form.menuIds.length > 0"
-              @change="(e:any) => fnModalCheckedKeys(e.target.checked, 'menu')"
-            >
+            <a-checkbox id="menu_2" :checked="form.menuIds.length > 0"
+              @change="(e: any) => handleTreeCheckAll(e.target.checked, 'menu')">
               全选/全不选
             </a-checkbox>
-            <a-checkbox
-              id="menu_3"
-              :checked="modalState.form.menuCheckStrictly === '1'"
-              @change="(e:any) => fnModalCheckStrictly(e.target.checked, 'menu')"
-            >
+            <a-checkbox id="menu_3" :checked="form.menuCheckStrictly === '1'"
+              @change="(e: any) => handleTreeCheckStrictly(e.target.checked, 'menu')">
               父子联动
             </a-checkbox>
           </a-space>
-          <a-tree
-            checkable
-            :selectable="false"
-            @check="
-              (checked:any, info:any) => fnModalTreeChecked(checked, info, 'menu')
-            "
-            v-model:expanded-keys="modalState.menuTree.expandedKeys"
-            v-model:checked-keys="modalState.menuTree.checkedKeys"
-            :check-strictly="modalState.form.menuCheckStrictly === '0'"
-            :tree-data="modalState.menuTree.treeData"
-            :field-names="{ children: 'children', title: 'label', key: 'id' }"
-            :height="256"
-            style="
+          <a-tree checkable :selectable="false" @check="
+            (checked: any, info: any) => handleTreeCheck(checked, info, 'menu')
+          " v-model:expanded-keys="menuTreeState.expandedKeys" v-model:checked-keys="menuTreeState.checkedKeys"
+            :check-strictly="form.menuCheckStrictly === '0'" :tree-data="menuTreeState.treeData"
+            :field-names="{ children: 'children', title: 'label', key: 'id' }" :height="256" style="
               border-width: 1px;
               border-style: solid;
               border-color: #d9d9d9;
               border-radius: 6px;
               margin-top: 4px;
-            "
-          >
+            ">
           </a-tree>
         </a-form-item>
       </a-form>
     </ProModal>
 
     <!-- 分配角色数据权限修改框 -->
-    <ProModal
-      :drag="true"
-      :destroyOnClose="true"
-      :width="800"
-      :keyboard="false"
-      :mask-closable="false"
-      :open="modalState.visibleByDataScope"
-      :title="modalState.title"
-      :confirm-loading="modalState.confirmLoading"
-      @ok="fnModalOkDataScope"
-      @cancel="fnModalCancel"
-    >
-      <a-form name="modalStateFormByDataScope" layout="horizontal">
+    <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
+      :open="visibleByDataScope" :title="modalTitle" :confirm-loading="confirmLoading" @ok="handleDataScopeSubmit"
+      @cancel="handleCloseModal">
+      <a-form name="formCtlByDataScope" layout="horizontal">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色编号" name="roleId">
-              {{ modalState.form.roleId }}
+              {{ form.roleId }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="创建时间" name="createTime">
-              <span v-if="+modalState.form.createTime > 0">
-                {{ parseDateToStr(+modalState.form.createTime) }}
+              <span v-if="+form.createTime > 0">
+                {{ parseDateToStr(+form.createTime) }}
               </span>
             </a-form-item>
           </a-col>
@@ -1338,96 +849,62 @@ onMounted(() => {
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色顺序" name="roleSort">
-              {{ modalState.form.roleSort }}
+              {{ form.roleSort }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色状态" name="statusFlag">
-              <DictTag
-                :options="dict.sysNormalDisable"
-                :value="modalState.form.statusFlag"
-              />
+              <DictTag :options="dict.sysNormalDisable" :value="form.statusFlag" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色名称" name="roleName">
-              {{ modalState.form.roleName }}
+              {{ form.roleName }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="角色键值" name="roleKey">
-              {{ modalState.form.roleKey }}
+              {{ form.roleKey }}
             </a-form-item>
           </a-col>
         </a-row>
         <a-form-item label="角色说明" name="remark">
-          <a-textarea
-            :value="modalState.form.remark"
-            :auto-size="{ minRows: 2, maxRows: 6 }"
-            :disabled="true"
-            style="color: rgba(0, 0, 0, 0.85)"
-          />
+          <a-textarea :value="form.remark" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
+            style="color: rgba(0, 0, 0, 0.85)" />
         </a-form-item>
 
         <a-form-item label="权限范围" name="dataScope">
-          <a-select
-            v-model:value="modalState.form.dataScope"
-            default-value="5"
-            placeholder="权限范围"
-            :options="dataScopeOptions"
-          >
+          <a-select v-model:value="form.dataScope" default-value="5" placeholder="权限范围" :options="dataScopeOptions">
           </a-select>
         </a-form-item>
-        <a-form-item
-          label="数据权限"
-          name="deptCheckStrictly"
-          v-show="modalState.form.dataScope === '2'"
-        >
+        <a-form-item label="数据权限" name="deptCheckStrictly" v-show="form.dataScope === '2'">
           <a-space :size="12" align="center">
-            <a-checkbox
-              id="dept_1"
-              :checked="modalState.deptTree.expandedKeys.length > 0"
-              @change="(e:any) => fnModalExpandedKeys(e.target.checked, 'dept')"
-            >
+            <a-checkbox id="dept_1" :checked="deptTreeState.expandedKeys.length > 0"
+              @change="(e: any) => handleTreeExpand(e.target.checked, 'dept')">
               展开/折叠
             </a-checkbox>
-            <a-checkbox
-              id="dept_2"
-              :checked="modalState.form.deptIds.length > 0"
-              @change="(e:any) => fnModalCheckedKeys(e.target.checked, 'dept')"
-            >
+            <a-checkbox id="dept_2" :checked="form.deptIds.length > 0"
+              @change="(e: any) => handleTreeCheckAll(e.target.checked, 'dept')">
               全选/全不选
             </a-checkbox>
-            <a-checkbox
-              id="dept_1"
-              :checked="modalState.form.deptCheckStrictly === '1'"
-              @change="(e:any) => fnModalCheckStrictly(e.target.checked, 'dept')"
-            >
+            <a-checkbox id="dept_1" :checked="form.deptCheckStrictly === '1'"
+              @change="(e: any) => handleTreeCheckStrictly(e.target.checked, 'dept')">
               父子联动
             </a-checkbox>
           </a-space>
-          <a-tree
-            checkable
-            :selectable="false"
-            @check="
-              (checked:any, info:any) => fnModalTreeChecked(checked, info, 'dept')
-            "
-            v-model:expanded-keys="modalState.deptTree.expandedKeys"
-            v-model:checked-keys="modalState.deptTree.checkedKeys"
-            :check-strictly="modalState.form.deptCheckStrictly === '0'"
-            :tree-data="modalState.deptTree.treeData"
-            :field-names="{ children: 'children', title: 'label', key: 'id' }"
-            :height="256"
-            style="
+          <a-tree checkable :selectable="false" @check="
+            (checked: any, info: any) => handleTreeCheck(checked, info, 'dept')
+          " v-model:expanded-keys="deptTreeState.expandedKeys" v-model:checked-keys="deptTreeState.checkedKeys"
+            :check-strictly="form.deptCheckStrictly === '0'" :tree-data="deptTreeState.treeData"
+            :field-names="{ children: 'children', title: 'label', key: 'id' }" :height="256" style="
               border-width: 1px;
               border-style: solid;
               border-color: #d9d9d9;
               border-radius: 6px;
               margin-top: 4px;
-            "
-          >
+            ">
           </a-tree>
         </a-form-item>
       </a-form>
