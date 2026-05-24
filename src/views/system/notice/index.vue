@@ -1,6 +1,6 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { useRoute } from "vue-router";
-import { ref, toRaw, computed, onMounted } from "vue";
+import { ref, toRaw, computed, watch } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { PageContainer } from "antdv-pro-layout";
 import { ProModal } from "antdv-pro-modal";
@@ -29,7 +29,7 @@ const queryClient = useQueryClient();
 const title = ref<string>(route.meta.title ?? "标题");
 
 /** 字典数据初始化 */
-const { dict, loadDicts } = useDictSetup({
+const { dict } = useDictSetup({
   sysNoticeType: "sys_notice_type",
   sysNoticeStatus: "sys_notice_status",
 });
@@ -50,7 +50,7 @@ const { queryParams, resetQuery } = useQueryParams(
 );
 
 /** 分页管理 */
-const { pagination, resetPage } = usePagination({
+const { pagination, resetPage, fixPage } = usePagination({
   onChange: (page, pageSize) => {
     queryParams.pageNum = page;
     queryParams.pageSize = pageSize;
@@ -191,13 +191,10 @@ function handleDelete(noticeId: string = "0") {
     action: (id) => delNotice(id),
     variables: noticeId,
     successText: "删除成功",
+    onSuccess: () => fixPage(tableState.selectedRowKeys.length || 1, total.value),
     invalidateKeys: [["noticeList"]],
   });
 }
-
-onMounted(() => {
-  loadDicts();
-});
 </script>
 
 <template>

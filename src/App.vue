@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { onMounted, onBeforeMount, watch } from 'vue';
 import useLayoutStore from '@/store/modules/layout';
 import useAppStore from '@/store/modules/app';
@@ -42,11 +42,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <a-config-provider
-    :theme="themeConfig"
-    :locale="zhCN"
-    :component-size="appStore.componentSize"
-  >
+  <a-config-provider :theme="themeConfig" :locale="zhCN" :component-size="appStore.componentSize">
     <RouterView />
   </a-config-provider>
 </template>
@@ -55,6 +51,7 @@ onMounted(() => {
 #app {
   height: 100%;
 }
+
 body .ant-pro-basicLayout {
   display: flex;
   flex-direction: column;
@@ -93,6 +90,7 @@ body .ant-pro-basicLayout {
 [data-theme='dark']::view-transition-old(root) {
   z-index: 1;
 }
+
 [data-theme='dark']::view-transition-new(root) {
   z-index: 999;
 }
@@ -100,6 +98,7 @@ body .ant-pro-basicLayout {
 ::view-transition-old(root) {
   z-index: 999;
 }
+
 ::view-transition-new(root) {
   z-index: 1;
 }

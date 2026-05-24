@@ -1,6 +1,6 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { useRoute } from "vue-router";
-import { ref, toRaw, computed, onMounted } from "vue";
+import { ref, toRaw, computed, watch } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { PageContainer } from "antdv-pro-layout";
 import { ProModal } from "antdv-pro-modal";
@@ -21,14 +21,14 @@ const route = useRoute();
 const queryClient = useQueryClient();
 const title = ref<string>(route.meta.title ?? "标题");
 
-const { dict, loadDicts } = useDictSetup({ sysNormalDisable: "sys_normal_disable" });
+const { dict } = useDictSetup({ sysNormalDisable: "sys_normal_disable" });
 
 const { queryParams, resetQuery } = useQueryParams(
   { postCode: "", postName: "", statusFlag: undefined as string | undefined, pageNum: 1, pageSize: 20 },
   () => { resetPage(); },
 );
 
-const { pagination, resetPage } = usePagination({
+const { pagination, resetPage, fixPage } = usePagination({
   onChange: (page, pageSize) => { queryParams.pageNum = page; queryParams.pageSize = pageSize; },
 });
 
@@ -79,7 +79,7 @@ function handleDelete(postId: string = "0") {
   if (postId === "0") postId = tableState.selectedRowKeys.join(",");
   confirmAndRun({
     content: `确认删除岗位编号为【${postId}】的数据项?`,
-    action: (id) => delPost(id), variables: postId, successText: "删除成功", invalidateKeys: [["postList"]],
+    action: (id) => delPost(id), variables: postId, successText: "删除成功", onSuccess: () => { if (queryParams.pageNum > 1 && listData.value.length <= Math.max(tableState.selectedRowKeys.length, 1)) queryParams.pageNum--; }, invalidateKeys: [["postList"]],
   });
 }
 
@@ -90,8 +90,6 @@ function handleExport() {
     onSuccess: (res) => { saveAs(res.data, `post_${Date.now()}.xlsx`); },
   });
 }
-
-onMounted(() => { loadDicts(); });
 </script>
 <template>
   <PageContainer :title="title">

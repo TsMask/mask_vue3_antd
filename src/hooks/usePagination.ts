@@ -12,27 +12,20 @@ export interface UsePaginationOptions {
 /**
  * 通用分页管理 hook
  *
- * 解决的问题：
- * - 各页面重复编写 tablePagination reactive 对象（current/pageSize/total/onChange 等）
- * - 分页变化时需要同步 queryParams 并重新拉取列表
- * - 删除当前页最后一条数据后页码不回退，导致空页面
+ * 管理 a-table 分页 UI 配置，与 useListQuery 配合使用。
  *
  * @example
  * ```ts
- * const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
+ * const { pagination, resetPage, fixPage } = usePagination({
  *   onChange: (page, pageSize) => {
  *     queryParams.pageNum = page;
  *     queryParams.pageSize = pageSize;
- *     fetchList();
  *   },
  * });
- * ```
  *
- * @param options - 分页配置选项
- * @returns pagination - 响应式分页配置对象，可直接绑定到 a-table :pagination
- * @returns resetPage - 重置页码到第1页（通常在搜索/重置时调用）
- * @returns setTotal - 设置数据总数（通常在列表请求成功后调用）
- * @returns fixPageAfterDelete - 删除后修正页码，返回 true 表示需要重新拉取
+ * // 删除后修正页码（在 confirmAndRun 的 onSuccess 中调用）
+ * fixPage(1, total.value);
+ * ```
  */
 export function usePagination(options: UsePaginationOptions = {}) {
   const {
@@ -41,7 +34,7 @@ export function usePagination(options: UsePaginationOptions = {}) {
     onChange,
   } = options;
 
-  /** 响应式分页配置对象，可直接绑定到 ant-design-vue Table 的 :pagination */
+  /** 响应式分页配置对象，可直接绑定到 a-table 的 :pagination */
   const pagination = reactive({
     /** 当前页码 */
     current: 1,
@@ -57,7 +50,7 @@ export function usePagination(options: UsePaginationOptions = {}) {
     showQuickJumper: true,
     /** 是否显示每页条数选择器 */
     showSizeChanger: true,
-    /** 数据总数 */
+    /** 数据总数（由页面模板中通过 { ...pagination, total } 覆盖） */
     total: 0,
     /** 自定义总数显示格式 */
     showTotal: (total: number) => `总共 ${total} 条`,
@@ -79,34 +72,27 @@ export function usePagination(options: UsePaginationOptions = {}) {
   }
 
   /**
-   * 设置数据总数
-   * 通常在列表请求成功后调用
-   * @param total - 数据总数
-   */
-  function setTotal(total: number) {
-    pagination.total = total;
-  }
-
-  /**
-   * 删除数据后修正页码
-   * 如果当前页数据为空且不在第1页，自动回退到上一页
-   * 解决"删除当前页最后一条数据后显示空页面"的问题
+   * 删除后修正页码
+   * 根据删除数量和当前总数计算最大有效页码，超出则回退
    *
-   * @param dataLength - 当前页数据条数
-   * @returns 是否需要重新拉取列表（true = 已回退页码，需要重新请求）
+   * 在 confirmAndRun / useMutationAction 的 onSuccess 中调用：
+   *   fixPage(1, total.value)              — 单条删除
+   *   fixPage(selectedKeys.length, total.value) — 批量删除
+   *
+   * @param deletedCount - 本次删除的数据条数
+   * @param total - 删除前的数据总数（来自 useListQuery 的 total）
    */
-  function fixPageAfterDelete(dataLength: number): boolean {
-    if (dataLength === 0 && pagination.current > 1) {
-      pagination.current -= 1;
-      return true;
+  function fixPage(deletedCount: number, total: number) {
+    const maxPage = Math.max(1, Math.ceil((total - deletedCount) / pagination.pageSize));
+    if (pagination.current > maxPage) {
+      pagination.current = maxPage;
+      onChange?.(pagination.current, pagination.pageSize);
     }
-    return false;
   }
 
   return {
     pagination,
     resetPage,
-    setTotal,
-    fixPageAfterDelete,
+    fixPage,
   };
 }

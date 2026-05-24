@@ -1,11 +1,9 @@
-import { useQuery, type QueryKey } from '@tanstack/vue-query';
+﻿import { useQuery, keepPreviousData, type QueryKey } from '@tanstack/vue-query';
 import { type Ref, type ComputedRef, computed } from 'vue';
 import { isSuccess } from '@/plugins/http-fetch';
 import type { ResultType } from '@/plugins/http-fetch';
 
-/**
- * 详情查询配置项
- */
+/** 详情查询配置项 */
 export interface UseDetailQueryOptions<TData = any> {
   /**
    * 查询唯一标识
@@ -24,9 +22,7 @@ export interface UseDetailQueryOptions<TData = any> {
   enabled?: Ref<boolean> | boolean;
 }
 
-/**
- * 详情查询结果
- */
+/** 详情查询结果 */
 export interface UseDetailQueryResult<TData = any> {
   /** 响应原始数据 */
   result: Ref<ResultType | undefined>;
@@ -67,6 +63,8 @@ export function useDetailQuery<TData = any>(
     queryKey,
     queryFn,
     enabled: enabled ?? true,
+    /** 详情查询保持上一次数据，避免弹窗打开时闪烁 */
+    placeholderData: keepPreviousData,
   });
 
   /** 响应原始数据 */

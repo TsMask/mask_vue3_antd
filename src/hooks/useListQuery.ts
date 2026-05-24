@@ -1,11 +1,9 @@
-import { useQuery, useQueryClient, type QueryKey } from '@tanstack/vue-query';
-import { type Ref, type ComputedRef, computed, watch, toRef, isRef } from 'vue';
+﻿import { useQuery, useQueryClient, keepPreviousData, type QueryKey } from '@tanstack/vue-query';
+import { type Ref, type ComputedRef, computed } from 'vue';
 import { isSuccess } from '@/plugins/http-fetch';
 import type { ResultType } from '@/plugins/http-fetch';
 
-/**
- * 列表查询配置项
- */
+/** 列表查询配置项 */
 export interface UseListQueryOptions<TData = any> {
   /**
    * 查询唯一标识
@@ -25,9 +23,7 @@ export interface UseListQueryOptions<TData = any> {
   enabled?: Ref<boolean> | boolean;
 }
 
-/**
- * 列表查询结果
- */
+/** 列表查询结果 */
 export interface UseListQueryResult<TData = any> {
   /** 响应原始数据（包含 code/msg/data） */
   result: Ref<ResultType | undefined>;
@@ -53,35 +49,25 @@ export interface UseListQueryResult<TData = any> {
  * 封装 vue-query 的 useQuery，适配管理后台分页列表场景。
  * 自动从 ResultType 中解析 rows/total，并通过 vue-query 管理缓存和刷新策略。
  *
- * 替代原来页面中手动编写的 fetchList + tableState.loading + setTotal + fixPageAfterDelete 模式。
- *
  * @example
  * ```ts
- * const queryParams = ref({ userName: '', pageNum: 1, pageSize: 20 });
- *
- * const { listData, total, isFetching, refetch } = useListQuery({
- *   queryKey: computed(() => ['userList', queryParams.value]),
- *   queryFn: () => listUser(toRaw(queryParams.value)),
+ * const { listData, total, isFetching } = useListQuery({
+ *   queryKey: computed(() => ['userList', { ...toRaw(queryParams) }]),
+ *   queryFn: () => listUser(toRaw(queryParams)),
  * });
- *
- * // 在模板中使用
- * // <a-table :data-source="listData" :loading="isFetching" :pagination="{ total }" />
- *
- * // 删除后刷新
- * await delUser(id);
- * queryClient.invalidateQueries({ queryKey: ['userList'] });
  * ```
  */
 export function useListQuery<TData = any>(
   options: UseListQueryOptions<TData>
 ): UseListQueryResult<TData> {
   const { queryKey, queryFn, enabled } = options;
-  const queryClient = useQueryClient();
 
   const query = useQuery<ResultType>({
     queryKey,
     queryFn,
     enabled: enabled ?? true,
+    /** 翻页时保持上一页数据，避免表格闪烁 */
+    placeholderData: keepPreviousData,
   });
 
   /** 响应原始数据 */
@@ -127,15 +113,9 @@ export function useListQuery<TData = any>(
 
 /**
  * 使指定 queryKey 的缓存失效，触发重新查询
- * 通常在新增/编辑/删除操作成功后调用
  *
+ * @param queryClient - vue-query 客户端实例
  * @param queryKey - 要失效的查询 key
- *
- * @example
- * ```ts
- * await delUser(id);
- * invalidateList(queryClient, ['userList']);
- * ```
  */
 export function invalidateList(
   queryClient: ReturnType<typeof useQueryClient>,

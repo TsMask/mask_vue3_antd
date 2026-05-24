@@ -1,32 +1,51 @@
 ﻿import { reactive, ref } from "vue";
 import useDictStore from "@/store/modules/dict";
 
+export interface UseDictSetupOptions {
+  /** 本地字段名到字典类型键的映射 */
+  keyMap: Record<string, string>;
+  /**
+   * 是否在 setup 阶段自动加载字典数据
+   * 默认 true，页面无需手动调用 loadDicts()
+   * 设为 false 时需在适当时机手动调用 loadDicts()
+   */
+  autoLoad?: boolean;
+}
 
 /**
  * 通用字典初始化 hook
  *
  * 解决的问题：
  * - 各页面重复编写 Promise.allSettled(getDict(...)) 与赋值逻辑
- * - 字典 loading 状态、错误处理不统一
+ * - 各页面重复编写 onMounted(() => { loadDicts() })
  *
  * @example
  * ```ts
- * const { dict, dictLoading, loadDicts } = useDictSetup({
- *   sysNormalDisable: "sys_normal_disable",
- *   sysBusinessType: "sys_opera_type",
+ * // 自动加载（默认），无需 onMounted
+ * const { dict } = useDictSetup({
+ *   keyMap: { sysNormalDisable: "sys_normal_disable" },
  * });
  *
+ * // 手动加载
+ * const { dict, loadDicts } = useDictSetup({
+ *   keyMap: { sysNormalDisable: "sys_normal_disable" },
+ *   autoLoad: false,
+ * });
  * onMounted(() => { loadDicts(); });
- * // 模板中使用 dict.sysNormalDisable
  * ```
- *
- * @param keyMap - 本地字段名到字典类型键的映射，如 { sysNormalDisable: "sys_normal_disable" }
- * @returns dict - 响应式字典数据对象，按 keyMap 的本地字段名存放对应字典列表
- * @returns dictLoading - 字典加载状态
- * @returns loadDicts - 启动字典数据加载
  */
-export function useDictSetup(keyMap: Record<string, string>) {
+export function useDictSetup(
+  keyMapOrOptions: Record<string, string> | UseDictSetupOptions,
+) {
+  /** 兼容旧用法：直接传 keyMap 对象 */
+  const options: UseDictSetupOptions =
+    typeof Object.values(keyMapOrOptions)[0] === "string"
+      ? { keyMap: keyMapOrOptions as Record<string, string> }
+      : (keyMapOrOptions as UseDictSetupOptions);
+
+  const { keyMap, autoLoad = true } = options;
   const { getDict } = useDictStore();
+
   /** 字典数据加载状态 */
   const dictLoading = ref(false);
 
@@ -60,6 +79,11 @@ export function useDictSetup(keyMap: Record<string, string>) {
     } finally {
       dictLoading.value = false;
     }
+  }
+
+  /** 自动加载：在 setup 阶段立即发起字典请求，无需等待 onMounted */
+  if (autoLoad) {
+    loadDicts();
   }
 
   return {

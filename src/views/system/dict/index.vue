@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
 import { useRoute, useRouter } from "vue-router";
-import { ref, toRaw, onMounted } from "vue";
+import { ref, toRaw, computed, watch } from "vue";
+import { useQueryClient } from "@tanstack/vue-query";
 import { PageContainer } from "antdv-pro-layout";
 import { ProModal } from "antdv-pro-modal";
 import { message } from "ant-design-vue";
@@ -18,25 +19,24 @@ import {
 import { saveAs } from "file-saver";
 import { parseDateToStr } from "@/utils/date-utils";
 import { MENU_PATH_INLINE } from "@/constants/menu-constants";
-import { RESULT_CODE_SUCCESS } from "@/constants/result-constants";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { usePagination } from "@/hooks/usePagination";
 import { useTableUI } from "@/hooks/useTableUI";
 import { useCrudModal } from "@/hooks/useCrudModal";
-import { useMessageAction } from "@/hooks/useMessageAction";
 import { useDictSetup } from "@/hooks/useDictSetup";
+import { useListQuery } from "@/hooks/useListQuery";
+import { useMutationAction, confirmAndRun } from "@/hooks/useMutationAction";
 
 const route = useRoute();
 const router = useRouter();
+const queryClient = useQueryClient();
 const routePath = route.path;
 
 const title = ref<string>(route.meta.title ?? "标题");
 
-const { dict, loadDicts } = useDictSetup({
+const { dict } = useDictSetup({
   sysNormalDisable: "sys_normal_disable",
 });
-
-const { withLoading, confirmAndRun } = useMessageAction();
 
 const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
@@ -51,16 +51,24 @@ const { queryParams, resetQuery: baseResetQuery } = useQueryParams(
     pageNum: 1,
     pageSize: 20,
   },
-  () => {
-    resetPage();
-    fetchList();
-  },
+  () => resetPage(),
 );
 
-/** 重置查询条件，清空日期选择器后恢复默认参数并重新查询 */
+/** 重置查询条件，清空日期选择器后恢复默认参数 */
 function resetQuery() {
   queryRangePicker.value = undefined;
   baseResetQuery();
+}
+
+/** 同步日期范围到查询参数 */
+function syncDateRange() {
+  if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
+    queryParams.beginTime = queryRangePicker.value[0].startOf("day").valueOf();
+    queryParams.endTime = queryRangePicker.value[1].endOf("day").valueOf();
+  } else {
+    queryParams.beginTime = undefined;
+    queryParams.endTime = undefined;
+  }
 }
 
 const {
@@ -68,15 +76,22 @@ const {
   setTableSize,
   rowClassName,
   setSelectedRowKeys,
-  clearSelection,
 } = useTableUI();
 
-const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
+const { pagination, resetPage, fixPage } = usePagination({
   onChange: (page, pageSize) => {
     queryParams.pageNum = page;
     queryParams.pageSize = pageSize;
-    fetchList();
   },
+});
+
+/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
+const { listData, total, isFetching } = useListQuery({
+  queryKey: computed(() => {
+    syncDateRange();
+    return ["dictTypeList", { ...toRaw(queryParams) }];
+  }),
+  queryFn: () => listType(toRaw(queryParams)),
 });
 
 const {
@@ -94,158 +109,90 @@ const {
     remark: undefined as string | undefined,
   }),
   rules: {
-    dictName: [
-      { required: true, min: 1, max: 50, message: "请输入字典名称" },
-    ],
-    dictType: [
-      { required: true, min: 1, max: 50, message: "请输入字典类型" },
-    ],
+    dictName: [{ required: true, min: 1, max: 50, message: "请输入字典名称" }],
+    dictType: [{ required: true, min: 1, max: 50, message: "请输入字典类型" }],
   },
+});
+
+/** 新增/编辑 mutation */
+const { mutateAsync: submitMutateAsync, isLoading: isSubmitting } = useMutationAction({
+  mutationFn: (form: Record<string, any>) =>
+    form.dictId ? updateType(form) : addType(form),
+  successText: "操作成功",
+  invalidateKeys: [["dictTypeList"]],
 });
 
 const tableColumns: ColumnsType = [
   { title: "字典编号", dataIndex: "dictId", align: "left", width: 100 },
   { title: "字典名称", dataIndex: "dictName", align: "left", width: 200 },
   { title: "字典类型", dataIndex: "dictType", align: "left", width: 200 },
+  { title: "字典状态", dataIndex: "statusFlag", key: "statusFlag", align: "left", width: 100 },
   {
-    title: "字典状态",
-    dataIndex: "statusFlag",
-    key: "statusFlag",
-    align: "left",
-    width: 100,
-  },
-  {
-    title: "创建时间",
-    dataIndex: "createTime",
-    align: "left",
-    width: 150,
-    customRender(opt) {
-      if (+opt.value <= 0) return "";
-      return parseDateToStr(+opt.value);
-    },
+    title: "创建时间", dataIndex: "createTime", align: "left", width: 150,
+    customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); },
   },
   { title: "操作", key: "dictId", align: "left" },
 ];
 
-/** 打开字典类型详情弹窗，根据 dictId 查询并展示数据 */
 function handleView(dictId: string | number) {
   openView(dictId, getType, "字典类型信息");
 }
 
-/** 打开新增或编辑弹窗，有 dictId 则回填数据，否则为新增 */
 function handleEdit(dictId?: string | number) {
   openEdit(dictId, getType, "添加字典类型", "修改字典类型");
 }
 
-/** 校验表单后提交新增/编辑，成功则刷新列表并关闭弹窗 */
 async function handleSubmit() {
   try {
     await modalStateForm.validate();
   } catch (e: any) {
-    message.error({
-      content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
-      duration: 3,
-    });
+    message.error({ content: `请正确填写 ${e.errorFields.length} 处必填信息！`, duration: 3 });
     return;
   }
-  modalState.confirmLoading = true;
   try {
-    const form = toRaw(modalState.form);
-    const res = await withLoading(
-      (form.dictId ? updateType : addType)(form),
-      { successText: `${modalState.title}成功` },
-    );
-    if (res.code === RESULT_CODE_SUCCESS) {
-      fetchList(1);
-      handleCancel();
-    }
-  } finally {
-    modalState.confirmLoading = false;
+    await submitMutateAsync(toRaw(modalState.form));
+    handleCancel();
+  } catch {
+    // 错误已由 useMutationAction 统一处理
   }
 }
 
-/** 删除字典类型（单条或批量），支持从选中行键列表批量删除 */
 function handleDelete(dictId: string = "0") {
   if (dictId === "0") {
     dictId = tableState.selectedRowKeys.join(",");
   }
   confirmAndRun({
     content: `确认删除字典编号为【${dictId}】的数据项?`,
-    onOk: () => delType(dictId),
+    action: () => delType(dictId),
+    variables: undefined,
     successText: "删除成功",
-    onSuccess: () => fetchList(),
+    onSuccess: () => fixPage(tableState.selectedRowKeys.length || 1, total.value),
+    invalidateKeys: [["dictTypeList"]],
   });
 }
 
-/** 根据当前搜索条件导出字典类型列表 xlsx 文件 */
 function handleExport() {
   confirmAndRun({
     content: "确认根据搜索条件导出xlsx表格文件吗",
-    onOk: () => exportType(toRaw(queryParams)),
+    action: () => exportType(toRaw(queryParams)),
+    variables: undefined,
     successText: "已导出完成",
-    onSuccess: (res) => {
-      saveAs(res.data, `dict_${Date.now()}.xlsx`);
-    },
+    onSuccess: (res) => saveAs(res.data, `dict_${Date.now()}.xlsx`),
   });
 }
 
-/** 刷新字典数据缓存 */
 function handleRefreshCache() {
   confirmAndRun({
     content: "确定要刷新字典数据缓存吗?",
-    onOk: () => refreshCache(),
+    action: () => refreshCache(),
+    variables: undefined,
     successText: "刷新缓存成功",
   });
 }
 
-/** 跳转到字典数据页面，查看指定字典类型下的数据列表 */
 function handleDataView(dictId: string | number = "0") {
   router.push(`${routePath}${MENU_PATH_INLINE}/data/${dictId}`);
 }
-
-/** 查询字典类型列表，支持指定页码；处理日期范围筛选及删除后空页修正 */
-async function fetchList(pageNum?: number) {
-  if (tableState.loading) return;
-  tableState.loading = true;
-  if (pageNum) {
-    queryParams.pageNum = pageNum;
-  }
-
-  if (
-    Array.isArray(queryRangePicker.value) &&
-    queryRangePicker.value.length > 0
-  ) {
-    queryParams.beginTime = queryRangePicker.value[0].startOf("day").valueOf();
-    queryParams.endTime = queryRangePicker.value[1].endOf("day").valueOf();
-  } else {
-    queryParams.beginTime = undefined;
-    queryParams.endTime = undefined;
-  }
-
-  try {
-    const res = await listType(toRaw(queryParams));
-    if (res.code === RESULT_CODE_SUCCESS) {
-      clearSelection();
-      setTotal(res.data.total);
-      tableState.data = res.data.rows;
-      if (fixPageAfterDelete(res.data.rows.length)) {
-        queryParams.pageNum = pagination.current;
-        const res2 = await listType(toRaw(queryParams));
-        if (res2.code === RESULT_CODE_SUCCESS) {
-          setTotal(res2.data.total);
-          tableState.data = res2.data.rows;
-        }
-      }
-    }
-  } finally {
-    tableState.loading = false;
-  }
-}
-
-onMounted(() => {
-  loadDicts();
-  fetchList();
-});
 </script>
 
 <template>
@@ -284,7 +231,7 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fetchList(1)">
+                <a-button type="primary" @click.prevent="resetQuery">
                   <template #icon><SearchOutlined /></template>
                   搜索
                 </a-button>
@@ -338,7 +285,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList()">
+            <a-button type="text" @click.prevent="queryClient.invalidateQueries({ queryKey: ['dictTypeList'] })">
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
@@ -360,15 +307,12 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="dictId" :columns="tableColumns" :loading="tableState.loading"
-        :data-source="tableState.data" :size="tableState.size" :row-class-name="rowClassName"
-        :pagination="pagination" :scroll="{
-          x: tableColumns.length * 120,
-          scrollToFirstRowOnChange: true,
+      <a-table class="table" row-key="dictId" :columns="tableColumns" :loading="isFetching"
+        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName"
+        :pagination="{ ...pagination, total }" :scroll="{
+          x: tableColumns.length * 120, scrollToFirstRowOnChange: true,
         }" :row-selection="{
-          type: 'checkbox',
-          selectedRowKeys: tableState.selectedRowKeys,
-          onChange: setSelectedRowKeys,
+          type: 'checkbox', selectedRowKeys: tableState.selectedRowKeys, onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'statusFlag'">
@@ -412,9 +356,7 @@ onMounted(() => {
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典编号" name="dictId">
-              {{ modalState.form.dictId }}
-            </a-form-item>
+            <a-form-item label="字典编号" name="dictId">{{ modalState.form.dictId }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="字典状态" name="statusFlag">
@@ -424,14 +366,10 @@ onMounted(() => {
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典名称" name="dictName">
-              {{ modalState.form.dictName }}
-            </a-form-item>
+            <a-form-item label="字典名称" name="dictName">{{ modalState.form.dictName }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典类型" name="dictType">
-              {{ modalState.form.dictType }}
-            </a-form-item>
+            <a-form-item label="字典类型" name="dictType">{{ modalState.form.dictType }}</a-form-item>
           </a-col>
         </a-row>
         <a-form-item label="字典说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
@@ -446,7 +384,7 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
-      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="modalState.confirmLoading"
+      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="isSubmitting"
       @ok="handleSubmit" @cancel="handleCancel">
       <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 3 }" :label-wrap="true">
         <a-form-item label="字典名称" name="dictName" v-bind="modalStateForm.validateInfos.dictName">
@@ -478,5 +416,3 @@ onMounted(() => {
   padding: 0 24px;
 }
 </style>
-
-

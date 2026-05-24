@@ -1,6 +1,6 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { useRoute } from "vue-router";
-import { ref, toRaw, computed, onMounted } from "vue";
+import { ref, toRaw, computed, watch } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { PageContainer } from "antdv-pro-layout";
 import type { Dayjs } from "dayjs";
@@ -19,7 +19,7 @@ const route = useRoute();
 const queryClient = useQueryClient();
 const title = ref<string>(route.meta.title ?? "标题");
 
-const { dict, loadDicts } = useDictSetup({ sysCommonStatus: "sys_common_status" });
+const { dict } = useDictSetup({ sysCommonStatus: "sys_common_status" });
 
 const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
@@ -40,7 +40,7 @@ const { queryParams, resetQuery: baseResetQuery } = useQueryParams(
 
 function resetQuery() { queryRangePicker.value = undefined; baseResetQuery(); }
 
-const { pagination, resetPage } = usePagination({
+const { pagination, resetPage, fixPage } = usePagination({
   onChange: (page, pageSize) => { queryParams.pageNum = page; queryParams.pageSize = pageSize; },
 });
 
@@ -83,8 +83,6 @@ function handleExport() {
     onSuccess: (res) => { saveAs(res.data, `sys_log_login_${Date.now()}.xlsx`); },
   });
 }
-
-onMounted(() => { loadDicts(); });
 </script>
 <template>
   <PageContainer :title="title">

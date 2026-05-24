@@ -1,80 +1,55 @@
 ﻿<script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { PageContainer } from 'antdv-pro-layout';
 import type { ColumnsType } from 'ant-design-vue/es/table';
 import { forceLogout, listOnline } from '@/api/monitor/online';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 import { parseDateToStr } from '@/utils/date-utils';
 import { useTableUI } from '@/hooks/useTableUI';
-import { useMessageAction } from '@/hooks/useMessageAction';
+import { useQueryParams } from '@/hooks/useQueryParams';
+import { useListQuery } from '@/hooks/useListQuery';
+import { confirmAndRun } from '@/hooks/useMutationAction';
+import { useQueryClient } from '@tanstack/vue-query';
+import { toRaw } from 'vue';
+
 const route = useRoute();
+const queryClient = useQueryClient();
 
 /** 路由标题 */
-let title = ref<string>(route.meta.title ?? '标题');
+const title = ref<string>(route.meta.title ?? '标题');
 
 /** 查询参数 */
-let queryParams = reactive({
-  /** 登录主机 */
+const { queryParams, resetQuery } = useQueryParams({
   loginIp: '',
-  /** 登录账号 */
   userName: '',
 });
 
-/** 表格UI状态：loading/size/striped/seached/data */
+/** 表格UI状态：size/striped/searched */
 const { tableState, setTableSize, rowClassName } = useTableUI();
 
-/** 通用操作反馈：带loading的异步操作、二次确认 */
-const { confirmAndRun } = useMessageAction();
+/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
+const { listData, isFetching } = useListQuery({
+  queryKey: computed(() => ['onlineList', { ...toRaw(queryParams) }]),
+  queryFn: () => listOnline(toRaw(queryParams)),
+});
 
 /** 表格字段列 */
-let tableColumns: ColumnsType = [
+const tableColumns: ColumnsType = [
   {
     title: '序号',
     dataIndex: 'num',
     width: 50,
     align: 'left',
     customRender(opt) {
-      const idxNum = (tablePagination.current - 1) * tablePagination.pageSize;
-      return idxNum + opt.index + 1;
+      return (opt.index as number) + 1;
     },
   },
-  {
-    title: '登录账号',
-    dataIndex: 'userName',
-    align: 'left',
-    width: 150,
-  },
-  {
-    title: '所属部门',
-    dataIndex: 'deptName',
-    align: 'left',
-    width: 150,
-  },
-  {
-    title: '登录IP',
-    dataIndex: 'loginIp',
-    align: 'left',
-    width: 120,
-  },
-  {
-    title: '登录地点',
-    dataIndex: 'loginLocation',
-    align: 'left',
-    width: 120,
-  },
-  {
-    title: '操作系统',
-    dataIndex: 'os',
-    align: 'left',
-    width: 120,
-  },
-  {
-    title: '浏览器',
-    dataIndex: 'browser',
-    align: 'left',
-    width: 200,
-  },
+  { title: '登录账号', dataIndex: 'userName', align: 'left', width: 150 },
+  { title: '所属部门', dataIndex: 'deptName', align: 'left', width: 150 },
+  { title: '登录IP', dataIndex: 'loginIp', align: 'left', width: 120 },
+  { title: '登录地点', dataIndex: 'loginLocation', align: 'left', width: 120 },
+  { title: '操作系统', dataIndex: 'os', align: 'left', width: 120 },
+  { title: '浏览器', dataIndex: 'browser', align: 'left', width: 200 },
   {
     title: '登录时间',
     dataIndex: 'loginTime',
@@ -85,78 +60,20 @@ let tableColumns: ColumnsType = [
       return parseDateToStr(+opt.value);
     },
   },
-  {
-    title: '会话编号',
-    dataIndex: 'tokenId',
-    align: 'left',
-    width: 250,
-  },
-  {
-    title: '操作',
-    key: 'tokenId',
-    align: 'left',
-  },
+  { title: '会话编号', dataIndex: 'tokenId', align: 'left', width: 250 },
+  { title: '操作', key: 'tokenId', align: 'left' },
 ];
-
-/** 表格分页器参数 */
-let tablePagination = {
-  /** 当前页数 */
-  current: 1,
-  /** 每页条数 */
-  pageSize: 20,
-  /** 默认的每页条数 */
-  defaultPageSize: 20,
-  /** 指定每页可以显示多少条 */
-  pageSizeOptions: ['10', '20', '50', '100'],
-  /** 只有一页时是否隐藏分页器 */
-  hideOnSinglePage: true,
-  /** 是否可以快速跳转至某页 */
-  showQuickJumper: true,
-  /** 是否可以改变 pageSize */
-  showSizeChanger: true,
-  /** 数据总数 */
-  total: 0,
-  showTotal: (total: number) => `总共 ${total} 条`,
-  onChange: (page: number, pageSize: number) => {
-    tablePagination.current = page;
-    tablePagination.pageSize = pageSize;
-  },
-};
-
-/** 查询参数重置 */
-function handleResetQuery() {
-  queryParams.loginIp = '';
-  queryParams.userName = '';
-  tablePagination.current = 1;
-  tablePagination.pageSize = 20;
-  fetchList();
-}
-
-/** 查询在线用户列表 */
-function fetchList() {
-  if (tableState.loading) return;
-  tableState.loading = true;
-  listOnline(queryParams).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data.rows)) {
-      tableState.data = res.data.rows;
-    }
-    tableState.loading = false;
-  });
-}
 
 /** 强退按钮操作 */
 function handleForceLogout(row: Record<string, string>) {
   confirmAndRun({
     content: `确认强退登录账号为 ${row.userName} 的用户?`,
-    onOk: () => forceLogout(row.tokenId),
+    action: () => forceLogout(row.tokenId),
+    variables: undefined,
     successText: `已强退用户 ${row.userName}`,
-    onSuccess: () => fetchList(),
+    invalidateKeys: [['onlineList']],
   });
 }
-
-onMounted(() => {
-  fetchList();
-});
 </script>
 
 <template>
@@ -172,7 +89,6 @@ onMounted(() => {
     </template>
 
     <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
-      <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
@@ -181,22 +97,19 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录IP" name="ipaddr">
+            <a-form-item label="登录IP" name="loginIp">
               <a-input v-model:value="queryParams.loginIp" allow-clear :maxlength="128" placeholder="请输入登录IP"></a-input>
-            </a-form-item></a-col>
+            </a-form-item>
+          </a-col>
           <a-col :lg="12" :md="24" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fetchList">
-                  <template #icon>
-                    <SearchOutlined />
-                  </template>
+                <a-button type="primary" @click.prevent="resetQuery">
+                  <template #icon><SearchOutlined /></template>
                   搜索
                 </a-button>
-                <a-button type="default" @click.prevent="handleResetQuery">
-                  <template #icon>
-                    <ClearOutlined />
-                  </template>
+                <a-button type="default" @click.prevent="resetQuery">
+                  <template #icon><ClearOutlined /></template>
                   重置
                 </a-button>
               </a-space>
@@ -207,12 +120,8 @@ onMounted(() => {
     </a-card>
 
     <a-card :bordered="false" :body-style="{ padding: '0px' }">
-      <!-- 插槽-卡片左侧侧 -->
-      <template #title>
-        {{ title }}
-      </template>
+      <template #title>{{ title }}</template>
 
-      <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
           <a-tooltip>
@@ -225,19 +134,15 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip>
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList">
-              <template #icon>
-                <ReloadOutlined />
-              </template>
+            <a-button type="text" @click.prevent="queryClient.invalidateQueries({ queryKey: ['onlineList'] })">
+              <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon>
-                  <ColumnHeightOutlined />
-                </template>
+                <template #icon><ColumnHeightOutlined /></template>
               </a-button>
               <template #overlay>
                 <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
@@ -251,20 +156,15 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <!-- 表格列表 -->
-      <a-table class="table" row-key="tokenId" :columns="tableColumns" :loading="tableState.loading"
-        :data-source="tableState.data" :size="tableState.size" :row-class-name="rowClassName"
-        :pagination="tablePagination" :scroll="{
-          x: tableColumns.length * 150,
-          scrollToFirstRowOnChange: true,
-        }">
+      <a-table class="table" row-key="tokenId" :columns="tableColumns" :loading="isFetching"
+        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName"
+        :pagination="false"
+        :scroll="{ x: tableColumns.length * 150, scrollToFirstRowOnChange: true }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'tokenId'">
             <a-button type="link" danger @click.prevent="handleForceLogout(record)"
               v-perms:has="['monitor:online:forceLogout']">
-              <template #icon>
-                <LogoutOutlined />
-              </template>
+              <template #icon><LogoutOutlined /></template>
               强退
             </a-button>
           </template>

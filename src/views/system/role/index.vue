@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
-import { reactive, ref, onMounted, toRaw } from 'vue';
+import { reactive, ref, computed, watch, toRaw } from 'vue';
+import { useQueryClient } from '@tanstack/vue-query';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue';
@@ -26,41 +27,52 @@ import {
 } from '@/utils/parse-tree-utils';
 import { parseDateToStr } from '@/utils/date-utils';
 import { hasPermissions } from '@/plugins/auth-user';
+import { isSuccess } from '@/plugins/http-fetch';
 import { saveAs } from 'file-saver';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
 import { SYS_ROLE_SYSTEM_ID } from '@/constants/system-constants';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 import { useTableUI } from '@/hooks/useTableUI';
 import { usePagination } from '@/hooks/usePagination';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useQueryParams } from '@/hooks/useQueryParams';
-import { useMessageAction } from '@/hooks/useMessageAction';
+import { useListQuery } from '@/hooks/useListQuery';
+import { useMutationAction, confirmAndRun } from '@/hooks/useMutationAction';
 import useUserStore from '@/store/modules/user';
+
 const userStore = useUserStore();
 const route = useRoute();
 const router = useRouter();
+const queryClient = useQueryClient();
 const routePath = route.path;
 
 /** 路由标题 */
 const title = ref<string>(route.meta.title ?? '标题');
 
 /** 字典数据初始化 */
-const { dict, loadDicts } = useDictSetup({
+const { dict } = useDictSetup({
   sysNormalDisable: 'sys_normal_disable',
 });
 
-/** 通用操作反馈 */
-const { withLoading, confirmAndRun } = useMessageAction();
-
 /** 开始结束时间 */
-let queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
+const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
+
+/** 同步日期范围到查询参数（在 queryKey 计算时调用） */
+function syncDateRange() {
+  if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
+    queryParams.beginTime = queryRangePicker.value[0].startOf('day').valueOf();
+    queryParams.endTime = queryRangePicker.value[1].endOf('day').valueOf();
+  } else {
+    queryParams.beginTime = undefined;
+    queryParams.endTime = undefined;
+  }
+}
 
 /** 查询参数 */
 const { queryParams, resetQuery } = useQueryParams(
   {
     roleName: '',
     roleKey: '',
-    statusFlag: undefined,
+    statusFlag: undefined as string | undefined,
     beginTime: undefined as undefined | number,
     endTime: undefined as undefined | number,
     pageNum: 1,
@@ -69,22 +81,50 @@ const { queryParams, resetQuery } = useQueryParams(
   () => {
     queryRangePicker.value = undefined;
     resetPage();
-    fetchList();
   },
 );
 
 /** 分页管理 */
-const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
+const { pagination, resetPage, fixPage } = usePagination({
   onChange: (page, pageSize) => {
     queryParams.pageNum = page;
     queryParams.pageSize = pageSize;
-    fetchList();
   },
+});
+
+/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
+const { listData, total, isFetching } = useListQuery({
+  queryKey: computed(() => {
+    syncDateRange();
+    return ['roleList', { ...toRaw(queryParams) }];
+  }),
+  queryFn: () => listRole(toRaw(queryParams)),
+});
+
+/** 列表刷新后清空表格选中行 */
+watch(isFetching, (newVal, oldVal) => {
+  if (oldVal && !newVal) clearSelection();
 });
 
 /** 表格UI状态 */
 const { tableState, setTableSize, rowClassName, setSelectedRowKeys, clearSelection } =
   useTableUI();
+
+/** 新增/编辑提交 mutation */
+const { mutateAsync: submitMutateAsync, isLoading: isSubmitting } = useMutationAction({
+  mutationFn: (data: Record<string, any>) =>
+    data.roleId ? updateRole(data) : addRole(data),
+  successText: '操作成功',
+  invalidateKeys: [['roleList']],
+});
+
+/** 数据权限提交 mutation */
+const { mutateAsync: dataScopeMutateAsync, isLoading: isDataScopeSubmitting } =
+  useMutationAction({
+    mutationFn: (data: Record<string, any>) => dataScope(data),
+    successText: '操作成功',
+    invalidateKeys: [['roleList']],
+  });
 
 /** 表格字段列 */
 let tableColumns: ColumnsType = [
@@ -127,11 +167,13 @@ let deptTreeCache: TreeDataType = { treeData: [], checkedKeys: [], expandedKeys:
 
 // ==================== 弹窗状态 ====================
 
+/** 弹窗打开过程中的 loading 守卫 */
+const confirmLoading = ref(false);
+
 let visibleByView = ref(false);
 let visibleByEdit = ref(false);
 let visibleByDataScope = ref(false);
 let modalTitle = ref('角色');
-let confirmLoading = ref(false);
 
 const form = reactive({
   roleId: undefined as string | number | undefined,
@@ -180,9 +222,9 @@ async function handleView(roleId: string | number) {
       getRole(roleId),
       menuTreeSelectRole(roleId),
     ]);
-    if (roleRes.code === RESULT_CODE_SUCCESS && roleRes.data) {
+    if (isSuccess(roleRes) && roleRes.data) {
       Object.assign(form, roleRes.data);
-      if (menuRes.code === RESULT_CODE_SUCCESS && menuRes.data) {
+      if (isSuccess(menuRes) && menuRes.data) {
         const { menus, checkedKeys } = menuRes.data;
         menuTreeCache.checkedKeys = parseTreeKeys(menus, 'id');
         menuTreeCache.expandedKeys = parseTreeNodeKeys(menus, 'id');
@@ -219,7 +261,7 @@ async function handleOpenEdit(roleId?: string | number) {
       const hide = message.loading('正在打开...', 0);
       try {
         const res = await menuTreeSelect();
-        if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
+        if (isSuccess(res) && Array.isArray(res.data)) {
           menuTreeCache.checkedKeys = parseTreeKeys(res.data, 'id');
           menuTreeCache.expandedKeys = parseTreeNodeKeys(res.data, 'id');
           menuTreeCache.treeData = res.data;
@@ -241,9 +283,9 @@ async function handleOpenEdit(roleId?: string | number) {
         getRole(roleId),
         menuTreeSelectRole(roleId),
       ]);
-      if (roleRes.code === RESULT_CODE_SUCCESS && roleRes.data) {
+      if (isSuccess(roleRes) && roleRes.data) {
         Object.assign(form, roleRes.data);
-        if (menuRes.code === RESULT_CODE_SUCCESS && menuRes.data) {
+        if (isSuccess(menuRes) && menuRes.data) {
           const { menus, checkedKeys } = menuRes.data;
           menuTreeCache.checkedKeys = parseTreeKeys(menus, 'id');
           menuTreeCache.expandedKeys = parseTreeNodeKeys(menus, 'id');
@@ -275,21 +317,12 @@ async function handleSubmit() {
     message.error({ content: `请正确填写 ${e.errorFields.length} 处必填信息！`, duration: 3 });
     return;
   }
-  const hide = message.loading('请稍等...', 0);
-  confirmLoading.value = true;
+  queryParams.pageNum = 1;
   try {
-    const formRaw = toRaw(form);
-    const res = formRaw.roleId ? await updateRole(formRaw) : await addRole(formRaw);
-    if (res.code === RESULT_CODE_SUCCESS) {
-      message.success({ content: `${modalTitle.value}成功`, duration: 3 });
-      fetchList(1);
-      handleCloseModal();
-    } else {
-      message.error({ content: res.msg, duration: 3 });
-    }
-  } finally {
-    hide();
-    confirmLoading.value = false;
+    await submitMutateAsync(toRaw(form));
+    handleCloseModal();
+  } catch {
+    // 错误已由 useMutationAction 统一处理
   }
 }
 
@@ -346,23 +379,14 @@ function handleTreeCheckStrictly(checked: boolean, type: 'menu' | 'dept') {
 
 /** 分配数据权限确认 */
 async function handleDataScopeSubmit() {
-  if (confirmLoading.value) return;
-  const hide = message.loading('请稍等...', 0);
-  confirmLoading.value = true;
+  const formRaw = toRaw(form);
+  if (formRaw.dataScope !== '2') formRaw.deptIds = [];
   try {
-    const formRaw = toRaw(form);
-    if (formRaw.dataScope !== '2') formRaw.deptIds = [];
-    const res = await dataScope(formRaw);
-    if (res.code === RESULT_CODE_SUCCESS) {
-      message.success({ content: `${modalTitle.value}成功`, duration: 3 });
-      visibleByDataScope.value = false;
-      formCtl.resetFields();
-    } else {
-      message.error({ content: res.msg, duration: 3 });
-    }
-  } finally {
-    hide();
-    confirmLoading.value = false;
+    await dataScopeMutateAsync(formRaw);
+    visibleByDataScope.value = false;
+    formCtl.resetFields();
+  } catch {
+    // 错误已由 useMutationAction 统一处理
   }
 }
 
@@ -376,9 +400,9 @@ async function handleOpenDataScope(roleId: string | number) {
       getRole(roleId),
       deptTreeRole(roleId),
     ]);
-    if (roleRes.code === RESULT_CODE_SUCCESS && roleRes.data) {
+    if (isSuccess(roleRes) && roleRes.data) {
       Object.assign(form, roleRes.data);
-      if (deptRes.code === RESULT_CODE_SUCCESS && deptRes.data) {
+      if (isSuccess(deptRes) && deptRes.data) {
         const { depts, checkedKeys } = deptRes.data;
         deptTreeCache.checkedKeys = parseTreeKeys(depts, 'id');
         deptTreeCache.expandedKeys = parseTreeNodeKeys(depts, 'id');
@@ -411,16 +435,28 @@ function handleAuthUser(row: Record<string, string>) {
   });
 }
 
-/** 角色状态修改 */
+/** 角色状态修改（保留 Modal.confirm 以支持取消回滚） */
 function handleStatusChange(row: Record<string, string>) {
   const text = row.statusFlag === '1' ? '启用' : '停用';
   Modal.confirm({
     title: '提示',
     content: `确定要${text} ${row.roleName} 角色吗?`,
     onOk() {
-      return withLoading(changeStatus(row.roleId, row.statusFlag), {
-        successText: `${row.roleName} ${text}成功`,
-      }).then(() => fetchList());
+      const hide = message.loading('请稍等...', 0);
+      return changeStatus(row.roleId, row.statusFlag)
+        .then((res) => {
+          hide();
+          if (isSuccess(res)) {
+            message.success({ content: `${row.roleName} ${text}成功`, duration: 3 });
+            queryClient.invalidateQueries({ queryKey: ['roleList'] });
+          } else {
+            message.error({ content: res.msg, duration: 3 });
+          }
+        })
+        .catch((err) => {
+          hide();
+          message.error({ content: err.message || '操作失败', duration: 3 });
+        });
     },
     onCancel() {
       row.statusFlag = row.statusFlag === '1' ? '0' : '1';
@@ -428,16 +464,18 @@ function handleStatusChange(row: Record<string, string>) {
   });
 }
 
-/** 角色删除 */
+/** 角色删除（二次确认后执行） */
 function handleDelete(roleId: string = '0') {
   if (roleId === '0') {
     roleId = tableState.selectedRowKeys.join(',');
   }
   confirmAndRun({
     content: `确认删除角色编号为 【${roleId}】 的数据项?`,
-    onOk: () => delRole(roleId),
+    action: () => delRole(roleId),
+    variables: undefined,
     successText: '删除成功',
-    onSuccess: () => fetchList(),
+    onSuccess: () => fixPage(tableState.selectedRowKeys.length || 1, total.value),
+    invalidateKeys: [['roleList']],
   });
 }
 
@@ -445,45 +483,12 @@ function handleDelete(roleId: string = '0') {
 function handleExport() {
   confirmAndRun({
     content: '确认根据搜索条件导出xlsx表格文件吗?',
-    onOk: () => exportRole(toRaw(queryParams)),
+    action: () => exportRole(toRaw(queryParams)),
+    variables: undefined,
     successText: '已完成导出',
-    onSuccess: (res) => { saveAs(res.data, `role_${Date.now()}.xlsx`); },
+    onSuccess: (res) => saveAs(res.data, `role_${Date.now()}.xlsx`),
   });
 }
-
-/** 查询角色列表 */
-function fetchList(pageNum?: number) {
-  if (tableState.loading) return;
-  tableState.loading = true;
-  if (pageNum) queryParams.pageNum = pageNum;
-  // 时间范围
-  if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
-    queryParams.beginTime = queryRangePicker.value[0].startOf('day').valueOf();
-    queryParams.endTime = queryRangePicker.value[1].endOf('day').valueOf();
-  } else {
-    queryParams.beginTime = undefined;
-    queryParams.endTime = undefined;
-  }
-  listRole(toRaw(queryParams)).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS) {
-      clearSelection();
-      const { total, rows } = res.data;
-      setTotal(total);
-      tableState.data = rows;
-      // 删除后修正页码，避免空页面
-      if (fixPageAfterDelete(rows.length)) {
-        fetchList();
-        return;
-      }
-    }
-    tableState.loading = false;
-  });
-}
-
-onMounted(() => {
-  loadDicts();
-  fetchList();
-});
 </script>
 <template>
   <PageContainer :title="title">
@@ -494,7 +499,6 @@ onMounted(() => {
     </template>
 
     <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
-      <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
@@ -523,7 +527,7 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fetchList(1)">
+                <a-button type="primary" @click.prevent="queryParams.pageNum = 1">
                   <template #icon>
                     <SearchOutlined />
                   </template>
@@ -543,7 +547,6 @@ onMounted(() => {
     </a-card>
 
     <a-card :bordered="false" :body-style="{ padding: '0px' }">
-      <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
           <a-button type="primary" @click.prevent="handleOpenEdit()" v-perms:has="['system:role:add']">
@@ -568,7 +571,6 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
@@ -581,7 +583,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList()">
+            <a-button type="text" @click.prevent="queryClient.invalidateQueries({ queryKey: ['roleList'] })">
               <template #icon>
                 <ReloadOutlined />
               </template>
@@ -607,9 +609,8 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <!-- 表格列表 -->
-      <a-table class="table" row-key="roleId" :columns="tableColumns" :loading="tableState.loading"
-        :data-source="tableState.data" :size="tableState.size" :row-class-name="rowClassName" :pagination="pagination"
+      <a-table class="table" row-key="roleId" :columns="tableColumns" :loading="isFetching"
+        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName" :pagination="{ ...pagination, total }"
         :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
@@ -746,7 +747,7 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
-      :open="visibleByEdit" :title="modalTitle" :confirm-loading="confirmLoading" @ok="handleSubmit"
+      :open="visibleByEdit" :title="modalTitle" :confirm-loading="isSubmitting" @ok="handleSubmit"
       @cancel="handleCloseModal">
       <a-form name="formCtlByEdit" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
@@ -829,7 +830,7 @@ onMounted(() => {
 
     <!-- 分配角色数据权限修改框 -->
     <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
-      :open="visibleByDataScope" :title="modalTitle" :confirm-loading="confirmLoading" @ok="handleDataScopeSubmit"
+      :open="visibleByDataScope" :title="modalTitle" :confirm-loading="isDataScopeSubmitting" @ok="handleDataScopeSubmit"
       @cancel="handleCloseModal">
       <a-form name="formCtlByDataScope" layout="horizontal">
         <a-row>
@@ -889,7 +890,7 @@ onMounted(() => {
               @change="(e: any) => handleTreeCheckAll(e.target.checked, 'dept')">
               全选/全不选
             </a-checkbox>
-            <a-checkbox id="dept_1" :checked="form.deptCheckStrictly === '1'"
+            <a-checkbox id="dept_3" :checked="form.deptCheckStrictly === '1'"
               @change="(e: any) => handleTreeCheckStrictly(e.target.checked, 'dept')">
               父子联动
             </a-checkbox>

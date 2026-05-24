@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 公共 hooks 统一导出
  *
  * 基础 UI hooks（适用于所有页面）：
@@ -27,15 +27,18 @@ export { usePagination } from './usePagination';
 export { useTableUI } from './useTableUI';
 export { useCrudModal } from './useCrudModal';
 export { useDictSetup } from './useDictSetup';
-export { useLoading } from './useLoading';
 
 // vue-query hooks
 export { useListQuery, invalidateList } from './useListQuery';
 export type { UseListQueryOptions, UseListQueryResult } from './useListQuery';
 export { useDetailQuery } from './useDetailQuery';
-export type { UseDetailQueryOptions, UseDetailQueryResult } from './useDetailQuery';
+export type {
+  UseDetailQueryOptions,
+  UseDetailQueryResult,
+} from './useDetailQuery';
 export { useMutationAction, confirmAndRun } from './useMutationAction';
-export type { UseMutationActionOptions, UseMutationActionResult, ConfirmAndRunOptions } from './useMutationAction';
-
-// 兼容导出（旧页面过渡期保留，新页面请使用 vue-query hooks）
-export { useMessageAction } from './useMessageAction';
+export type {
+  UseMutationActionOptions,
+  UseMutationActionResult,
+  ConfirmAndRunOptions,
+} from './useMutationAction';

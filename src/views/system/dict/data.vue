@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
 import { useRoute, useRouter } from "vue-router";
-import { ref, reactive, toRaw, onMounted } from "vue";
+import { ref, reactive, toRaw, computed, watch, onMounted } from "vue";
+import { useQueryClient } from "@tanstack/vue-query";
 import { PageContainer } from "antdv-pro-layout";
 import { ProModal } from "antdv-pro-modal";
 import { message } from "ant-design-vue";
@@ -18,18 +19,20 @@ import { saveAs } from "file-saver";
 import { parseDateToStr } from "@/utils/date-utils";
 import useTabsStore from "@/store/modules/tabs";
 import useDictStore from "@/store/modules/dict";
-import { RESULT_CODE_SUCCESS } from "@/constants/result-constants";
+import { isSuccess } from "@/plugins/http-fetch";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { usePagination } from "@/hooks/usePagination";
 import { useTableUI } from "@/hooks/useTableUI";
 import { useCrudModal } from "@/hooks/useCrudModal";
-import { useMessageAction } from "@/hooks/useMessageAction";
 import { useDictSetup } from "@/hooks/useDictSetup";
+import { useListQuery } from "@/hooks/useListQuery";
+import { useMutationAction, confirmAndRun } from "@/hooks/useMutationAction";
 
 const tabsStore = useTabsStore();
 const { parseDataDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
+const queryClient = useQueryClient();
 
 const dictId = route.params && (route.params.dictId as string);
 
@@ -55,7 +58,7 @@ const tagTypeOptions = ref([
   { value: "success", label: "成功（success）" },
 ]);
 
-const { dict: sysDict, loadDicts: loadSysDicts } = useDictSetup({
+const { dict: sysDict } = useDictSetup({
   sysNormalDisable: "sys_normal_disable",
 });
 
@@ -63,8 +66,6 @@ const dict = reactive({
   sysNormalDisable: sysDict.sysNormalDisable,
   sysDictType: [] as DictType[],
 });
-
-const { withLoading, confirmAndRun } = useMessageAction();
 
 const { queryParams, resetQuery: baseResetQuery, setQuery } = useQueryParams(
   {
@@ -74,10 +75,7 @@ const { queryParams, resetQuery: baseResetQuery, setQuery } = useQueryParams(
     pageNum: 1,
     pageSize: 20,
   },
-  () => {
-    resetPage();
-    fetchList();
-  },
+  () => resetPage(),
 );
 
 /** 重置查询条件；从字典类型页进入时仅重置数据标签和状态，保留 dictType */
@@ -85,7 +83,6 @@ function resetQuery() {
   if (dictId && dictId !== "0") {
     setQuery({ dataLabel: "", statusFlag: undefined, pageNum: 1, pageSize: 20 });
     resetPage();
-    fetchList();
   } else {
     baseResetQuery();
   }
@@ -96,17 +93,21 @@ const {
   setTableSize,
   rowClassName,
   setSelectedRowKeys,
-  clearSelection,
 } = useTableUI({ defaultSize: "middle" });
 
 tableState.seached = true;
 
-const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
+const { pagination, resetPage, fixPage } = usePagination({
   onChange: (page, pageSize) => {
     queryParams.pageNum = page;
     queryParams.pageSize = pageSize;
-    fetchList();
   },
+});
+
+/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
+const { listData: tableListData, total, isFetching } = useListQuery({
+  queryKey: computed(() => ["dictDataList", { ...toRaw(queryParams) }]),
+  queryFn: () => listData(toRaw(queryParams)),
 });
 
 const {
@@ -131,13 +132,17 @@ const {
   }),
   rules: {
     dictType: [{ required: true, message: "请选择字典类型" }],
-    dataLabel: [
-      { required: true, min: 1, max: 50, message: "请输入数据标签" },
-    ],
-    dataValue: [
-      { required: true, min: 1, max: 50, message: "请输入数据键值" },
-    ],
+    dataLabel: [{ required: true, min: 1, max: 50, message: "请输入数据标签" }],
+    dataValue: [{ required: true, min: 1, max: 50, message: "请输入数据键值" }],
   },
+});
+
+/** 新增/编辑 mutation */
+const { mutateAsync: submitMutateAsync, isLoading: isSubmitting } = useMutationAction({
+  mutationFn: (form: Record<string, any>) =>
+    form.dataId ? updateData(form) : addData(form),
+  successText: "操作成功",
+  invalidateKeys: [["dictDataList"]],
 });
 
 const tableColumns: ColumnsType = [
@@ -145,22 +150,10 @@ const tableColumns: ColumnsType = [
   { title: "数据标签", dataIndex: "dataLabel", align: "left", width: 200 },
   { title: "数据键值", dataIndex: "dataValue", align: "left", width: 200 },
   { title: "数据排序", dataIndex: "dataSort", align: "left", width: 100 },
+  { title: "数据状态", dataIndex: "statusFlag", key: "statusFlag", align: "left", width: 100 },
   {
-    title: "数据状态",
-    dataIndex: "statusFlag",
-    key: "statusFlag",
-    align: "left",
-    width: 100,
-  },
-  {
-    title: "创建时间",
-    dataIndex: "createTime",
-    align: "left",
-    width: 150,
-    customRender(opt) {
-      if (+opt.value <= 0) return "";
-      return parseDateToStr(+opt.value);
-    },
+    title: "创建时间", dataIndex: "createTime", align: "left", width: 150,
+    customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); },
   },
   { title: "操作", key: "dataId", align: "left" },
 ];
@@ -172,71 +165,55 @@ function handleView(row: Record<string, string>) {
   modalState.visibleByView = true;
 }
 
-/** 打开新增或编辑弹窗；新增时自动带入当前 dictType，有 dataId 则回填数据 */
+/** 打开新增或编辑弹窗 */
 function handleEdit(dataId?: string | number) {
   if (!dataId) {
     openEdit(undefined, getData, "添加字典数据", "修改字典数据");
-    setTimeout(() => {
-      modalState.form.dictType = queryParams.dictType;
-    }, 0);
+    setTimeout(() => { modalState.form.dictType = queryParams.dictType; }, 0);
   } else {
     openEdit(dataId, getData, "添加字典数据", "修改字典数据");
   }
 }
 
-/** 校验表单后提交新增/编辑，成功则刷新列表并关闭弹窗 */
 async function handleSubmit() {
   try {
     await modalStateForm.validate();
   } catch (e: any) {
-    message.error({
-      content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
-      duration: 3,
-    });
+    message.error({ content: `请正确填写 ${e.errorFields.length} 处必填信息！`, duration: 3 });
     return;
   }
-  modalState.confirmLoading = true;
   try {
-    const form = toRaw(modalState.form);
-    const res = await withLoading(
-      (form.dataId ? updateData : addData)(form),
-      { successText: `${modalState.title}成功` },
-    );
-    if (res.code === RESULT_CODE_SUCCESS) {
-      fetchList(1);
-      handleCancel();
-    }
-  } finally {
-    modalState.confirmLoading = false;
+    await submitMutateAsync(toRaw(modalState.form));
+    handleCancel();
+  } catch {
+    // 错误已由 useMutationAction 统一处理
   }
 }
 
-/** 删除字典数据（单条或批量），支持从选中行键列表批量删除 */
 function handleDelete(dataId: string = "0") {
   if (dataId === "0") {
     dataId = tableState.selectedRowKeys.join(",");
   }
   confirmAndRun({
     content: `确认删除字典数据编号为【${dataId}】的数据项?`,
-    onOk: () => delData(dataId),
+    action: () => delData(dataId),
+    variables: undefined,
     successText: "删除成功",
-    onSuccess: () => fetchList(),
+    onSuccess: () => fixPage(tableState.selectedRowKeys.length || 1, total.value),
+    invalidateKeys: [["dictDataList"]],
   });
 }
 
-/** 根据当前搜索条件导出字典数据列表 xlsx 文件 */
 function handleExport() {
   confirmAndRun({
     content: "确认根据搜索条件导出xlsx表格文件吗",
-    onOk: () => exportData(toRaw(queryParams)),
+    action: () => exportData(toRaw(queryParams)),
+    variables: undefined,
     successText: "已导出完成",
-    onSuccess: (res) => {
-      saveAs(res.data, `dict_data_${Date.now()}.xlsx`);
-    },
+    onSuccess: (res) => saveAs(res.data, `dict_data_${Date.now()}.xlsx`),
   });
 }
 
-/** 关闭当前标签页并跳转回上级页面（字典类型列表） */
 function handleClose() {
   const to = tabsStore.tabClose(route.path);
   if (to) {
@@ -246,50 +223,18 @@ function handleClose() {
   }
 }
 
-/** 查询字典数据列表，支持指定页码；删除后自动修正空页 */
-async function fetchList(pageNum?: number) {
-  if (tableState.loading) return;
-  tableState.loading = true;
-  if (pageNum) {
-    queryParams.pageNum = pageNum;
-  }
-  try {
-    const res = await listData(toRaw(queryParams));
-    if (res.code === RESULT_CODE_SUCCESS) {
-      clearSelection();
-      setTotal(res.data.total);
-      tableState.data = res.data.rows;
-      if (fixPageAfterDelete(res.data.rows.length)) {
-        queryParams.pageNum = pagination.current;
-        const res2 = await listData(toRaw(queryParams));
-        if (res2.code === RESULT_CODE_SUCCESS) {
-          setTotal(res2.data.total);
-          tableState.data = res2.data.rows;
-        }
-      }
-    }
-  } finally {
-    tableState.loading = false;
-  }
-}
-
 onMounted(async () => {
-  loadSysDicts();
   const optRes = await getDictOption();
-  if (optRes.code === RESULT_CODE_SUCCESS) {
+  if (isSuccess(optRes)) {
     dict.sysDictType = optRes.data;
   }
-
   if (dictId && dictId !== "0") {
     const res = await getType(dictId);
-    if (res.code === RESULT_CODE_SUCCESS && res.data) {
+    if (isSuccess(res) && res.data) {
       queryParams.dictType = res.data.dictType;
-      fetchList();
     } else {
       message.error({ content: "获取字典类型信息失败", duration: 3 });
     }
-  } else {
-    fetchList();
   }
 });
 </script>
@@ -321,7 +266,7 @@ onMounted(async () => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fetchList(1)">
+                <a-button type="primary" @click.prevent="resetQuery">
                   <template #icon><SearchOutlined /></template>
                   搜索
                 </a-button>
@@ -371,7 +316,7 @@ onMounted(async () => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList()">
+            <a-button type="text" @click.prevent="queryClient.invalidateQueries({ queryKey: ['dictDataList'] })">
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
@@ -393,15 +338,11 @@ onMounted(async () => {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="dataId" :columns="tableColumns" :loading="tableState.loading"
-        :data-source="tableState.data" :size="tableState.size" :row-class-name="rowClassName"
-        :scroll="{
-          x: tableColumns.length * 120,
-          scrollToFirstRowOnChange: true,
-        }" :pagination="pagination" :row-selection="{
-          type: 'checkbox',
-          selectedRowKeys: tableState.selectedRowKeys,
-          onChange: setSelectedRowKeys,
+      <a-table class="table" row-key="dataId" :columns="tableColumns" :loading="isFetching"
+        :data-source="tableListData" :size="tableState.size" :row-class-name="rowClassName"
+        :scroll="{ x: tableColumns.length * 120, scrollToFirstRowOnChange: true }"
+        :pagination="{ ...pagination, total }" :row-selection="{
+          type: 'checkbox', selectedRowKeys: tableState.selectedRowKeys, onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'statusFlag'">
@@ -439,15 +380,11 @@ onMounted(async () => {
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据编号" name="dataId">
-              {{ modalState.form.dataId }}
-            </a-form-item>
+            <a-form-item label="数据编号" name="dataId">{{ modalState.form.dataId }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="创建时间" name="createTime">
-              <span v-if="+modalState.form.createTime > 0">
-                {{ parseDateToStr(+modalState.form.createTime) }}
-              </span>
+              <span v-if="+modalState.form.createTime > 0">{{ parseDateToStr(+modalState.form.createTime) }}</span>
             </a-form-item>
           </a-col>
         </a-row>
@@ -467,14 +404,10 @@ onMounted(async () => {
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据标签" name="dataLabel">
-              {{ modalState.form.dataLabel }}
-            </a-form-item>
+            <a-form-item label="数据标签" name="dataLabel">{{ modalState.form.dataLabel }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据键值" name="dataValue">
-              {{ modalState.form.dataValue }}
-            </a-form-item>
+            <a-form-item label="数据键值" name="dataValue">{{ modalState.form.dataValue }}</a-form-item>
           </a-col>
         </a-row>
         <a-row>
@@ -484,16 +417,12 @@ onMounted(async () => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据排序" name="dataSort">
-              {{ modalState.form.dataSort }}
-            </a-form-item>
+            <a-form-item label="数据排序" name="dataSort">{{ modalState.form.dataSort }}</a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="样式属性" name="tagClass">
-              {{ modalState.form.tagClass }}
-            </a-form-item>
+            <a-form-item label="样式属性" name="tagClass">{{ modalState.form.tagClass }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="回显预览" name="tagType">
@@ -513,7 +442,7 @@ onMounted(async () => {
 
     <!-- 新增框或修改框 -->
     <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
-      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="modalState.confirmLoading"
+      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="isSubmitting"
       @ok="handleSubmit" @cancel="handleCancel">
       <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
@@ -535,14 +464,12 @@ onMounted(async () => {
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="数据标签" name="dataLabel" v-bind="modalStateForm.validateInfos.dataLabel">
-              <a-input v-model:value="modalState.form.dataLabel" allow-clear placeholder="请输入数据标签"
-                :maxlength="50"></a-input>
+              <a-input v-model:value="modalState.form.dataLabel" allow-clear placeholder="请输入数据标签" :maxlength="50"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="数据键值" name="dataValue" v-bind="modalStateForm.validateInfos.dataValue">
-              <a-input v-model:value="modalState.form.dataValue" allow-clear placeholder="请输入数据键值"
-                :maxlength="50"></a-input>
+              <a-input v-model:value="modalState.form.dataValue" allow-clear placeholder="请输入数据键值" :maxlength="50"></a-input>
             </a-form-item>
           </a-col>
         </a-row>
@@ -581,6 +508,3 @@ onMounted(async () => {
   padding: 0 24px;
 }
 </style>
-
-
-

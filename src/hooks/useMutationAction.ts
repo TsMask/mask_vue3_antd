@@ -1,7 +1,13 @@
-import { useMutation, useQueryClient, type QueryKey } from '@tanstack/vue-query';
+﻿import { useMutation, useQueryClient, type QueryKey } from '@tanstack/vue-query';
 import { message, Modal } from 'ant-design-vue';
 import { isSuccess } from '@/plugins/http-fetch';
 import type { ResultType } from '@/plugins/http-fetch';
+
+/** mutation 操作过程中传递的上下文类型 */
+interface MutationContext {
+  /** 关闭全局 loading 提示的函数 */
+  hide: () => void;
+}
 
 /**
  * Mutation 操作配置项
@@ -41,9 +47,7 @@ export interface UseMutationActionOptions<TVariables = void> {
   onError?: (error: Error, variables: TVariables) => void;
 }
 
-/**
- * Mutation 操作结果
- */
+/** Mutation 操作结果 */
 export interface UseMutationActionResult<TVariables = void> {
   /** 执行操作（会自动显示 loading 和成功/失败提示） */
   mutate: (variables: TVariables) => void;
@@ -66,20 +70,15 @@ export interface UseMutationActionResult<TVariables = void> {
  * @example
  * ```ts
  * // 新增用户
- * const { mutate: addUserMutate } = useMutationAction({
+ * const { mutateAsync, isLoading } = useMutationAction({
  *   mutationFn: (data) => addUser(data),
  *   successText: '新增成功',
  *   invalidateKeys: [['userList']],
  * });
- * addUserMutate(toRaw(form));
  *
- * // 删除用户
- * const { mutate: deleteUser } = useMutationAction({
- *   mutationFn: (id) => delUser(id),
- *   successText: '删除成功',
- *   invalidateKeys: [['userList']],
- * });
- * deleteUser(userId);
+ * // 在提交函数中使用
+ * await mutateAsync(toRaw(form));
+ * closeModal();
  * ```
  */
 export function useMutationAction<TVariables = void>(
@@ -96,10 +95,10 @@ export function useMutationAction<TVariables = void>(
 
   const queryClient = useQueryClient();
 
-  const mutation = useMutation<ResultType, Error, TVariables>({
+  const mutation = useMutation<ResultType, Error, TVariables, MutationContext>({
     mutationFn,
 
-    onMutate() {
+    onMutate(): MutationContext {
       /** 显示全局 loading 提示 */
       const hide = message.loading(loadingText, 0);
       return { hide };
@@ -107,7 +106,7 @@ export function useMutationAction<TVariables = void>(
 
     onSuccess(res, variables, context) {
       /** 关闭 loading */
-      (context as any)?.hide?.();
+      context?.hide();
 
       if (isSuccess(res)) {
         /** 显示成功提示 */
@@ -131,7 +130,7 @@ export function useMutationAction<TVariables = void>(
 
     onError(error, variables, context) {
       /** 关闭 loading */
-      (context as any)?.hide?.();
+      context?.hide();
       /** 网络等异常 */
       message.error({ content: error.message || '操作失败', duration: 3 });
       onError?.(error, variables);
@@ -155,9 +154,7 @@ export function useMutationAction<TVariables = void>(
   };
 }
 
-/**
- * 二次确认后执行操作的配置项
- */
+/** 二次确认后执行操作的配置项 */
 export interface ConfirmAndRunOptions<TVariables = void> {
   /** 确认框标题，默认 "提示" */
   title?: string;

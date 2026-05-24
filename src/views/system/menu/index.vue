@@ -6,7 +6,8 @@ import type { ColumnsType } from 'ant-design-vue/es/table';
 import IconFont from '@/components/IconFont/index.vue';
 import { iconFonts } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import { useRoute } from 'vue-router';
-import { reactive, ref, toRaw, onMounted } from 'vue';
+import { reactive, ref, computed, toRaw, onMounted, watch } from 'vue';
+import { useQueryClient } from '@tanstack/vue-query';
 import {
   addMenu,
   delMenu,
@@ -25,28 +26,57 @@ import {
   MENU_TYPE_MENU,
   MENU_TYPE_AUTH,
 } from '@/constants/menu-constants';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import { isSuccess } from '@/plugins/http-fetch';
 import { useTableUI } from '@/hooks/useTableUI';
-import { useMessageAction } from '@/hooks/useMessageAction';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useQueryParams } from '@/hooks/useQueryParams';
+import { useListQuery } from '@/hooks/useListQuery';
+import { useMutationAction, confirmAndRun } from '@/hooks/useMutationAction';
 
 const route = useRoute();
+const queryClient = useQueryClient();
 
 const icons = reactive(iconFonts.map((item) => ({ value: item, label: item })));
 
 const title = ref<string>(route.meta.title ?? '标题');
 
+/** 字典数据初始化 */
 const { dict, loadDicts } = useDictSetup({
   sysNormalDisable: 'sys_normal_disable',
 });
 
-const { withLoading, confirmAndRun } = useMessageAction();
-
+/** 查询参数 */
 const { queryParams, resetQuery } = useQueryParams(
   { menuName: '', statusFlag: undefined as string | undefined },
-  () => fetchList(),
+  () => { /* vue-query 根据 queryKey 变化自动刷新 */ },
 );
+
+/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
+const { listData, isFetching } = useListQuery({
+  queryKey: computed(() => ['menuList', { ...toRaw(queryParams) }]),
+  queryFn: () => listMenu(toRaw(queryParams)),
+});
+
+/** 树形表格数据（由列表数据自动转换） */
+const treeTableData = computed(() => parseDataToTree(listData.value as any[], 'menuId'));
+
+/** 弹窗用父菜单树数据（排除权限类型，带根节点） */
+const treeDataAll = computed(() => {
+  if (listData.value.length === 0) return [];
+  const data = JSON.parse(JSON.stringify(listData.value));
+  return [
+    {
+      menuId: '0',
+      menuName: '根节点',
+      children: parseDataToTreeExclude(data, 'menuType', MENU_TYPE_AUTH, 'menuId'),
+    },
+  ];
+});
+
+/** 所有父节点 ID（用于展开/折叠全部） */
+const expandedRowKeysAll = computed(() => {
+  return [...new Set(listData.value.map((item: any) => item.parentId))];
+});
 
 const {
   tableState,
@@ -55,7 +85,6 @@ const {
 } = useTableUI();
 
 tableState.seached = false;
-const expandedRowKeysAll = ref<string[]>([]);
 const expandedRowKeys = ref<(string | number)[]>([]);
 const expandedRowAll = ref(false);
 
@@ -70,33 +99,22 @@ function handleExpandedRowsChange(rows: (string | number)[]) {
   expandedRowKeys.value = rows;
 }
 
+/** 数据更新后，若全部展开状态保持则同步最新展开键 */
+watch(expandedRowKeysAll, (keys) => {
+  if (expandedRowAll.value) {
+    expandedRowKeys.value = keys;
+  }
+});
+
 const tableColumns: ColumnsType = [
   { title: '菜单名称', dataIndex: 'menuName', align: 'left', width: 200 },
   { title: '菜单编号', dataIndex: 'menuId', align: 'left', width: 100 },
   { title: '菜单排序', dataIndex: 'menuSort', align: 'left', width: 100 },
-  {
-    title: '菜单图标',
-    dataIndex: 'icon',
-    key: 'icon',
-    align: 'left',
-    width: 100,
-  },
+  { title: '菜单图标', dataIndex: 'icon', key: 'icon', align: 'left', width: 100 },
   { title: '权限标识', dataIndex: 'perms', align: 'left', width: 200 },
   { title: '组件路径', dataIndex: 'component', align: 'left', width: 200 },
-  {
-    title: '显示状态',
-    dataIndex: 'visibleFlag',
-    key: 'visibleFlag',
-    align: 'left',
-    width: 100,
-  },
-  {
-    title: '菜单状态',
-    dataIndex: 'statusFlag',
-    key: 'statusFlag',
-    align: 'left',
-    width: 100,
-  },
+  { title: '显示状态', dataIndex: 'visibleFlag', key: 'visibleFlag', align: 'left', width: 100 },
+  { title: '菜单状态', dataIndex: 'statusFlag', key: 'statusFlag', align: 'left', width: 100 },
   {
     title: '创建时间',
     dataIndex: 'createTime',
@@ -110,8 +128,7 @@ const tableColumns: ColumnsType = [
   { title: '操作', key: 'menuId', align: 'left' },
 ];
 
-let menuListData: Record<string, any>[] = [];
-let treeDataAll: Record<string, any>[] = [];
+// ==================== 弹窗状态 ====================
 
 const modalState = reactive({
   visibleByView: false,
@@ -119,7 +136,6 @@ const modalState = reactive({
   title: '菜单',
   form: {} as Record<string, any>,
   confirmLoading: false,
-  treeData: [] as Record<string, any>[],
 });
 
 const modalStateForm = Form.useForm(
@@ -140,6 +156,14 @@ const modalStateForm = Form.useForm(
     ],
   })
 );
+
+/** 新增/编辑提交 mutation */
+const { mutateAsync: submitMutateAsync, isLoading: isSubmitting } = useMutationAction({
+  mutationFn: (data: Record<string, any>) =>
+    data.menuId ? updateMenu(data) : addMenu(data),
+  successText: '操作成功',
+  invalidateKeys: [['menuList']],
+});
 
 /** 获取菜单表单默认值 */
 function getDefaultForm() {
@@ -168,15 +192,15 @@ Object.assign(modalState.form, getDefaultForm());
 /** 上级菜单选择变化时，自动推断子菜单类型（目录->菜单，菜单->权限） */
 function handleTreeDataChange(value: any) {
   if (!value) return;
-  const menu = menuListData.find((m) => m.menuId === value);
+  const menu = listData.value.find((m: any) => m.menuId === value);
   if (!menu) return;
-  if (menu.menuType === MENU_TYPE_DIR) {
+  if ((menu as any).menuType === MENU_TYPE_DIR) {
     modalState.form.menuType = MENU_TYPE_MENU;
   }
-  if (menu.menuType === MENU_TYPE_MENU) {
+  if ((menu as any).menuType === MENU_TYPE_MENU) {
     modalState.form.menuType = MENU_TYPE_AUTH;
   }
-  modalState.form.parentType = menu.menuType;
+  modalState.form.parentType = (menu as any).menuType;
 }
 
 /** 打开菜单详情弹窗，根据 menuId 查询并展示数据 */
@@ -188,10 +212,9 @@ function handleView(menuId: string | number) {
   if (modalState.confirmLoading) return;
   const hide = message.loading('正在打开...', 0);
   modalState.confirmLoading = true;
-  modalState.treeData = treeDataAll;
   getMenu(menuId)
     .then((res) => {
-      if (res.code === RESULT_CODE_SUCCESS && res.data) {
+      if (isSuccess(res) && res.data) {
         Object.assign(modalState.form, res.data);
         modalState.title = '菜单信息';
         modalState.visibleByView = true;
@@ -216,7 +239,6 @@ function handleEdit(
   parentId?: string | number,
   parentType?: string | number,
 ) {
-  modalState.treeData = treeDataAll;
   if (!menuId) {
     Object.assign(modalState.form, getDefaultForm());
     if (parentId) {
@@ -231,7 +253,7 @@ function handleEdit(
     modalState.confirmLoading = true;
     getMenu(menuId)
       .then((res) => {
-        if (res.code === RESULT_CODE_SUCCESS && res.data) {
+        if (isSuccess(res) && res.data) {
           Object.assign(modalState.form, res.data);
           modalState.title = '修改菜单信息';
           modalState.visibleByEdit = true;
@@ -252,76 +274,27 @@ function handleCancel() {
   modalState.visibleByView = false;
 }
 
-/** 提交新增/编辑菜单，成功则清空树形缓存并刷新列表 */
+/** 提交新增/编辑菜单 */
 async function handleSubmit() {
-  modalState.confirmLoading = true;
   try {
-    const form = toRaw(modalState.form);
-    const res = await withLoading(
-      (form.menuId ? updateMenu : addMenu)(form),
-      { successText: modalState.title + '成功' },
-    );
-    if (res.code === RESULT_CODE_SUCCESS) {
-      treeDataAll = [];
-      fetchList();
-      handleCancel();
-    }
-  } finally {
-    modalState.confirmLoading = false;
+    await submitMutateAsync(toRaw(modalState.form));
+    handleCancel();
+  } catch {
+    // 错误已由 useMutationAction 统一处理
   }
 }
 
-/** 删除单个菜单，操作前需二次确认 */
+/** 删除单个菜单（二次确认后执行） */
 function handleDelete(menuId: string | number) {
   confirmAndRun({
     content: '确认删除菜单编号为【' + menuId + '】的数据项?',
-    onOk: () => delMenu(menuId),
+    action: () => delMenu(menuId),
+    variables: undefined,
     successText: '删除成功',
-    onSuccess: () => fetchList(),
+    invalidateKeys: [['menuList']],
   });
 }
-
-/** 查询菜单树形列表，首次加载时构建父节点树和展开键列表 */
-function fetchList() {
-  if (tableState.loading) return;
-  tableState.loading = true;
-  listMenu(toRaw(queryParams)).then((res) => {
-    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
-      menuListData = JSON.parse(JSON.stringify(res.data));
-      if (treeDataAll.length <= 0) {
-        const data: Record<string, any>[] = JSON.parse(
-          JSON.stringify(res.data),
-        );
-        treeDataAll = [
-          {
-            menuId: '0',
-            menuName: '根节点',
-            children: parseDataToTreeExclude(
-              data,
-              'menuType',
-              MENU_TYPE_AUTH,
-              'menuId',
-            ),
-          },
-        ];
-        expandedRowKeysAll.value = [
-          ...new Set(data.map((item) => item.parentId)),
-        ];
-        handleExpandAll(expandedRowAll.value);
-      }
-      tableState.data = parseDataToTree(res.data, 'menuId');
-    }
-    tableState.loading = false;
-  });
-}
-
-onMounted(() => {
-  loadDicts();
-  fetchList();
-});
-</script>
-﻿
-<template>
+</script>﻿<template>
   <PageContainer :title="title">
     <template #content>
       <a-typography-paragraph>
@@ -334,7 +307,6 @@ onMounted(() => {
       :bordered="false"
       :body-style="{ marginBottom: '24px', paddingBottom: 0 }"
     >
-      <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
@@ -360,7 +332,7 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fetchList()">
+                <a-button type="primary" @click.prevent="queryClient.invalidateQueries({ queryKey: ['menuList'] })">
                   <template #icon><SearchOutlined /></template>
                   搜索
                 </a-button>
@@ -376,7 +348,6 @@ onMounted(() => {
     </a-card>
 
     <a-card :bordered="false" :body-style="{ padding: '0px' }">
-      <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
           <a-button
@@ -390,7 +361,6 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
@@ -423,7 +393,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList()">
+            <a-button type="text" @click.prevent="queryClient.invalidateQueries({ queryKey: ['menuList'] })">
               <template #icon><ReloadOutlined /></template>
             </a-button>
           </a-tooltip>
@@ -452,8 +422,8 @@ onMounted(() => {
         class="table"
         row-key="menuId"
         :columns="tableColumns"
-        :loading="tableState.loading"
-        :data-source="tableState.data"
+        :loading="isFetching"
+        :data-source="treeTableData"
         :size="tableState.size"
         :row-class-name="rowClassName"
         :pagination="false"
@@ -570,7 +540,7 @@ onMounted(() => {
             :value="modalState.form.parentId"
             placeholder="上级菜单"
             disabled
-            :tree-data="modalState.treeData"
+            :tree-data="treeDataAll"
             :field-names="{
               children: 'children',
               label: 'menuName',
@@ -719,7 +689,7 @@ onMounted(() => {
       :mask-closable="false"
       :open="modalState.visibleByEdit"
       :title="modalState.title"
-      :confirm-loading="modalState.confirmLoading"
+      :confirm-loading="isSubmitting"
       @ok="handleSubmit"
       @cancel="handleCancel"
     >
@@ -741,7 +711,7 @@ onMounted(() => {
             placeholder="上级菜单"
             show-search
             tree-default-expand-all
-            :tree-data="modalState.treeData"
+            :tree-data="treeDataAll"
             :field-names="{
               children: 'children',
               label: 'menuName',

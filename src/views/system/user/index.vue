@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
 import { useRoute } from 'vue-router';
-import { reactive, ref, onMounted, toRaw } from 'vue';
+import { reactive, ref, computed, watch, onMounted, toRaw } from 'vue';
+import { useQueryClient } from '@tanstack/vue-query';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue';
@@ -31,31 +32,42 @@ import {
   regExpUserName,
 } from '@/utils/regular-utils';
 import { parseDateToStr } from '@/utils/date-utils';
+import { isSuccess } from '@/plugins/http-fetch';
 import { SYS_ROLE_SYSTEM_ID } from '@/constants/system-constants';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 import { useTableUI } from '@/hooks/useTableUI';
 import { usePagination } from '@/hooks/usePagination';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useQueryParams } from '@/hooks/useQueryParams';
-import { useMessageAction } from '@/hooks/useMessageAction';
+import { useListQuery } from '@/hooks/useListQuery';
+import { useMutationAction, confirmAndRun } from '@/hooks/useMutationAction';
 import useUserStore from '@/store/modules/user';
+
 const userStore = useUserStore();
 const route = useRoute();
+const queryClient = useQueryClient();
 
 /** 路由标题 */
 const title = ref<string>(route.meta.title ?? '标题');
 
 /** 字典数据初始化 */
-const { dict, loadDicts } = useDictSetup({
+const { dict } = useDictSetup({
   sysNormalDisable: 'sys_normal_disable',
   sysUserSex: 'sys_user_sex',
 });
 
-/** 通用操作反馈 */
-const { withLoading, confirmAndRun } = useMessageAction();
-
 /** 开始结束时间 */
-let queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
+const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
+
+/** 同步日期范围到查询参数（在 queryKey 计算时调用） */
+function syncDateRange() {
+  if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
+    queryParams.beginTime = queryRangePicker.value[0].startOf('day').valueOf();
+    queryParams.endTime = queryRangePicker.value[1].endOf('day').valueOf();
+  } else {
+    queryParams.beginTime = undefined;
+    queryParams.endTime = undefined;
+  }
+}
 
 /** 查询参数 */
 const { queryParams, resetQuery } = useQueryParams(
@@ -63,7 +75,7 @@ const { queryParams, resetQuery } = useQueryParams(
     userName: '',
     phone: '',
     deptId: '',
-    statusFlag: undefined,
+    statusFlag: undefined as string | undefined,
     beginTime: undefined as undefined | number,
     endTime: undefined as undefined | number,
     pageNum: 1,
@@ -72,17 +84,29 @@ const { queryParams, resetQuery } = useQueryParams(
   () => {
     queryRangePicker.value = undefined;
     resetPage();
-    fetchList();
   },
 );
 
 /** 分页管理 */
-const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
+const { pagination, resetPage, fixPage } = usePagination({
   onChange: (page, pageSize) => {
     queryParams.pageNum = page;
     queryParams.pageSize = pageSize;
-    fetchList();
   },
+});
+
+/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
+const { listData, total, isFetching } = useListQuery({
+  queryKey: computed(() => {
+    syncDateRange();
+    return ['userList', { ...toRaw(queryParams) }];
+  }),
+  queryFn: () => listUser(toRaw(queryParams)),
+});
+
+/** 列表刷新后清空表格选中行 */
+watch(isFetching, (newVal, oldVal) => {
+  if (oldVal && !newVal) clearSelection();
 });
 
 /** 表格UI状态 */
@@ -90,7 +114,7 @@ const { tableState, setTableSize, rowClassName, setSelectedRowKeys, clearSelecti
   useTableUI();
 
 /** 部门树数据 */
-let deptTreeData = ref<Record<string, any>[]>([]);
+const deptTreeData = ref<Record<string, any>[]>([]);
 
 /** 表格字段列 */
 let tableColumns: ColumnsType = [
@@ -116,11 +140,13 @@ let tableColumns: ColumnsType = [
 
 // ==================== 弹窗状态 ====================
 
+/** 弹窗打开过程中的 loading 守卫 */
+const confirmLoading = ref(false);
+
 let visibleByView = ref(false);
 let visibleByEdit = ref(false);
 let visibleByResetPwd = ref(false);
 let modalTitle = ref('用户');
-let confirmLoading = ref(false);
 
 type OptionsType = { posts: Record<string, any>[]; roles: Record<string, any>[] };
 
@@ -170,6 +196,21 @@ const formCtl = Form.useForm(
   }),
 );
 
+/** 新增/编辑提交 mutation */
+const { mutateAsync: submitMutateAsync, isLoading: isSubmitting } = useMutationAction({
+  mutationFn: (data: Record<string, any>) =>
+    data.userId ? updateUser(data) : addUser(data),
+  successText: '操作成功',
+  invalidateKeys: [['userList']],
+});
+
+/** 重置密码 mutation */
+const { mutateAsync: resetPwdMutateAsync, isLoading: isResetPwdSubmitting } = useMutationAction({
+  mutationFn: (params: { userId: string | number; password: string }) =>
+    resetPassword(params.userId, params.password),
+  successText: '重置密码成功',
+});
+
 // ==================== 导入弹窗状态 ====================
 
 let importState = reactive({
@@ -208,7 +249,7 @@ async function handleView(userId: string | number) {
   const hide = message.loading('正在打开...', 0);
   try {
     const res = await getUser(userId);
-    if (res.code === RESULT_CODE_SUCCESS && res.data) {
+    if (isSuccess(res) && res.data) {
       setFormOptions(res.data);
       form.avatar = userStore.fnAvatar(form.avatar);
       modalTitle.value = '用户信息';
@@ -228,7 +269,7 @@ async function handleOpenEdit(userId?: string | number) {
   try {
     const fetchId = userId || 0;
     const res = await getUser(fetchId);
-    if (res.code === RESULT_CODE_SUCCESS && res.data) {
+    if (isSuccess(res) && res.data) {
       if (!userId) formCtl.resetFields();
       setFormOptions(res.data);
       if (!userId && deptTreeData.value.length > 0) {
@@ -255,21 +296,12 @@ async function handleSubmit() {
     message.error({ content: `请正确填写 ${e.errorFields.length} 处必填信息！`, duration: 3 });
     return;
   }
-  const hide = message.loading('请稍等...', 0);
-  confirmLoading.value = true;
+  queryParams.pageNum = 1;
   try {
-    const formRaw = toRaw(form);
-    const res = formRaw.userId ? await updateUser(formRaw) : await addUser(formRaw);
-    if (res.code === RESULT_CODE_SUCCESS) {
-      message.success({ content: `${modalTitle.value}成功`, duration: 3 });
-      fetchList(1);
-      handleCloseModal();
-    } else {
-      message.error({ content: res.msg, duration: 3 });
-    }
-  } finally {
-    hide();
-    confirmLoading.value = false;
+    await submitMutateAsync(toRaw(form));
+    handleCloseModal();
+  } catch {
+    // 错误已由 useMutationAction 统一处理
   }
 }
 
@@ -302,35 +334,39 @@ async function handleResetPwdSubmit() {
     message.error({ content: `请正确填写 ${e.errorFields.length} 处必填信息！`, duration: 3 });
     return;
   }
-  const hide = message.loading('请稍等...', 0);
-  confirmLoading.value = true;
   try {
-    const res = await resetPassword(form.userId!, form.password);
-    if (res.code === RESULT_CODE_SUCCESS) {
-      message.success({ content: `${modalTitle.value}成功`, duration: 3 });
-      visibleByResetPwd.value = false;
-      formCtl.resetFields();
-    } else {
-      message.error({ content: res.msg, duration: 3 });
-    }
-  } finally {
-    hide();
-    confirmLoading.value = false;
+    await resetPwdMutateAsync({ userId: form.userId!, password: form.password });
+    visibleByResetPwd.value = false;
+    formCtl.resetFields();
+  } catch {
+    // 错误已由 useMutationAction 统一处理
   }
 }
 
 // ==================== 列表操作 ====================
 
-/** 用户状态修改 */
+/** 用户状态修改（保留 Modal.confirm 以支持取消回滚） */
 function handleStatusChange(row: Record<string, string>) {
   const text = row.statusFlag === '1' ? '启用' : '停用';
   Modal.confirm({
     title: '提示',
     content: `确定要${text} ${row.userName} 用户吗?`,
     onOk() {
-      return withLoading(changeStatus(row.userId, row.statusFlag), {
-        successText: `${row.userName} ${text}成功`,
-      }).then(() => fetchList());
+      const hide = message.loading('请稍等...', 0);
+      return changeStatus(row.userId, row.statusFlag)
+        .then((res) => {
+          hide();
+          if (isSuccess(res)) {
+            message.success({ content: `${row.userName} ${text}成功`, duration: 3 });
+            queryClient.invalidateQueries({ queryKey: ['userList'] });
+          } else {
+            message.error({ content: res.msg, duration: 3 });
+          }
+        })
+        .catch((err) => {
+          hide();
+          message.error({ content: err.message || '操作失败', duration: 3 });
+        });
     },
     onCancel() {
       row.statusFlag = row.statusFlag === '1' ? '0' : '1';
@@ -338,24 +374,27 @@ function handleStatusChange(row: Record<string, string>) {
   });
 }
 
-/** 用户删除 */
+/** 用户删除（二次确认后执行） */
 function handleDelete(userId: string = '0') {
   if (userId === '0') {
     userId = tableState.selectedRowKeys.join(',');
   }
   confirmAndRun({
     content: `确认删除用户编号为 【${userId}】 的数据项?`,
-    onOk: () => delUser(userId),
+    action: () => delUser(userId),
+    variables: undefined,
     successText: '删除成功',
-    onSuccess: () => fetchList(),
+    onSuccess: () => fixPage(tableState.selectedRowKeys.length || 1, total.value),
+    invalidateKeys: [['userList']],
   });
 }
 
-/** 用户解锁 */
+/** 用户解锁（二次确认后执行） */
 function handleUnlock(userName: string) {
   confirmAndRun({
     content: `确认解锁用户 ${userName} ?`,
-    onOk: () => unlock(userName),
+    action: () => unlock(userName),
+    variables: undefined,
     successText: `用户 ${userName} 解锁成功`,
   });
 }
@@ -364,9 +403,10 @@ function handleUnlock(userName: string) {
 function handleExport() {
   confirmAndRun({
     content: '确认根据搜索条件导出xlsx表格文件吗?',
-    onOk: () => exportUser(toRaw(queryParams)),
+    action: () => exportUser(toRaw(queryParams)),
+    variables: undefined,
     successText: '已完成导出',
-    onSuccess: (res) => { saveAs(res.data, `user_${Date.now()}.xlsx`); },
+    onSuccess: (res) => saveAs(res.data, `user_${Date.now()}.xlsx`),
   });
 }
 
@@ -393,11 +433,12 @@ async function handleImportUpload(file: File) {
     formData.append('file', file);
     formData.append('subPath', 'import');
     const uploadRes = await uploadFile(formData);
-    if (uploadRes.code !== RESULT_CODE_SUCCESS) return;
+    if (!isSuccess(uploadRes)) return;
     const filePath = uploadRes.data.filePath;
     const importRes = await importData(filePath, importState.updateSupport);
-    if (importRes.code === RESULT_CODE_SUCCESS) {
+    if (isSuccess(importRes)) {
       importState.msg = importRes.msg?.replaceAll(/<br\/>+/g, '\r');
+      queryClient.invalidateQueries({ queryKey: ['userList'] });
     } else {
       message.error(importRes.msg, 3);
     }
@@ -413,7 +454,7 @@ async function handleDownloadTemplate() {
   importState.templateDownload = true;
   try {
     const res = await importTemplate();
-    if (res.code === RESULT_CODE_SUCCESS) {
+    if (isSuccess(res)) {
       saveAs(res.data, `user_template_${Date.now()}.xlsx`);
     }
   } finally {
@@ -421,44 +462,13 @@ async function handleDownloadTemplate() {
   }
 }
 
-/** 查询用户列表 */
-function fetchList(pageNum?: number) {
-  if (tableState.loading) return;
-  tableState.loading = true;
-  if (pageNum) queryParams.pageNum = pageNum;
-  // 时间范围
-  if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
-    queryParams.beginTime = queryRangePicker.value[0].startOf('day').valueOf();
-    queryParams.endTime = queryRangePicker.value[1].endOf('day').valueOf();
-  } else {
-    queryParams.beginTime = undefined;
-    queryParams.endTime = undefined;
-  }
-  listUser(toRaw(queryParams)).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS) {
-      clearSelection();
-      const { total, rows } = res.data;
-      setTotal(total);
-      tableState.data = rows;
-      // 删除后修正页码，避免空页面
-      if (fixPageAfterDelete(rows.length)) {
-        fetchList();
-        return;
-      }
-    }
-    tableState.loading = false;
-  });
-}
-
 onMounted(() => {
-  loadDicts();
-  // 获取部门树
-  deptTree().then(res => {
-    if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
+  /** 加载部门树（一次性） */
+  deptTree().then((res) => {
+    if (isSuccess(res) && Array.isArray(res.data)) {
       deptTreeData.value = res.data;
     }
   });
-  fetchList();
 });
 </script>
 <template>
@@ -468,7 +478,6 @@ onMounted(() => {
     </template>
 
     <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
-      <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
@@ -511,7 +520,7 @@ onMounted(() => {
           <a-col :lg="4" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fetchList(1)">
+                <a-button type="primary" @click.prevent="queryParams.pageNum = 1">
                   <template #icon>
                     <SearchOutlined />
                   </template>
@@ -531,7 +540,6 @@ onMounted(() => {
     </a-card>
 
     <a-card :bordered="false" :body-style="{ padding: '0px' }">
-      <!-- 插槽-卡片左侧侧 -->
       <template #title>
         <a-space :size="8" align="center">
           <a-button type="primary" @click.prevent="handleOpenEdit()" v-perms:has="['system:user:add']">
@@ -562,7 +570,6 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
@@ -575,7 +582,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList()">
+            <a-button type="text" @click.prevent="queryClient.invalidateQueries({ queryKey: ['userList'] })">
               <template #icon>
                 <ReloadOutlined />
               </template>
@@ -601,9 +608,8 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <!-- 表格列表 -->
-      <a-table class="table" row-key="userId" :columns="tableColumns" :loading="tableState.loading"
-        :data-source="tableState.data" :size="tableState.size" :row-class-name="rowClassName" :pagination="pagination"
+      <a-table class="table" row-key="userId" :columns="tableColumns" :loading="isFetching"
+        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName" :pagination="{ ...pagination, total }"
         :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
@@ -795,7 +801,7 @@ onMounted(() => {
 
     <!-- 新增框或修改框 -->
     <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
-      :open="visibleByEdit" :title="modalTitle" :confirm-loading="confirmLoading" @ok="handleSubmit"
+      :open="visibleByEdit" :title="modalTitle" :confirm-loading="isSubmitting" @ok="handleSubmit"
       @cancel="handleCloseModal">
       <a-form name="formCtlByEdit" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row v-if="!form.userId">
@@ -895,7 +901,7 @@ onMounted(() => {
 
     <!-- 重置密码修改框 -->
     <ProModal :drag="true" :keyboard="false" :mask-closable="false" :open="visibleByResetPwd" :title="modalTitle"
-      :confirm-loading="confirmLoading" @ok="handleResetPwdSubmit" @cancel="handleCloseModal">
+      :confirm-loading="isResetPwdSubmitting" @ok="handleResetPwdSubmit" @cancel="handleCloseModal">
       <a-form name="formCtlByResetPwd" layout="horizontal">
         <a-form-item label="登录账号" name="userName" v-bind="formCtl.validateInfos.userName">
           <a-input :value="form.userName" disabled :maxlength="30" placeholder="登录账号">

@@ -1,24 +1,28 @@
 ﻿<script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
-import { ref, onMounted, toRaw } from 'vue';
+import { ref, computed, toRaw, watch } from 'vue';
+import { useQueryClient } from '@tanstack/vue-query';
 import { PageContainer } from 'antdv-pro-layout';
 import { message } from 'ant-design-vue';
 import type { ColumnsType } from 'ant-design-vue/es/table';
 import AuthUserSelect from './components/auth-user-select.vue';
 import { authUserList, authUserChecked } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
+import { isSuccess } from '@/plugins/http-fetch';
 import useTabsStore from '@/store/modules/tabs';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 import { useTableUI } from '@/hooks/useTableUI';
 import { usePagination } from '@/hooks/usePagination';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useQueryParams } from '@/hooks/useQueryParams';
-import { useMessageAction } from '@/hooks/useMessageAction';
+import { useListQuery } from '@/hooks/useListQuery';
+import { useMutationAction, confirmAndRun } from '@/hooks/useMutationAction';
+
 const tabsStore = useTabsStore();
 const route = useRoute();
 const router = useRouter();
+const queryClient = useQueryClient();
 
-// 获取地址栏参数
+/** 获取地址栏参数 */
 const roleId = route.params && (route.params.roleId as string);
 const roleName = route.query && (route.query.roleName as string);
 
@@ -27,79 +31,62 @@ const { dict, loadDicts } = useDictSetup({
   sysNormalDisable: 'sys_normal_disable',
 });
 
-/** 通用操作反馈：带loading的异步操作、二次确认 */
-const { withLoading, confirmAndRun } = useMessageAction();
-
 /** 查询参数 */
 const { queryParams, resetQuery } = useQueryParams(
   {
     userName: '',
     phone: '',
-    statusFlag: undefined,
+    statusFlag: undefined as string | undefined,
+    roleId: roleId,
+    auth: true,
     pageNum: 1,
     pageSize: 20,
   },
   () => {
     resetPage();
-    fetchList();
   },
 );
 
-/** 分页管理：current/pageSize/total/onChange + fixPageAfterDelete */
-const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
+/** 分页管理 */
+const { pagination, resetPage, fixPage } = usePagination({
   onChange: (page, pageSize) => {
     queryParams.pageNum = page;
     queryParams.pageSize = pageSize;
-    fetchList();
   },
 });
 
-/** 表格UI状态：loading/size/striped/seached/data/selectedRowKeys */
+/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
+const { listData, total, isFetching } = useListQuery({
+  queryKey: computed(() => ['authUserList', { ...toRaw(queryParams) }]),
+  queryFn: () => authUserList(toRaw(queryParams)),
+});
+
+/** 列表刷新后清空表格选中行 */
+watch(isFetching, (newVal, oldVal) => {
+  if (oldVal && !newVal) clearSelection();
+});
+
+/** 表格UI状态 */
 const { tableState, setTableSize, rowClassName, setSelectedRowKeys, clearSelection } =
   useTableUI({ defaultSize: 'middle' });
 
 /** 表格搜索栏默认展开 */
 tableState.seached = true;
 
+/** 授权用户 mutation */
+const { mutateAsync: authMutateAsync } = useMutationAction({
+  mutationFn: (data: Record<string, any>) => authUserChecked(data),
+  invalidateKeys: [['authUserList']],
+});
+
 /** 表格字段列 */
 let tableColumns: ColumnsType = [
-  {
-    title: '用户编号',
-    dataIndex: 'userId',
-    align: 'left',
-    width: 100,
-  },
-  {
-    title: '登录账号',
-    dataIndex: 'userName',
-    align: 'left',
-    width: 150,
-  },
-  {
-    title: '用户昵称',
-    dataIndex: 'nickName',
-    align: 'left',
-    width: 150,
-  },
-  {
-    title: '手机号码',
-    dataIndex: 'phone',
-    align: 'left',
-    width: 150,
-  },
-  {
-    title: '电子邮箱',
-    dataIndex: 'email',
-    align: 'left',
-    width: 200,
-  },
-  {
-    title: '用户状态',
-    dataIndex: 'statusFlag',
-    key: 'statusFlag',
-    align: 'left',
-    width: 100,
-  },
+  { title: '用户编号', dataIndex: 'userId', align: 'left', width: 100 },
+  { title: '登录账号', dataIndex: 'userName', align: 'left', width: 150 },
+  { title: '用户昵称', dataIndex: 'nickName', align: 'left', width: 150 },
+  { title: '手机号码', dataIndex: 'phone', align: 'left', width: 150 },
+  { title: '电子邮箱', dataIndex: 'email', align: 'left', width: 200 },
+  { title: '用户状态', dataIndex: 'statusFlag', key: 'statusFlag', align: 'left', width: 100 },
   {
     title: '创建时间',
     dataIndex: 'createTime',
@@ -110,11 +97,7 @@ let tableColumns: ColumnsType = [
       return parseDateToStr(+opt.value);
     },
   },
-  {
-    title: '操作',
-    key: 'userId',
-    align: 'left',
-  },
+  { title: '操作', key: 'userId', align: 'left' },
 ];
 
 /** 选择用户弹窗状态 */
@@ -132,17 +115,17 @@ async function handleAuthUserOk(userIds: string[] | number[]) {
     message.error({ content: '请选择要分配的用户', duration: 3 });
     return;
   }
-  const res = await withLoading(
-    authUserChecked({
+  try {
+    await authMutateAsync({
       auth: true,
       userIds: userIds.map((v: any) => parseInt(v)),
       roleId: parseInt(roleId),
-    }),
-    { successText: '授权用户添加成功' },
-  );
-  if (res.code === RESULT_CODE_SUCCESS) {
+    });
+    message.success({ content: '授权用户添加成功', duration: 3 });
     selectUserVisible.value = false;
-    fetchList(1);
+    queryParams.pageNum = 1;
+  } catch {
+    // 错误已由 useMutationAction 统一处理
   }
 }
 
@@ -156,14 +139,15 @@ function handleRevokeAuth(userId: string | number) {
   }
   confirmAndRun({
     content: `确认取消用户编号为 【${userId}】 的数据项授权?`,
-    onOk: () =>
+    action: () =>
       authUserChecked({
         auth: false,
         userIds: userIds,
         roleId: parseInt(roleId),
       }),
+    variables: undefined,
     successText: '取消授权成功',
-    onSuccess: () => fetchList(1),
+    invalidateKeys: [['authUserList']],
   });
 }
 
@@ -176,40 +160,11 @@ function handleClose() {
     router.back();
   }
 }
-
-/** 查询角色已授权用户列表, pageNum初始页数 */
-function fetchList(pageNum?: number) {
-  if (tableState.loading) return;
-  tableState.loading = true;
-  if (pageNum) {
-    queryParams.pageNum = pageNum;
-  }
-  authUserList(toRaw(queryParams)).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS) {
-      clearSelection();
-      const { total, rows } = res.data;
-      setTotal(total);
-      tableState.data = rows;
-      // 删除后修正页码，避免空页面
-      if (fixPageAfterDelete(rows.length)) {
-        fetchList();
-        return;
-      }
-    }
-    tableState.loading = false;
-  });
-}
-
-onMounted(() => {
-  loadDicts();
-  fetchList();
-});
 </script>
 
 <template>
   <PageContainer>
     <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
-      <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
@@ -237,7 +192,7 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="fetchList(1)">
+                <a-button type="primary" @click.prevent="queryParams.pageNum = 1">
                   <template #icon>
                     <SearchOutlined />
                   </template>
@@ -255,7 +210,6 @@ onMounted(() => {
     </a-card>
 
     <a-card :bordered="false" :body-style="{ padding: '0px' }">
-      <!-- 插槽-卡片左侧 -->
       <template #title>
         <a-space :size="8" align="center">
           <a-button type="default" @click.prevent="handleClose()">
@@ -280,7 +234,6 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <!-- 插槽-卡片右侧 -->
       <template #extra>
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
@@ -293,7 +246,7 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList()">
+            <a-button type="text" @click.prevent="queryClient.invalidateQueries({ queryKey: ['authUserList'] })">
               <template #icon>
                 <ReloadOutlined />
               </template>
@@ -319,12 +272,11 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <!-- 表格列表 -->
-      <a-table class="table" row-key="userId" :columns="tableColumns" :loading="tableState.loading"
-        :data-source="tableState.data" :size="tableState.size" :row-class-name="rowClassName" :scroll="{
+      <a-table class="table" row-key="userId" :columns="tableColumns" :loading="isFetching"
+        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
-        }" :pagination="pagination" :row-selection="{
+        }" :pagination="{ ...pagination, total }" :row-selection="{
           type: 'checkbox',
           selectedRowKeys: tableState.selectedRowKeys,
           onChange: setSelectedRowKeys,
@@ -350,7 +302,6 @@ onMounted(() => {
       </a-table>
     </a-card>
 
-    <!-- 分配用户选择框 -->
     <AuthUserSelect :role-id="roleId" :title="selectUserTitle" v-model:open="selectUserVisible"
       @ok="handleAuthUserOk" />
   </PageContainer>

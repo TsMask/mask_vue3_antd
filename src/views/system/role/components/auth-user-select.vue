@@ -1,14 +1,15 @@
 ﻿<script setup lang="ts">
-import { toRaw, watch } from 'vue';
+import { toRaw, computed, watch } from 'vue';
 import { message } from 'ant-design-vue';
 import type { ColumnsType } from 'ant-design-vue/es/table';
 import { authUserList } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 import { useTableUI } from '@/hooks/useTableUI';
 import { usePagination } from '@/hooks/usePagination';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useQueryParams } from '@/hooks/useQueryParams';
+import { useListQuery } from '@/hooks/useListQuery';
+
 const emit = defineEmits(['ok', 'cancel', 'update:open']);
 const props = defineProps({
   title: {
@@ -35,7 +36,7 @@ const { queryParams, resetQuery } = useQueryParams(
   {
     userName: '',
     phone: '',
-    statusFlag: undefined,
+    statusFlag: undefined as string | undefined,
     roleId: props.roleId,
     auth: false,
     pageNum: 1,
@@ -43,17 +44,22 @@ const { queryParams, resetQuery } = useQueryParams(
   },
   () => {
     resetPage();
-    fetchList();
   },
 );
 
 /** 分页管理 */
-const { pagination, resetPage, setTotal, fixPageAfterDelete } = usePagination({
+const { pagination, resetPage, fixPage } = usePagination({
   onChange: (page, pageSize) => {
     queryParams.pageNum = page;
     queryParams.pageSize = pageSize;
-    fetchList();
   },
+});
+
+/** 列表数据查询：仅在弹窗打开时自动查询 */
+const { listData, total, isFetching } = useListQuery({
+  queryKey: computed(() => ['authUserSelect', { ...toRaw(queryParams) }]),
+  queryFn: () => authUserList(toRaw(queryParams)),
+  enabled: computed(() => props.open),
 });
 
 /** 表格UI状态 */
@@ -63,31 +69,10 @@ const { tableState, setSelectedRowKeys, clearSelection } = useTableUI({
 
 /** 表格字段列 */
 let tableColumns: ColumnsType = [
-  {
-    title: '用户编号',
-    dataIndex: 'userId',
-    align: 'left',
-    width: 100,
-  },
-  {
-    title: '登录账号',
-    dataIndex: 'userName',
-    align: 'left',
-    width: 150,
-  },
-  {
-    title: '用户昵称',
-    dataIndex: 'nickName',
-    align: 'left',
-    width: 150,
-  },
-  {
-    title: '用户状态',
-    dataIndex: 'statusFlag',
-    key: 'statusFlag',
-    align: 'left',
-    width: 100,
-  },
+  { title: '用户编号', dataIndex: 'userId', align: 'left', width: 100 },
+  { title: '登录账号', dataIndex: 'userName', align: 'left', width: 150 },
+  { title: '用户昵称', dataIndex: 'nickName', align: 'left', width: 150 },
+  { title: '用户状态', dataIndex: 'statusFlag', key: 'statusFlag', align: 'left', width: 100 },
   {
     title: '创建时间',
     dataIndex: 'createTime',
@@ -99,29 +84,6 @@ let tableColumns: ColumnsType = [
     },
   },
 ];
-
-/** 查询角色未授权用户列表, pageNum初始页数 */
-function fetchList(pageNum?: number) {
-  if (tableState.loading) return;
-  tableState.loading = true;
-  if (pageNum) {
-    queryParams.pageNum = pageNum;
-  }
-  authUserList(toRaw(queryParams)).then(res => {
-    if (res.code === RESULT_CODE_SUCCESS) {
-      clearSelection();
-      const { total, rows } = res.data;
-      setTotal(total);
-      tableState.data = rows;
-      // 删除后修正页码，避免空页面
-      if (fixPageAfterDelete(rows.length)) {
-        fetchList();
-        return;
-      }
-    }
-    tableState.loading = false;
-  });
-}
 
 /** 弹框确认按钮事件 */
 function handleOk() {
@@ -140,17 +102,15 @@ function handleCancel() {
   emit('cancel');
 }
 
-/** 显示弹框时初始数据 */
-function init() {
-  loadDicts();
-  fetchList(1);
-}
-
-/** 监听是否显示，初始数据 */
+/** 弹窗打开时初始化字典并重置页码 */
 watch(
   () => props.open,
-  val => {
-    if (val) init();
+  (val) => {
+    if (val) {
+      loadDicts();
+      queryParams.pageNum = 1;
+      clearSelection();
+    }
   },
 );
 </script>
@@ -159,7 +119,6 @@ watch(
   <a-modal :drag="true" :fullscreen="true" :forceFullscreen="true" :destroyOnClose="true" :width="800"
     :title="props.title" :open="props.open" :keyboard="false" :mask-closable="false" @ok="handleOk"
     @cancel="handleCancel">
-    <!-- 表格搜索栏 -->
     <a-form :model="queryParams" name="queryParams" layout="horizontal">
       <a-row :gutter="16">
         <a-col :lg="8" :md="12" :xs="24">
@@ -182,7 +141,7 @@ watch(
         <a-col :lg="12" :md="12" :xs="24">
           <a-form-item>
             <a-space :size="8">
-              <a-button type="primary" @click.prevent="fetchList(1)">
+              <a-button type="primary" @click.prevent="queryParams.pageNum = 1">
                 <template #icon>
                   <SearchOutlined />
                 </template>
@@ -200,12 +159,12 @@ watch(
       </a-row>
     </a-form>
 
-    <a-table class="table" row-key="userId" :columns="tableColumns" :loading="tableState.loading"
-      :data-source="tableState.data" :size="tableState.size" :scroll="{
+    <a-table class="table" row-key="userId" :columns="tableColumns" :loading="isFetching"
+      :data-source="listData" :size="tableState.size" :scroll="{
         x: tableColumns.length * 120,
         scrollToFirstRowOnChange: true,
         y: 400,
-      }" :pagination="pagination" :row-selection="{
+      }" :pagination="{ ...pagination, total }" :row-selection="{
         type: 'checkbox',
         selectedRowKeys: tableState.selectedRowKeys,
         onChange: setSelectedRowKeys,
