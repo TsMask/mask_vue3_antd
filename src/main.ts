@@ -1,10 +1,9 @@
-import { createApp } from 'vue';
-import { VueQueryPlugin } from '@tanstack/vue-query';
+﻿import { createApp } from 'vue';
 import store from './store';
 import App from './App.vue';
 import router from './router';
 import directive from './directive';
-import { queryClient } from '@/plugins/query';
+import { VueQuery } from '@/plugins/vue-query';
 import 'antdv-pro-modal/dist/style.css';
 import 'antdv-pro-layout/dist/style.css';
 import 'ant-design-vue/dist/reset.css';
@@ -13,6 +12,6 @@ const app = createApp(App);
 app.use(store);
 app.use(router);
 app.use(directive);
-app.use(VueQueryPlugin, { queryClient });
+app.use(VueQuery);
 
 app.mount('#app');
