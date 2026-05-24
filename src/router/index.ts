@@ -1,4 +1,4 @@
-import {
+﻿import {
   createRouter,
   createWebHistory,
   createWebHashHistory,
@@ -23,7 +23,7 @@ const historyType =
     ? createWebHashHistory(bashUrl)
     : createWebHistory(bashUrl);
 
-/**全局路由 */
+/** 全局路由 */
 const router = createRouter({
   history: historyType,
   routes: constantRoutes,
@@ -36,7 +36,7 @@ const router = createRouter({
   },
 });
 
-/**无Token可访问页面地址白名单 */
+/** 无Token可访问页面地址白名单 */
 const WHITE_LIST: string[] = [
   '/login',
   '/redirect',
@@ -45,7 +45,7 @@ const WHITE_LIST: string[] = [
   '/register',
 ];
 
-/**全局路由-后置守卫 */
+/** 全局路由-后置守卫 */
 router.afterEach((to, from, failure) => {
   NProgress.done();
   // 设置标题
@@ -54,7 +54,15 @@ router.afterEach((to, from, failure) => {
   }
 });
 
-/**全局路由-前置守卫 */
+/**
+ * 全局路由-前置守卫
+ *
+ * 核心流程：
+ * 1. 无 token → 白名单放行，否则重定向到登录页
+ * 2. 有 token + 访问登录页 → 重定向到首页
+ * 3. 有 token + 已有角色信息 → 放行
+ * 4. 有 token + 无角色信息 → 请求用户信息 + 动态路由 → 放行或跳转登录
+ */
 router.beforeEach(async (to, from) => {
   NProgress.start();
   const accessToken = getAccessToken();
@@ -85,7 +93,7 @@ router.beforeEach(async (to, from) => {
         return;
       }
       try {
-        // 获取用户信息
+        // 获取用户信息（失败时会 throw，由下方 catch 处理）
         await user.fnGetInfo();
         // 获取路由信息
         const accessRoutes = await useRouterStore().generateRoutes();
@@ -101,8 +109,14 @@ router.beforeEach(async (to, from) => {
         // 刷新替换原先路由，确保addRoutes已完成
         return { ...to, replace: true };
       } catch (error: any) {
-        console.error(`[${to.path}]: ${error.message}`);
-        await user.fnLogOut();
+        // fnGetInfo 或 generateRoutes 失败（token失效、网络异常等）
+        // 清除本地状态并跳转登录页
+        console.error(`[Router Guard] ${to.path}: ${error.message}`);
+        try {
+          await user.fnLogOut();
+        } catch {
+          // fnLogOut 已内部清理，即使失败也不影响重定向
+        }
         return { name: 'Login' };
       }
     }

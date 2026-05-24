@@ -1,14 +1,30 @@
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
-import { request } from '@/plugins/http-fetch';
+﻿import {
+  RESULT_CODE_SUCCESS,
+  RESULT_CODE_EXCEPTION,
+  RESULT_MSG_SUCCESS,
+} from '@/constants/result-constants';
+import { request, isSuccess, type ResultType } from '@/plugins/http-fetch';
 import { encode } from 'js-base64';
 
 /**
- * 下载文件
- * @param filePath 文件路径带/，如:/upload/default/2023/06/xx.png
- * @param range 断点续传标识，填入字符串 `bytes=${startByte}-${endByte}`
- * @returns object
+ * 进度回调函数类型
+ * @param percent 当前进度百分比 (0-100)
  */
-export async function downloadFile(filePath: string, range?: string) {
+export type ProgressCallback = (percent: number) => void;
+
+/**
+ * 下载文件（普通方式）
+ *
+ * 通过服务端返回 blob 流直接下载单个文件。
+ *
+ * @param filePath - 文件路径，如 /upload/default/2023/06/xx.png
+ * @param range    - 断点续传 Range 头，格式 `bytes=0-1023`，不传则下载整个文件
+ * @returns ResultType，成功时 data 为 Blob（附带 status / headers 扩展字段）
+ */
+export async function downloadFile(
+  filePath: string,
+  range?: string
+): Promise<ResultType> {
   return request({
     url: `/file/download/${encode(filePath)}`,
     method: 'GET',
@@ -18,58 +34,101 @@ export async function downloadFile(filePath: string, range?: string) {
 }
 
 /**
- * 下载文件切片
- * @param filePath 文件路径带/，如:/upload/default/2023/06/xx.png
- * @param chunkSize 数据块大小MB，默认1MB
- * @returns bolb
+ * 下载文件（分片方式）
+ *
+ * 通过 HTTP Range 请求逐片下载，最终合并为完整 Blob。
+ * 适用于大文件下载场景，支持进度回调。
+ *
+ * @param filePath    - 文件路径，如 /upload/default/2023/06/xx.png
+ * @param chunkSizeMB - 每片大小（MB），默认 1MB
+ * @param onProgress  - 可选的下载进度回调，每片完成后触发
+ * @returns ResultType，成功时 data 为合并后的 Blob；失败时返回原始错误信息
  */
 export async function downloadFileChunk(
   filePath: string,
-  chunkSize: number = 1
-): Promise<Blob> {
-  chunkSize = chunkSize * 1024 * 1024;
-  let start = 0; // 文件块的起始字节
-  let end = chunkSize - 1; // 文件块的结束字节
-  let totalSize = 0; // 文件总大小
-  let downloadedSize = 0; // 已下载的文件大小
-  let filePart: Blob[] = []; // 文件数据块内容
+  chunkSizeMB: number = 1,
+  onProgress?: ProgressCallback
+): Promise<ResultType> {
+  const chunkSizeBytes = chunkSizeMB * 1024 * 1024;
+  let start = 0;
+  let end = chunkSizeBytes - 1;
+  let totalSize = 0;
+  let downloadedSize = 0;
+  const fileParts: Blob[] = [];
 
-  // 发送带有 Range 请求头的 HTTP 请求
-  async function sendRequest() {
+  // 循环发送 Range 请求，直到下载完整文件
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
     const range = `bytes=${start}-${end}`;
     const res = await downloadFile(filePath, range);
-    if (res.code === RESULT_CODE_SUCCESS && res.status === 206) {
-      // 总大小
-      const contentRange = res.headers.get('content-range') || '0/0';
-      totalSize = parseInt(contentRange.split('/')[1]);
-      // 已下载大小
-      const contentLength = res.headers.get('content-length') || '0';
-      const chunkSize = parseInt(contentLength);
-      // 下一段数据块区间
-      start += chunkSize;
-      end = Math.min(start + chunkSize - 1, totalSize - 1);
-      // 记录下载结果
-      filePart.push(res.data);
-      downloadedSize += chunkSize;
-      // 小于总大小继续下载后续数据
-      if (downloadedSize < totalSize) {
-        await sendRequest();
-      }
-    } else {
+
+    // 请求失败，直接返回错误信息（不再吞没错误）
+    if (!isSuccess(res)) {
       return res;
     }
+
+    // 服务端未返回 206 Partial Content，说明不支持 Range 或文件不存在
+    if (res.status !== 206) {
+      return {
+        code: RESULT_CODE_EXCEPTION,
+        msg: `服务端未返回分片数据(status: ${res.status})`,
+      };
+    }
+
+    // 解析 Content-Range 获取文件总大小: bytes 0-1023/4096
+    const contentRange = (res.headers?.get('content-range') as string) || '';
+    const contentRangeTotal = contentRange.split('/')[1];
+    const parsedTotal = contentRangeTotal ? parseInt(contentRangeTotal, 10) : 0;
+    if (!parsedTotal || parsedTotal <= 0) {
+      return {
+        code: RESULT_CODE_EXCEPTION,
+        msg: '服务端未返回有效的 Content-Range 头',
+      };
+    }
+    totalSize = parsedTotal;
+
+    // 当前片的实际字节数
+    const contentLength = parseInt(
+      (res.headers?.get('content-length') as string) || '0',
+      10
+    );
+    if (!contentLength || contentLength <= 0) {
+      return {
+        code: RESULT_CODE_EXCEPTION,
+        msg: '服务端返回空数据块，无法继续下载',
+      };
+    }
+
+    fileParts.push(res.data as Blob);
+    downloadedSize += contentLength;
+
+    // 回调进度（钳制到 0-100）
+    onProgress?.(Math.min(100, Math.round((downloadedSize / totalSize) * 100)));
+
+    // 已下载完毕
+    if (downloadedSize >= totalSize) break;
+
+    // 计算下一片的字节区间
+    start += contentLength;
+    end = Math.min(start + contentLength - 1, totalSize - 1);
   }
 
-  await sendRequest();
-  return new Blob(filePart, { type: 'application/octet-stream' });
+  return {
+    code: RESULT_CODE_SUCCESS,
+    msg: RESULT_MSG_SUCCESS,
+    data: new Blob(fileParts, { type: 'application/octet-stream' }),
+  };
 }
 
 /**
- * 上传文件
- * @param data 表单数据对象
- * @returns object
+ * 上传文件（普通方式）
+ *
+ * 通过 FormData 上传单个文件。
+ *
+ * @param data - FormData 对象，需包含 file 字段，可附带 subPath 等
+ * @returns ResultType，成功时 data 包含 url / filePath 等文件信息
  */
-export function uploadFile(data: FormData) {
+export function uploadFile(data: FormData): Promise<ResultType> {
   return request({
     url: '/file/upload',
     method: 'POST',
@@ -79,85 +138,86 @@ export function uploadFile(data: FormData) {
 }
 
 /**
- * 上传切片文件
- * @param file 文件对象
- * @param chunkSize 数据块大小MB，默认1MB
- * @param subPath 归属子路径, 默认default
- * @returns
+ * 上传文件（分片方式）
+ *
+ * 将大文件切分为多个分片逐片上传，支持断点续传。
+ * 流程：chunkCheck(检查已上传分片) → 逐片 chunkUpload → chunkMerge(合并)
+ *
+ * @param fileData    - 要上传的 File 对象
+ * @param chunkSizeMB - 每片大小（MB），默认 1MB
+ * @param subPath     - 文件归属子路径，默认 'default'
+ * @param onProgress  - 可选的上传进度回调，每片完成后触发
+ * @returns ResultType，成功时 data 为 chunkMerge 返回的文件信息；失败时返回错误信息
  */
 export async function uploadFileChunk(
   fileData: File,
-  chunkSize: number = 1,
-  subPath: string = 'default'
-) {
+  chunkSizeMB: number = 1,
+  subPath: string = 'default',
+  onProgress?: ProgressCallback
+): Promise<ResultType> {
   const { name, size } = fileData;
-  const chunkSizeInBytes = chunkSize * 1024 * 1024;
-  // 文件标识使用唯一编码 MD5(文件名+文件大小)
+  const chunkSizeBytes = chunkSizeMB * 1024 * 1024;
+
+  // 文件标识：基于文件名+大小生成（注意：非加密哈希，极端情况下可能碰撞）
   const fileIdentifier = `${name}-${size}`;
-  // 文件切分为多少份进行上传
-  const chunksCount = Math.ceil(size / chunkSizeInBytes);
-  // 切块的数据数据用于上传
-  const fileChunks: { index: number; chunk: Blob }[] = [];
+  const chunksCount = Math.ceil(size / chunkSizeBytes);
 
-  for (let i = 0; i < chunksCount; i++) {
-    const start = i * chunkSizeInBytes;
-    const end = Math.min(start + chunkSizeInBytes, size);
-    fileChunks.push({
-      index: i,
-      chunk: fileData.slice(start, end),
-    });
-  }
-
-  // 检查是否已上传部分数据块
+  // 检查服务端已上传的分片索引列表
   const resCheck = await chunkCheck(fileIdentifier, name);
-  if (resCheck.code !== 200) {
+  if (!isSuccess(resCheck)) {
     return resCheck;
   }
 
+  // 已上传分片索引数组（兼容 null / 非数组情况）
+  const uploadedChunks: string[] = Array.isArray(resCheck.data)
+    ? resCheck.data
+    : [];
   let uploadedSize = 0;
-  let uploadProgress = 0;
 
-  for (const { index, chunk } of fileChunks) {
-    const chunksIndex = `${index}`;
-    // 跳过已上传块
-    if (resCheck.data.includes(chunksIndex)) {
-      uploadedSize += chunk.size;
-      uploadProgress = (uploadedSize / size) * 100;
-      console.log(`上传进度：${uploadProgress}%`);
+  // 逐片上传
+  for (let i = 0; i < chunksCount; i++) {
+    const chunkIndex = `${i}`;
+    const chunkStart = i * chunkSizeBytes;
+    const chunkEnd = Math.min(chunkStart + chunkSizeBytes, size);
+    const chunkActualSize = chunkEnd - chunkStart;
+
+    // 该分片已上传，跳过（断点续传核心逻辑）
+    if (uploadedChunks.includes(chunkIndex)) {
+      uploadedSize += chunkActualSize;
+      onProgress?.(Math.min(100, Math.round((uploadedSize / size) * 100)));
       continue;
     }
 
-    // 上传数据块
+    // 切片并上传
     const formData = new FormData();
-    formData.append('file', chunk, name);
-    formData.append('index', chunksIndex);
+    formData.append('file', fileData.slice(chunkStart, chunkEnd), name);
+    formData.append('index', chunkIndex);
     formData.append('identifier', fileIdentifier);
 
     const resUpload = await chunkUpload(formData);
-    if (resUpload.code === 200) {
-      uploadedSize += chunk.size;
-      uploadProgress = (uploadedSize / size) * 100;
-      console.log(`上传进度：${uploadProgress}%`);
-    } else {
-      // 上传失败处理
-      break;
+    if (!isSuccess(resUpload)) {
+      return resUpload;
     }
+
+    uploadedSize += chunkActualSize;
+    onProgress?.(Math.min(100, Math.round((uploadedSize / size) * 100)));
   }
 
-  // 上传数据完整后合并数据块
-  if (uploadedSize === size) {
-    return await chunkMerge(fileIdentifier, name, subPath);
-  }
-  return { code: 500, msg: '上传出错，请重试' };
+  // 所有分片上传完毕，通知服务端合并
+  return await chunkMerge(fileIdentifier, name, subPath);
 }
 
 /**
- * 切片文件检查
- * @param identifier 文件标识
- * @param fileName 原文件名称
- * @returns object
+ * 分片上传前检查：查询服务端已存储的分片索引
+ *
+ * @param identifier - 文件标识（文件名-文件大小）
+ * @param fileName   - 原始文件名
+ * @returns ResultType，成功时 data 为已上传分片索引数组，如 ["0", "1", "2"]
  */
-export function chunkCheck(identifier: string, fileName: string) {
+export function chunkCheck(
+  identifier: string,
+  fileName: string
+): Promise<ResultType> {
   return request({
     url: '/file/chunk-check',
     method: 'POST',
@@ -166,17 +226,18 @@ export function chunkCheck(identifier: string, fileName: string) {
 }
 
 /**
- * 切片文件合并
- * @param identifier 文件标识
- * @param fileName 原文件名称
- * @param subPath 文件归属
- * @returns object
+ * 分片合并：所有分片上传完成后通知服务端合并为完整文件
+ *
+ * @param identifier - 文件标识（文件名-文件大小）
+ * @param fileName   - 原始文件名
+ * @param subPath    - 文件归属子路径，默认 'default'
+ * @returns ResultType，成功时 data 包含 url / filePath / newFileName 等
  */
 export function chunkMerge(
   identifier: string,
   fileName: string,
   subPath: string = 'default'
-) {
+): Promise<ResultType> {
   return request({
     url: '/file/chunk-merge',
     method: 'POST',
@@ -185,11 +246,12 @@ export function chunkMerge(
 }
 
 /**
- * 切片文件上传
- * @param data 表单数据对象
- * @returns object
+ * 分片上传：上传单个数据块
+ *
+ * @param data - FormData 对象，需包含 file / index / identifier 字段
+ * @returns ResultType
  */
-export function chunkUpload(data: FormData) {
+export function chunkUpload(data: FormData): Promise<ResultType> {
   return request({
     url: '/file/chunk-upload',
     method: 'POST',

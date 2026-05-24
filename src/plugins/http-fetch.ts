@@ -1,4 +1,4 @@
-import {
+﻿import {
   getAccessToken,
   setAccessToken,
   delAccessToken,
@@ -33,7 +33,7 @@ export type ResultType = {
   msg: string;
   /** 数据 */
   data?: any;
-  /** 未知属性 */
+  /** 未知属性（blob 响应附带 status / headers 等） */
   [key: string]: any;
 };
 
@@ -69,7 +69,7 @@ type OptionsType = {
   responseType?: 'text' | 'json' | 'blob' | 'arrayBuffer';
   /** 请求缓存策略 */
   cache?: RequestCache;
-  /** 请求的凭据 */
+  /** 请求的凭证 */
   credentials?: RequestCredentials;
   /** 请求体 */
   body?: BodyInit;
@@ -109,14 +109,20 @@ let pendingRequestsQueue: Array<{
   resolve: (value: ResultType | PromiseLike<ResultType>) => void;
   /** 刷新失败后拒绝请求的函数 */
   reject: (reason?: any) => void;
-  /** 待重放的请求参数 */
+  /** 待重放的请求参数（未经 beforeRequest 修改的原始参数） */
   options: OptionsType;
 }> = [];
 
 /**
+ * 是否正在执行强制登出（防止 window.location.reload 被多次触发）
+ * 页面 reload 后模块重新执行，该标志自然重置为 false
+ */
+let isForceLoggingOut = false;
+
+/**
  * 处理token刷新队列
  * 刷新成功：重放所有等待中的请求
- * 刷新失败：延迟跳转登录页，确保 reject 能被调用方处理
+ * 刷新失败：立即清除 token，延迟刷新页面（确保 reject 能被调用方 catch 处理）
  *
  * @param isSuccess - 刷新是否成功
  * @param refreshResult - 刷新接口返回的结果
@@ -140,12 +146,17 @@ function processPendingQueue(isSuccess: boolean, refreshResult?: ResultType) {
     for (const { reject } of queue) {
       reject(error);
     }
-    // 延迟跳转，确保 reject 能被调用方 catch 处理
-    setTimeout(() => {
-      delAccessToken();
-      delRefreshToken();
-      window.location.reload();
-    }, 0);
+    // 立即清除 token（不延迟），防止路由守卫在 token 未清除时重复触发刷新
+    delAccessToken();
+    delRefreshToken();
+    // 延迟刷新页面，确保 reject 回调有时间被调用方处理
+    // 使用 isForceLoggingOut 标志防止多次触发
+    if (!isForceLoggingOut) {
+      isForceLoggingOut = true;
+      setTimeout(() => {
+        window.location.reload();
+      }, 0);
+    }
   }
 }
 
@@ -154,6 +165,7 @@ function processPendingQueue(isSuccess: boolean, refreshResult?: ResultType) {
 /**
  * 请求前的拦截处理
  * 负责设置请求头、token注入、参数序列化、防重复提交
+ * 注意：此函数会**原地修改** options 的 url / headers / body 等字段
  *
  * @param options - 请求参数（会被直接修改）
  * @returns 处理后的请求参数，或防重复提交被触发时的错误结果
@@ -229,7 +241,7 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<ResultType> 
     const queryParams: string[] = [];
     for (const key in params) {
       const value = params[key];
-      // 空字符串、未定义、null 的值不作为参数发送
+      // 空字符串、undefined、null 的值不作为参数发送
       if (value === '' || value === undefined || value === null) continue;
       const str = `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
       queryParams.push(str);
@@ -254,16 +266,28 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<ResultType> 
 
 // ==================== 响应后拦截 ====================
 
+/** 需要走 token 刷新流程的登录失效业务码集合 */
+const AUTH_FAILURE_CODES = [401001, 401002, 401003];
+
+/**
+ * 判断业务码是否属于登录失效
+ * @param code - 业务响应码
+ * @returns 是否为登录失效码
+ */
+function isAuthFailureCode(code: number): boolean {
+  return AUTH_FAILURE_CODES.includes(code);
+}
+
 /**
  * 响应后的拦截处理
  * 统一处理token过期刷新（带并发队列），其他错误码直接透传给调用方
  *
- * @param options - 请求参数（用于token刷新后重放）
+ * @param originalOptions - 未被 beforeRequest 修改的**原始**请求参数（用于token刷新后重试）
  * @param res - 响应结果
  * @returns 处理后的响应结果
  */
 async function beforeResponse(
-  options: OptionsType,
+  originalOptions: OptionsType,
   res: ResultType
 ): Promise<ResultType> {
   // 登录过期时，刷新token并重放请求
@@ -271,7 +295,7 @@ async function beforeResponse(
     // 如果已经在刷新中，将当前请求加入等待队列
     if (isRefreshingToken) {
       return new Promise<ResultType>((resolve, reject) => {
-        pendingRequestsQueue.push({ resolve, reject, options });
+        pendingRequestsQueue.push({ resolve, reject, options: originalOptions });
       });
     }
 
@@ -284,8 +308,8 @@ async function beforeResponse(
         // 刷新成功，更新token
         setAccessToken(result.data.accessToken, result.data.refreshExpiresIn);
         setRefreshToken(result.data.refreshToken, result.data.refreshExpiresIn);
-        // 重放当前请求
-        const retriedResult = await request(options);
+        // 使用原始参数重放当前请求（未被 beforeRequest 修改，参数不会重复拼接）
+        const retriedResult = await request(originalOptions);
         // 释放队列中的等待请求
         processPendingQueue(true);
         return retriedResult;
@@ -307,11 +331,14 @@ async function beforeResponse(
     }
   }
 
-  // 其他登录失效码，清除token并跳转登录
+  // 其他登录失效码（401002 / 401003），清除token并跳转登录
   if ([401002, 401003].includes(res.code)) {
     delAccessToken();
     delRefreshToken();
-    window.location.reload();
+    if (!isForceLoggingOut) {
+      isForceLoggingOut = true;
+      window.location.reload();
+    }
   }
 
   return res;
@@ -336,6 +363,18 @@ async function beforeResponse(
  */
 export async function request(options: OptionsType): Promise<ResultType> {
   const reqOptions = Object.assign({}, FETCH_OPTIONS, options);
+
+  /**
+   * 保存合并后的原始参数副本，用于 token 刷新后重试。
+   *
+   * beforeRequest 会原地修改 reqOptions（拼接 params 到 url、设置 body），
+   * 随后 URL 构造会将 baseUrl 拼到 url 前面。
+   * 如果重试时传入被修改后的 reqOptions，会导致：
+   *   1. params 被重复拼接（pageNum=1&pageSize=50&pageNum=1&pageSize=50）
+   *   2. 当 baseUrl 为相对路径（如 /dev-api）时，url 不以 http 开头，
+   *      URL 构造会再次拼接 baseUrl（/dev-api/dev-api/system/user/list）
+   */
+  const originalOptions: OptionsType = { ...reqOptions };
 
   // 请求超时控制
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -393,6 +432,11 @@ export async function request(options: OptionsType): Promise<ResultType> {
               : `请求失败(${res.status})`,
           };
         }
+        // 登录失效码无论 HTTP 状态码如何，都必须走 beforeResponse 处理 token 刷新
+        // 否则 HTTP 401 + code:401001 会被 !res.ok 短路，导致 token 刷新永远不会触发
+        if (isAuthFailureCode(result.code)) {
+          return await beforeResponse(originalOptions, result);
+        }
         if (!res.ok) {
           return {
             code: result.code || RESULT_CODE_EXCEPTION,
@@ -400,7 +444,7 @@ export async function request(options: OptionsType): Promise<ResultType> {
             data: result.data,
           };
         }
-        return await beforeResponse(reqOptions, result);
+        return await beforeResponse(originalOptions, result);
       }
       case 'blob':
       case 'arrayBuffer': {
@@ -415,16 +459,18 @@ export async function request(options: OptionsType): Promise<ResultType> {
               msg: res.ok ? RESULT_MSG_SERVER_ERROR : `请求失败(${res.status})`,
             };
           }
+          // 登录失效码无论 HTTP 状态码如何，都必须走 beforeResponse 处理 token 刷新
+          if (isAuthFailureCode(result.code)) {
+            return await beforeResponse(originalOptions, result);
+          }
           if (!res.ok) {
-            // 非2xx JSON响应走完整错误处理（含token刷新）
             return {
               code: result.code || RESULT_CODE_EXCEPTION,
               msg: result.msg || `请求失败(${res.status})`,
               data: result.data,
             };
           }
-          // 2xx JSON响应（如分片校验返回），走 beforeResponse 处理 token 刷新
-          return await beforeResponse(reqOptions, result);
+          return await beforeResponse(originalOptions, result);
         }
         if (!res.ok) {
           return {

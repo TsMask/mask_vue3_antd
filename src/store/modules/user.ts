@@ -1,4 +1,4 @@
-import defaultAvatar from '@/assets/images/default_avatar.png';
+﻿import defaultAvatar from '@/assets/images/default_avatar.png';
 import useLayoutStore from './layout';
 import { login, logout, getInfo } from '@/api/auth';
 import {
@@ -9,27 +9,27 @@ import {
 } from '@/plugins/auth-token';
 import { defineStore } from 'pinia';
 import { validHttp } from '@/utils/regular-utils';
-import { RESULT_CODE_EXCEPTION, RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 
-/**用户信息类型 */
+/** 用户信息类型 */
 type UserInfo = {
-  /**用户ID */
+  /** 用户ID */
   userId: string;
-  /**登录账号 */
+  /** 登录账号 */
   userName: string;
-  /**用户角色 字符串数组 */
+  /** 用户角色 字符串数组 */
   roles: string[];
-  /**用户权限 字符串数组 */
+  /** 用户权限 字符串数组 */
   permissions: string[];
-  /**用户头像 */
+  /** 用户头像 */
   avatar: string;
-  /**用户昵称 */
+  /** 用户昵称 */
   nickName: string;
-  /**用户手机号 */
+  /** 用户手机号 */
   phone: string;
-  /**用户邮箱 */
+  /** 用户邮箱 */
   email: string;
-  /**用户性别 */
+  /** 用户性别 */
   sex: string | undefined;
 };
 
@@ -119,7 +119,15 @@ const useUserStore = defineStore('user', {
       }
       return res;
     },
-    // 获取用户信息
+    /**
+     * 获取用户信息
+     *
+     * 成功时填充 store 状态；失败时抛出异常，由路由守卫 catch 处理重定向到登录页。
+     * 不再在函数内部调用 window.location.reload()，避免与路由守卫产生无限重定向。
+     *
+     * @returns 响应结果
+     * @throws 获取失败时抛出错误
+     */
     async fnGetInfo() {
       const res = await getInfo();
       if (res.code === RESULT_CODE_SUCCESS && res.data) {
@@ -151,21 +159,22 @@ const useUserStore = defineStore('user', {
           waterMarkContent = `${this.nickName} ${this.phone}`;
         }
         useLayoutStore().changeWaterMark(waterMarkContent);
+        return res;
       }
-      // 网络错误时退出登录状态
-      if (res.code === RESULT_CODE_EXCEPTION) {
-        delAccessToken();
-        delRefreshToken();
-        window.location.reload();
-      }
-      return res;
+      // 获取信息失败，抛出让路由守卫 catch 处理
+      throw new Error(res.msg || '获取用户信息失败');
     },
-    // 退出系统
+    /**
+     * 退出系统
+     *
+     * 无论退出接口是否成功，都清除本地 token 和用户状态。
+     * 不再重新抛出 API 错误，确保调用方可以安全地 await 而不会抛异常。
+     */
     async fnLogOut() {
       try {
         await logout();
-      } catch (error) {
-        throw error;
+      } catch {
+        // 忽略登出接口错误，本地状态已在 finally 中清理
       } finally {
         this.roles = [];
         this.permissions = [];

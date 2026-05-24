@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+﻿<script lang="ts" setup>
 import { reactive } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { Modal, message } from 'ant-design-vue';
@@ -11,16 +11,16 @@ import {
   uploadFile,
   uploadFileChunk,
 } from '@/api/tool/file';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import { isSuccess } from '@/plugins/http-fetch';
 
 type StateType = {
-  /**上传状态 */
+  /** 上传状态 */
   loading: boolean;
-  /**上传资源地址 */
+  /** 上传资源地址 */
   uploadFilePath: string;
-  /**下载资源地址 */
+  /** 下载资源地址 */
   downloadFilePath: string;
-  /*文件列表 */
+  /** 文件列表 */
   fileList: UploadFile<any>[];
 };
 
@@ -40,31 +40,22 @@ let state = reactive<StateType>({
   ],
 });
 
-/**下载文件 */
+/** 下载文件（普通方式） */
 function fnDownload() {
   const filePath = state.downloadFilePath;
   if (!filePath) {
-    message.warning({
-      content: '下载资源地址为空',
-      duration: 3,
-    });
+    message.warning({ content: '下载资源地址为空', duration: 3 });
     return;
   }
-  const hide = message.loading('请稍等...', 0);
+  const hide = message.loading('请稍等..', 0);
   downloadFile(filePath)
     .then(res => {
-      if (res.code === RESULT_CODE_SUCCESS) {
-        message.success({
-          content: `已完成下载`,
-          duration: 3,
-        });
+      if (isSuccess(res)) {
+        message.success({ content: '已完成下载', duration: 3 });
         const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
         saveAs(res.data, fileName);
       } else {
-        message.error({
-          content: `${res.msg}`,
-          duration: 3,
-        });
+        message.error({ content: res.msg, duration: 3 });
       }
     })
     .finally(() => {
@@ -72,32 +63,24 @@ function fnDownload() {
     });
 }
 
-/**下载切片文件 */
+/** 下载文件（分片方式，带进度） */
 function fnDownloadChunk() {
   const filePath = state.downloadFilePath;
   if (!filePath) {
-    message.warning({
-      content: '下载资源地址为空',
-      duration: 3,
-    });
+    message.warning({ content: '下载资源地址为空', duration: 3 });
     return;
   }
-  const hide = message.loading('请稍等...', 0);
-  downloadFileChunk(filePath, 5)
-    .then(blob => {
-      console.log(blob);
-      if (blob.size === 0) {
-        message.error({
-          content: `文件读取失败`,
-          duration: 3,
-        });
-      } else {
-        message.success({
-          content: `已完成下载`,
-          duration: 3,
-        });
+  const hide = message.loading('请稍等..', 0);
+  downloadFileChunk(filePath, 5, (percent) => {
+    console.log(`下载进度: ${percent}%`);
+  })
+    .then(res => {
+      if (isSuccess(res)) {
+        message.success({ content: '已完成下载', duration: 3 });
         const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-        saveAs(blob, fileName);
+        saveAs(res.data, fileName);
+      } else {
+        message.error({ content: res.msg, duration: 3 });
       }
     })
     .finally(() => {
@@ -105,45 +88,35 @@ function fnDownloadChunk() {
     });
 }
 
-/**上传前检查或转换压缩 */
+/** 上传前检查或压缩 */
 function fnBeforeUpload(file: FileType) {
   if (state.loading) return false;
   const isJpgOrPng = ['image/jpeg', 'image/png'].includes(file.type);
   if (!isJpgOrPng) {
-    message.error({
-      content: '只支持上传图片格式（jpg、png）',
-      duration: 3,
-    });
+    message.error({ content: '只支持上传图片格式（jpg、png）', duration: 3 });
   }
   const isLt2M = file.size / 1024 / 1024 < 2;
   if (!isLt2M) {
-    message.error({
-      content: '图片文件大小必须小于 2MB',
-      duration: 3,
-    });
+    message.error({ content: '图片文件大小必须小于 2MB', duration: 3 });
   }
   return isJpgOrPng && isLt2M;
 }
 
-/**上传文件 */
+/** 上传文件（普通方式） */
 function fnUpload(up: UploadRequestOption) {
   Modal.confirm({
     title: '提示',
-    content: `确认要上传文件吗?`,
+    content: '确认要上传文件吗?',
     onOk() {
-      // 发送请求
-      const hide = message.loading('请稍等...', 0);
+      const hide = message.loading('请稍等..', 0);
       state.loading = true;
-      let formData = new FormData();
+      const formData = new FormData();
       formData.append('file', up.file);
       formData.append('subPath', 'default');
       uploadFile(formData)
         .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: '文件上传成功！',
-              duration: 3,
-            });
+          if (isSuccess(res)) {
+            message.success({ content: '文件上传成功！', duration: 3 });
             state.uploadFilePath = res.data.url;
             state.downloadFilePath = res.data.filePath;
           } else {
@@ -158,23 +131,21 @@ function fnUpload(up: UploadRequestOption) {
   });
 }
 
-/**上传分片 */
+/** 上传文件（分片方式，带进度） */
 function fnUploadChunk(up: UploadRequestOption) {
   const fileData = up.file as File;
   const item = state.fileList.find(f => f.name === fileData.name);
   Modal.confirm({
     title: '提示',
-    content: `确认要进行分片上传文件吗?`,
+    content: '确认要进行分片上传文件吗?',
     onOk() {
-      // 发送请求
-      const hide = message.loading('请稍等...', 0);
-      uploadFileChunk(fileData, 4, 'default')
+      const hide = message.loading('请稍等..', 0);
+      uploadFileChunk(fileData, 4, 'default', (percent) => {
+        console.log(`上传进度: ${percent}%`);
+      })
         .then(res => {
-          if (res.code === RESULT_CODE_SUCCESS) {
-            message.success({
-              content: '文件上传成功！',
-              duration: 3,
-            });
+          if (isSuccess(res)) {
+            message.success({ content: '文件上传成功！', duration: 3 });
             if (item) {
               item.url = res.data.url;
               item.name = res.data.newFileName;
@@ -206,14 +177,8 @@ function fnUploadChunk(up: UploadRequestOption) {
       <a-col :lg="12" :md="12" :xs="24">
         <a-card title="小文件普通上传" style="margin-bottom: 16px">
           <a-space direction="vertical" :size="16">
-            <a-upload
-              name="file"
-              list-type="picture"
-              :max-count="1"
-              :show-upload-list="false"
-              :before-upload="fnBeforeUpload"
-              :custom-request="fnUpload"
-            >
+            <a-upload name="file" list-type="picture" :max-count="1" :show-upload-list="false"
+              :before-upload="fnBeforeUpload" :custom-request="fnUpload">
               <a-button type="default" :loading="state.loading">
                 选择文件
               </a-button>
@@ -222,12 +187,7 @@ function fnUploadChunk(up: UploadRequestOption) {
           </a-space>
         </a-card>
         <a-card title="大文件分片上传">
-          <a-upload
-            v-model:file-list="state.fileList"
-            name="file"
-            list-type="picture"
-            :custom-request="fnUploadChunk"
-          >
+          <a-upload v-model:file-list="state.fileList" name="file" list-type="picture" :custom-request="fnUploadChunk">
             <a-button> 选择文件 </a-button>
           </a-upload>
         </a-card>
@@ -236,23 +196,16 @@ function fnUploadChunk(up: UploadRequestOption) {
         <a-card title="文件下载" style="margin-bottom: 16px">
           <a-row :gutter="8">
             <a-col :span="24" style="margin-bottom: 16px">
-              <a-input
-                style="margin-bottom: 16px"
-                type="text"
-                placeholder="输入资源地址，列如：/upload/default/2024/12/xxx.png"
-                v-model:value="state.downloadFilePath"
-              >
+              <a-input style="margin-bottom: 16px" type="text" placeholder="输入资源地址，列如：/upload/default/2024/12/xxx.png"
+                v-model:value="state.downloadFilePath">
                 <template #suffix>
                   <a-button type="primary" @click="fnDownload">
                     普通下载
                   </a-button>
                 </template>
               </a-input>
-              <a-input
-                type="text"
-                placeholder="输入资源地址，列如：/upload/default/2024/12/xxx.png"
-                v-model:value="state.downloadFilePath"
-              >
+              <a-input type="text" placeholder="输入资源地址，列如：/upload/default/2024/12/xxx.png"
+                v-model:value="state.downloadFilePath">
                 <template #suffix>
                   <a-button type="primary" @click="fnDownloadChunk">
                     分片下载
