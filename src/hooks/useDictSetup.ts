@@ -1,5 +1,5 @@
-﻿import { reactive, ref } from "vue";
-import useDictStore from "@/store/modules/dict";
+import { reactive, ref } from 'vue';
+import useDictStore from '@/store/modules/dict';
 
 export interface UseDictSetupOptions {
   /** 本地字段名到字典类型键的映射 */
@@ -34,15 +34,7 @@ export interface UseDictSetupOptions {
  * onMounted(() => { loadDicts(); });
  * ```
  */
-export function useDictSetup(
-  keyMapOrOptions: Record<string, string> | UseDictSetupOptions,
-) {
-  /** 兼容旧用法：直接传 keyMap 对象 */
-  const options: UseDictSetupOptions =
-    typeof Object.values(keyMapOrOptions)[0] === "string"
-      ? { keyMap: keyMapOrOptions as Record<string, string> }
-      : (keyMapOrOptions as UseDictSetupOptions);
-
+export function useDictSetup(options: UseDictSetupOptions) {
   const { keyMap, autoLoad = true } = options;
   const { getDict } = useDictStore();
 
@@ -55,8 +47,8 @@ export function useDictSetup(
         acc[key] = [];
         return acc;
       },
-      {} as Record<string, DictType[]>,
-    ),
+      {} as Record<string, DictType[]>
+    )
   );
 
   /**
@@ -68,11 +60,11 @@ export function useDictSetup(
     try {
       const entries = Object.entries(keyMap);
       const results = await Promise.allSettled(
-        entries.map(([, dictKey]) => getDict(dictKey)),
+        entries.map(([, dictKey]) => getDict(dictKey))
       );
       entries.forEach(([localKey], index) => {
         const result = results[index];
-        if (result.status === "fulfilled") {
+        if (result.status === 'fulfilled') {
           dict[localKey] = result.value as DictType[];
         }
       });

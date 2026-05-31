@@ -1,125 +1,109 @@
-﻿import { useQuery, useQueryClient, keepPreviousData, type QueryKey } from '@tanstack/vue-query';
-import { type Ref, type ComputedRef, computed } from 'vue';
+import { ref, type Ref } from 'vue';
 import { isSuccess } from '@/plugins/http-fetch';
 import type { ResultType } from '@/plugins/http-fetch';
 
 /** 列表查询配置项 */
-export interface UseListQueryOptions<TData = any> {
+export interface UseListQueryOptions {
   /**
-   * 查询唯一标识
-   * vue-query 根据此 key 做缓存、失效、去重
-   * 例: computed(() => ['userList', queryParams.value])
-   */
-  queryKey: Ref<QueryKey> | ComputedRef<QueryKey>;
-  /**
-   * 查询函数，返回 ResultType
-   * 例: () => listUser(toRaw(queryParams.value))
+   * API 查询函数
+   * 调用 fetch() 时执行，应返回 ResultType 格式的响应
+   * 例: () => listPost(toRaw(queryParams))
    */
   queryFn: () => Promise<ResultType>;
   /**
-   * 是否启用查询
-   * 例如某些条件下不发起请求（如字典加载完成前）
+  * 外部分页对象（来自 usePagination），查询成功后自动同步 total
+  * 传入后 useListQuery 会将响应的 total 写入 pagination.total
    */
-  enabled?: Ref<boolean> | boolean;
+  paginationRef?: { total: number };
+  /**
+   * 是否在 setup 阶段立即执行查询
+   * 默认 true，设为 false 时需手动调用 fetch()
+   */
+  immediate?: boolean;
 }
 
 /** 列表查询结果 */
 export interface UseListQueryResult<TData = any> {
-  /** 响应原始数据（包含 code/msg/data） */
-  result: Ref<ResultType | undefined>;
-  /** 解析后的列表数据（rows） */
+  /** 解析后的列表数据（rows 或 data 数组），直接绑定 a-table :data-source */
   listData: Ref<TData[]>;
-  /** 数据总数 */
+  /** 数据总数（用于分页） */
   total: Ref<number>;
-  /** vue-query 的加载状态（首次加载） */
-  isLoading: Ref<boolean>;
-  /** vue-query 的请求中状态（包含后台刷新） */
-  isFetching: Ref<boolean>;
-  /** 请求是否成功 */
-  isSuccess: Ref<boolean>;
-  /** 手动触发重新查询 */
-  refetch: () => void;
-  /** vue-query 原始 query 返回值，供高级场景使用 */
-  query: ReturnType<typeof useQuery<ResultType>>;
+  /** 加载状态，直接绑定 a-table :loading */
+  loading: Ref<boolean>;
+  /** 执行查询（调用 queryFn 并更新 listData/total） */
+  fetch: () => Promise<void>;
 }
 
 /**
- * 分页列表查询 hook
+ * 分页列表查询 hook（纯 Vue 实现）
  *
- * 封装 vue-query 的 useQuery，适配管理后台分页列表场景。
- * 自动从 ResultType 中解析 rows/total，并通过 vue-query 管理缓存和刷新策略。
+ * 封装列表数据获取的通用逻辑：loading 状态管理、响应数据解析。
+ * 页面通过 fetch() 控制何时发起请求。
  *
  * @example
  * ```ts
- * const { listData, total, isFetching } = useListQuery({
- *   queryKey: computed(() => ['userList', { ...toRaw(queryParams) }]),
- *   queryFn: () => listUser(toRaw(queryParams)),
+ * const { listData, total, loading, fetch: fetchList } = useListQuery({
+ *   queryFn: () => listPost(toRaw(queryParams)),
  * });
+ *
+ * // 搜索
+ * function handleSearch() {
+ *   queryParams.pageNum = 1;
+ *   fetchList();
+ * }
+ *
+ * // 新增成功后刷新
+ * onSuccess() { fetchList(); }
  * ```
  */
 export function useListQuery<TData = any>(
-  options: UseListQueryOptions<TData>
+  options: UseListQueryOptions
 ): UseListQueryResult<TData> {
-  const { queryKey, queryFn, enabled } = options;
+  const { queryFn, paginationRef, immediate = true } = options;
 
-  const query = useQuery<ResultType>({
-    queryKey,
-    queryFn,
-    enabled: enabled ?? true,
-    /** 翻页时保持上一页数据，避免表格闪烁 */
-    placeholderData: keepPreviousData,
-  });
+  const listData = ref<TData[]>([]) as Ref<TData[]>;
+  const total = ref(0);
+  const loading = ref(false);
 
-  /** 响应原始数据 */
-  const result = computed(() => query.data.value);
+  /**
+   * 执行查询
+   * 调用 queryFn，根据响应更新 listData 和 total
+   */
+  async function fetch(): Promise<void> {
+    loading.value = true;
+    try {
+      const res = await queryFn();
+      if (isSuccess(res)) {
+        let count = 0;
+        if (Array.isArray(res.data?.rows)) {
+          listData.value = res.data.rows;
+          count = res.data?.total ?? 0;
+        } else if (Array.isArray(res.data)) {
+          listData.value = res.data as TData[];
+          count = 0;
+        } else {
+          listData.value = [];
+          count = 0;
+        }
+        total.value = count;
+        if (paginationRef) {
+          paginationRef.total = count;
+        }
+      }
+    } finally {
+      loading.value = false;
+    }
+  }
 
-  /** 解析后的列表数据（rows 或 data 数组） */
-  const listData = computed<TData[]>(() => {
-    const res = result.value;
-    if (!res || !isSuccess(res)) return [];
-    if (Array.isArray(res.data?.rows)) return res.data.rows;
-    if (Array.isArray(res.data)) return res.data as TData[];
-    return [];
-  });
-
-  /** 数据总数 */
-  const total = computed(() => {
-    const res = result.value;
-    if (!res || !isSuccess(res)) return 0;
-    return res.data?.total ?? 0;
-  });
-
-  /** 是否请求成功 */
-  const queryIsSuccess = computed(() => {
-    return query.isSuccess.value && !!result.value && isSuccess(result.value);
-  });
-
-  /** 手动触发重新查询 */
-  function refetch() {
-    query.refetch();
+  /** setup 阶段自动执行首次查询 */
+  if (immediate) {
+    fetch();
   }
 
   return {
-    result,
     listData,
     total,
-    isLoading: query.isLoading as unknown as Ref<boolean>,
-    isFetching: query.isFetching as unknown as Ref<boolean>,
-    isSuccess: queryIsSuccess,
-    refetch,
-    query,
+    loading,
+    fetch,
   };
-}
-
-/**
- * 使指定 queryKey 的缓存失效，触发重新查询
- *
- * @param queryClient - vue-query 客户端实例
- * @param queryKey - 要失效的查询 key
- */
-export function invalidateList(
-  queryClient: ReturnType<typeof useQueryClient>,
-  queryKey: QueryKey
-) {
-  queryClient.invalidateQueries({ queryKey });
 }

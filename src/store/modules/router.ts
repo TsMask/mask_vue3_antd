@@ -16,11 +16,11 @@ import {
 } from '@/constants/menu-constants';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 
-/**路由构建参数类型 */
+/** 路由构建参数类型 */
 type RouterStore = {
-  /**初始的根路由数据 */
+  /** 初始的根路由数据 */
   rootRouterData: RouteRecordRaw[];
-  /**动态路由数据 */
+  /** 动态路由数据 */
   buildRouterData: RouteRecordRaw[];
 };
 
@@ -57,7 +57,7 @@ const useRouterStore = defineStore('router', {
   },
 });
 
-/**异步路由类型 */
+/** 异步路由类型 */
 type RecordRaws = {
   path: string;
   name: string;
@@ -121,15 +121,15 @@ function buildRouters(recordRaws: RecordRaws[]): RouteRecordRaw[] {
   return routers;
 }
 
-/**匹配views里面所有的.vue或.tsx文件 */
+/** 匹配 views 里面所有的 .vue 或 .tsx 文件 */
 const views = import.meta.glob('./../../views/**/*.{vue,tsx}');
 
 /**
  * 查找页面模块
  *
- * 查找 `/views/system/menu/index.vue` 或 `/views/system/menu/index.tsx`
+ * 查找 /views/system/menu/index.vue 或 /views/system/menu/index.tsx
  *
- * 参数值为 `system/menu/index`
+ * 参数值为 system/menu/index
  *
  * @param dirName 组件路径
  * @returns 路由懒加载函数

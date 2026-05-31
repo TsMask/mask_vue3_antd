@@ -1,97 +1,75 @@
-﻿import { useQuery, keepPreviousData, type QueryKey } from '@tanstack/vue-query';
-import { type Ref, type ComputedRef, computed } from 'vue';
+import { ref, type Ref } from 'vue';
 import { isSuccess } from '@/plugins/http-fetch';
 import type { ResultType } from '@/plugins/http-fetch';
 
 /** 详情查询配置项 */
 export interface UseDetailQueryOptions<TData = any> {
   /**
-   * 查询唯一标识
-   * 通常包含业务ID，例如: computed(() => ['userDetail', userId.value])
-   */
-  queryKey: Ref<QueryKey> | ComputedRef<QueryKey>;
-  /**
-   * 查询函数
+   * 详情查询函数
    * 例: () => getUser(userId.value)
    */
-  queryFn: () => Promise<ResultType>;
-  /**
-   * 是否启用查询
-   * 通常在 ID 有效时才发起请求
-   */
-  enabled?: Ref<boolean> | boolean;
+  queryFn?: () => Promise<ResultType>;
 }
 
 /** 详情查询结果 */
 export interface UseDetailQueryResult<TData = any> {
-  /** 响应原始数据 */
-  result: Ref<ResultType | undefined>;
   /** 解析后的业务数据（res.data） */
   detail: Ref<TData | undefined>;
   /** 是否正在加载 */
-  isLoading: Ref<boolean>;
-  /** 请求是否成功 */
-  isSuccess: Ref<boolean>;
-  /** 手动触发重新查询 */
-  refetch: () => void;
-  /** vue-query 原始返回值 */
-  query: ReturnType<typeof useQuery<ResultType>>;
+  loading: Ref<boolean>;
+  /**
+   * 执行查询
+   * 可传入查询函数，或使用构造时配置的 queryFn
+   * @param queryFn - 可选，覆盖构造时的 queryFn
+   */
+  fetch: (queryFn?: () => Promise<ResultType>) => Promise<TData | undefined>;
 }
 
 /**
- * 详情数据查询 hook
+ * 详情数据查询 hook（纯 Vue 实现）
  *
- * 封装 vue-query 的 useQuery，适用于查看/编辑弹窗中的详情数据获取。
- * 自动从 ResultType 中解析 data 字段。
+ * 适用于查看/编辑弹窗中的详情数据获取。
+ * 提供 fetch 方法，页面在需要时调用即可。
  *
  * @example
  * ```ts
- * const userId = ref<string | number | undefined>();
- * const { detail, isLoading } = useDetailQuery({
- *   queryKey: computed(() => ['userDetail', userId.value]),
- *   queryFn: () => getUser(userId.value!),
- *   enabled: computed(() => !!userId.value),
- * });
+ * const { detail, loading, fetch: fetchDetail } = useDetailQuery();
+ *
+ * async function openEdit(id: number) {
+ *   const data = await fetchDetail(() => getUser(id));
+ *   if (data) {
+ *     Object.assign(form, data);
+ *     modal.visible = true;
+ *   }
+ * }
  * ```
  */
 export function useDetailQuery<TData = any>(
-  options: UseDetailQueryOptions<TData>
+  options: UseDetailQueryOptions<TData> = {}
 ): UseDetailQueryResult<TData> {
-  const { queryKey, queryFn, enabled } = options;
+  const { queryFn: defaultQueryFn } = options;
 
-  const query = useQuery<ResultType>({
-    queryKey,
-    queryFn,
-    enabled: enabled ?? true,
-    /** 详情查询保持上一次数据，避免弹窗打开时闪烁 */
-    placeholderData: keepPreviousData,
-  });
+  const detail = ref<TData>() as Ref<TData | undefined>;
+  const loading = ref(false);
 
-  /** 响应原始数据 */
-  const result = computed(() => query.data.value);
+  async function fetch(
+    queryFn?: () => Promise<ResultType>
+  ): Promise<TData | undefined> {
+    const fn = queryFn ?? defaultQueryFn;
+    if (!fn) return undefined;
 
-  /** 解析后的业务数据 */
-  const detail = computed<TData | undefined>(() => {
-    const res = result.value;
-    if (!res || !isSuccess(res)) return undefined;
-    return res.data as TData;
-  });
-
-  /** 是否请求成功 */
-  const queryIsSuccess = computed(() => {
-    return query.isSuccess.value && !!result.value && isSuccess(result.value);
-  });
-
-  function refetch() {
-    query.refetch();
+    loading.value = true;
+    try {
+      const res = await fn();
+      if (isSuccess(res)) {
+        detail.value = res.data as TData;
+        return detail.value;
+      }
+      return undefined;
+    } finally {
+      loading.value = false;
+    }
   }
 
-  return {
-    result,
-    detail,
-    isLoading: query.isLoading as unknown as Ref<boolean>,
-    isSuccess: queryIsSuccess,
-    refetch,
-    query,
-  };
+  return { detail, loading, fetch };
 }

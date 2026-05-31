@@ -1,36 +1,42 @@
-﻿import { reactive } from "vue";
+import { reactive } from 'vue';
 
 export interface UsePaginationOptions {
   /** 默认每页条数，默认 20 */
   defaultPageSize?: number;
   /** 可选的每页条数选项，默认 ['10', '20', '50', '100'] */
   pageSizeOptions?: string[];
-  /** 页码或每页条数变化时的回调，通常用于重新拉取列表 */
+  /** 页码或每页条数变化时的回调（来自 UI 翻页操作） */
   onChange?: (page: number, pageSize: number) => void;
 }
 
 /**
  * 通用分页管理 hook
  *
- * 管理 a-table 分页 UI 配置，与 useListQuery 配合使用。
+ * 管理 a-table 分页 UI 配置，配合 useListQuery 使用。
+ * onChange 在 UI 翻页和 clampPage 回退页码时均会触发。
+ * onChange 在 UI 翻页、resetPage 重置和 clampPage 回退页码时均会触发。
  *
  * @example
  * ```ts
- * const { pagination, resetPage, fixPage } = usePagination({
+ * const { pagination, resetPage, clampPage } = usePagination({
  *   onChange: (page, pageSize) => {
  *     queryParams.pageNum = page;
  *     queryParams.pageSize = pageSize;
+ *     fetchList();
  *   },
  * });
  *
- * // 删除后修正页码（在 confirmAndRun 的 onSuccess 中调用）
- * fixPage(1, total.value);
+ * // 重置查询时（resetPage 自动触发 onChange → 同步参数 + 刷新列表）
+ * handleQuery() { resetPage(); }
+ *
+ * // 删除后修正页码（clampPage 页码变化时自动触发 onChange → syncParams + fetchList）
+ * clampPage(deletedCount);
  * ```
  */
 export function usePagination(options: UsePaginationOptions = {}) {
   const {
     defaultPageSize = 20,
-    pageSizeOptions = ["10", "20", "50", "100"],
+    pageSizeOptions = ['10', '20', '50', '100'],
     onChange,
   } = options;
 
@@ -50,11 +56,11 @@ export function usePagination(options: UsePaginationOptions = {}) {
     showQuickJumper: true,
     /** 是否显示每页条数选择器 */
     showSizeChanger: true,
-    /** 数据总数（由页面模板中通过 { ...pagination, total } 覆盖） */
+    /** 数据总数 */
     total: 0,
     /** 自定义总数显示格式 */
     showTotal: (total: number) => `总共 ${total} 条`,
-    /** 页码或每页条数变化时的回调 */
+    /** 页码或每页条数变化时的回调（仅 UI 操作触发） */
     onChange: (page: number, pageSize: number) => {
       pagination.current = page;
       pagination.pageSize = pageSize;
@@ -64,35 +70,37 @@ export function usePagination(options: UsePaginationOptions = {}) {
 
   /**
    * 重置分页到初始状态（第1页、默认每页条数）
-   * 通常在搜索或重置查询条件时调用
+   * 自动触发 onChange 回调，同步 queryParams 并刷新列表
    */
   function resetPage() {
     pagination.current = 1;
     pagination.pageSize = defaultPageSize;
+    onChange?.(1, defaultPageSize);
   }
 
   /**
-   * 删除后修正页码
-   * 根据删除数量和当前总数计算最大有效页码，超出则回退
+   * 删除后将页码钳制到合法范围，页码变化时自动触发 onChange
    *
-   * 在 confirmAndRun / useMutationAction 的 onSuccess 中调用：
-   *   fixPage(1, total.value)              — 单条删除
-   *   fixPage(selectedKeys.length, total.value) — 批量删除
+   * 根据删除数量和当前总数计算最大有效页码，超出则回退。
+   * pagination.total 由 useListQuery 通过 paginationRef 自动同步。
+   * 页码变化时触发 onChange 回调，自动同步 queryParams 并刷新列表。
    *
    * @param deletedCount - 本次删除的数据条数
-   * @param total - 删除前的数据总数（来自 useListQuery 的 total）
    */
-  function fixPage(deletedCount: number, total: number) {
-    const maxPage = Math.max(1, Math.ceil((total - deletedCount) / pagination.pageSize));
+  function clampPage(deletedCount: number) {
+    const maxPage = Math.max(
+      1,
+      Math.ceil((pagination.total - deletedCount) / pagination.pageSize)
+    );
     if (pagination.current > maxPage) {
       pagination.current = maxPage;
-      onChange?.(pagination.current, pagination.pageSize);
+      onChange?.(maxPage, pagination.pageSize);
     }
   }
 
   return {
     pagination,
     resetPage,
-    fixPage,
+    clampPage,
   };
 }
