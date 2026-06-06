@@ -158,7 +158,7 @@ watch(
       </a-row>
     </a-form>
 
-    <a-table class="table" row-key="userId" :columns="tableColumns" :loading="loading" :data-source="listData"
+    <a-table class="antdv-table" row-key="userId" :columns="tableColumns" :loading="loading" :data-source="listData"
       :size="tableState.size" :scroll="{
         x: tableColumns.length * 120,
         scrollToFirstRowOnChange: true,

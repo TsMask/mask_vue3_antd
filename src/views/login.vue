@@ -183,17 +183,17 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="container">
-    <div class="top">
-      <div class="header">
-        <a href="/" target="_self"><img src="@/assets/logo.png" class="logo" alt="logo" />
-          <span class="title">Mask Antd Vue3</span>
+  <div class="antdv-container">
+    <div class="antdv-top">
+      <div class="antdv-header">
+        <a href="/" target="_self"><img src="@/assets/logo.png" class="antdv-logo" alt="logo" />
+          <span class="antdv-title">Mask Antd Vue3</span>
         </a>
       </div>
-      <div class="desc">基于 ant-design-vue + vue3 的管理系统</div>
+      <div class="antdv-desc">基于 ant-design-vue + vue3 的管理系统</div>
     </div>
 
-    <a-card :bordered="true" class="main">
+    <a-card :bordered="true" class="antdv-main">
       <a-form :model="state.form" name="StateForm" @finish="fnFinish">
         <a-tabs v-model:activeKey="activeKey" tabPosition="top" type="line" :centered="true"
           :destroy-inactive-tab-pane="true">
@@ -311,7 +311,7 @@ onBeforeUnmount(() => {
       </a-form>
     </a-card>
 
-    <GlobalFooter class="footer" :links="[
+    <GlobalFooter class="antdv-footer" :links="[
       { blankTarget: false, title: '帮助', href: '/' },
       { blankTarget: false, title: '隐私', href: '/' },
       { blankTarget: false, title: '条款', href: '/' },
@@ -321,7 +321,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style lang="less" scoped>
-.container {
+.antdv-container {
   position: relative;
   width: 100%;
   min-height: 100%;
@@ -332,22 +332,22 @@ onBeforeUnmount(() => {
   background-size: 100%;
 }
 
-[data-theme='dark'] .container {
+[data-theme='dark'] .antdv-container {
   background-color: #141414;
 }
 
-.top {
+.antdv-top {
   text-align: center;
 
   a {
     text-decoration: none;
   }
 
-  .header {
+  .antdv-header {
     height: 44px;
     line-height: 44px;
 
-    .logo {
+    .antdv-logo {
       height: 44px;
       margin-right: 16px;
       vertical-align: top;
@@ -355,7 +355,7 @@ onBeforeUnmount(() => {
       border-radius: 6.66px;
     }
 
-    .title {
+    .antdv-title {
       position: relative;
       top: 2px;
       color: inherit;
@@ -366,7 +366,7 @@ onBeforeUnmount(() => {
     }
   }
 
-  .desc {
+  .antdv-desc {
     margin-top: 12px;
     margin-bottom: 40px;
     color: inherit;
@@ -375,15 +375,15 @@ onBeforeUnmount(() => {
   }
 }
 
-[data-theme='dark'] .top .header .title {
+[data-theme='dark'] .antdv-top .antdv-header .antdv-title {
   color: rgba(255, 255, 255, 0.85);
 }
 
-[data-theme='dark'] .top .desc {
+[data-theme='dark'] .antdv-top .antdv-desc {
   color: rgba(255, 255, 255, 0.45);
 }
 
-.main {
+.antdv-main {
   width: 368px;
   min-width: 260px;
   margin: 0 auto;
@@ -394,13 +394,13 @@ onBeforeUnmount(() => {
   }
 }
 
-.footer {
+.antdv-footer {
   position: absolute;
   bottom: 0;
   width: 100%;
 }
 
-[data-theme='dark'] .footer {
+[data-theme='dark'] .antdv-footer {
   color: rgba(255, 255, 255, 0.85);
 }
 </style>

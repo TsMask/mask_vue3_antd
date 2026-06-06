@@ -353,7 +353,7 @@ onMounted(async () => {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="dataId" :columns="tableColumns" :loading="loading" :data-source="tableListData"
+      <a-table class="antdv-table" row-key="dataId" :columns="tableColumns" :loading="loading" :data-source="tableListData"
         :size="tableState.size" :row-class-name="rowClassName"
         :scroll="{ x: tableColumns.length * 120, scrollToFirstRowOnChange: true }" :pagination="{ ...pagination }"
         :row-selection="{
@@ -523,11 +523,11 @@ onMounted(async () => {
 </template>
 
 <style lang="less" scoped>
-.table :deep(.table-striped) td {
+.antdv-table :deep(.antdv-striped) td {
   background-color: #fafafa;
 }
 
-.table :deep(.ant-pagination) {
+.antdv-table :deep(.ant-pagination) {
   padding: 0 24px;
 }
 </style>

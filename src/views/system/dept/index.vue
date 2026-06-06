@@ -330,7 +330,7 @@ function handleDelete(deptId: string | number) {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="deptId" :columns="tableColumns" :loading="loading" :data-source="treeData"
+      <a-table class="antdv-table" row-key="deptId" :columns="tableColumns" :loading="loading" :data-source="treeData"
         :size="tableState.size" :row-class-name="rowClassName" :pagination="false"
         :scroll="{ x: tableColumns.length * 120, scrollToFirstRowOnChange: true }" children-column-name="children"
         :expanded-row-keys="expandedRowKeys" @expandedRowsChange="handleExpandedRowsChange">
@@ -480,7 +480,7 @@ function handleDelete(deptId: string | number) {
 </template>
 
 <style lang="less" scoped>
-.table :deep(.table-striped) td {
+.antdv-table :deep(.antdv-striped) td {
   background-color: #fafafa;
 }
 </style>

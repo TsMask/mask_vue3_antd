@@ -57,11 +57,11 @@ export function useTableUI(options: UseTableUIOptions = {}) {
   /**
    * 斑马纹行类名函数
    * 绑定到 a-table 的 :row-class-name 属性
-   * 奇数行添加 'table-striped' 类名（需配合 CSS 样式）
+   * 奇数行添加 'antdv-striped' 类名（需配合 CSS 样式）
    * @returns 行类名或空字符串
    */
   function rowClassName(_record: unknown, index: number): string {
-    return tableState.striped && index % 2 === 1 ? 'table-striped' : '';
+    return tableState.striped && index % 2 === 1 ? 'antdv-striped' : '';
   }
 
   /**

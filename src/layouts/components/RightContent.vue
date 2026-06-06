@@ -43,11 +43,7 @@ function fnClick({ key }: MenuInfo) {
 
 <template>
   <a-space :size="12" align="center">
-    <a-popover
-      overlayClassName="head-notice"
-      placement="bottomRight"
-      trigger="click"
-    >
+    <a-popover overlayClassName="head-notice" placement="bottomRight" trigger="click">
       <a-button type="text" style="color: inherit">
         <template #icon>
           <a-badge :count="9999" :overflow-count="99" style="color: inherit">
@@ -75,12 +71,7 @@ function fnClick({ key }: MenuInfo) {
 
     <a-tooltip placement="bottomRight">
       <template #title>开源仓库</template>
-      <a-button
-        type="text"
-        style="color: inherit"
-        href="https://gitee.com/TsMask"
-        target="_blank"
-      >
+      <a-button type="text" style="color: inherit" href="https://gitee.com/TsMask" target="_blank">
         <template #icon>
           <GithubOutlined />
         </template>
@@ -89,12 +80,7 @@ function fnClick({ key }: MenuInfo) {
 
     <a-tooltip placement="bottomRight">
       <template #title>文档手册</template>
-      <a-button
-        type="text"
-        style="color: inherit"
-        href="https://juejin.cn/column/7188761626017792056"
-        target="_blank"
-      >
+      <a-button type="text" style="color: inherit" href="https://juejin.cn/column/7188761626017792056" target="_blank">
         <template #icon>
           <QuestionCircleOutlined />
         </template>
@@ -125,13 +111,12 @@ function fnClick({ key }: MenuInfo) {
       <template #title>组件尺寸</template>
       <a-dropdown placement="bottomRight" trigger="click">
         <a-button type="text" style="color: inherit">
-          <template #icon><FontSizeOutlined /></template>
+          <template #icon>
+            <FontSizeOutlined />
+          </template>
         </a-button>
         <template #overlay>
-          <a-menu
-            :selected-keys="[appStore.componentSize as string]"
-            @click="fnComponentSize"
-          >
+          <a-menu :selected-keys="[appStore.componentSize as string]" @click="fnComponentSize">
             <a-menu-item key="large">大号</a-menu-item>
             <a-menu-item key="middle">中号</a-menu-item>
             <a-menu-item key="small">小号</a-menu-item>
@@ -141,14 +126,9 @@ function fnClick({ key }: MenuInfo) {
     </a-tooltip>
 
     <a-dropdown placement="bottomRight" trigger="click">
-      <div class="user">
-        <a-avatar
-          shape="circle"
-          size="default"
-          :src="userStore.getAvatar"
-          :alt="userStore.userName"
-        ></a-avatar>
-        <span class="nick">
+      <div class="account-user">
+        <a-avatar shape="circle" size="default" :src="userStore.getAvatar" :alt="userStore.userName"></a-avatar>
+        <span class="account-nickname">
           {{ userStore.nickName }}
         </span>
       </div>
@@ -180,20 +160,21 @@ function fnClick({ key }: MenuInfo) {
 </template>
 
 <style lang="less" scoped>
-.user {
+.account-user {
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
   cursor: pointer;
-  .nick {
-    padding-left: 8px;
-    font-size: 16px;
-    max-width: 164px;
-    white-space: nowrap;
-    text-align: start;
-    text-overflow: ellipsis;
-    overflow: hidden;
-  }
+}
+
+.account-user .account-nickname {
+  padding-left: 8px;
+  font-size: 16px;
+  max-width: 164px;
+  white-space: nowrap;
+  text-align: start;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 </style>

@@ -213,7 +213,7 @@ function handleExport() {
       </template>
 
       <!-- 表格列表 -->
-      <a-table class="table" row-key="postId" :columns="tableColumns" :loading="loading" :data-source="listData"
+      <a-table class="antdv-table" row-key="postId" :columns="tableColumns" :loading="loading" :data-source="listData"
         :size="tableState.size" :row-class-name="rowClassName" :pagination="pagination" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
@@ -356,11 +356,11 @@ function handleExport() {
 </template>
 
 <style lang="less" scoped>
-.table :deep(.table-striped) td {
+.antdv-table :deep(.antdv-striped) td {
   background-color: #fafafa;
 }
 
-.table :deep(.ant-pagination) {
+.antdv-table :deep(.ant-pagination) {
   padding: 0 24px;
 }
 </style>

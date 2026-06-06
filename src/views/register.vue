@@ -119,17 +119,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container">
-    <div class="top">
-      <div class="header">
-        <a href="/" target="_self"><img src="@/assets/logo.png" class="logo" alt="logo" />
-          <span class="title">Mask Antd Vue3</span>
+  <div class="antdv-container">
+    <div class="antdv-top">
+      <div class="antdv-header">
+        <a href="/" target="_self"><img src="@/assets/logo.png" class="antdv-logo" alt="logo" />
+          <span class="antdv-title">Mask Antd Vue3</span>
         </a>
       </div>
-      <div class="desc">基于 ant-design-vue + vue3 的管理系统</div>
+      <div class="antdv-desc">基于 ant-design-vue + vue3 的管理系统</div>
     </div>
 
-    <a-card :bordered="true" class="main">
+    <a-card :bordered="true" class="antdv-main">
       <a-form :model="state.form" name="stateForm" @finish="fnFinish">
         <a-form-item name="username" :rules="[
           {
@@ -198,7 +198,7 @@ onMounted(() => {
       </a-form>
     </a-card>
 
-    <GlobalFooter class="footer" :links="[
+    <GlobalFooter class="antdv-footer" :links="[
       { blankTarget: false, title: '帮助', href: '/' },
       { blankTarget: false, title: '隐私', href: '/' },
       { blankTarget: false, title: '条款', href: '/' },
@@ -208,7 +208,7 @@ onMounted(() => {
 </template>
 
 <style lang="less" scoped>
-.container {
+.antdv-container {
   position: relative;
   width: 100%;
   min-height: 100%;
@@ -219,18 +219,18 @@ onMounted(() => {
   background-size: 100%;
 }
 
-.top {
+.antdv-top {
   text-align: center;
 
   a {
     text-decoration: none;
   }
 
-  .header {
+  .antdv-header {
     height: 44px;
     line-height: 44px;
 
-    .logo {
+    .antdv-logo {
       height: 44px;
       margin-right: 16px;
       vertical-align: top;
@@ -238,7 +238,7 @@ onMounted(() => {
       border-radius: 6.66px;
     }
 
-    .title {
+    .antdv-title {
       position: relative;
       top: 2px;
       color: inherit;
@@ -249,7 +249,7 @@ onMounted(() => {
     }
   }
 
-  .desc {
+  .antdv-desc {
     margin-top: 12px;
     margin-bottom: 40px;
     color: inherit;
@@ -258,7 +258,7 @@ onMounted(() => {
   }
 }
 
-.main {
+.antdv-main {
   width: 368px;
   min-width: 260px;
   margin: 0 auto;
@@ -269,7 +269,7 @@ onMounted(() => {
   }
 }
 
-.footer {
+.antdv-footer {
   position: absolute;
   bottom: 0;
   width: 100%;
