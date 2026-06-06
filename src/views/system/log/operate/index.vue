@@ -94,7 +94,6 @@ function handleView(row: Record<string, any>) {
 }
 
 function handleTableChange(_pagination: any, _filters: any, sorter: any) {
-  console.log(sorter);
   const sorters = Array.isArray(sorter) ? sorter : sorter.order ? [sorter] : [];
   queryParams.sort = sorters
     .filter(s => s.order)
