@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { useRoute } from "vue-router";
 import { ref, toRaw } from "vue";
 import { PageContainer } from "antdv-pro-layout";
@@ -40,7 +40,7 @@ const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
     beginTime: undefined as number | undefined,
     endTime: undefined as number | undefined,
     pageNum: 1, pageSize: 20,
-    sortBy: "", sortOrder: ""
+    sort: ""
   },
   () => { resetPage(); fetchList(); },
 );
@@ -94,8 +94,12 @@ function handleView(row: Record<string, any>) {
 }
 
 function handleTableChange(_pagination: any, _filters: any, sorter: any) {
-  queryParams.sortBy = sorter.order ? sorter.field : undefined;
-  queryParams.sortOrder = sorter.order;
+  console.log(sorter);
+  const sorters = Array.isArray(sorter) ? sorter : sorter.order ? [sorter] : [];
+  queryParams.sort = sorters
+    .filter(s => s.order)
+    .map(s => s.field + ":" + (s.order === "ascend" ? "asc" : "desc"))
+    .join(",");
   fetchList();
 }
 
