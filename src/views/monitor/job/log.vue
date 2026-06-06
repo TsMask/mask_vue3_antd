@@ -1,7 +1,6 @@
 ﻿<script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
-import { ref, reactive, toRaw, computed, watch, onMounted } from 'vue';
-import { useQueryClient } from '@tanstack/vue-query';
+import { ref, reactive, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
 import type { Dayjs } from 'dayjs';
@@ -20,33 +19,33 @@ import { usePagination } from '@/hooks/usePagination';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useQueryParams } from '@/hooks/useQueryParams';
 import { useListQuery } from '@/hooks/useListQuery';
-import { confirmAndRun } from '@/hooks/useMutationAction';
+import { confirmAction } from '@/hooks/useAction';
 
 const tabsStore = useTabsStore();
 const route = useRoute();
 const router = useRouter();
-const queryClient = useQueryClient();
-
 /** 字典数据初始化 */
 const { dict } = useDictSetup({
-  sysJobGroup: 'sys_job_group',
-  sysCommonStatus: 'sys_common_status',
+  keyMap: {
+    sysJobGroup: 'sys_job_group',
+    sysCommonStatus: 'sys_common_status',
+  }
 });
 
 /** 开始结束时间范围 */
 const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
 /** 查询参数 */
-const { queryParams, resetQuery: baseResetQuery } = useQueryParams(
+const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
   {
-    jobId: '',
+    jobId: (route.params.jobId as string) || '',
     statusFlag: undefined as string | undefined,
     beginTime: undefined as number | undefined,
     endTime: undefined as number | undefined,
     pageNum: 1,
     pageSize: 20,
   },
-  () => resetPage(),
+  () => { resetPage(); fetchList(); },
 );
 
 /** 重置查询条件，清空日期选择器后恢复默认参数 */
@@ -66,25 +65,23 @@ function syncDateRange() {
   }
 }
 
-const { pagination, resetPage, fixPage } = usePagination({
+const { pagination, resetPage, clampPage } = usePagination({
   onChange: (page, pageSize) => {
     queryParams.pageNum = page;
     queryParams.pageSize = pageSize;
+    fetchList()
   },
 });
 
-/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
-const { listData, total, isFetching } = useListQuery({
-  queryKey: computed(() => {
-    syncDateRange();
-    return ['jobLogList', { ...toRaw(queryParams) }];
-  }),
-  queryFn: () => listJobLog(toRaw(queryParams)),
+/** 列表数据查询 */
+const { listData, loading, fetch: fetchList } = useListQuery({
+  paginationRef: pagination,
+  queryFn: () => { syncDateRange(); return listJobLog(toRaw(queryParams)); },
 });
 
 const { tableState, setTableSize, rowClassName, setSelectedRowKeys } = useTableUI();
 
-tableState.seached = true;
+tableState.searched = true;
 
 const tableColumns: ColumnsType = [
   { title: '日志编号', dataIndex: 'logId', align: 'left', width: 100 },
@@ -129,28 +126,29 @@ function handleCloseDetail() {
 
 function handleDeleteSelected() {
   const ids = tableState.selectedRowKeys.join(',');
-  confirmAndRun({
+  confirmAction({
     content: `确认删除调度日志编号为 【${ids}】 的数据项吗?`,
     action: () => delJobLog(ids),
     variables: undefined,
     successText: '删除成功',
-    onSuccess: () => fixPage(tableState.selectedRowKeys.length || 1, total.value),
-    invalidateKeys: [['jobLogList']],
+    onSuccess() {
+      const deletedCount = String(ids).split(",").length;
+      if (!clampPage(deletedCount)) fetchList();
+    },
   });
 }
 
 function handleCleanAll() {
-  confirmAndRun({
+  confirmAction({
     content: '确认清空所有调度日志数据项吗?',
     action: () => cleanJobLog(),
     variables: undefined,
     successText: '清空成功',
-    invalidateKeys: [['jobLogList']],
   });
 }
 
 function handleExport() {
-  confirmAndRun({
+  confirmAction({
     content: '确认根据搜索条件导出xlsx表格文件吗?',
     action: () => exportJobLog(toRaw(queryParams)),
     variables: undefined,
@@ -163,16 +161,11 @@ function handleClose() {
   const to = tabsStore.tabClose(route.path);
   if (to) { router.push(to); } else { router.back(); }
 }
-
-onMounted(() => {
-  const jobId = route.params && (route.params.jobId as string);
-  if (jobId) queryParams.jobId = jobId;
-});
 </script>
 
 <template>
   <PageContainer>
-    <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
+    <a-card v-show="tableState.searched" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
@@ -191,12 +184,16 @@ onMounted(() => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="resetQuery">
-                  <template #icon><SearchOutlined /></template>
+                <a-button type="primary" @click.prevent="handleQuery">
+                  <template #icon>
+                    <SearchOutlined />
+                  </template>
                   搜索
                 </a-button>
                 <a-button type="default" @click.prevent="resetQuery">
-                  <template #icon><ClearOutlined /></template>
+                  <template #icon>
+                    <ClearOutlined />
+                  </template>
                   重置
                 </a-button>
               </a-space>
@@ -210,20 +207,28 @@ onMounted(() => {
       <template #title>
         <a-space :size="8" align="center">
           <a-button type="default" @click.prevent="handleClose()">
-            <template #icon><CloseOutlined /></template>
+            <template #icon>
+              <CloseOutlined />
+            </template>
             关闭
           </a-button>
           <a-button type="default" danger :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="handleDeleteSelected()" v-perms:has="['monitor:job:remove']">
-            <template #icon><DeleteOutlined /></template>
+            <template #icon>
+              <DeleteOutlined />
+            </template>
             删除
           </a-button>
           <a-button type="dashed" danger @click.prevent="handleCleanAll()" v-perms:has="['monitor:job:remove']">
-            <template #icon><DeleteOutlined /></template>
+            <template #icon>
+              <DeleteOutlined />
+            </template>
             清空
           </a-button>
           <a-button type="dashed" @click.prevent="handleExport()" v-perms:has="['monitor:job:export']">
-            <template #icon><ExportOutlined /></template>
+            <template #icon>
+              <ExportOutlined />
+            </template>
             导出
           </a-button>
         </a-space>
@@ -233,7 +238,7 @@ onMounted(() => {
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch v-model:checked="tableState.seached" checked-children="显" un-checked-children="隐" size="small" />
+            <a-switch v-model:checked="tableState.searched" checked-children="显" un-checked-children="隐" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
@@ -241,15 +246,19 @@ onMounted(() => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="queryClient.invalidateQueries({ queryKey: ['jobLogList'] })">
-              <template #icon><ReloadOutlined /></template>
+            <a-button type="text" @click.prevent="fetchList">
+              <template #icon>
+                <ReloadOutlined />
+              </template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon><ColumnHeightOutlined /></template>
+                <template #icon>
+                  <ColumnHeightOutlined />
+                </template>
               </a-button>
               <template #overlay>
                 <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
@@ -263,10 +272,10 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="logId" :columns="tableColumns" :loading="isFetching"
-        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName" :scroll="{
+      <a-table class="table" row-key="logId" :columns="tableColumns" :loading="loading" :data-source="listData"
+        :size="tableState.size" :row-class-name="rowClassName" :scroll="{
           x: tableColumns.length * 140, scrollToFirstRowOnChange: true,
-        }" :pagination="{ ...pagination, total }" :row-selection="{
+        }" :pagination="{ ...pagination }" :row-selection="{
           type: 'checkbox', selectedRowKeys: tableState.selectedRowKeys, onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
@@ -283,7 +292,9 @@ onMounted(() => {
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
                 <a-button type="link" @click.prevent="handleViewDetail(record)" v-perms:has="['monitor:job:query']">
-                  <template #icon><ProfileOutlined /></template>
+                  <template #icon>
+                    <ProfileOutlined />
+                  </template>
                   详情
                 </a-button>
               </a-tooltip>

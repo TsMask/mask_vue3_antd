@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
-import { reactive, ref, onMounted } from 'vue';
+import { reactive, ref } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { message } from 'ant-design-vue';
 import type { ColumnsType } from 'ant-design-vue/es/table/Table';
@@ -14,32 +14,61 @@ import {
 } from '@/api/monitor/cache';
 import { hasPermissions } from '@/plugins/auth-user';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import { useListQuery } from '@/hooks/useListQuery';
+import { useAction } from '@/hooks/useAction';
+
 const route = useRoute();
+const title = ref<string>(route.meta.title ?? '标题');
 
-/**路由标题 */
-let title = ref<string>(route.meta.title ?? '标题');
-
-/**缓存内容信息 */
-let cacheKeyInfo = reactive({
-  loading: false,
-  data: {
-    cacheKey: '',
-    cacheName: '',
-    cacheValue: '',
-    remark: '',
-  },
+/** 缓存名称列表 */
+const { listData: cacheNameData, loading: cacheNameLoading, fetch: fetchCacheNames } = useListQuery({
+  queryFn: () => listCacheName(),
 });
 
-/**
- * 查询缓存内容详细
- * @param cacheKey
- */
-function fnCacheKeyInfo(cacheKey: string) {
+/** 当前选中的缓存名称 */
+let selectedCacheName = '';
+
+/** 缓存键名列表 */
+const { listData: cacheKeyData, loading: cacheKeyLoading, fetch: fetchCacheKeys } = useListQuery({
+  queryFn: () => listCacheKey(selectedCacheName),
+  immediate: false,
+});
+
+/** 选择缓存名称，加载键名列表 */
+function handleSelectCacheName(cacheName: string) {
+  selectedCacheName = cacheName;
+  fetchCacheKeys();
+}
+
+/** 刷新键名列表 */
+function handleRefreshKeys() {
+  if (!selectedCacheName) {
+    message.warning({ content: '请在缓存列表中选择数据项！', duration: 3 });
+    return;
+  }
+  fetchCacheKeys();
+}
+
+/** 缓存内容信息 */
+const cacheKeyInfo = reactive({
+  loading: false,
+  data: { cacheKey: '', cacheName: '', cacheValue: '', remark: '' },
+});
+
+/** 查询缓存内容详细 */
+function handleCacheKeyInfo(cacheKey: string) {
   if (!hasPermissions(['monitor:cache:query'])) return;
   cacheKeyInfo.loading = true;
-  getCacheValue(cacheKeyTable.cacheName, cacheKey)
+  getCacheValue(selectedCacheName, cacheKey)
     .then(res => {
       if (res.code === RESULT_CODE_SUCCESS) {
+        if (res.data.cacheValue) {
+          try {
+            res.data.cacheValue = JSON.stringify(JSON.parse(res.data.cacheValue), null, 2);
+          } catch {
+            // 非 JSON 格式保持原样
+          }
+        }
         Object.assign(cacheKeyInfo.data, res.data);
       }
     })
@@ -48,235 +77,73 @@ function fnCacheKeyInfo(cacheKey: string) {
     });
 }
 
-/**键名列表表格字段列 */
-let cacheKeyTableColumns: ColumnsType = [
-  {
-    title: '序号',
-    dataIndex: 'num',
-    width: 50,
-    align: 'left',
-    customRender(opt) {
-      return opt.index + 1;
-    },
+/** 安全清理缓存 mutation */
+const { execute: clearSafeRun } = useAction({
+  action: () => clearCacheSafe(),
+  successText: '已完成安全清理缓存',
+  onSuccess: () => {
+    cacheKeyInfo.loading = true;
+    cacheKeyData.value = [];
   },
+});
+
+/** 清理缓存名称 mutation */
+const { execute: clearNameRun } = useAction({
+  action: (cacheName: string) => clearCacheName(cacheName),
+  successText: '缓存名称已清理',
+  onSuccess: (_res, cacheName) => {
+    if (cacheKeyInfo.data.cacheName === cacheName) {
+      cacheKeyInfo.loading = true;
+    }
+    fetchCacheKeys();
+  },
+});
+
+/** 删除缓存键名 mutation */
+const { execute: clearKeyRun } = useAction({
+  action: (cacheKey: string) => clearCacheKey(selectedCacheName, cacheKey),
+  successText: '缓存键名已删除',
+  onSuccess: (_res, cacheKey) => {
+    fetchCacheKeys();
+    if (cacheKeyInfo.data.cacheKey === cacheKey) {
+      cacheKeyInfo.loading = true;
+    }
+  },
+});
+
+/** 键名列表表格字段列 */
+const cacheKeyTableColumns: ColumnsType = [
+  { title: '序号', dataIndex: 'num', width: 50, align: 'left', customRender(opt) { return opt.index + 1; } },
   {
-    title: '缓存键名',
-    dataIndex: 'cacheKey',
-    align: 'left',
-    width: 150,
-    ellipsis: true,
-    // 渲染值处理
-    customRender(opt) {
-      return opt.text;
-    },
-    // 自定义过滤控件
+    title: '缓存键名', dataIndex: 'cacheKey', align: 'left', width: 150, ellipsis: true,
+    customRender(opt) { return opt.text; },
     customFilterDropdown: true,
     onFilter: (value, record) => {
       if (typeof value === 'string') {
-        const nameLower = record.cacheKey.toLowerCase();
-        return nameLower.includes(value.toLowerCase());
+        return record.cacheKey.toLowerCase().includes(value.toLowerCase());
       }
     },
   },
-  {
-    title: '操作',
-    key: 'option',
-    align: 'left',
-    width: 50,
-  },
+  { title: '操作', key: 'option', align: 'left', width: 50 },
 ];
 
-/**键名列表表格数据 */
-let cacheKeyTable = reactive({
-  loading: false,
-  data: [],
-  /**当前键名列表的缓存名称 */
-  cacheName: '',
-});
-
-/**
- * 清理指定缓存键名
- * @param cacheKey 键名列表中的缓存键名
- */
-function fnCacheKeyClear(cacheKey: string) {
-  const hide = message.loading('请稍等...', 0);
-  clearCacheKey(cacheKeyTable.cacheName, cacheKey)
-    .then(res => {
-      if (res.code === RESULT_CODE_SUCCESS) {
-        message.success({
-          content: `已删除缓存键名 ${cacheKey}`,
-          duration: 3,
-        });
-        fnCacheKeyList();
-        // 缓存内容显示且是删除的缓存键名，需要进行加载显示
-        if (!cacheKeyInfo.loading && cacheKeyInfo.data.cacheKey === cacheKey) {
-          cacheKeyInfo.loading = true;
-        }
-      } else {
-        message.error({
-          content: res.msg,
-          duration: 3,
-        });
-      }
-    })
-    .finally(() => {
-      hide();
-    });
-}
-
-/** 查询缓存键名列表 */
-function fnCacheKeyList(cacheName: string = 'load') {
-  if (cacheName === 'load') {
-    cacheName = cacheKeyTable.cacheName;
-  }
-  if (!cacheName) {
-    message.warning({
-      content: '请在缓存列表中选择数据项！',
-      duration: 3,
-    });
-    return;
-  }
-  if (cacheKeyTable.loading) return;
-  cacheKeyTable.loading = true;
-  listCacheKey(cacheName)
-    .then(res => {
-      if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        cacheKeyTable.cacheName = cacheName;
-        cacheKeyTable.data = res.data;
-      }
-    })
-    .finally(() => {
-      cacheKeyTable.loading = false;
-    });
-}
-
-/**缓存列表表格数据 */
-let cacheNameTable = reactive({
-  loading: false,
-  data: [],
-});
-
-/**缓存列表表格字段列 */
-let cacheNameTableColumns: ColumnsType = [
+/** 缓存列表表格字段列 */
+const cacheNameTableColumns: ColumnsType = [
+  { title: '序号', dataIndex: 'num', width: 50, align: 'left', customRender(opt) { return opt.index + 1; } },
   {
-    title: '序号',
-    dataIndex: 'num',
-    width: 50,
-    align: 'left',
-    customRender(opt) {
-      return opt.index + 1;
-    },
-  },
-  {
-    title: '缓存名称',
-    dataIndex: 'cacheName',
-    align: 'left',
-    width: 150,
-    ellipsis: true,
-    // 渲染值处理
-    customRender(opt) {
-      return opt.text;
-    },
-    // 自定义过滤控件
+    title: '缓存名称', dataIndex: 'cacheName', align: 'left', width: 150, ellipsis: true,
+    customRender(opt) { return opt.text; },
     customFilterDropdown: true,
     onFilter: (value, record) => {
       if (typeof value === 'string') {
-        const nameLower = record.cacheName.toLowerCase();
-        return nameLower.includes(value.toLowerCase());
+        return record.cacheName.toLowerCase().includes(value.toLowerCase());
       }
     },
   },
-  {
-    title: '备注',
-    dataIndex: 'remark',
-    align: 'left',
-    width: 150,
-    ellipsis: true,
-  },
-  {
-    title: '操作',
-    key: 'option',
-    align: 'left',
-    width: 50,
-  },
+  { title: '备注', dataIndex: 'remark', align: 'left', width: 150, ellipsis: true },
+  { title: '操作', key: 'option', align: 'left', width: 50 },
 ];
 
-/**安全清理缓存 */
-function fnClearCacheSafe() {
-  const hide = message.loading('请稍等...', 0);
-  clearCacheSafe()
-    .then(res => {
-      if (res.code === RESULT_CODE_SUCCESS) {
-        message.success({
-          content: '已完成安全清理缓存',
-          duration: 3,
-        });
-        cacheKeyInfo.loading = true;
-        cacheKeyTable.loading = true;
-        cacheKeyTable.data = [];
-      } else {
-        message.error({
-          content: res.msg,
-          duration: 3,
-        });
-      }
-    })
-    .finally(() => {
-      hide();
-    });
-}
-
-/**
- * 清理指定缓存名称
- * @param cacheName 缓存名称
- */
-function fnCacheNameClear(cacheName: string) {
-  const hide = message.loading('请稍等...', 0);
-  clearCacheName(cacheName)
-    .then(res => {
-      if (res.code === RESULT_CODE_SUCCESS) {
-        message.success({
-          content: `已清理缓存名称 ${cacheName}`,
-          duration: 3,
-        });
-        // 缓存内容显示且是删除的缓存名称，需要进行加载显示
-        if (
-          !cacheKeyInfo.loading &&
-          cacheKeyInfo.data.cacheName === cacheName
-        ) {
-          cacheKeyInfo.loading = true;
-        }
-      } else {
-        message.error({
-          content: res.msg,
-          duration: 3,
-        });
-      }
-      fnCacheKeyList(cacheName);
-    })
-    .finally(() => {
-      hide();
-    });
-}
-
-/**查询缓存名称列表 */
-function fnCacheNameList() {
-  if (cacheNameTable.loading) return;
-  cacheNameTable.loading = true;
-  listCacheName()
-    .then(res => {
-      if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        cacheNameTable.data = res.data;
-      }
-    })
-    .finally(() => {
-      cacheNameTable.loading = false;
-    });
-}
-
-onMounted(() => {
-  fnCacheNameList();
-});
 </script>
 
 <template>
@@ -291,95 +158,63 @@ onMounted(() => {
 
     <a-row :gutter="20">
       <a-col :lg="8" :md="8" :xs="24">
-        <a-card
-          title="缓存列表"
-          :bordered="false"
-          :body-style="{ marginBottom: '24px', padding: 0 }"
-        >
+        <a-card title="缓存列表" :bordered="false" :body-style="{ marginBottom: '24px', padding: 0 }">
           <template #extra>
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>刷新</template>
-                <a-button type="text" @click.prevent="fnCacheNameList">
-                  <template #icon><ReloadOutlined /></template>
+                <a-button type="text" @click.prevent="fetchCacheNames">
+                  <template #icon>
+                    <ReloadOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>安全清理</template>
-                <a-popconfirm
-                  placement="bottomRight"
-                  title="确认要执行可安全清理的缓存下所有键名吗?"
-                  ok-text="确认"
-                  cancel-text="取消"
-                  @confirm="fnClearCacheSafe()"
-                >
+                <a-popconfirm placement="bottomRight" title="确认要执行可安全清理的缓存下所有键名吗?" ok-text="确认" cancel-text="取消"
+                  @confirm="clearSafeRun(undefined)">
                   <a-button type="text" v-perms:has="['monitor:cache:remove']">
-                    <template #icon><ClearOutlined /></template>
+                    <template #icon>
+                      <ClearOutlined />
+                    </template>
                   </a-button>
                 </a-popconfirm>
               </a-tooltip>
             </a-space>
           </template>
-          <a-table
-            row-key="cacheName"
-            size="small"
-            :columns="cacheNameTableColumns"
-            :data-source="cacheNameTable.data"
-            :loading="cacheNameTable.loading"
-            :scroll="{ y: 'calc(100vh - 380px)' }"
-            :pagination="false"
-            :row-selection="{
+          <a-table row-key="cacheName" size="small" :columns="cacheNameTableColumns" :data-source="cacheNameData"
+            :loading="cacheNameLoading" :scroll="{ y: 'calc(100vh - 380px)' }" :pagination="false" :row-selection="{
               type: 'radio',
-              onChange: (selectedRowKeys: (string|number)[]) => fnCacheKeyList(selectedRowKeys[0] as string),
-            }"
-          >
-            <template
-              #customFilterDropdown="{
-                setSelectedKeys,
-                selectedKeys,
-                confirm,
-                clearFilters,
-                column,
-              }"
-            >
+              onChange: (selectedRowKeys: (string | number)[]) => handleSelectCacheName(selectedRowKeys[0] as string),
+            }">
+            <template #customFilterDropdown="{
+              setSelectedKeys,
+              selectedKeys,
+              confirm,
+              clearFilters,
+              column,
+            }">
               <div style="padding: 8px">
-                <a-input
-                  :placeholder="`模糊过滤 ${column.title}`"
-                  :value="selectedKeys[0]"
-                  style="width: 188px; margin-bottom: 8px; display: block"
-                  @change="
-                    (e:any)=> setSelectedKeys(e.target.value ? [e.target.value] : [])
-                  "
-                  @pressEnter="confirm()"
-                />
-                <a-button
-                  type="primary"
-                  size="small"
-                  style="width: 90px; margin-right: 8px"
-                  @click="confirm()"
-                >
+                <a-input :placeholder="`模糊过滤 ${column.title}`" :value="selectedKeys[0]"
+                  style="width: 188px; margin-bottom: 8px; display: block" @change="
+                    (e: any) => setSelectedKeys(e.target.value ? [e.target.value] : [])
+                  " @pressEnter="confirm()" />
+                <a-button type="primary" size="small" style="width: 90px; margin-right: 8px" @click="confirm()">
                   过滤
                 </a-button>
-                <a-button
-                  size="small"
-                  style="width: 90px"
-                  @click="clearFilters({ confirm: true })"
-                >
+                <a-button size="small" style="width: 90px" @click="clearFilters({ confirm: true })">
                   重置
                 </a-button>
               </div>
             </template>
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'option'">
-                <a-popconfirm
-                  placement="topRight"
-                  title="确认要清理该缓存名称下的所有键名吗?"
-                  ok-text="确认"
-                  cancel-text="取消"
-                  @confirm="fnCacheNameClear(record.cacheName)"
-                >
+                <a-popconfirm placement="topRight" title="确认要清理该缓存名称下的所有键名吗?" ok-text="确认" cancel-text="取消"
+                  @confirm="clearNameRun(record.cacheName)">
                   <a-button type="text" v-perms:has="['monitor:cache:remove']">
-                    <template #icon><ClearOutlined /></template>
+                    <template #icon>
+                      <ClearOutlined />
+                    </template>
                   </a-button>
                 </a-popconfirm>
               </template>
@@ -389,79 +224,50 @@ onMounted(() => {
       </a-col>
 
       <a-col :lg="8" :md="8" :xs="24">
-        <a-card
-          title="键名列表"
-          :bordered="false"
-          :body-style="{ marginBottom: '24px', padding: 0 }"
-        >
+        <a-card title="键名列表" :bordered="false" :body-style="{ marginBottom: '24px', padding: 0 }">
           <template #extra>
             <a-tooltip placement="topRight">
               <template #title>刷新</template>
-              <a-button type="text" @click.prevent="fnCacheKeyList()">
-                <template #icon><ReloadOutlined /></template>
+              <a-button type="text" @click.prevent="handleRefreshKeys">
+                <template #icon>
+                  <ReloadOutlined />
+                </template>
               </a-button>
             </a-tooltip>
           </template>
-          <a-table
-            row-key="cacheKey"
-            size="small"
-            :columns="cacheKeyTableColumns"
-            :data-source="cacheKeyTable.data"
-            :loading="cacheKeyTable.loading"
-            :scroll="{ y: 'calc(100vh - 380px)' }"
-            :pagination="false"
-            :row-selection="{
+          <a-table row-key="cacheKey" size="small" :columns="cacheKeyTableColumns" :data-source="cacheKeyData"
+            :loading="cacheKeyLoading" :scroll="{ y: 'calc(100vh - 380px)' }" :pagination="false" :row-selection="{
               type: 'radio',
-              onChange: (selectedRowKeys: (string|number)[]) => fnCacheKeyInfo(selectedRowKeys[0] as string),
-            }"
-          >
-            <template
-              #customFilterDropdown="{
-                setSelectedKeys,
-                selectedKeys,
-                confirm,
-                clearFilters,
-                column,
-              }"
-            >
+              onChange: (selectedRowKeys: (string | number)[]) => handleCacheKeyInfo(selectedRowKeys[0] as string),
+            }">
+            <template #customFilterDropdown="{
+              setSelectedKeys,
+              selectedKeys,
+              confirm,
+              clearFilters,
+              column,
+            }">
               <div style="padding: 8px">
-                <a-input
-                  :placeholder="`模糊过滤 ${column.title}`"
-                  :value="selectedKeys[0]"
-                  style="width: 188px; margin-bottom: 8px; display: block"
-                  @change="
-                    (e:any) => setSelectedKeys(e.target.value ? [e.target.value] : [])
-                  "
-                  @pressEnter="confirm()"
-                />
-                <a-button
-                  type="primary"
-                  size="small"
-                  style="width: 90px; margin-right: 8px"
-                  @click="confirm()"
-                >
+                <a-input :placeholder="`模糊过滤 ${column.title}`" :value="selectedKeys[0]"
+                  style="width: 188px; margin-bottom: 8px; display: block" @change="
+                    (e: any) => setSelectedKeys(e.target.value ? [e.target.value] : [])
+                  " @pressEnter="confirm()" />
+                <a-button type="primary" size="small" style="width: 90px; margin-right: 8px" @click="confirm()">
                   过滤
                 </a-button>
-                <a-button
-                  size="small"
-                  style="width: 90px"
-                  @click="clearFilters({ confirm: true })"
-                >
+                <a-button size="small" style="width: 90px" @click="clearFilters({ confirm: true })">
                   重置
                 </a-button>
               </div>
             </template>
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'option'">
-                <a-popconfirm
-                  placement="topRight"
-                  title="确认要删除该缓存键吗?"
-                  ok-text="确认"
-                  cancel-text="取消"
-                  @confirm="fnCacheKeyClear(record.cacheKey)"
-                >
+                <a-popconfirm placement="topRight" title="确认要删除该缓存键吗?" ok-text="确认" cancel-text="取消"
+                  @confirm="clearKeyRun(record.cacheKey)">
                   <a-button type="text" v-perms:has="['monitor:cache:remove']">
-                    <template #icon><DeleteOutlined /></template>
+                    <template #icon>
+                      <DeleteOutlined />
+                    </template>
                   </a-button>
                 </a-popconfirm>
               </template>
@@ -471,18 +277,9 @@ onMounted(() => {
       </a-col>
 
       <a-col :lg="8" :md="8" :xs="24" v-perms:has="['monitor:cache:query']">
-        <a-card
-          title="缓存内容"
-          :bordered="false"
-          :body-style="{ marginBottom: '24px', padding: 0 }"
-          :loading="cacheKeyInfo.loading"
-        >
-          <a-descriptions
-            size="small"
-            layout="vertical"
-            :bordered="true"
-            :column="1"
-          >
+        <a-card title="缓存内容" :bordered="false" :body-style="{ marginBottom: '24px', padding: 0 }"
+          :loading="cacheKeyInfo.loading">
+          <a-descriptions size="small" layout="vertical" :bordered="true" :column="1">
             <a-descriptions-item label="缓存名称">
               {{ cacheKeyInfo.data.cacheName }}
             </a-descriptions-item>
@@ -491,14 +288,8 @@ onMounted(() => {
             </a-descriptions-item>
             <a-descriptions-item label="缓存内容">
               <a-typography-paragraph>
-                <a-textarea
-                  :value="cacheKeyInfo.data.cacheValue"
-                  :auto-size="{ minRows: 4, maxRows: 18 }"
-                  :maxlength="4000"
-                  :disabled="true"
-                  style="color: rgba(0, 0, 0, 0.85)"
-                  placeholder="显示缓存内容"
-                />
+                <a-textarea :value="cacheKeyInfo.data.cacheValue" :auto-size="{ minRows: 4, maxRows: 18 }"
+                  :maxlength="4000" :disabled="true" style="color: rgba(0, 0, 0, 0.85)" placeholder="显示缓存内容" />
               </a-typography-paragraph>
             </a-descriptions-item>
           </a-descriptions>

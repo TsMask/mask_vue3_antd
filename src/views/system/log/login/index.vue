@@ -1,7 +1,6 @@
 ﻿<script setup lang="ts">
 import { useRoute } from "vue-router";
-import { ref, toRaw, computed, watch } from "vue";
-import { useQueryClient } from "@tanstack/vue-query";
+import { ref, toRaw, watch } from "vue";
 import { PageContainer } from "antdv-pro-layout";
 import type { Dayjs } from "dayjs";
 import type { ColumnsType } from "ant-design-vue/es/table";
@@ -13,13 +12,12 @@ import { usePagination } from "@/hooks/usePagination";
 import { useTableUI } from "@/hooks/useTableUI";
 import { useDictSetup } from "@/hooks/useDictSetup";
 import { useListQuery } from "@/hooks/useListQuery";
-import { confirmAndRun } from "@/hooks/useMutationAction";
+import { confirmAction } from "@/hooks/useAction";
 
 const route = useRoute();
-const queryClient = useQueryClient();
 const title = ref<string>(route.meta.title ?? "标题");
 
-const { dict } = useDictSetup({ sysCommonStatus: "sys_common_status" });
+const { dict } = useDictSetup({ keyMap: { sysCommonStatus: "sys_common_status" } });
 
 const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
@@ -33,19 +31,26 @@ function syncDateRange() {
   }
 }
 
-const { queryParams, resetQuery: baseResetQuery } = useQueryParams(
-  { loginIp: "", userName: "", statusFlag: undefined as string | undefined, beginTime: undefined as number | undefined, endTime: undefined as number | undefined, pageNum: 1, pageSize: 20, sortBy: "", sortOrder: "" },
-  () => { resetPage(); },
+const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
+  {
+    loginIp: "", userName: "",
+    statusFlag: undefined as string | undefined,
+    beginTime: undefined as number | undefined,
+    endTime: undefined as number | undefined,
+    pageNum: 1, pageSize: 20,
+    sortBy: "", sortOrder: ""
+  },
+  () => { resetPage(); fetchList(); },
 );
 
 function resetQuery() { queryRangePicker.value = undefined; baseResetQuery(); }
 
-const { pagination, resetPage, fixPage } = usePagination({
-  onChange: (page, pageSize) => { queryParams.pageNum = page; queryParams.pageSize = pageSize; },
+const { pagination, resetPage, clampPage } = usePagination({
+  onChange: (page, pageSize) => { queryParams.pageNum = page; queryParams.pageSize = pageSize; fetchList() },
 });
 
-const { listData, total, isFetching, refetch } = useListQuery({
-  queryKey: computed(() => { syncDateRange(); return ["logLoginList", { ...queryParams }]; }),
+const { listData, loading, fetch: fetchList } = useListQuery({
+  paginationRef: pagination,
   queryFn: () => listSysLogLogin(toRaw(queryParams)),
 });
 
@@ -59,25 +64,31 @@ const tableColumns: ColumnsType = [
   { title: "操作系统", dataIndex: "os", align: "left", width: 150 },
   { title: "浏览器", dataIndex: "browser", align: "left", width: 200 },
   { title: "登录状态", dataIndex: "statusFlag", key: "statusFlag", align: "left", width: 100 },
-  { title: "登录时间", dataIndex: "loginTime", align: "left", width: 150, sorter: true, customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); } },
+  {
+    title: "登录时间", dataIndex: "loginTime", align: "left", width: 150, sorter: true,
+    customRender(opt) {
+      if (+opt.value <= 0) return "";
+      return parseDateToStr(+opt.value);
+    }
+  },
   { title: "登录信息", dataIndex: "msg", align: "left", ellipsis: true },
 ];
 
 function handleTableChange(_pagination: any, _filters: any, sorter: any) {
   queryParams.sortBy = sorter.order ? sorter.field : undefined;
   queryParams.sortOrder = sorter.order;
-  refetch();
+  fetchList();
 }
 
 function handleCleanList() {
-  confirmAndRun({
+  confirmAction({
     content: "确认清空所有登录日志数据项?",
-    action: () => cleanSysLogLogin(), variables: undefined as any, successText: "清空成功", invalidateKeys: [["logLoginList"]],
+    action: () => cleanSysLogLogin(), variables: undefined as any, successText: "清空成功",
   });
 }
 
 function handleExport() {
-  confirmAndRun({
+  confirmAction({
     content: "确认根据搜索条件导出xlsx表格文件吗",
     action: () => exportSysLogLogin(toRaw(queryParams)), variables: undefined as any, successText: "已导出完成",
     onSuccess: (res) => { saveAs(res.data, `sys_log_login_${Date.now()}.xlsx`); },
@@ -94,7 +105,7 @@ function handleExport() {
       </a-typography-paragraph>
     </template>
 
-    <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
+    <a-card v-show="tableState.searched" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
@@ -123,12 +134,16 @@ function handleExport() {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="refetch">
-                  <template #icon><SearchOutlined /></template>
+                <a-button type="primary" @click.prevent="handleQuery">
+                  <template #icon>
+                    <SearchOutlined />
+                  </template>
                   搜索
                 </a-button>
                 <a-button type="default" @click.prevent="resetQuery">
-                  <template #icon><ClearOutlined /></template>
+                  <template #icon>
+                    <ClearOutlined />
+                  </template>
                   重置
                 </a-button>
               </a-space>
@@ -142,11 +157,15 @@ function handleExport() {
       <template #title>
         <a-space :size="8" align="center">
           <a-button type="dashed" danger @click.prevent="handleCleanList()" v-perms:has="['system:log:login:remove']">
-            <template #icon><DeleteOutlined /></template>
+            <template #icon>
+              <DeleteOutlined />
+            </template>
             清空
           </a-button>
           <a-button type="dashed" @click.prevent="handleExport()" v-perms:has="['system:log:login:export']">
-            <template #icon><ExportOutlined /></template>
+            <template #icon>
+              <ExportOutlined />
+            </template>
             导出
           </a-button>
         </a-space>
@@ -156,7 +175,7 @@ function handleExport() {
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch v-model:checked="tableState.seached" checked-children="是" un-checked-children="否" size="small" />
+            <a-switch v-model:checked="tableState.searched" checked-children="是" un-checked-children="否" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
@@ -164,15 +183,19 @@ function handleExport() {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="refetch">
-              <template #icon><ReloadOutlined /></template>
+            <a-button type="text" @click.prevent="fetchList">
+              <template #icon>
+                <ReloadOutlined />
+              </template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon><ColumnHeightOutlined /></template>
+                <template #icon>
+                  <ColumnHeightOutlined />
+                </template>
               </a-button>
               <template #overlay>
                 <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
@@ -186,9 +209,8 @@ function handleExport() {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="id" :columns="tableColumns" :loading="isFetching"
-        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName"
-        :scroll="{
+      <a-table class="table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="listData"
+        :size="tableState.size" :row-class-name="rowClassName" :scroll="{
           x: tableColumns.length * 160,
           scrollToFirstRowOnChange: true,
         }" :pagination="pagination" @change="handleTableChange">
@@ -211,5 +233,3 @@ function handleExport() {
   padding: 0 24px;
 }
 </style>
-
-

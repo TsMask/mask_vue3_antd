@@ -11,8 +11,8 @@ export interface UseListQueryOptions {
    */
   queryFn: () => Promise<ResultType>;
   /**
-  * 外部分页对象（来自 usePagination），查询成功后自动同步 total
-  * 传入后 useListQuery 会将响应的 total 写入 pagination.total
+   * 外部分页对象（来自 usePagination），查询成功后自动同步 total
+   * 传入后 useListQuery 会将响应的 total 写入 pagination.total
    */
   paginationRef?: { total: number };
   /**

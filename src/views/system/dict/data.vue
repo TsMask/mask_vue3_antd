@@ -1,7 +1,6 @@
 ﻿<script setup lang="ts">
 import { useRoute, useRouter } from "vue-router";
 import { ref, reactive, toRaw, computed, watch, onMounted } from "vue";
-import { useQueryClient } from "@tanstack/vue-query";
 import { PageContainer } from "antdv-pro-layout";
 import { ProModal } from "antdv-pro-modal";
 import { message } from "ant-design-vue";
@@ -26,14 +25,12 @@ import { useTableUI } from "@/hooks/useTableUI";
 import { useCrudModal } from "@/hooks/useCrudModal";
 import { useDictSetup } from "@/hooks/useDictSetup";
 import { useListQuery } from "@/hooks/useListQuery";
-import { useMutationAction, confirmAndRun } from "@/hooks/useMutationAction";
+import { useAction, confirmAction } from "@/hooks/useAction";
 
 const tabsStore = useTabsStore();
 const { parseDataDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
-const queryClient = useQueryClient();
-
 const dictId = route.params && (route.params.dictId as string);
 
 const tagTypeOptions = ref([
@@ -58,16 +55,14 @@ const tagTypeOptions = ref([
   { value: "success", label: "成功（success）" },
 ]);
 
-const { dict: sysDict } = useDictSetup({
-  sysNormalDisable: "sys_normal_disable",
-});
+const { dict: sysDict } = useDictSetup({ keyMap: { sysNormalDisable: "sys_normal_disable", } });
 
 const dict = reactive({
-  sysNormalDisable: sysDict.sysNormalDisable,
+  sysNormalDisable: [] as DictType[],
   sysDictType: [] as DictType[],
 });
 
-const { queryParams, resetQuery: baseResetQuery, setQuery } = useQueryParams(
+const { queryParams, handleQuery, resetQuery: baseResetQuery, setQuery } = useQueryParams(
   {
     dictType: undefined as string | undefined,
     dataLabel: "",
@@ -75,7 +70,7 @@ const { queryParams, resetQuery: baseResetQuery, setQuery } = useQueryParams(
     pageNum: 1,
     pageSize: 20,
   },
-  () => resetPage(),
+  () => { resetPage(); }
 );
 
 /** 重置查询条件；从字典类型页进入时仅重置数据标签和状态，保留 dictType */
@@ -95,18 +90,20 @@ const {
   setSelectedRowKeys,
 } = useTableUI({ defaultSize: "middle" });
 
-tableState.seached = true;
+tableState.searched = true;
 
-const { pagination, resetPage, fixPage } = usePagination({
+const { pagination, resetPage, clampPage } = usePagination({
   onChange: (page, pageSize) => {
     queryParams.pageNum = page;
     queryParams.pageSize = pageSize;
+    fetchList()
   },
 });
 
-/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
-const { listData: tableListData, total, isFetching } = useListQuery({
-  queryKey: computed(() => ["dictDataList", { ...toRaw(queryParams) }]),
+/** 列表数据查询 */
+const { listData: tableListData, loading, fetch: fetchList } = useListQuery({
+  immediate: false,
+  paginationRef: pagination,
   queryFn: () => listData(toRaw(queryParams)),
 });
 
@@ -138,11 +135,14 @@ const {
 });
 
 /** 新增/编辑 mutation */
-const { mutateAsync: submitMutateAsync, isLoading: isSubmitting } = useMutationAction({
-  mutationFn: (form: Record<string, any>) =>
+const { execute: submitExecute, loading: isSubmitting } = useAction({
+  action: (form: Record<string, any>) =>
     form.dataId ? updateData(form) : addData(form),
   successText: "操作成功",
-  invalidateKeys: [["dictDataList"]],
+  onSuccess() {
+    handleCancel();
+    fetchList();
+  }
 });
 
 const tableColumns: ColumnsType = [
@@ -182,30 +182,27 @@ async function handleSubmit() {
     message.error({ content: `请正确填写 ${e.errorFields.length} 处必填信息！`, duration: 3 });
     return;
   }
-  try {
-    await submitMutateAsync(toRaw(modalState.form));
-    handleCancel();
-  } catch {
-    // 错误已由 useMutationAction 统一处理
-  }
+  await submitExecute(toRaw(modalState.form));
 }
 
 function handleDelete(dataId: string = "0") {
   if (dataId === "0") {
     dataId = tableState.selectedRowKeys.join(",");
   }
-  confirmAndRun({
+  confirmAction({
     content: `确认删除字典数据编号为【${dataId}】的数据项?`,
     action: () => delData(dataId),
     variables: undefined,
     successText: "删除成功",
-    onSuccess: () => fixPage(tableState.selectedRowKeys.length || 1, total.value),
-    invalidateKeys: [["dictDataList"]],
+    onSuccess() {
+      const deletedCount = String(dataId).split(",").length;
+      if (!clampPage(deletedCount)) fetchList();
+    },
   });
 }
 
 function handleExport() {
-  confirmAndRun({
+  confirmAction({
     content: "确认根据搜索条件导出xlsx表格文件吗",
     action: () => exportData(toRaw(queryParams)),
     variables: undefined,
@@ -227,6 +224,7 @@ onMounted(async () => {
   const optRes = await getDictOption();
   if (isSuccess(optRes)) {
     dict.sysDictType = optRes.data;
+    dict.sysNormalDisable = sysDict.sysNormalDisable;
   }
   if (dictId && dictId !== "0") {
     const res = await getType(dictId);
@@ -236,12 +234,13 @@ onMounted(async () => {
       message.error({ content: "获取字典类型信息失败", duration: 3 });
     }
   }
+  await fetchList()
 });
 </script>
 
 <template>
   <PageContainer>
-    <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
+    <a-card v-show="tableState.searched" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
@@ -266,12 +265,16 @@ onMounted(async () => {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="resetQuery">
-                  <template #icon><SearchOutlined /></template>
+                <a-button type="primary" @click.prevent="handleQuery">
+                  <template #icon>
+                    <SearchOutlined />
+                  </template>
                   搜索
                 </a-button>
                 <a-button type="default" @click.prevent="resetQuery">
-                  <template #icon><ClearOutlined /></template>
+                  <template #icon>
+                    <ClearOutlined />
+                  </template>
                   重置
                 </a-button>
               </a-space>
@@ -285,20 +288,28 @@ onMounted(async () => {
       <template #title>
         <a-space :size="8" align="center">
           <a-button type="default" @click.prevent="handleClose()">
-            <template #icon><CloseOutlined /></template>
+            <template #icon>
+              <CloseOutlined />
+            </template>
             关闭
           </a-button>
           <a-button type="primary" @click.prevent="handleEdit()" v-perms:has="['system:dict:add']">
-            <template #icon><PlusOutlined /></template>
+            <template #icon>
+              <PlusOutlined />
+            </template>
             新增
           </a-button>
           <a-button type="default" danger :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="handleDelete()" v-perms:has="['system:dict:remove']">
-            <template #icon><DeleteOutlined /></template>
+            <template #icon>
+              <DeleteOutlined />
+            </template>
             删除
           </a-button>
           <a-button type="dashed" @click.prevent="handleExport()" v-perms:has="['system:dict:export']">
-            <template #icon><ExportOutlined /></template>
+            <template #icon>
+              <ExportOutlined />
+            </template>
             导出
           </a-button>
         </a-space>
@@ -308,7 +319,7 @@ onMounted(async () => {
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch v-model:checked="tableState.seached" checked-children="是" un-checked-children="否" size="small" />
+            <a-switch v-model:checked="tableState.searched" checked-children="是" un-checked-children="否" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
@@ -316,15 +327,19 @@ onMounted(async () => {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="queryClient.invalidateQueries({ queryKey: ['dictDataList'] })">
-              <template #icon><ReloadOutlined /></template>
+            <a-button type="text" @click.prevent="fetchList">
+              <template #icon>
+                <ReloadOutlined />
+              </template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon><ColumnHeightOutlined /></template>
+                <template #icon>
+                  <ColumnHeightOutlined />
+                </template>
               </a-button>
               <template #overlay>
                 <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
@@ -338,10 +353,10 @@ onMounted(async () => {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="dataId" :columns="tableColumns" :loading="isFetching"
-        :data-source="tableListData" :size="tableState.size" :row-class-name="rowClassName"
-        :scroll="{ x: tableColumns.length * 120, scrollToFirstRowOnChange: true }"
-        :pagination="{ ...pagination, total }" :row-selection="{
+      <a-table class="table" row-key="dataId" :columns="tableColumns" :loading="loading" :data-source="tableListData"
+        :size="tableState.size" :row-class-name="rowClassName"
+        :scroll="{ x: tableColumns.length * 120, scrollToFirstRowOnChange: true }" :pagination="{ ...pagination }"
+        :row-selection="{
           type: 'checkbox', selectedRowKeys: tableState.selectedRowKeys, onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
@@ -353,19 +368,25 @@ onMounted(async () => {
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
                 <a-button type="link" @click.prevent="handleView(record)" v-perms:has="['system:dict:query']">
-                  <template #icon><ProfileOutlined /></template>
+                  <template #icon>
+                    <ProfileOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
                 <a-button type="link" @click.prevent="handleEdit(record.dataId)" v-perms:has="['system:dict:edit']">
-                  <template #icon><FormOutlined /></template>
+                  <template #icon>
+                    <FormOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>删除</template>
                 <a-button type="link" @click.prevent="handleDelete(record.dataId)" v-perms:has="['system:dict:remove']">
-                  <template #icon><DeleteOutlined /></template>
+                  <template #icon>
+                    <DeleteOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
             </a-space>
@@ -442,8 +463,8 @@ onMounted(async () => {
 
     <!-- 新增框或修改框 -->
     <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
-      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="isSubmitting"
-      @ok="handleSubmit" @cancel="handleCancel">
+      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="isSubmitting" @ok="handleSubmit"
+      @cancel="handleCancel">
       <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
@@ -464,12 +485,14 @@ onMounted(async () => {
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="数据标签" name="dataLabel" v-bind="modalStateForm.validateInfos.dataLabel">
-              <a-input v-model:value="modalState.form.dataLabel" allow-clear placeholder="请输入数据标签" :maxlength="50"></a-input>
+              <a-input v-model:value="modalState.form.dataLabel" allow-clear placeholder="请输入数据标签"
+                :maxlength="50"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="数据键值" name="dataValue" v-bind="modalStateForm.validateInfos.dataValue">
-              <a-input v-model:value="modalState.form.dataValue" allow-clear placeholder="请输入数据键值" :maxlength="50"></a-input>
+              <a-input v-model:value="modalState.form.dataValue" allow-clear placeholder="请输入数据键值"
+                :maxlength="50"></a-input>
             </a-form-item>
           </a-col>
         </a-row>

@@ -87,7 +87,7 @@ export function usePagination(options: UsePaginationOptions = {}) {
    *
    * @param deletedCount - 本次删除的数据条数
    */
-  function clampPage(deletedCount: number) {
+  function clampPage(deletedCount: number): boolean {
     const maxPage = Math.max(
       1,
       Math.ceil((pagination.total - deletedCount) / pagination.pageSize)
@@ -95,7 +95,9 @@ export function usePagination(options: UsePaginationOptions = {}) {
     if (pagination.current > maxPage) {
       pagination.current = maxPage;
       onChange?.(maxPage, pagination.pageSize);
+      return true;
     }
+    return false;
   }
 
   return {

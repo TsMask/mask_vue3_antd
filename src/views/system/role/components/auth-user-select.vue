@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { toRaw, computed, watch } from 'vue';
+import { toRaw, watch } from 'vue';
 import { message } from 'ant-design-vue';
 import type { ColumnsType } from 'ant-design-vue/es/table';
 import { authUserList } from '@/api/system/role';
@@ -27,12 +27,10 @@ const props = defineProps({
 });
 
 /** 字典数据初始化 */
-const { dict, loadDicts } = useDictSetup({
-  sysNormalDisable: 'sys_normal_disable',
-});
+const { dict, loadDicts } = useDictSetup({ keyMap: { sysNormalDisable: 'sys_normal_disable', } });
 
 /** 查询参数 */
-const { queryParams, resetQuery } = useQueryParams(
+const { queryParams, handleQuery, resetQuery } = useQueryParams(
   {
     userName: '',
     phone: '',
@@ -44,22 +42,23 @@ const { queryParams, resetQuery } = useQueryParams(
   },
   () => {
     resetPage();
+    fetchList();
   },
 );
 
 /** 分页管理 */
-const { pagination, resetPage, fixPage } = usePagination({
+const { pagination, resetPage } = usePagination({
   onChange: (page, pageSize) => {
     queryParams.pageNum = page;
     queryParams.pageSize = pageSize;
+    fetchList()
   },
 });
 
 /** 列表数据查询：仅在弹窗打开时自动查询 */
-const { listData, total, isFetching } = useListQuery({
-  queryKey: computed(() => ['authUserSelect', { ...toRaw(queryParams) }]),
+const { listData, loading, fetch: fetchList } = useListQuery({
+  paginationRef: pagination,
   queryFn: () => authUserList(toRaw(queryParams)),
-  enabled: computed(() => props.open),
 });
 
 /** 表格UI状态 */
@@ -141,7 +140,7 @@ watch(
         <a-col :lg="12" :md="12" :xs="24">
           <a-form-item>
             <a-space :size="8">
-              <a-button type="primary" @click.prevent="queryParams.pageNum = 1">
+              <a-button type="primary" @click.prevent="handleQuery">
                 <template #icon>
                   <SearchOutlined />
                 </template>
@@ -159,12 +158,12 @@ watch(
       </a-row>
     </a-form>
 
-    <a-table class="table" row-key="userId" :columns="tableColumns" :loading="isFetching"
-      :data-source="listData" :size="tableState.size" :scroll="{
+    <a-table class="table" row-key="userId" :columns="tableColumns" :loading="loading" :data-source="listData"
+      :size="tableState.size" :scroll="{
         x: tableColumns.length * 120,
         scrollToFirstRowOnChange: true,
         y: 400,
-      }" :pagination="{ ...pagination, total }" :row-selection="{
+      }" :pagination="{ ...pagination }" :row-selection="{
         type: 'checkbox',
         selectedRowKeys: tableState.selectedRowKeys,
         onChange: setSelectedRowKeys,

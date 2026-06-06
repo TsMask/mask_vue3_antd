@@ -1,38 +1,32 @@
 ﻿<script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
-import { ref, computed, toRaw, watch } from 'vue';
-import { useQueryClient } from '@tanstack/vue-query';
+import { ref, toRaw, watch } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { message } from 'ant-design-vue';
 import type { ColumnsType } from 'ant-design-vue/es/table';
 import AuthUserSelect from './components/auth-user-select.vue';
 import { authUserList, authUserChecked } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
-import { isSuccess } from '@/plugins/http-fetch';
 import useTabsStore from '@/store/modules/tabs';
 import { useTableUI } from '@/hooks/useTableUI';
 import { usePagination } from '@/hooks/usePagination';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useQueryParams } from '@/hooks/useQueryParams';
 import { useListQuery } from '@/hooks/useListQuery';
-import { useMutationAction, confirmAndRun } from '@/hooks/useMutationAction';
+import { useAction, confirmAction } from '@/hooks/useAction';
 
 const tabsStore = useTabsStore();
 const route = useRoute();
 const router = useRouter();
-const queryClient = useQueryClient();
-
 /** 获取地址栏参数 */
 const roleId = route.params && (route.params.roleId as string);
 const roleName = route.query && (route.query.roleName as string);
 
 /** 字典数据初始化 */
-const { dict, loadDicts } = useDictSetup({
-  sysNormalDisable: 'sys_normal_disable',
-});
+const { dict } = useDictSetup({ keyMap: { sysNormalDisable: 'sys_normal_disable', } });
 
 /** 查询参数 */
-const { queryParams, resetQuery } = useQueryParams(
+const { queryParams, handleQuery, resetQuery } = useQueryParams(
   {
     userName: '',
     phone: '',
@@ -44,25 +38,27 @@ const { queryParams, resetQuery } = useQueryParams(
   },
   () => {
     resetPage();
+    fetchList();
   },
 );
 
 /** 分页管理 */
-const { pagination, resetPage, fixPage } = usePagination({
+const { pagination, resetPage, clampPage } = usePagination({
   onChange: (page, pageSize) => {
     queryParams.pageNum = page;
     queryParams.pageSize = pageSize;
+    fetchList()
   },
 });
 
-/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
-const { listData, total, isFetching } = useListQuery({
-  queryKey: computed(() => ['authUserList', { ...toRaw(queryParams) }]),
+/** 列表数据查询 */
+const { listData, loading, fetch: fetchList } = useListQuery({
+  paginationRef: pagination,
   queryFn: () => authUserList(toRaw(queryParams)),
 });
 
 /** 列表刷新后清空表格选中行 */
-watch(isFetching, (newVal, oldVal) => {
+watch(loading, (newVal, oldVal) => {
   if (oldVal && !newVal) clearSelection();
 });
 
@@ -71,12 +67,11 @@ const { tableState, setTableSize, rowClassName, setSelectedRowKeys, clearSelecti
   useTableUI({ defaultSize: 'middle' });
 
 /** 表格搜索栏默认展开 */
-tableState.seached = true;
+tableState.searched = true;
 
 /** 授权用户 mutation */
-const { mutateAsync: authMutateAsync } = useMutationAction({
-  mutationFn: (data: Record<string, any>) => authUserChecked(data),
-  invalidateKeys: [['authUserList']],
+const { execute: authExecute } = useAction({
+  action: (data: Record<string, any>) => authUserChecked(data),
 });
 
 /** 表格字段列 */
@@ -116,7 +111,7 @@ async function handleAuthUserOk(userIds: string[] | number[]) {
     return;
   }
   try {
-    await authMutateAsync({
+    await authExecute({
       auth: true,
       userIds: userIds.map((v: any) => parseInt(v)),
       roleId: parseInt(roleId),
@@ -125,7 +120,7 @@ async function handleAuthUserOk(userIds: string[] | number[]) {
     selectUserVisible.value = false;
     queryParams.pageNum = 1;
   } catch {
-    // 错误已由 useMutationAction 统一处理
+    // 错误已由 useAction 统一处理
   }
 }
 
@@ -137,17 +132,20 @@ function handleRevokeAuth(userId: string | number) {
   } else {
     userIds = [Number(userId)];
   }
-  confirmAndRun({
-    content: `确认取消用户编号为 【${userId}】 的数据项授权?`,
-    action: () =>
-      authUserChecked({
+  confirmAction({
+    content: `确认取消用户编号为 【${userIds.map((v: any) => v).join(',')}】 的数据项授权?`,
+    action: () => {
+      return authUserChecked({
         auth: false,
         userIds: userIds,
         roleId: parseInt(roleId),
-      }),
+      });
+    },
     variables: undefined,
     successText: '取消授权成功',
-    invalidateKeys: [['authUserList']],
+    onSuccess() {
+      if (!clampPage(userIds.length)) fetchList();
+    },
   });
 }
 
@@ -164,7 +162,7 @@ function handleClose() {
 
 <template>
   <PageContainer>
-    <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
+    <a-card v-show="tableState.searched" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
@@ -192,7 +190,7 @@ function handleClose() {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="queryParams.pageNum = 1">
+                <a-button type="primary" @click.prevent="handleQuery">
                   <template #icon>
                     <SearchOutlined />
                   </template>
@@ -238,7 +236,7 @@ function handleClose() {
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch v-model:checked="tableState.seached" checked-children="显" un-checked-children="隐" size="small" />
+            <a-switch v-model:checked="tableState.searched" checked-children="显" un-checked-children="隐" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
@@ -246,7 +244,7 @@ function handleClose() {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="queryClient.invalidateQueries({ queryKey: ['authUserList'] })">
+            <a-button type="text" @click.prevent="fetchList">
               <template #icon>
                 <ReloadOutlined />
               </template>
@@ -272,11 +270,11 @@ function handleClose() {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="userId" :columns="tableColumns" :loading="isFetching"
-        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName" :scroll="{
+      <a-table class="table" row-key="userId" :columns="tableColumns" :loading="loading" :data-source="listData"
+        :size="tableState.size" :row-class-name="rowClassName" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
-        }" :pagination="{ ...pagination, total }" :row-selection="{
+        }" :pagination="{ ...pagination }" :row-selection="{
           type: 'checkbox',
           selectedRowKeys: tableState.selectedRowKeys,
           onChange: setSelectedRowKeys,

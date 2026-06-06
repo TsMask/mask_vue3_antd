@@ -1,7 +1,6 @@
 ﻿<script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
-import { ref, toRaw, computed, watch } from 'vue';
-import { useQueryClient } from '@tanstack/vue-query';
+import { ref, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
 import { message } from 'ant-design-vue';
@@ -27,22 +26,23 @@ import { useDictSetup } from '@/hooks/useDictSetup';
 import { useQueryParams } from '@/hooks/useQueryParams';
 import { useCrudModal } from '@/hooks/useCrudModal';
 import { useListQuery } from '@/hooks/useListQuery';
-import { useMutationAction, confirmAndRun } from '@/hooks/useMutationAction';
+import { useAction, confirmAction } from '@/hooks/useAction';
 
 const route = useRoute();
 const router = useRouter();
-const queryClient = useQueryClient();
 const routePath = route.path;
 
 const title = ref<string>(route.meta.title ?? '标题');
 
 const { dict } = useDictSetup({
-  sysJobGroup: 'sys_job_group',
-  sysJobStatus: 'sys_job_status',
-  sysJobSaveLog: 'sys_job_save_log',
+  keyMap: {
+    sysJobGroup: 'sys_job_group',
+    sysJobStatus: 'sys_job_status',
+    sysJobSaveLog: 'sys_job_save_log',
+  }
 });
 
-const { queryParams, resetQuery } = useQueryParams(
+const { queryParams, handleQuery, resetQuery } = useQueryParams(
   {
     jobName: '',
     jobGroup: undefined as string | undefined,
@@ -50,25 +50,26 @@ const { queryParams, resetQuery } = useQueryParams(
     pageNum: 1,
     pageSize: 20,
   },
-  () => resetPage(),
+  () => { resetPage(); fetchList(); },
 );
 
-const { pagination, resetPage, fixPage } = usePagination({
+const { pagination, resetPage, clampPage } = usePagination({
   onChange: (page, pageSize) => {
     queryParams.pageNum = page;
     queryParams.pageSize = pageSize;
+    fetchList()
   },
 });
 
-/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
-const { listData, total, isFetching } = useListQuery({
-  queryKey: computed(() => ['jobList', { ...toRaw(queryParams) }]),
+/** 列表数据查询 */
+const { listData, loading, fetch: fetchList } = useListQuery({
+  paginationRef: pagination,
   queryFn: () => listJob(toRaw(queryParams)),
 });
 
 const { tableState, setTableSize, rowClassName, setSelectedRowKeys } = useTableUI();
 
-const { modal, formCtl, openView, openEdit, close } = useCrudModal({
+const { modal, formCtl, openView, openEdit, close: handleCancel, } = useCrudModal({
   initForm: () => ({
     jobId: undefined as string | number | undefined,
     jobName: '',
@@ -92,11 +93,14 @@ const { modal, formCtl, openView, openEdit, close } = useCrudModal({
 });
 
 /** 新增/编辑 mutation */
-const { mutateAsync: submitMutateAsync, isLoading: isSubmitting } = useMutationAction({
-  mutationFn: (form: Record<string, any>) =>
+const { execute: submitExecute, loading: isSubmitting } = useAction({
+  action: (form: Record<string, any>) =>
     form.jobId ? updateJob(form) : addJob(form),
   successText: '操作成功',
-  invalidateKeys: [['jobList']],
+  onSuccess() {
+    handleCancel();
+    fetchList();
+  }
 });
 
 const cronVisible = ref(false);
@@ -119,17 +123,16 @@ function handleCronOk(opt: boolean, cronStr?: string) {
 
 function handleStatusChange(row: Record<string, string>) {
   const text = row.status === '1' ? dict.sysJobStatus[0]?.label : dict.sysJobStatus[1]?.label;
-  confirmAndRun({
+  confirmAction({
     content: `确定要${text} ${row.jobName} 任务吗?`,
     action: () => changeStatus(row.jobId, row.statusFlag),
     variables: undefined,
     successText: `${row.jobName} ${text}成功`,
-    invalidateKeys: [['jobList']],
   });
 }
 
 function handleRunOnce(row: Record<string, string>) {
-  confirmAndRun({
+  confirmAction({
     content: `确定要立即执行一次 【${row.jobName}】 任务吗?`,
     action: () => runJob(row.jobId),
     variables: undefined,
@@ -139,18 +142,20 @@ function handleRunOnce(row: Record<string, string>) {
 
 function handleDelete(jobId: string = '0') {
   if (jobId === '0') jobId = tableState.selectedRowKeys.join(',');
-  confirmAndRun({
+  confirmAction({
     content: `确认删除定时任务编号为 【${jobId}】 任务吗?`,
     action: () => delJob(jobId),
     variables: undefined,
     successText: '删除成功',
-    onSuccess: () => fixPage(tableState.selectedRowKeys.length || 1, total.value),
-    invalidateKeys: [['jobList']],
+    onSuccess() {
+      const deletedCount = String(jobId).split(",").length;
+      if (!clampPage(deletedCount)) fetchList();
+    },
   });
 }
 
 function handleResetQueue() {
-  confirmAndRun({
+  confirmAction({
     content: '确定要重置并刷新调度任务吗?',
     action: () => resetJob(),
     variables: undefined,
@@ -159,7 +164,7 @@ function handleResetQueue() {
 }
 
 function handleExport() {
-  confirmAndRun({
+  confirmAction({
     content: '确认根据搜索条件导出xlsx表格文件吗?',
     action: () => exportJob(toRaw(queryParams)),
     variables: undefined,
@@ -179,12 +184,7 @@ async function handleSubmit() {
     message.error({ content: `请正确填写 ${e.errorFields.length} 处必填信息！`, duration: 3 });
     return;
   }
-  try {
-    await submitMutateAsync(toRaw(modal.form));
-    close();
-  } catch {
-    // 错误已由 useMutationAction 统一处理
-  }
+  await submitExecute(toRaw(modal.form));
 }
 </script>
 
@@ -194,7 +194,7 @@ async function handleSubmit() {
       <a-typography-paragraph> 单例任务，不支持并发 </a-typography-paragraph>
     </template>
 
-    <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
+    <a-card v-show="tableState.searched" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
@@ -219,12 +219,16 @@ async function handleSubmit() {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="resetQuery">
-                  <template #icon><SearchOutlined /></template>
+                <a-button type="primary" @click.prevent="handleQuery">
+                  <template #icon>
+                    <SearchOutlined />
+                  </template>
                   搜索
                 </a-button>
                 <a-button type="default" @click.prevent="resetQuery">
-                  <template #icon><ClearOutlined /></template>
+                  <template #icon>
+                    <ClearOutlined />
+                  </template>
                   重置
                 </a-button>
               </a-space>
@@ -239,24 +243,34 @@ async function handleSubmit() {
         <a-space :size="8" align="center">
           <a-button type="primary" @click.prevent="openEdit(undefined, getJob, '添加任务', '修改任务')"
             v-perms:has="['monitor:job:add']">
-            <template #icon><PlusOutlined /></template>
+            <template #icon>
+              <PlusOutlined />
+            </template>
             新建
           </a-button>
           <a-button type="default" danger :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="handleDelete()" v-perms:has="['monitor:job:remove']">
-            <template #icon><DeleteOutlined /></template>
+            <template #icon>
+              <DeleteOutlined />
+            </template>
             删除
           </a-button>
           <a-button type="dashed" @click.prevent="handleExport()" v-perms:has="['monitor:job:export']">
-            <template #icon><ExportOutlined /></template>
+            <template #icon>
+              <ExportOutlined />
+            </template>
             导出
           </a-button>
           <a-button type="default" @click.prevent="handleViewLog()" v-perms:has="['monitor:job:query']">
-            <template #icon><ContainerOutlined /></template>
+            <template #icon>
+              <ContainerOutlined />
+            </template>
             日志
           </a-button>
           <a-button type="dashed" danger @click.prevent="handleResetQueue" v-perms:has="['monitor:job:remove']">
-            <template #icon><SyncOutlined /></template>
+            <template #icon>
+              <SyncOutlined />
+            </template>
             重置队列
           </a-button>
         </a-space>
@@ -266,7 +280,7 @@ async function handleSubmit() {
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch v-model:checked="tableState.seached" checked-children="显" un-checked-children="隐" size="small" />
+            <a-switch v-model:checked="tableState.searched" checked-children="显" un-checked-children="隐" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
@@ -274,15 +288,19 @@ async function handleSubmit() {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="queryClient.invalidateQueries({ queryKey: ['jobList'] })">
-              <template #icon><ReloadOutlined /></template>
+            <a-button type="text" @click.prevent="fetchList">
+              <template #icon>
+                <ReloadOutlined />
+              </template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon><ColumnHeightOutlined /></template>
+                <template #icon>
+                  <ColumnHeightOutlined />
+                </template>
               </a-button>
               <template #overlay>
                 <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
@@ -296,9 +314,9 @@ async function handleSubmit() {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="jobId" :columns="tableColumns" :loading="isFetching"
-        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName"
-        :pagination="{ ...pagination, total }" :scroll="{ x: tableColumns.length * 120, scrollToFirstRowOnChange: true }"
+      <a-table class="table" row-key="jobId" :columns="tableColumns" :loading="loading" :data-source="listData"
+        :size="tableState.size" :row-class-name="rowClassName" :pagination="{ ...pagination }"
+        :scroll="{ x: tableColumns.length * 120, scrollToFirstRowOnChange: true }"
         :row-selection="{ type: 'checkbox', selectedRowKeys: tableState.selectedRowKeys, onChange: setSelectedRowKeys }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'jobGroup'">
@@ -320,32 +338,42 @@ async function handleSubmit() {
                 <template #title>查看详情</template>
                 <a-button type="link" @click.prevent="openView(record.jobId, getJob, '任务信息')"
                   v-perms:has="['monitor:job:query']">
-                  <template #icon><ProfileOutlined /></template>
+                  <template #icon>
+                    <ProfileOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
                 <a-button type="link" @click.prevent="openEdit(record.jobId, getJob, '添加任务', '修改任务')"
                   v-perms:has="['monitor:job:edit']">
-                  <template #icon><FormOutlined /></template>
+                  <template #icon>
+                    <FormOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>删除</template>
                 <a-button type="link" @click.prevent="handleDelete(record.jobId)" v-perms:has="['monitor:job:remove']">
-                  <template #icon><DeleteOutlined /></template>
+                  <template #icon>
+                    <DeleteOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>执行一次</template>
                 <a-button type="link" @click.prevent="handleRunOnce(record)" v-perms:has="['monitor:job:changeStatus']">
-                  <template #icon><RocketOutlined /></template>
+                  <template #icon>
+                    <RocketOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>任务日志</template>
                 <a-button type="link" @click.prevent="handleViewLog(record.jobId)" v-perms:has="['monitor:job:log']">
-                  <template #icon><ContainerOutlined /></template>
+                  <template #icon>
+                    <ContainerOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
             </a-space>
@@ -355,7 +383,7 @@ async function handleSubmit() {
     </a-card>
 
     <!-- 详情框 -->
-    <ProModal :drag="true" :width="800" :open="modal.visibleByView" :title="modal.title" @cancel="close">
+    <ProModal :drag="true" :width="800" :open="modal.visibleByView" :title="modal.title" @cancel="handleCancel">
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
@@ -414,14 +442,14 @@ async function handleSubmit() {
         </a-form-item>
       </a-form>
       <template #footer>
-        <a-button key="cancel" @click="close">关闭</a-button>
+        <a-button key="cancel" @click="handleCancel">关闭</a-button>
       </template>
     </ProModal>
 
     <!-- 新增框或修改框 -->
     <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
       :open="modal.visibleByEdit" :title="modal.title" :confirm-loading="isSubmitting" @ok="handleSubmit"
-      @cancel="close">
+      @cancel="handleCancel">
       <a-form name="modalForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
@@ -506,7 +534,9 @@ async function handleSubmit() {
             </template>
             <template #addonAfter>
               <a-button type="text" size="small" @click.prevent="handleCronOk(true)">
-                <template #icon><FieldTimeOutlined /></template>
+                <template #icon>
+                  <FieldTimeOutlined />
+                </template>
                 生成表达式
               </a-button>
             </template>

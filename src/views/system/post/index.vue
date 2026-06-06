@@ -1,7 +1,6 @@
 ﻿<script setup lang="ts">
 import { useRoute } from "vue-router";
-import { ref, toRaw, computed, watch } from "vue";
-import { useQueryClient } from "@tanstack/vue-query";
+import { ref, toRaw } from "vue";
 import { PageContainer } from "antdv-pro-layout";
 import { ProModal } from "antdv-pro-modal";
 import { message } from "ant-design-vue";
@@ -15,25 +14,24 @@ import { useTableUI } from "@/hooks/useTableUI";
 import { useCrudModal } from "@/hooks/useCrudModal";
 import { useDictSetup } from "@/hooks/useDictSetup";
 import { useListQuery } from "@/hooks/useListQuery";
-import { useMutationAction, confirmAndRun } from "@/hooks/useMutationAction";
+import { useAction, confirmAction } from "@/hooks/useAction";
 
 const route = useRoute();
-const queryClient = useQueryClient();
 const title = ref<string>(route.meta.title ?? "标题");
 
-const { dict } = useDictSetup({ sysNormalDisable: "sys_normal_disable" });
+const { dict } = useDictSetup({ keyMap: { sysNormalDisable: "sys_normal_disable" } });
 
-const { queryParams, resetQuery } = useQueryParams(
+const { queryParams, handleQuery, resetQuery } = useQueryParams(
   { postCode: "", postName: "", statusFlag: undefined as string | undefined, pageNum: 1, pageSize: 20 },
-  () => { resetPage(); },
+  () => { resetPage(); fetchList(); },
 );
 
-const { pagination, resetPage, fixPage } = usePagination({
-  onChange: (page, pageSize) => { queryParams.pageNum = page; queryParams.pageSize = pageSize; },
+const { pagination, resetPage, clampPage } = usePagination({
+  onChange: (page, pageSize) => { queryParams.pageNum = page; queryParams.pageSize = pageSize; fetchList(); },
 });
 
-const { listData, total, isFetching, refetch } = useListQuery({
-  queryKey: computed(() => ["postList", { ...queryParams }]),
+const { listData, loading, fetch: fetchList } = useListQuery({
+  paginationRef: pagination,
   queryFn: () => listPost(toRaw(queryParams)),
 });
 
@@ -50,11 +48,13 @@ const { modal: modalState, formCtl: modalStateForm, openView, openEdit, close: h
   },
 });
 
-const { mutate: submitMutate, isLoading: isSubmitting } = useMutationAction({
-  mutationFn: (form: Record<string, any>) => form.postId ? updatePost(form) : addPost(form),
+const { execute: submitExecute, loading: isSubmitting } = useAction({
+  action: (form: Record<string, any>) => form.postId ? updatePost(form) : addPost(form),
   successText: "操作成功",
-  invalidateKeys: [["postList"]],
-  onSuccess() { handleCancel(); queryParams.pageNum = 1; },
+  onSuccess() {
+    handleCancel();
+    fetchList();
+  },
 });
 
 const tableColumns: ColumnsType = [
@@ -71,20 +71,29 @@ function handleView(postId: string | number) { openView(postId, getPost, "岗位
 function handleEdit(postId?: string | number) { openEdit(postId, getPost, "添加岗位", "修改岗位"); }
 
 async function handleSubmit() {
-  try { await modalStateForm.validate(); } catch (e: any) { message.error({ content: `请正确填写 ${e.errorFields.length} 处必填信息！`, duration: 3 }); return; }
-  submitMutate(toRaw(modalState.form));
+  try {
+    await modalStateForm.validate();
+  } catch (e: any) {
+    message.error({ content: `请正确填写 ${e.errorFields.length} 处必填信息！`, duration: 3 });
+    return;
+  }
+  submitExecute(toRaw(modalState.form));
 }
 
 function handleDelete(postId: string = "0") {
   if (postId === "0") postId = tableState.selectedRowKeys.join(",");
-  confirmAndRun({
+  confirmAction({
     content: `确认删除岗位编号为【${postId}】的数据项?`,
-    action: (id) => delPost(id), variables: postId, successText: "删除成功", onSuccess: () => { if (queryParams.pageNum > 1 && listData.value.length <= Math.max(tableState.selectedRowKeys.length, 1)) queryParams.pageNum--; }, invalidateKeys: [["postList"]],
+    action: (id) => delPost(id), variables: postId, successText: "删除成功",
+    onSuccess() {
+      const deletedCount = String(postId).split(",").length;
+      if (!clampPage(deletedCount)) fetchList();
+    },
   });
 }
 
 function handleExport() {
-  confirmAndRun({
+  confirmAction({
     content: "确认根据搜索条件导出xlsx表格文件吗",
     action: () => exportPost(toRaw(queryParams)), variables: undefined as any, successText: "已导出完成",
     onSuccess: (res) => { saveAs(res.data, `post_${Date.now()}.xlsx`); },
@@ -97,54 +106,40 @@ function handleExport() {
       <a-typography-paragraph> 给予用户岗位标记 </a-typography-paragraph>
     </template>
 
-    <a-card
-      v-show="tableState.seached"
-      :bordered="false"
-      :body-style="{ marginBottom: '24px', paddingBottom: 0 }"
-    >
+    <a-card v-show="tableState.searched" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <!-- 表格搜索栏 -->
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="岗位编码" name="postCode">
-              <a-input
-                v-model:value="queryParams.postCode"
-                allow-clear
-                placeholder="请输入岗位编码"
-              ></a-input>
+              <a-input v-model:value="queryParams.postCode" allow-clear placeholder="请输入岗位编码"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="岗位名称" name="postName">
-              <a-input
-                v-model:value="queryParams.postName"
-                allow-clear
-                placeholder="请输入岗位名称"
-              ></a-input>
+              <a-input v-model:value="queryParams.postName" allow-clear placeholder="请输入岗位名称"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="岗位状态" name="statusFlag">
-              <a-select
-                v-model:value="queryParams.statusFlag"
-                allow-clear
-                placeholder="请选择"
-                :options="dict.sysNormalDisable"
-              >
+              <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择"
+                :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="refetch">
-                  <template #icon><SearchOutlined /></template>
-                  搜索</a-button
-                >
+                <a-button type="primary" @click.prevent="handleQuery">
+                  <template #icon>
+                    <SearchOutlined />
+                  </template>
+                  搜索</a-button>
                 <a-button type="default" @click.prevent="resetQuery">
-                  <template #icon><ClearOutlined /></template>
-                  重置</a-button
-                >
+                  <template #icon>
+                    <ClearOutlined />
+                  </template>
+                  重置</a-button>
               </a-space>
             </a-form-item>
           </a-col>
@@ -156,30 +151,23 @@ function handleExport() {
       <!-- 插槽-卡片左侧 -->
       <template #title>
         <a-space :size="8" align="center">
-          <a-button
-            type="primary"
-            @click.prevent="handleEdit()"
-            v-perms:has="['system:post:add']"
-          >
-            <template #icon><PlusOutlined /></template>
+          <a-button type="primary" @click.prevent="handleEdit()" v-perms:has="['system:post:add']">
+            <template #icon>
+              <PlusOutlined />
+            </template>
             新建
           </a-button>
-          <a-button
-            type="default"
-            danger
-            :disabled="tableState.selectedRowKeys.length <= 0"
-            @click.prevent="handleDelete()"
-            v-perms:has="['system:post:remove']"
-          >
-            <template #icon><DeleteOutlined /></template>
+          <a-button type="default" danger :disabled="tableState.selectedRowKeys.length <= 0"
+            @click.prevent="handleDelete()" v-perms:has="['system:post:remove']">
+            <template #icon>
+              <DeleteOutlined />
+            </template>
             删除
           </a-button>
-          <a-button
-            type="dashed"
-            @click.prevent="handleExport()"
-            v-perms:has="['system:post:export']"
-          >
-            <template #icon><ExportOutlined /></template>
+          <a-button type="dashed" @click.prevent="handleExport()" v-perms:has="['system:post:export']">
+            <template #icon>
+              <ExportOutlined />
+            </template>
             导出
           </a-button>
         </a-space>
@@ -190,39 +178,30 @@ function handleExport() {
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch
-              v-model:checked="tableState.seached"
-              checked-children="是"
-              un-checked-children="否"
-              size="small"
-            />
+            <a-switch v-model:checked="tableState.searched" checked-children="是" un-checked-children="否" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
-            <a-switch
-              v-model:checked="tableState.striped"
-              checked-children="开"
-              un-checked-children="关"
-              size="small"
-            />
+            <a-switch v-model:checked="tableState.striped" checked-children="开" un-checked-children="关" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="refetch">
-              <template #icon><ReloadOutlined /></template>
+            <a-button type="text" @click.prevent="fetchList">
+              <template #icon>
+                <ReloadOutlined />
+              </template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon><ColumnHeightOutlined /></template>
+                <template #icon>
+                  <ColumnHeightOutlined />
+                </template>
               </a-button>
               <template #overlay>
-                <a-menu
-                  :selected-keys="[tableState.size as string]"
-                  @click="setTableSize"
-                >
+                <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
                   <a-menu-item key="default">默认</a-menu-item>
                   <a-menu-item key="middle">中等</a-menu-item>
                   <a-menu-item key="small">紧凑</a-menu-item>
@@ -234,62 +213,43 @@ function handleExport() {
       </template>
 
       <!-- 表格列表 -->
-      <a-table
-        class="table"
-        row-key="postId"
-        :columns="tableColumns"
-        :loading="isFetching"
-        :data-source="listData"
-        :size="tableState.size"
-        :row-class-name="rowClassName"
-        :pagination="pagination"
-        :scroll="{
+      <a-table class="table" row-key="postId" :columns="tableColumns" :loading="loading" :data-source="listData"
+        :size="tableState.size" :row-class-name="rowClassName" :pagination="pagination" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
-        }"
-        :row-selection="{
+        }" :row-selection="{
           type: 'checkbox',
           selectedRowKeys: tableState.selectedRowKeys,
           onChange: setSelectedRowKeys,
-        }"
-      >
+        }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'statusFlag'">
-            <DictTag
-              :options="dict.sysNormalDisable"
-              :value="record.statusFlag"
-            />
+            <DictTag :options="dict.sysNormalDisable" :value="record.statusFlag" />
           </template>
           <template v-if="column.key === 'postId'">
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
-                <a-button
-                  type="link"
-                  @click.prevent="handleView(record.postId)"
-                  v-perms:has="['system:post:query']"
-                >
-                  <template #icon><ProfileOutlined /></template>
+                <a-button type="link" @click.prevent="handleView(record.postId)" v-perms:has="['system:post:query']">
+                  <template #icon>
+                    <ProfileOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
-                <a-button
-                  type="link"
-                  @click.prevent="handleEdit(record.postId)"
-                  v-perms:has="['system:post:edit']"
-                >
-                  <template #icon><FormOutlined /></template>
+                <a-button type="link" @click.prevent="handleEdit(record.postId)" v-perms:has="['system:post:edit']">
+                  <template #icon>
+                    <FormOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>删除</template>
-                <a-button
-                  type="link"
-                  @click.prevent="handleDelete(record.postId)"
-                  v-perms:has="['system:post:remove']"
-                >
-                  <template #icon><DeleteOutlined /></template>
+                <a-button type="link" @click.prevent="handleDelete(record.postId)" v-perms:has="['system:post:remove']">
+                  <template #icon>
+                    <DeleteOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
             </a-space>
@@ -299,13 +259,8 @@ function handleExport() {
     </a-card>
 
     <!-- 详情框 -->
-    <ProModal
-      :drag="true"
-      :width="800"
-      :open="modalState.visibleByView"
-      :title="modalState.title"
-      @cancel="handleCancel"
-    >
+    <ProModal :drag="true" :width="800" :open="modalState.visibleByView" :title="modalState.title"
+      @cancel="handleCancel">
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
@@ -329,10 +284,7 @@ function handleExport() {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="岗位状态" name="statusFlag">
-              <DictTag
-                :options="dict.sysNormalDisable"
-                :value="modalState.form.statusFlag"
-              />
+              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.statusFlag" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -348,18 +300,9 @@ function handleExport() {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item
-          label="岗位说明"
-          name="remark"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-textarea
-            :value="modalState.form.remark"
-            :auto-size="{ minRows: 2, maxRows: 6 }"
-            :disabled="true"
-            style="color: rgba(0, 0, 0, 0.85)"
-          />
+        <a-form-item label="岗位说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea :value="modalState.form.remark" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
+            style="color: rgba(0, 0, 0, 0.85)" />
         </a-form-item>
       </a-form>
       <template #footer>
@@ -368,47 +311,21 @@ function handleExport() {
     </ProModal>
 
     <!-- 新增框或修改框 -->
-    <ProModal
-      :drag="true"
-      :destroyOnClose="true"
-      :width="800"
-      :keyboard="false"
-      :mask-closable="false"
-      :open="modalState.visibleByEdit"
-      :title="modalState.title"
-      :confirm-loading="isSubmitting"
-      @ok="handleSubmit"
-      @cancel="handleCancel"
-    >
-      <a-form
-        name="modalStateForm"
-        layout="horizontal"
-        :label-col="{ span: 6 }"
-        :label-wrap="true"
-      >
+    <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
+      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="isSubmitting" @ok="handleSubmit"
+      @cancel="handleCancel">
+      <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="岗位编码"
-              name="postCode"
-              v-bind="modalStateForm.validateInfos.postCode"
-            >
-              <a-input
-                v-model:value="modalState.form.postCode"
-                allow-clear
-                placeholder="请输入岗位编码"
-                :maxlength="50"
-              ></a-input>
+            <a-form-item label="岗位编码" name="postCode" v-bind="modalStateForm.validateInfos.postCode">
+              <a-input v-model:value="modalState.form.postCode" allow-clear placeholder="请输入岗位编码"
+                :maxlength="50"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="岗位状态" name="statusFlag">
-              <a-select
-                v-model:value="modalState.form.statusFlag"
-                default-value="0"
-                placeholder="岗位状态"
-                :options="dict.sysNormalDisable"
-              >
+              <a-select v-model:value="modalState.form.statusFlag" default-value="0" placeholder="岗位状态"
+                :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
           </a-col>
@@ -416,45 +333,22 @@ function handleExport() {
 
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="岗位名称"
-              name="postName"
-              v-bind="modalStateForm.validateInfos.postName"
-            >
-              <a-input
-                v-model:value="modalState.form.postName"
-                allow-clear
-                placeholder="请输入岗位名称"
-                :maxlength="50"
-              ></a-input>
+            <a-form-item label="岗位名称" name="postName" v-bind="modalStateForm.validateInfos.postName">
+              <a-input v-model:value="modalState.form.postName" allow-clear placeholder="请输入岗位名称"
+                :maxlength="50"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="岗位顺序" name="postSort">
-              <a-input-number
-                v-model:value="modalState.form.postSort"
-                :min="0"
-                :max="9999"
-                :step="1"
-                placeholder="排序值"
-              ></a-input-number>
+              <a-input-number v-model:value="modalState.form.postSort" :min="0" :max="9999" :step="1"
+                placeholder="排序值"></a-input-number>
             </a-form-item>
           </a-col>
         </a-row>
 
-        <a-form-item
-          label="岗位说明"
-          name="remark"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-textarea
-            v-model:value="modalState.form.remark"
-            :auto-size="{ minRows: 2, maxRows: 6 }"
-            :maxlength="200"
-            :show-count="true"
-            placeholder="请输入岗位说明"
-          />
+        <a-form-item label="岗位说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea v-model:value="modalState.form.remark" :auto-size="{ minRows: 2, maxRows: 6 }" :maxlength="200"
+            :show-count="true" placeholder="请输入岗位说明" />
         </a-form-item>
       </a-form>
     </ProModal>
@@ -470,4 +364,3 @@ function handleExport() {
   padding: 0 24px;
 }
 </style>
-

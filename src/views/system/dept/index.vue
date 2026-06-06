@@ -1,7 +1,6 @@
 ﻿<script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { ref, reactive, computed, toRaw, watch } from 'vue';
-import { useQueryClient } from '@tanstack/vue-query';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
 import { message, Form } from 'ant-design-vue';
@@ -22,24 +21,20 @@ import { useTableUI } from '@/hooks/useTableUI';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useQueryParams } from '@/hooks/useQueryParams';
 import { useListQuery } from '@/hooks/useListQuery';
-import { useMutationAction, confirmAndRun } from '@/hooks/useMutationAction';
+import { useAction, confirmAction } from '@/hooks/useAction';
 
 const route = useRoute();
-const queryClient = useQueryClient();
-
 /** 路由标题 */
 const title = ref<string>(route.meta.title ?? '标题');
 
 /** 字典数据初始化 */
-const { dict } = useDictSetup({
-  sysNormalDisable: 'sys_normal_disable',
-});
+const { dict } = useDictSetup({ keyMap: { sysNormalDisable: 'sys_normal_disable', } });
 
 /** 查询参数 */
-const { queryParams, resetQuery } = useQueryParams({
+const { queryParams, handleQuery, resetQuery } = useQueryParams({
   deptName: '',
   statusFlag: undefined as string | undefined,
-});
+}, () => { fetchList(); });
 
 /** 表格UI状态 */
 const { tableState, setTableSize, rowClassName } = useTableUI();
@@ -51,16 +46,15 @@ const expandedRowKeys: (string | number)[] = reactive([]);
 /** 全部展开时的key列表 */
 let globalExpandedKeys: (string | number)[] = [];
 
-/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
-const { listData, isFetching } = useListQuery({
-  queryKey: computed(() => ['deptList', { ...toRaw(queryParams) }]),
+/** 列表数据查询 */
+const { listData, loading, fetch: fetchList } = useListQuery({
   queryFn: () => listDept(toRaw(queryParams)),
 });
 
 /** 解析为树结构（响应式，listData 变化自动重算） */
 const treeData = computed(() => parseDataToTree(listData.value, 'deptId'));
 
-/** 弹窗表单中的上级部门树（首次加载时初始化展开状态） */
+/** 弹窗表单中的上级部门树 */
 const treeDataForModal = computed(() => treeData.value);
 
 /** 首次加载后初始化展开状态 */
@@ -79,7 +73,7 @@ const tableColumns: ColumnsType = [
   { title: '部门编号', dataIndex: 'deptId', align: 'left', width: 100 },
   { title: '部门排序', dataIndex: 'deptSort', align: 'left', width: 100 },
   {
-    title: '岗位状态', dataIndex: 'statusFlag', key: 'statusFlag', align: 'left', width: 100,
+    title: '部门状态', dataIndex: 'statusFlag', key: 'statusFlag', align: 'left', width: 100,
   },
   {
     title: '创建时间', dataIndex: 'createTime', align: 'left', width: 150,
@@ -140,10 +134,13 @@ const modalFormCtl = Form.useForm(
 );
 
 /** 新增/编辑操作 */
-const { mutateAsync: submitMutateAsync, isLoading: isSubmitting } = useMutationAction({
-  mutationFn: (form: any) => form.deptId ? updateDept(form) : addDept(form),
+const { execute: submitExecute, loading: isSubmitting } = useAction({
+  action: (form: any) => form.deptId ? updateDept(form) : addDept(form),
   successText: '操作成功',
-  invalidateKeys: [['deptList']],
+  onSuccess() {
+    handleCloseModal();
+    fetchList()
+  }
 });
 
 /** 打开详情弹窗 */
@@ -213,12 +210,7 @@ async function handleSubmit() {
     message.error({ content: `请正确填写 ${e.errorFields.length} 处必填信息！`, duration: 3 });
     return;
   }
-  try {
-    await submitMutateAsync(toRaw(modalForm));
-    handleCloseModal();
-  } catch {
-    // 错误已由 useMutationAction 统一处理
-  }
+  await submitExecute(toRaw(modalForm));
 }
 
 /** 关闭弹窗 */
@@ -230,12 +222,12 @@ function handleCloseModal() {
 
 /** 删除部门 */
 function handleDelete(deptId: string | number) {
-  confirmAndRun({
+  confirmAction({
     content: `确认删除部门编号为 【${deptId}】 的数据项?`,
     action: () => delDept(deptId),
     variables: undefined,
     successText: '删除成功',
-    invalidateKeys: [['deptList']],
+    onSuccess: () => fetchList(),
   });
 }
 </script>
@@ -246,7 +238,7 @@ function handleDelete(deptId: string | number) {
       <a-typography-paragraph> 给予用户部门标记 </a-typography-paragraph>
     </template>
 
-    <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
+    <a-card v-show="tableState.searched" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
@@ -255,7 +247,7 @@ function handleDelete(deptId: string | number) {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="岗位状态" name="statusFlag">
+            <a-form-item label="部门状态" name="statusFlag">
               <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择"
                 :options="dict.sysNormalDisable">
               </a-select>
@@ -264,12 +256,16 @@ function handleDelete(deptId: string | number) {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="resetQuery">
-                  <template #icon><SearchOutlined /></template>
+                <a-button type="primary" @click.prevent="handleQuery">
+                  <template #icon>
+                    <SearchOutlined />
+                  </template>
                   搜索
                 </a-button>
                 <a-button type="default" @click.prevent="resetQuery">
-                  <template #icon><ClearOutlined /></template>
+                  <template #icon>
+                    <ClearOutlined />
+                  </template>
                   重置
                 </a-button>
               </a-space>
@@ -283,7 +279,9 @@ function handleDelete(deptId: string | number) {
       <template #title>
         <a-space :size="8" align="center">
           <a-button type="primary" @click.prevent="handleOpenEdit()" v-perms:has="['system:dept:add']">
-            <template #icon><PlusOutlined /></template>
+            <template #icon>
+              <PlusOutlined />
+            </template>
             新建
           </a-button>
         </a-space>
@@ -298,7 +296,7 @@ function handleDelete(deptId: string | number) {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch v-model:checked="tableState.seached" checked-children="显" un-checked-children="隐" size="small" />
+            <a-switch v-model:checked="tableState.searched" checked-children="显" un-checked-children="隐" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
@@ -306,15 +304,19 @@ function handleDelete(deptId: string | number) {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="queryClient.invalidateQueries({ queryKey: ['deptList'] })">
-              <template #icon><ReloadOutlined /></template>
+            <a-button type="text" @click.prevent="fetchList">
+              <template #icon>
+                <ReloadOutlined />
+              </template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon><ColumnHeightOutlined /></template>
+                <template #icon>
+                  <ColumnHeightOutlined />
+                </template>
               </a-button>
               <template #overlay>
                 <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
@@ -328,11 +330,10 @@ function handleDelete(deptId: string | number) {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="deptId" :columns="tableColumns" :loading="isFetching"
-        :data-source="treeData" :size="tableState.size" :row-class-name="rowClassName" :pagination="false"
-        :scroll="{ x: tableColumns.length * 120, scrollToFirstRowOnChange: true }"
-        children-column-name="children" :expanded-row-keys="expandedRowKeys"
-        @expandedRowsChange="handleExpandedRowsChange">
+      <a-table class="table" row-key="deptId" :columns="tableColumns" :loading="loading" :data-source="treeData"
+        :size="tableState.size" :row-class-name="rowClassName" :pagination="false"
+        :scroll="{ x: tableColumns.length * 120, scrollToFirstRowOnChange: true }" children-column-name="children"
+        :expanded-row-keys="expandedRowKeys" @expandedRowsChange="handleExpandedRowsChange">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'statusFlag'">
             <DictTag :options="dict.sysNormalDisable" :value="record.statusFlag" />
@@ -342,25 +343,34 @@ function handleDelete(deptId: string | number) {
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
                 <a-button type="link" @click.prevent="handleView(record.deptId)" v-perms:has="['system:dept:query']">
-                  <template #icon><ProfileOutlined /></template>
+                  <template #icon>
+                    <ProfileOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
                 <a-button type="link" @click.prevent="handleOpenEdit(record.deptId)" v-perms:has="['system:dept:edit']">
-                  <template #icon><FormOutlined /></template>
+                  <template #icon>
+                    <FormOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight" v-if="record.parentId !== 0">
                 <template #title>删除</template>
                 <a-button type="link" @click.prevent="handleDelete(record.deptId)" v-perms:has="['system:dept:remove']">
-                  <template #icon><DeleteOutlined /></template>
+                  <template #icon>
+                    <DeleteOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight" v-if="record.statusFlag !== '0'">
                 <template #title>新增子部门</template>
-                <a-button type="link" @click.prevent="handleOpenEdit(undefined, record.deptId)" v-perms:has="['system:dept:add']">
-                  <template #icon><PlusOutlined /></template>
+                <a-button type="link" @click.prevent="handleOpenEdit(undefined, record.deptId)"
+                  v-perms:has="['system:dept:add']">
+                  <template #icon>
+                    <PlusOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
             </a-space>
@@ -377,8 +387,7 @@ function handleDelete(deptId: string | number) {
         </a-form-item>
         <a-form-item label="上级部门" name="parentId" :label-col="{ span: 3 }" :label-wrap="true">
           <a-tree-select :value="modalForm.parentId" placeholder="上级部门" disabled :tree-data="modalTreeData"
-            :field-names="{ children: 'children', label: 'deptName', value: 'deptId' }"
-            tree-node-label-prop="deptName">
+            :field-names="{ children: 'children', label: 'deptName', value: 'deptId' }" tree-node-label-prop="deptName">
             <template #suffixIcon></template>
           </a-tree-select>
         </a-form-item>
@@ -433,15 +442,16 @@ function handleDelete(deptId: string | number) {
         </a-form-item>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位状态" name="statusFlag">
-              <a-select v-model:value="modalForm.statusFlag" default-value="0" placeholder="岗位状态"
+            <a-form-item label="部门状态" name="statusFlag">
+              <a-select v-model:value="modalForm.statusFlag" default-value="0" placeholder="部门状态"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="显示顺序" name="deptSort">
-              <a-input-number v-model:value="modalForm.deptSort" :min="0" :max="9999" :step="1" placeholder="排序值"></a-input-number>
+              <a-input-number v-model:value="modalForm.deptSort" :min="0" :max="9999" :step="1"
+                placeholder="排序值"></a-input-number>
             </a-form-item>
           </a-col>
         </a-row>

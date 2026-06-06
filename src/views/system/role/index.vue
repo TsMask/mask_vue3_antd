@@ -1,7 +1,6 @@
 ﻿<script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
-import { reactive, ref, computed, watch, toRaw } from 'vue';
-import { useQueryClient } from '@tanstack/vue-query';
+import { reactive, ref, watch, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
 import { message, Modal, Form } from 'ant-design-vue';
@@ -36,27 +35,24 @@ import { usePagination } from '@/hooks/usePagination';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useQueryParams } from '@/hooks/useQueryParams';
 import { useListQuery } from '@/hooks/useListQuery';
-import { useMutationAction, confirmAndRun } from '@/hooks/useMutationAction';
+import { useAction, confirmAction } from '@/hooks/useAction';
 import useUserStore from '@/store/modules/user';
 
 const userStore = useUserStore();
 const route = useRoute();
 const router = useRouter();
-const queryClient = useQueryClient();
 const routePath = route.path;
 
 /** 路由标题 */
 const title = ref<string>(route.meta.title ?? '标题');
 
 /** 字典数据初始化 */
-const { dict } = useDictSetup({
-  sysNormalDisable: 'sys_normal_disable',
-});
+const { dict } = useDictSetup({ keyMap: { sysNormalDisable: 'sys_normal_disable', } });
 
 /** 开始结束时间 */
 const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
-/** 同步日期范围到查询参数（在 queryKey 计算时调用） */
+/** 同步日期范围到查询参数（查询前调用） */
 function syncDateRange() {
   if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
     queryParams.beginTime = queryRangePicker.value[0].startOf('day').valueOf();
@@ -68,7 +64,7 @@ function syncDateRange() {
 }
 
 /** 查询参数 */
-const { queryParams, resetQuery } = useQueryParams(
+const { queryParams, handleQuery, resetQuery } = useQueryParams(
   {
     roleName: '',
     roleKey: '',
@@ -81,28 +77,27 @@ const { queryParams, resetQuery } = useQueryParams(
   () => {
     queryRangePicker.value = undefined;
     resetPage();
+    fetchList();
   },
 );
 
 /** 分页管理 */
-const { pagination, resetPage, fixPage } = usePagination({
+const { pagination, resetPage, clampPage } = usePagination({
   onChange: (page, pageSize) => {
     queryParams.pageNum = page;
     queryParams.pageSize = pageSize;
+    fetchList()
   },
 });
 
-/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
-const { listData, total, isFetching } = useListQuery({
-  queryKey: computed(() => {
-    syncDateRange();
-    return ['roleList', { ...toRaw(queryParams) }];
-  }),
-  queryFn: () => listRole(toRaw(queryParams)),
+/** 列表数据查询 */
+const { listData, loading, fetch: fetchList } = useListQuery({
+  paginationRef: pagination,
+  queryFn: () => { syncDateRange(); return listRole(toRaw(queryParams)); },
 });
 
 /** 列表刷新后清空表格选中行 */
-watch(isFetching, (newVal, oldVal) => {
+watch(loading, (newVal, oldVal) => {
   if (oldVal && !newVal) clearSelection();
 });
 
@@ -111,19 +106,21 @@ const { tableState, setTableSize, rowClassName, setSelectedRowKeys, clearSelecti
   useTableUI();
 
 /** 新增/编辑提交 mutation */
-const { mutateAsync: submitMutateAsync, isLoading: isSubmitting } = useMutationAction({
-  mutationFn: (data: Record<string, any>) =>
+const { execute: submitExecute, loading: isSubmitting } = useAction({
+  action: (data: Record<string, any>) =>
     data.roleId ? updateRole(data) : addRole(data),
   successText: '操作成功',
-  invalidateKeys: [['roleList']],
+  onSuccess: () => {
+    handleCloseModal();
+    fetchList();
+  },
 });
 
 /** 数据权限提交 mutation */
-const { mutateAsync: dataScopeMutateAsync, isLoading: isDataScopeSubmitting } =
-  useMutationAction({
-    mutationFn: (data: Record<string, any>) => dataScope(data),
+const { execute: dataScopeExecute, loading: isDataScopeSubmitting } =
+  useAction({
+    action: (data: Record<string, any>) => dataScope(data),
     successText: '操作成功',
-    invalidateKeys: [['roleList']],
   });
 
 /** 表格字段列 */
@@ -318,12 +315,7 @@ async function handleSubmit() {
     return;
   }
   queryParams.pageNum = 1;
-  try {
-    await submitMutateAsync(toRaw(form));
-    handleCloseModal();
-  } catch {
-    // 错误已由 useMutationAction 统一处理
-  }
+  await submitExecute(toRaw(form));
 }
 
 /** 关闭所有弹窗 */
@@ -382,11 +374,11 @@ async function handleDataScopeSubmit() {
   const formRaw = toRaw(form);
   if (formRaw.dataScope !== '2') formRaw.deptIds = [];
   try {
-    await dataScopeMutateAsync(formRaw);
+    await dataScopeExecute(formRaw);
     visibleByDataScope.value = false;
     formCtl.resetFields();
   } catch {
-    // 错误已由 useMutationAction 统一处理
+    // 错误已由 useAction 统一处理
   }
 }
 
@@ -448,7 +440,7 @@ function handleStatusChange(row: Record<string, string>) {
           hide();
           if (isSuccess(res)) {
             message.success({ content: `${row.roleName} ${text}成功`, duration: 3 });
-            queryClient.invalidateQueries({ queryKey: ['roleList'] });
+            fetchList();
           } else {
             message.error({ content: res.msg, duration: 3 });
           }
@@ -469,19 +461,21 @@ function handleDelete(roleId: string = '0') {
   if (roleId === '0') {
     roleId = tableState.selectedRowKeys.join(',');
   }
-  confirmAndRun({
+  confirmAction({
     content: `确认删除角色编号为 【${roleId}】 的数据项?`,
     action: () => delRole(roleId),
     variables: undefined,
     successText: '删除成功',
-    onSuccess: () => fixPage(tableState.selectedRowKeys.length || 1, total.value),
-    invalidateKeys: [['roleList']],
+    onSuccess() {
+      const deletedCount = String(roleId).split(",").length;
+      if (!clampPage(deletedCount)) fetchList();
+    },
   });
 }
 
 /** 列表导出 */
 function handleExport() {
-  confirmAndRun({
+  confirmAction({
     content: '确认根据搜索条件导出xlsx表格文件吗?',
     action: () => exportRole(toRaw(queryParams)),
     variables: undefined,
@@ -498,7 +492,7 @@ function handleExport() {
       </a-typography-paragraph>
     </template>
 
-    <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
+    <a-card v-show="tableState.searched" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
@@ -527,7 +521,7 @@ function handleExport() {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="queryParams.pageNum = 1">
+                <a-button type="primary" @click.prevent="handleQuery">
                   <template #icon>
                     <SearchOutlined />
                   </template>
@@ -575,7 +569,7 @@ function handleExport() {
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch v-model:checked="tableState.seached" checked-children="显" un-checked-children="隐" size="small" />
+            <a-switch v-model:checked="tableState.searched" checked-children="显" un-checked-children="隐" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
@@ -583,7 +577,7 @@ function handleExport() {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="queryClient.invalidateQueries({ queryKey: ['roleList'] })">
+            <a-button type="text" @click.prevent="fetchList">
               <template #icon>
                 <ReloadOutlined />
               </template>
@@ -609,9 +603,8 @@ function handleExport() {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="roleId" :columns="tableColumns" :loading="isFetching"
-        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName" :pagination="{ ...pagination, total }"
-        :scroll="{
+      <a-table class="table" row-key="roleId" :columns="tableColumns" :loading="loading" :data-source="listData"
+        :size="tableState.size" :row-class-name="rowClassName" :pagination="{ ...pagination }" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
         }" :row-selection="{
@@ -830,8 +823,8 @@ function handleExport() {
 
     <!-- 分配角色数据权限修改框 -->
     <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
-      :open="visibleByDataScope" :title="modalTitle" :confirm-loading="isDataScopeSubmitting" @ok="handleDataScopeSubmit"
-      @cancel="handleCloseModal">
+      :open="visibleByDataScope" :title="modalTitle" :confirm-loading="isDataScopeSubmitting"
+      @ok="handleDataScopeSubmit" @cancel="handleCloseModal">
       <a-form name="formCtlByDataScope" layout="horizontal">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">

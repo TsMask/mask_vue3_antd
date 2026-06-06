@@ -1,7 +1,6 @@
 ﻿<script setup lang="ts">
 import { useRoute } from "vue-router";
 import { ref, toRaw, computed, watch } from "vue";
-import { useQueryClient } from "@tanstack/vue-query";
 import { PageContainer } from "antdv-pro-layout";
 import { ProModal } from "antdv-pro-modal";
 import { message } from "ant-design-vue";
@@ -19,23 +18,24 @@ import { usePagination } from "@/hooks/usePagination";
 import { useTableUI } from "@/hooks/useTableUI";
 import { useCrudModal } from "@/hooks/useCrudModal";
 import { useDictSetup } from "@/hooks/useDictSetup";
-import { useListQuery, invalidateList } from "@/hooks/useListQuery";
-import { useMutationAction, confirmAndRun } from "@/hooks/useMutationAction";
+import { useListQuery } from "@/hooks/useListQuery";
+import { useAction, confirmAction } from "@/hooks/useAction";
 
 const route = useRoute();
-const queryClient = useQueryClient();
 
 /** 路由标题 */
 const title = ref<string>(route.meta.title ?? "标题");
 
 /** 字典数据初始化 */
 const { dict } = useDictSetup({
-  sysNoticeType: "sys_notice_type",
-  sysNoticeStatus: "sys_notice_status",
+  keyMap: {
+    sysNoticeType: "sys_notice_type",
+    sysNoticeStatus: "sys_notice_status",
+  }
 });
 
 /** 查询参数 */
-const { queryParams, resetQuery } = useQueryParams(
+const { queryParams, handleQuery, resetQuery } = useQueryParams(
   {
     noticeTitle: "",
     createBy: undefined as string | undefined,
@@ -46,23 +46,22 @@ const { queryParams, resetQuery } = useQueryParams(
   },
   () => {
     resetPage();
+    fetchList();
   },
 );
 
 /** 分页管理 */
-const { pagination, resetPage, fixPage } = usePagination({
+const { pagination, resetPage, clampPage } = usePagination({
   onChange: (page, pageSize) => {
     queryParams.pageNum = page;
     queryParams.pageSize = pageSize;
+    fetchList()
   },
 });
 
-/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
-const { listData, total, isFetching, refetch } = useListQuery({
-  queryKey: computed(() => [
-    "noticeList",
-    { ...queryParams, beginTime: undefined, endTime: undefined },
-  ]),
+/** 列表数据查询 */
+const { listData, loading, fetch: fetchList } = useListQuery({
+  paginationRef: pagination,
   queryFn: () => listNotice(toRaw(queryParams)),
 });
 
@@ -112,15 +111,13 @@ const {
 });
 
 /** 新增/编辑 mutation */
-const { mutate: submitMutate, isLoading: isSubmitting } = useMutationAction({
-  mutationFn: (form: Record<string, any>) =>
+const { execute: submitExecute, loading: isSubmitting } = useAction({
+  action: (form: Record<string, any>) =>
     form.noticeId ? updateNotice(form) : addNotice(form),
   successText: "操作成功",
-  invalidateKeys: [["noticeList"]],
   onSuccess() {
     handleCancel();
-    // 编辑成功后重置到第1页
-    queryParams.pageNum = 1;
+    fetchList();
   },
 });
 
@@ -178,7 +175,7 @@ async function handleSubmit() {
     return;
   }
   const form = toRaw(modalState.form);
-  submitMutate(form);
+  submitExecute(form);
 }
 
 /** 删除公告（单条或批量） */
@@ -186,13 +183,15 @@ function handleDelete(noticeId: string = "0") {
   if (noticeId === "0") {
     noticeId = tableState.selectedRowKeys.join(",");
   }
-  confirmAndRun({
+  confirmAction({
     content: `确认删除公告编号为【${noticeId}】的数据项?`,
     action: (id) => delNotice(id),
     variables: noticeId,
     successText: "删除成功",
-    onSuccess: () => fixPage(tableState.selectedRowKeys.length || 1, total.value),
-    invalidateKeys: [["noticeList"]],
+    onSuccess() {
+      const deletedCount = String(noticeId).split(",").length;
+      if (!clampPage(deletedCount)) fetchList();
+    },
   });
 }
 </script>
@@ -205,7 +204,7 @@ function handleDelete(noticeId: string = "0") {
       </a-typography-paragraph>
     </template>
 
-    <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
+    <a-card v-show="tableState.searched" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
@@ -235,12 +234,16 @@ function handleDelete(noticeId: string = "0") {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="refetch">
-                  <template #icon><SearchOutlined /></template>
+                <a-button type="primary" @click.prevent="handleQuery">
+                  <template #icon>
+                    <SearchOutlined />
+                  </template>
                   搜索
                 </a-button>
                 <a-button type="default" @click.prevent="resetQuery">
-                  <template #icon><ClearOutlined /></template>
+                  <template #icon>
+                    <ClearOutlined />
+                  </template>
                   重置
                 </a-button>
               </a-space>
@@ -254,12 +257,16 @@ function handleDelete(noticeId: string = "0") {
       <template #title>
         <a-space :size="8" align="center">
           <a-button type="primary" @click.prevent="handleEdit()" v-perms:has="['system:notice:add']">
-            <template #icon><PlusOutlined /></template>
+            <template #icon>
+              <PlusOutlined />
+            </template>
             新建
           </a-button>
           <a-button type="default" danger :disabled="tableState.selectedRowKeys.length <= 0"
             @click.prevent="handleDelete()" v-perms:has="['system:notice:remove']">
-            <template #icon><DeleteOutlined /></template>
+            <template #icon>
+              <DeleteOutlined />
+            </template>
             删除
           </a-button>
         </a-space>
@@ -269,7 +276,7 @@ function handleDelete(noticeId: string = "0") {
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch v-model:checked="tableState.seached" checked-children="显" un-checked-children="隐" size="small" />
+            <a-switch v-model:checked="tableState.searched" checked-children="显" un-checked-children="隐" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
@@ -277,15 +284,19 @@ function handleDelete(noticeId: string = "0") {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="refetch">
-              <template #icon><ReloadOutlined /></template>
+            <a-button type="text" @click.prevent="fetchList">
+              <template #icon>
+                <ReloadOutlined />
+              </template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon><ColumnHeightOutlined /></template>
+                <template #icon>
+                  <ColumnHeightOutlined />
+                </template>
               </a-button>
               <template #overlay>
                 <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
@@ -299,9 +310,8 @@ function handleDelete(noticeId: string = "0") {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="noticeId" :columns="tableColumns" :loading="isFetching"
-        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName"
-        :pagination="pagination" :scroll="{
+      <a-table class="table" row-key="noticeId" :columns="tableColumns" :loading="loading" :data-source="listData"
+        :size="tableState.size" :row-class-name="rowClassName" :pagination="pagination" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
         }" :row-selection="{
@@ -322,21 +332,26 @@ function handleDelete(noticeId: string = "0") {
                 <template #title>查看详情</template>
                 <a-button type="link" @click.prevent="handleView(record.noticeId)"
                   v-perms:has="['system:notice:query']">
-                  <template #icon><ProfileOutlined /></template>
+                  <template #icon>
+                    <ProfileOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
-                <a-button type="link" @click.prevent="handleEdit(record.noticeId)"
-                  v-perms:has="['system:notice:edit']">
-                  <template #icon><FormOutlined /></template>
+                <a-button type="link" @click.prevent="handleEdit(record.noticeId)" v-perms:has="['system:notice:edit']">
+                  <template #icon>
+                    <FormOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>删除</template>
                 <a-button type="link" @click.prevent="handleDelete(record.noticeId)"
                   v-perms:has="['system:notice:remove']">
-                  <template #icon><DeleteOutlined /></template>
+                  <template #icon>
+                    <DeleteOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
             </a-space>
@@ -376,8 +391,8 @@ function handleDelete(noticeId: string = "0") {
 
     <!-- 新增框或修改框 -->
     <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
-      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="isSubmitting"
-      @ok="handleSubmit" @cancel="handleCancel">
+      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="isSubmitting" @ok="handleSubmit"
+      @cancel="handleCancel">
       <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">

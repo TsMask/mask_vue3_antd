@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import * as echarts from 'echarts/core';
 import {
   ToolboxComponent,
@@ -13,9 +13,10 @@ import { LabelLayout } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
 import { PageContainer } from 'antdv-pro-layout';
 import { getCache } from '@/api/monitor/cache';
-import { reactive, ref, onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import { useDetailQuery } from '@/hooks/useDetailQuery';
+
 const route = useRoute();
 
 echarts.use([
@@ -28,10 +29,7 @@ echarts.use([
 ]);
 
 /**路由标题 */
-let title = ref<string>(route.meta.title ?? '标题');
-
-/**加载状态 */
-let loading = ref<boolean>(true);
+const title = ref<string>(route.meta.title ?? '标题');
 
 /**数据参数类型 */
 type CacheType = {
@@ -58,45 +56,22 @@ type InfoType = {
   stats: Record<string, string>;
 };
 
-let cache: CacheType = reactive({
-  info: {
-    clients: {},
-    cluster: {},
-    cpu: {},
-    errorstats: {},
-    keyspace: {},
-    memory: {},
-    modules: {},
-    persistence: {},
-    replication: {},
-    server: {},
-    stats: {},
-  },
-  dbSize: 0,
-  commandStats: [],
+const { detail: cache, loading: loading, fetch: fetchCache } = useDetailQuery<CacheType>({
+  queryFn: getCache,
 });
 
-/**生成命令统计图 */
+/** 生成命令统计图 */
 function commandStatsChart() {
   const commandStatsDom = document.getElementById('commandstats');
-  if (!commandStatsDom) return;
+  if (!commandStatsDom || !cache.value) return;
   const commandStatsEchart = echarts.init(commandStatsDom);
   const option: echarts.ComposeOption<
-    | ToolboxComponentOption
-    | TooltipComponentOption
-    | LegendComponentOption
-    | PieSeriesOption
+    ToolboxComponentOption | TooltipComponentOption | LegendComponentOption | PieSeriesOption
   > = {
     // 鼠标悬浮提示
-    tooltip: {
-      trigger: 'item',
-      formatter: '{a} <br/>{b} : {c} ({d}%)',
-    },
+    tooltip: { trigger: 'item', formatter: '{a} <br/>{b} : {c} ({d}%)' },
     // 左侧标签
-    legend: {
-      orient: 'vertical',
-      left: 'left',
-    },
+    legend: { orient: 'vertical', left: 'left' },
     // 右侧工具
     toolbox: {
       show: true,
@@ -114,10 +89,8 @@ function commandStatsChart() {
         radius: ['5%', '80%'],
         center: ['60%', '50%'],
         roseType: 'area',
-        itemStyle: {
-          borderRadius: 8,
-        },
-        data: cache.commandStats,
+        itemStyle: { borderRadius: 8 },
+        data: cache.value.commandStats,
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
@@ -129,26 +102,12 @@ function commandStatsChart() {
     ],
   };
   commandStatsEchart.setOption(option);
-  window.addEventListener('resize', function () {
-    commandStatsEchart.resize();
-  });
+  window.addEventListener('resize', () => commandStatsEchart.resize());
 }
 
-onMounted(() => {
-  getCache()
-    .then(res => {
-      if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        cache.info = res.data.info;
-        cache.dbSize = res.data.dbSize;
-        cache.commandStats = res.data.commandStats;
-        // 加载状态
-        loading.value = false;
-      }
-    })
-    .then(() => {
-      // 加载结束后生成图
-      commandStatsChart();
-    });
+onMounted(async () => {
+  await fetchCache();
+  commandStatsChart();
 });
 </script>
 
@@ -162,18 +121,9 @@ onMounted(() => {
       </a-typography-paragraph>
     </template>
 
-    <a-card
-      title="基本信息"
-      :bordered="false"
-      :body-style="{ marginBottom: '24px', padding: 0 }"
-    >
-      <a-descriptions
-        size="middle"
-        layout="horizontal"
-        :label-style="{ width: '140px' }"
-        :bordered="true"
-        :column="{ lg: 4, md: 2, xs: 1 }"
-      >
+    <a-card v-if="cache" title="基本信息" :bordered="false" :body-style="{ marginBottom: '24px', padding: 0 }">
+      <a-descriptions size="middle" layout="horizontal" :label-style="{ width: '140px' }" :bordered="true"
+        :column="{ lg: 4, md: 2, xs: 1 }">
         <a-descriptions-item label="Redis版本">
           {{ cache.info.server.redis_version }}
         </a-descriptions-item>
@@ -214,7 +164,7 @@ onMounted(() => {
       </a-descriptions>
     </a-card>
 
-    <a-card title="命令统计" :bordered="false">
+    <a-card v-if="cache" title="命令统计" :bordered="false">
       <div id="commandstats" style="height: 400px; width: 100%"></div>
     </a-card>
   </PageContainer>

@@ -1,9 +1,9 @@
-import { reactive, ref } from 'vue';
+﻿import { reactive, ref } from 'vue';
 import useDictStore from '@/store/modules/dict';
 
-export interface UseDictSetupOptions {
+export interface UseDictSetupOptions<K extends string = string> {
   /** 本地字段名到字典类型键的映射 */
-  keyMap: Record<string, string>;
+  keyMap: Record<K, string>;
   /**
    * 是否在 setup 阶段自动加载字典数据
    * 默认 true，页面无需手动调用 loadDicts()
@@ -34,20 +34,22 @@ export interface UseDictSetupOptions {
  * onMounted(() => { loadDicts(); });
  * ```
  */
-export function useDictSetup(options: UseDictSetupOptions) {
+export function useDictSetup<K extends string>(
+  options: UseDictSetupOptions<K>
+) {
   const { keyMap, autoLoad = true } = options;
   const { getDict } = useDictStore();
 
   /** 字典数据加载状态 */
   const dictLoading = ref(false);
 
-  const dict = reactive<Record<string, DictType[]>>(
+  const dict = reactive<Record<K, DictType[]>>(
     Object.keys(keyMap).reduce(
       (acc, key) => {
-        acc[key] = [];
+        acc[key as K] = [];
         return acc;
       },
-      {} as Record<string, DictType[]>
+      {} as Record<K, DictType[]>
     )
   );
 
@@ -58,14 +60,15 @@ export function useDictSetup(options: UseDictSetupOptions) {
   async function loadDicts() {
     dictLoading.value = true;
     try {
-      const entries = Object.entries(keyMap);
+      const entries = Object.entries(keyMap) as [K, string][];
       const results = await Promise.allSettled(
         entries.map(([, dictKey]) => getDict(dictKey))
       );
       entries.forEach(([localKey], index) => {
         const result = results[index];
         if (result.status === 'fulfilled') {
-          dict[localKey] = result.value as DictType[];
+          (dict as Record<K, DictType[]>)[localKey] =
+            result.value as DictType[];
         }
       });
     } finally {

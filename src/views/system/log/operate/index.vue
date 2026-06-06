@@ -1,7 +1,6 @@
 ﻿<script setup lang="ts">
 import { useRoute } from "vue-router";
-import { ref, toRaw, computed, watch } from "vue";
-import { useQueryClient } from "@tanstack/vue-query";
+import { ref, toRaw } from "vue";
 import { PageContainer } from "antdv-pro-layout";
 import { ProModal } from "antdv-pro-modal";
 import type { Dayjs } from "dayjs";
@@ -14,13 +13,12 @@ import { usePagination } from "@/hooks/usePagination";
 import { useTableUI } from "@/hooks/useTableUI";
 import { useDictSetup } from "@/hooks/useDictSetup";
 import { useListQuery } from "@/hooks/useListQuery";
-import { confirmAndRun } from "@/hooks/useMutationAction";
+import { confirmAction } from "@/hooks/useAction";
 
 const route = useRoute();
-const queryClient = useQueryClient();
 const title = ref<string>(route.meta.title ?? "标题");
 
-const { dict } = useDictSetup({ sysOperType: "sys_opera_type", sysCommonStatus: "sys_common_status" });
+const { dict } = useDictSetup({ keyMap: { sysBusinessType: "sys_opera_type", sysCommonStatus: "sys_common_status" } });
 
 const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
@@ -34,33 +32,41 @@ function syncDateRange() {
   }
 }
 
-const { queryParams, resetQuery: baseResetQuery } = useQueryParams(
-  { operIp: "", operaBy: "", operaIp: "", title: "", businessType: undefined as string | undefined, statusFlag: undefined as string | undefined, beginTime: undefined as number | undefined, endTime: undefined as number | undefined, pageNum: 1, pageSize: 20, sortBy: "", sortOrder: "" },
-  () => { resetPage(); },
+const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
+  {
+    operaBy: "", operaIp: "", title: "",
+    businessType: undefined as string | undefined,
+    statusFlag: undefined as string | undefined,
+    beginTime: undefined as number | undefined,
+    endTime: undefined as number | undefined,
+    pageNum: 1, pageSize: 20,
+    sortBy: "", sortOrder: ""
+  },
+  () => { resetPage(); fetchList(); },
 );
 
 function resetQuery() { queryRangePicker.value = undefined; baseResetQuery(); }
 
-const { pagination, resetPage, fixPage } = usePagination({
-  onChange: (page, pageSize) => { queryParams.pageNum = page; queryParams.pageSize = pageSize; },
+const { pagination, resetPage, clampPage } = usePagination({
+  onChange: (page, pageSize) => { queryParams.pageNum = page; queryParams.pageSize = pageSize; fetchList(); },
 });
 
-const { listData, total, isFetching, refetch } = useListQuery({
-  queryKey: computed(() => { syncDateRange(); return ["logOperateList", { ...queryParams }]; }),
+const { listData, loading, fetch: fetchList } = useListQuery({
+  paginationRef: pagination,
   queryFn: () => listSysLogOperate(toRaw(queryParams)),
 });
 
 const { tableState, setTableSize, rowClassName, setSelectedRowKeys } = useTableUI();
 
 const tableColumns: ColumnsType = [
-  { title: "日志编号", dataIndex: "operId", align: "left", width: 100 },
+  { title: "日志编号", dataIndex: "id", align: "left", width: 100 },
   { title: "系统模块", dataIndex: "title", align: "left", width: 150 },
   { title: "操作类型", dataIndex: "businessType", key: "businessType", align: "left", width: 100 },
-  { title: "操作人员", dataIndex: "operName", align: "left", width: 100 },
-  { title: "操作地址", dataIndex: "operIp", align: "left", width: 150 },
+  { title: "操作人员", dataIndex: "operaBy", align: "left", width: 100 },
+  { title: "操作地址", dataIndex: "operaIp", align: "left", width: 150 },
   { title: "操作状态", dataIndex: "statusFlag", key: "statusFlag", align: "left", width: 100 },
-  { title: "操作时间", dataIndex: "operTime", align: "left", width: 150, sorter: true, customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); } },
-  { title: "操作", key: "operId", align: "left" },
+  { title: "操作时间", dataIndex: "operaTime", align: "left", width: 150, sorter: true, customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); } },
+  { title: "操作", key: "id", align: "left" },
 ];
 
 /** 详情弹窗状态 */
@@ -69,6 +75,20 @@ const detailForm = ref<Record<string, any>>({});
 
 /** 打开详情弹窗 */
 function handleView(row: Record<string, any>) {
+  if (row.operaParam) {
+    try {
+      row.operaParam = JSON.stringify(JSON.parse(row.operaParam), null, 2);
+    } catch {
+      // 非 JSON 格式保持原样
+    }
+  }
+  if (row.operaMsg) {
+    try {
+      row.operaMsg = JSON.stringify(JSON.parse(row.operaMsg), null, 2);
+    } catch {
+      // 非 JSON 格式保持原样
+    }
+  }
   detailForm.value = row;
   visibleByView.value = true;
 }
@@ -76,20 +96,20 @@ function handleView(row: Record<string, any>) {
 function handleTableChange(_pagination: any, _filters: any, sorter: any) {
   queryParams.sortBy = sorter.order ? sorter.field : undefined;
   queryParams.sortOrder = sorter.order;
-  refetch();
+  fetchList();
 }
 
 
 
 function handleCleanList() {
-  confirmAndRun({
+  confirmAction({
     content: "确认清空所有操作日志数据项?",
-    action: () => cleanSysLogOperate(), variables: undefined as any, successText: "清空成功", invalidateKeys: [["logOperateList"]],
+    action: () => cleanSysLogOperate(), variables: undefined as any, successText: "清空成功",
   });
 }
 
 function handleExport() {
-  confirmAndRun({
+  confirmAction({
     content: "确认根据搜索条件导出xlsx表格文件吗",
     action: () => exportSysLogOperate(toRaw(queryParams)), variables: undefined as any, successText: "已导出完成",
     onSuccess: (res) => { saveAs(res.data, `sys_log_operate_${Date.now()}.xlsx`); },
@@ -104,7 +124,7 @@ function handleExport() {
       </a-typography-paragraph>
     </template>
 
-    <a-card v-show="tableState.seached" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
+    <a-card v-show="tableState.searched" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
@@ -120,7 +140,7 @@ function handleExport() {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="操作IP" name="operaIp">
               <a-input v-model:value="queryParams.operaIp" allow-clear placeholder="请输入操作IP"
-                @keyup.enter="refetch"></a-input>
+                @keyup.enter="fetchList"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
@@ -146,12 +166,16 @@ function handleExport() {
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="refetch">
-                  <template #icon><SearchOutlined /></template>
+                <a-button type="primary" @click.prevent="handleQuery">
+                  <template #icon>
+                    <SearchOutlined />
+                  </template>
                   搜索
                 </a-button>
                 <a-button type="default" @click.prevent="resetQuery">
-                  <template #icon><ClearOutlined /></template>
+                  <template #icon>
+                    <ClearOutlined />
+                  </template>
                   重置
                 </a-button>
               </a-space>
@@ -165,11 +189,15 @@ function handleExport() {
       <template #title>
         <a-space :size="8" align="center">
           <a-button type="dashed" danger @click.prevent="handleCleanList()" v-perms:has="['system:log:operate:remove']">
-            <template #icon><DeleteOutlined /></template>
+            <template #icon>
+              <DeleteOutlined />
+            </template>
             清空
           </a-button>
           <a-button type="dashed" @click.prevent="handleExport()" v-perms:has="['system:log:operate:export']">
-            <template #icon><ExportOutlined /></template>
+            <template #icon>
+              <ExportOutlined />
+            </template>
             导出
           </a-button>
         </a-space>
@@ -179,7 +207,7 @@ function handleExport() {
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch v-model:checked="tableState.seached" checked-children="是" un-checked-children="否" size="small" />
+            <a-switch v-model:checked="tableState.searched" checked-children="是" un-checked-children="否" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
@@ -187,15 +215,19 @@ function handleExport() {
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="refetch">
-              <template #icon><ReloadOutlined /></template>
+            <a-button type="text" @click.prevent="fetchList">
+              <template #icon>
+                <ReloadOutlined />
+              </template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon><ColumnHeightOutlined /></template>
+                <template #icon>
+                  <ColumnHeightOutlined />
+                </template>
               </a-button>
               <template #overlay>
                 <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
@@ -209,9 +241,8 @@ function handleExport() {
         </a-space>
       </template>
 
-      <a-table class="table" row-key="id" :columns="tableColumns" :loading="isFetching"
-        :data-source="listData" :size="tableState.size" :row-class-name="rowClassName"
-        :scroll="{
+      <a-table class="table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="listData"
+        :size="tableState.size" :row-class-name="rowClassName" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
         }" :pagination="pagination" @change="handleTableChange">
@@ -227,7 +258,9 @@ function handleExport() {
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
                 <a-button type="link" @click.prevent="handleView(record)" v-perms:has="['system:log:operate:query']">
-                  <template #icon><ProfileOutlined /></template>
+                  <template #icon>
+                    <ProfileOutlined />
+                  </template>
                   详情
                 </a-button>
               </a-tooltip>
@@ -238,8 +271,7 @@ function handleExport() {
     </a-card>
 
     <!-- 详情框 -->
-    <ProModal :drag="true" :width="800" :open="visibleByView" :title="'操作日志信息'"
-      @cancel="visibleByView = false">
+    <ProModal :drag="true" :width="800" :open="visibleByView" :title="'操作日志信息'" @cancel="visibleByView = false">
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
@@ -297,12 +329,12 @@ function handleExport() {
           </a-col>
         </a-row>
         <a-form-item label="请求参数" name="operaParam" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea v-model:value="detailForm.operaParam" :auto-size="{ minRows: 2, maxRows: 6 }"
-            placeholder="请求参数" :disabled="true" />
+          <a-textarea v-model:value="detailForm.operaParam" :auto-size="{ minRows: 2, maxRows: 6 }" placeholder="请求参数"
+            :disabled="true" />
         </a-form-item>
         <a-form-item label="操作信息" name="operaMsg" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea v-model:value="detailForm.operaMsg" :auto-size="{ minRows: 2, maxRows: 6 }"
-            placeholder="操作信息" :disabled="true" />
+          <a-textarea v-model:value="detailForm.operaMsg" :auto-size="{ minRows: 2, maxRows: 6 }" placeholder="操作信息"
+            :disabled="true" />
         </a-form-item>
       </a-form>
       <template #footer>
@@ -321,5 +353,3 @@ function handleExport() {
   padding: 0 24px;
 }
 </style>
-
-

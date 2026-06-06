@@ -7,7 +7,6 @@ import IconFont from '@/components/IconFont/index.vue';
 import { iconFonts } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import { useRoute } from 'vue-router';
 import { reactive, ref, computed, toRaw, onMounted, watch } from 'vue';
-import { useQueryClient } from '@tanstack/vue-query';
 import {
   addMenu,
   delMenu,
@@ -31,29 +30,24 @@ import { useTableUI } from '@/hooks/useTableUI';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useQueryParams } from '@/hooks/useQueryParams';
 import { useListQuery } from '@/hooks/useListQuery';
-import { useMutationAction, confirmAndRun } from '@/hooks/useMutationAction';
+import { useAction, confirmAction } from '@/hooks/useAction';
 
 const route = useRoute();
-const queryClient = useQueryClient();
-
 const icons = reactive(iconFonts.map((item) => ({ value: item, label: item })));
 
 const title = ref<string>(route.meta.title ?? '标题');
 
 /** 字典数据初始化 */
-const { dict, loadDicts } = useDictSetup({
-  sysNormalDisable: 'sys_normal_disable',
-});
+const { dict } = useDictSetup({ keyMap: { sysNormalDisable: 'sys_normal_disable', } });
 
 /** 查询参数 */
-const { queryParams, resetQuery } = useQueryParams(
+const { queryParams, handleQuery, resetQuery } = useQueryParams(
   { menuName: '', statusFlag: undefined as string | undefined },
-  () => { /* vue-query 根据 queryKey 变化自动刷新 */ },
+  () => { fetchList(); },
 );
 
-/** 列表数据查询（vue-query 自动管理缓存、loading、刷新） */
-const { listData, isFetching } = useListQuery({
-  queryKey: computed(() => ['menuList', { ...toRaw(queryParams) }]),
+/** 列表数据查询 */
+const { listData, loading, fetch: fetchList } = useListQuery({
   queryFn: () => listMenu(toRaw(queryParams)),
 });
 
@@ -84,7 +78,7 @@ const {
   rowClassName,
 } = useTableUI();
 
-tableState.seached = false;
+tableState.searched = false;
 const expandedRowKeys = ref<(string | number)[]>([]);
 const expandedRowAll = ref(false);
 
@@ -158,11 +152,14 @@ const modalStateForm = Form.useForm(
 );
 
 /** 新增/编辑提交 mutation */
-const { mutateAsync: submitMutateAsync, isLoading: isSubmitting } = useMutationAction({
-  mutationFn: (data: Record<string, any>) =>
+const { execute: submitExecute, loading: isSubmitting } = useAction({
+  action: (data: Record<string, any>) =>
     data.menuId ? updateMenu(data) : addMenu(data),
   successText: '操作成功',
-  invalidateKeys: [['menuList']],
+  onSuccess: () => {
+    handleCancel();
+    fetchList();
+  },
 });
 
 /** 获取菜单表单默认值 */
@@ -276,25 +273,21 @@ function handleCancel() {
 
 /** 提交新增/编辑菜单 */
 async function handleSubmit() {
-  try {
-    await submitMutateAsync(toRaw(modalState.form));
-    handleCancel();
-  } catch {
-    // 错误已由 useMutationAction 统一处理
-  }
+  await submitExecute(toRaw(modalState.form));
 }
 
 /** 删除单个菜单（二次确认后执行） */
 function handleDelete(menuId: string | number) {
-  confirmAndRun({
+  confirmAction({
     content: '确认删除菜单编号为【' + menuId + '】的数据项?',
     action: () => delMenu(menuId),
     variables: undefined,
     successText: '删除成功',
-    invalidateKeys: [['menuList']],
   });
 }
-</script>﻿<template>
+</script>
+
+<template>
   <PageContainer :title="title">
     <template #content>
       <a-typography-paragraph>
@@ -302,42 +295,34 @@ function handleDelete(menuId: string | number) {
       </a-typography-paragraph>
     </template>
 
-    <a-card
-      v-show="tableState.seached"
-      :bordered="false"
-      :body-style="{ marginBottom: '24px', paddingBottom: 0 }"
-    >
+    <a-card v-show="tableState.searched" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="菜单名称" name="menuName">
-              <a-input
-                v-model:value="queryParams.menuName"
-                allow-clear
-                placeholder="请输入菜单名称"
-              ></a-input>
+              <a-input v-model:value="queryParams.menuName" allow-clear placeholder="请输入菜单名称"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item label="状态" name="statusFlag">
-              <a-select
-                v-model:value="queryParams.statusFlag"
-                allow-clear
-                placeholder="请选择菜单状态"
-                :options="dict.sysNormalDisable"
-              >
+              <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择菜单状态"
+                :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
             <a-form-item>
               <a-space :size="8">
-                <a-button type="primary" @click.prevent="queryClient.invalidateQueries({ queryKey: ['menuList'] })">
-                  <template #icon><SearchOutlined /></template>
+                <a-button type="primary" @click.prevent="handleQuery">
+                  <template #icon>
+                    <SearchOutlined />
+                  </template>
                   搜索
                 </a-button>
                 <a-button type="default" @click.prevent="resetQuery">
-                  <template #icon><ClearOutlined /></template>
+                  <template #icon>
+                    <ClearOutlined />
+                  </template>
                   重置
                 </a-button>
               </a-space>
@@ -350,12 +335,10 @@ function handleDelete(menuId: string | number) {
     <a-card :bordered="false" :body-style="{ padding: '0px' }">
       <template #title>
         <a-space :size="8" align="center">
-          <a-button
-            type="primary"
-            @click.prevent="handleEdit()"
-            v-perms:has="['system:menu:add']"
-          >
-            <template #icon><PlusOutlined /></template>
+          <a-button type="primary" @click.prevent="handleEdit()" v-perms:has="['system:menu:add']">
+            <template #icon>
+              <PlusOutlined />
+            </template>
             新建
           </a-button>
         </a-space>
@@ -365,49 +348,35 @@ function handleDelete(menuId: string | number) {
         <a-space :size="8" align="center">
           <a-tooltip placement="topRight">
             <template #title>展开/折叠</template>
-            <a-switch
-              v-model:checked="expandedRowAll"
-              checked-children="展"
-              un-checked-children="折"
-              size="small"
-              @change="handleExpandAll"
-            />
+            <a-switch v-model:checked="expandedRowAll" checked-children="展" un-checked-children="折" size="small"
+              @change="handleExpandAll" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>搜索栏</template>
-            <a-switch
-              v-model:checked="tableState.seached"
-              checked-children="显"
-              un-checked-children="隐"
-              size="small"
-            />
+            <a-switch v-model:checked="tableState.searched" checked-children="显" un-checked-children="隐" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>表格斑马纹</template>
-            <a-switch
-              v-model:checked="tableState.striped"
-              checked-children="开"
-              un-checked-children="关"
-              size="small"
-            />
+            <a-switch v-model:checked="tableState.striped" checked-children="开" un-checked-children="关" size="small" />
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>刷新</template>
-            <a-button type="text" @click.prevent="queryClient.invalidateQueries({ queryKey: ['menuList'] })">
-              <template #icon><ReloadOutlined /></template>
+            <a-button type="text" @click.prevent="fetchList">
+              <template #icon>
+                <ReloadOutlined />
+              </template>
             </a-button>
           </a-tooltip>
           <a-tooltip placement="topRight">
             <template #title>密度</template>
             <a-dropdown placement="bottomRight" trigger="click">
               <a-button type="text">
-                <template #icon><ColumnHeightOutlined /></template>
+                <template #icon>
+                  <ColumnHeightOutlined />
+                </template>
               </a-button>
               <template #overlay>
-                <a-menu
-                  :selected-keys="[tableState.size as string]"
-                  @click="setTableSize"
-                >
+                <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
                   <a-menu-item key="default">默认</a-menu-item>
                   <a-menu-item key="middle">中等</a-menu-item>
                   <a-menu-item key="small">紧凑</a-menu-item>
@@ -418,23 +387,12 @@ function handleDelete(menuId: string | number) {
         </a-space>
       </template>
       <!-- 表格列表 -->
-      <a-table
-        class="table"
-        row-key="menuId"
-        :columns="tableColumns"
-        :loading="isFetching"
-        :data-source="treeTableData"
-        :size="tableState.size"
-        :row-class-name="rowClassName"
-        :pagination="false"
-        :scroll="{
+      <a-table class="table" row-key="menuId" :columns="tableColumns" :loading="loading" :data-source="treeTableData"
+        :size="tableState.size" :row-class-name="rowClassName" :pagination="false" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
-        }"
-        children-column-name="children"
-        :expanded-row-keys="expandedRowKeys"
-        @expandedRowsChange="handleExpandedRowsChange"
-      >
+        }" children-column-name="children" :expanded-row-keys="expandedRowKeys"
+        @expandedRowsChange="handleExpandedRowsChange">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'icon'">
             <IconFont :type="record.icon" style="font-size: 18px"></IconFont>
@@ -445,60 +403,46 @@ function handleDelete(menuId: string | number) {
             </a-tag>
           </template>
           <template v-if="column.key === 'statusFlag'">
-            <DictTag
-              :options="dict.sysNormalDisable"
-              :value="record.statusFlag"
-            />
+            <DictTag :options="dict.sysNormalDisable" :value="record.statusFlag" />
           </template>
           <template v-if="column.key === 'menuId'">
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
-                <a-button
-                  type="link"
-                  @click.prevent="handleView(record.menuId)"
-                  v-perms:has="['system:menu:query']"
-                >
-                  <template #icon><ProfileOutlined /></template>
+                <a-button type="link" @click.prevent="handleView(record.menuId)" v-perms:has="['system:menu:query']">
+                  <template #icon>
+                    <ProfileOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
-                <a-button
-                  type="link"
-                  @click.prevent="handleEdit(record.menuId)"
-                  v-perms:has="['system:menu:edit']"
-                >
-                  <template #icon><FormOutlined /></template>
+                <a-button type="link" @click.prevent="handleEdit(record.menuId)" v-perms:has="['system:menu:edit']">
+                  <template #icon>
+                    <FormOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>删除</template>
-                <a-button
-                  type="link"
-                  @click.prevent="handleDelete(record.menuId)"
-                  v-perms:has="['system:menu:remove']"
-                >
-                  <template #icon><DeleteOutlined /></template>
+                <a-button type="link" @click.prevent="handleDelete(record.menuId)" v-perms:has="['system:menu:remove']">
+                  <template #icon>
+                    <DeleteOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip
-                placement="topRight"
-                v-if="record.menuType !== MENU_TYPE_AUTH"
-              >
+              <a-tooltip placement="topRight" v-if="record.menuType !== MENU_TYPE_AUTH">
                 <template #title>新增子菜单</template>
-                <a-button
-                  type="link"
-                  @click.prevent="
-                    handleEdit(
-                      undefined,
-                      record.menuId,
-                      record.menuType
-                    )
-                  "
-                  v-perms:has="['system:menu:add']"
-                >
-                  <template #icon><PlusOutlined /></template>
+                <a-button type="link" @click.prevent="
+                  handleEdit(
+                    undefined,
+                    record.menuId,
+                    record.menuType
+                  )
+                  " v-perms:has="['system:menu:add']">
+                  <template #icon>
+                    <PlusOutlined />
+                  </template>
                 </a-button>
               </a-tooltip>
             </a-space>
@@ -508,13 +452,8 @@ function handleDelete(menuId: string | number) {
     </a-card>
 
     <!-- 详情框 -->
-    <ProModal
-      :drag="true"
-      :width="800"
-      :open="modalState.visibleByView"
-      :title="modalState.title"
-      @cancel="handleCancel"
-    >
+    <ProModal :drag="true" :width="800" :open="modalState.visibleByView" :title="modalState.title"
+      @cancel="handleCancel">
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
@@ -530,24 +469,13 @@ function handleDelete(menuId: string | number) {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item
-          label="上级菜单"
-          name="parentId"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-tree-select
-            :value="modalState.form.parentId"
-            placeholder="上级菜单"
-            disabled
-            :tree-data="treeDataAll"
+        <a-form-item label="上级菜单" name="parentId" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-tree-select :value="modalState.form.parentId" placeholder="上级菜单" disabled :tree-data="treeDataAll"
             :field-names="{
               children: 'children',
               label: 'menuName',
               value: 'menuId',
-            }"
-            tree-node-label-prop="menuName"
-          >
+            }" tree-node-label-prop="menuName">
             <template #suffixIcon></template>
           </a-tree-select>
         </a-form-item>
@@ -565,28 +493,14 @@ function handleDelete(menuId: string | number) {
           </a-col>
         </a-row>
 
-        <a-form-item
-          label="菜单类型"
-          name="menuType"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-tag
-            v-if="modalState.form.menuType === MENU_TYPE_DIR"
-            color="purple"
-          >
+        <a-form-item label="菜单类型" name="menuType" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-tag v-if="modalState.form.menuType === MENU_TYPE_DIR" color="purple">
             目录
           </a-tag>
-          <a-tag
-            v-if="modalState.form.menuType === MENU_TYPE_MENU"
-            color="cyan"
-          >
+          <a-tag v-if="modalState.form.menuType === MENU_TYPE_MENU" color="cyan">
             菜单
           </a-tag>
-          <a-tag
-            v-if="modalState.form.menuType === MENU_TYPE_AUTH"
-            color="orange"
-          >
+          <a-tag v-if="modalState.form.menuType === MENU_TYPE_AUTH" color="orange">
             权限
           </a-tag>
         </a-form-item>
@@ -594,10 +508,7 @@ function handleDelete(menuId: string | number) {
         <a-row v-if="modalState.form.menuType !== MENU_TYPE_AUTH">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单图标" name="icon">
-              <IconFont
-                :type="modalState.form.icon || '#'"
-                style="font-size: 18px"
-              ></IconFont>
+              <IconFont :type="modalState.form.icon || '#'" style="font-size: 18px"></IconFont>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
@@ -633,46 +544,24 @@ function handleDelete(menuId: string | number) {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单状态" name="statusFlag">
-              <DictTag
-                :options="dict.sysNormalDisable"
-                :value="modalState.form.statusFlag"
-              />
+              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.statusFlag" />
             </a-form-item>
           </a-col>
         </a-row>
 
-        <a-form-item
-          label="组件路径"
-          name="component"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-          v-if="modalState.form.menuType === MENU_TYPE_MENU"
-        >
+        <a-form-item label="组件路径" name="component" :label-col="{ span: 3 }" :label-wrap="true"
+          v-if="modalState.form.menuType === MENU_TYPE_MENU">
           {{ modalState.form.component }}
         </a-form-item>
 
-        <a-form-item
-          label="权限标识"
-          name="perms"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-          v-if="modalState.form.menuType !== MENU_TYPE_DIR"
-        >
+        <a-form-item label="权限标识" name="perms" :label-col="{ span: 3 }" :label-wrap="true"
+          v-if="modalState.form.menuType !== MENU_TYPE_DIR">
           {{ modalState.form.perms }}
         </a-form-item>
 
-        <a-form-item
-          label="菜单说明"
-          name="remark"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-textarea
-            :value="modalState.form.remark"
-            :auto-size="{ minRows: 2, maxRows: 6 }"
-            :disabled="true"
-            style="color: rgba(0, 0, 0, 0.85)"
-          />
+        <a-form-item label="菜单说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea :value="modalState.form.remark" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
+            style="color: rgba(0, 0, 0, 0.85)" />
         </a-form-item>
       </a-form>
       <template #footer>
@@ -681,98 +570,45 @@ function handleDelete(menuId: string | number) {
     </ProModal>
 
     <!-- 新增框或修改框 -->
-    <ProModal
-      :drag="true"
-      :destroyOnClose="true"
-      :width="800"
-      :keyboard="false"
-      :mask-closable="false"
-      :open="modalState.visibleByEdit"
-      :title="modalState.title"
-      :confirm-loading="isSubmitting"
-      @ok="handleSubmit"
-      @cancel="handleCancel"
-    >
-      <a-form
-        name="modalStateForm"
-        layout="horizontal"
-        :label-col="{ span: 6 }"
-        :label-wrap="true"
-      >
-        <a-form-item
-          label="上级菜单"
-          name="parentId"
-          v-bind="modalStateForm.validateInfos.parentId"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-tree-select
-            v-model:value="modalState.form.parentId"
-            placeholder="上级菜单"
-            show-search
-            tree-default-expand-all
-            :tree-data="treeDataAll"
-            :field-names="{
+    <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
+      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="isSubmitting" @ok="handleSubmit"
+      @cancel="handleCancel">
+      <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
+        <a-form-item label="上级菜单" name="parentId" v-bind="modalStateForm.validateInfos.parentId"
+          :label-col="{ span: 3 }" :label-wrap="true">
+          <a-tree-select v-model:value="modalState.form.parentId" placeholder="上级菜单" show-search tree-default-expand-all
+            :tree-data="treeDataAll" :field-names="{
               children: 'children',
               label: 'menuName',
               value: 'menuId',
-            }"
-            tree-node-label-prop="menuName"
-            tree-node-filter-prop="menuName"
-            style="width: 100%"
-            :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
-            @change="handleTreeDataChange"
-          >
+            }" tree-node-label-prop="menuName" tree-node-filter-prop="menuName" style="width: 100%"
+            :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }" @change="handleTreeDataChange">
           </a-tree-select>
         </a-form-item>
 
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="菜单名称"
-              name="menuName"
-              v-bind="modalStateForm.validateInfos.menuName"
-            >
-              <a-input
-                v-model:value="modalState.form.menuName"
-                allow-clear
-                placeholder="请输入菜单名称"
-                :maxlength="50"
-              ></a-input>
+            <a-form-item label="菜单名称" name="menuName" v-bind="modalStateForm.validateInfos.menuName">
+              <a-input v-model:value="modalState.form.menuName" allow-clear placeholder="请输入菜单名称"
+                :maxlength="50"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单排序" name="menuSort">
-              <a-input-number
-                v-model:value="modalState.form.menuSort"
-                :min="0"
-                :max="9999"
-                :step="1"
-                placeholder="排序值"
-              ></a-input-number>
+              <a-input-number v-model:value="modalState.form.menuSort" :min="0" :max="9999" :step="1"
+                placeholder="排序值"></a-input-number>
             </a-form-item>
           </a-col>
         </a-row>
 
-        <a-form-item
-          label="菜单类型"
-          name="menuType"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
+        <a-form-item label="菜单类型" name="menuType" :label-col="{ span: 3 }" :label-wrap="true">
           <a-radio-group v-model:value="modalState.form.menuType">
-            <a-radio
-              :key="MENU_TYPE_DIR"
-              :value="MENU_TYPE_DIR"
-              :disabled="modalState.form.parentType === MENU_TYPE_MENU"
-            >
+            <a-radio :key="MENU_TYPE_DIR" :value="MENU_TYPE_DIR"
+              :disabled="modalState.form.parentType === MENU_TYPE_MENU">
               目录
             </a-radio>
-            <a-radio
-              :key="MENU_TYPE_MENU"
-              :value="MENU_TYPE_MENU"
-              :disabled="modalState.form.parentType === MENU_TYPE_MENU"
-            >
+            <a-radio :key="MENU_TYPE_MENU" :value="MENU_TYPE_MENU"
+              :disabled="modalState.form.parentType === MENU_TYPE_MENU">
               菜单
             </a-radio>
             <a-radio :key="MENU_TYPE_AUTH" :value="MENU_TYPE_AUTH">
@@ -785,14 +621,8 @@ function handleDelete(menuId: string | number) {
           <template v-if="modalState.form.menuType !== MENU_TYPE_AUTH">
             <a-col :lg="12" :md="12" :xs="24">
               <a-form-item label="菜单图标" name="icon">
-                <a-select
-                  v-model:value="modalState.form.icon"
-                  placeholder="请选择菜单图标"
-                  show-search
-                  option-filter-prop="label"
-                  option-label-prop="label"
-                  :options="icons"
-                >
+                <a-select v-model:value="modalState.form.icon" placeholder="请选择菜单图标" show-search
+                  option-filter-prop="label" option-label-prop="label" :options="icons">
                   <template #suffixIcon>
                     <IconFont :type="modalState.form.icon"></IconFont>
                   </template>
@@ -806,17 +636,8 @@ function handleDelete(menuId: string | number) {
               </a-form-item>
             </a-col>
             <a-col :lg="12" :md="12" :xs="24">
-              <a-form-item
-                label="路由地址"
-                name="menuPath"
-                v-bind="modalStateForm.validateInfos.menuPath"
-              >
-                <a-input
-                  v-model:value="modalState.form.menuPath"
-                  allow-clear
-                  placeholder="请输入路由地址"
-                  :maxlength="200"
-                >
+              <a-form-item label="路由地址" name="menuPath" v-bind="modalStateForm.validateInfos.menuPath">
+                <a-input v-model:value="modalState.form.menuPath" allow-clear placeholder="请输入路由地址" :maxlength="200">
                   <template #prefix>
                     <a-tooltip placement="topLeft">
                       <template #title>
@@ -843,11 +664,7 @@ function handleDelete(menuId: string | number) {
             </a-col>
             <a-col :lg="12" :md="12" :xs="24">
               <a-form-item label="显示状态" name="visibleFlag">
-                <a-select
-                  v-model:value="modalState.form.visibleFlag"
-                  default-value="0"
-                  placeholder="显示状态"
-                >
+                <a-select v-model:value="modalState.form.visibleFlag" default-value="0" placeholder="显示状态">
                   <a-select-option key="0" value="0">隐藏</a-select-option>
                   <a-select-option key="1" value="1">显示</a-select-option>
                 </a-select>
@@ -857,12 +674,8 @@ function handleDelete(menuId: string | number) {
 
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单状态" name="statusFlag">
-              <a-select
-                v-model:value="modalState.form.statusFlag"
-                default-value="0"
-                placeholder="菜单状态"
-                :options="dict.sysNormalDisable"
-              >
+              <a-select v-model:value="modalState.form.statusFlag" default-value="0" placeholder="菜单状态"
+                :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
           </a-col>
@@ -870,11 +683,7 @@ function handleDelete(menuId: string | number) {
           <template v-if="modalState.form.menuType === MENU_TYPE_MENU">
             <a-col :lg="12" :md="12" :xs="24">
               <a-form-item label="内部地址" name="frameFlag">
-                <a-select
-                  v-model:value="modalState.form.frameFlag"
-                  default-value="0"
-                  placeholder="内部地址"
-                >
+                <a-select v-model:value="modalState.form.frameFlag" default-value="0" placeholder="内部地址">
                   <a-select-option key="0" value="0">否</a-select-option>
                   <a-select-option key="1" value="1">是</a-select-option>
                 </a-select>
@@ -882,11 +691,7 @@ function handleDelete(menuId: string | number) {
             </a-col>
             <a-col :lg="12" :md="12" :xs="24">
               <a-form-item label="页面缓存" name="cacheFlag">
-                <a-select
-                  v-model:value="modalState.form.cacheFlag"
-                  default-value="0"
-                  placeholder="页面缓存"
-                >
+                <a-select v-model:value="modalState.form.cacheFlag" default-value="0" placeholder="页面缓存">
                   <a-select-option key="0" value="0">不缓存</a-select-option>
                   <a-select-option key="1" value="1">缓存</a-select-option>
                 </a-select>
@@ -895,20 +700,9 @@ function handleDelete(menuId: string | number) {
           </template>
         </a-row>
 
-        <a-form-item
-          label="组件路径"
-          name="component"
-          v-bind="modalStateForm.validateInfos.component"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-          v-if="modalState.form.menuType === MENU_TYPE_MENU"
-        >
-          <a-input
-            v-model:value="modalState.form.component"
-            allow-clear
-            placeholder="请输入组件路径"
-            :maxlength="200"
-          >
+        <a-form-item label="组件路径" name="component" v-bind="modalStateForm.validateInfos.component"
+          :label-col="{ span: 3 }" :label-wrap="true" v-if="modalState.form.menuType === MENU_TYPE_MENU">
+          <a-input v-model:value="modalState.form.component" allow-clear placeholder="请输入组件路径" :maxlength="200">
             <template #prefix>
               <a-tooltip placement="topLeft">
                 <template #title>
@@ -925,20 +719,9 @@ function handleDelete(menuId: string | number) {
           </a-input>
         </a-form-item>
 
-        <a-form-item
-          label="权限标识"
-          name="perms"
-          v-bind="modalStateForm.validateInfos.perms"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-          v-if="modalState.form.menuType !== MENU_TYPE_DIR"
-        >
-          <a-input
-            v-model:value="modalState.form.perms"
-            allow-clear
-            placeholder="请输入权限标识"
-            :maxlength="100"
-          >
+        <a-form-item label="权限标识" name="perms" v-bind="modalStateForm.validateInfos.perms" :label-col="{ span: 3 }"
+          :label-wrap="true" v-if="modalState.form.menuType !== MENU_TYPE_DIR">
+          <a-input v-model:value="modalState.form.perms" allow-clear placeholder="请输入权限标识" :maxlength="100">
             <template #prefix>
               <a-tooltip placement="topLeft">
                 <template #title>
@@ -952,19 +735,9 @@ function handleDelete(menuId: string | number) {
           </a-input>
         </a-form-item>
 
-        <a-form-item
-          label="菜单说明"
-          name="remark"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-textarea
-            v-model:value="modalState.form.remark"
-            :auto-size="{ minRows: 2, maxRows: 6 }"
-            :maxlength="200"
-            :show-count="true"
-            placeholder="请输入菜单说明"
-          />
+        <a-form-item label="菜单说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea v-model:value="modalState.form.remark" :auto-size="{ minRows: 2, maxRows: 6 }" :maxlength="200"
+            :show-count="true" placeholder="请输入菜单说明" />
         </a-form-item>
       </a-form>
     </ProModal>

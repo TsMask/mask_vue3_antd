@@ -1,17 +1,14 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { reactive, ref, onMounted } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import type { ColumnsType } from 'ant-design-vue/es/table';
 import { getSystemInfo } from '@/api/monitor/system';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import { useDetailQuery } from '@/hooks/useDetailQuery';
+
 const route = useRoute();
-
 /**路由标题 */
-let title = ref<string>(route.meta.title ?? '标题');
-
-/**加载状态 */
-let loading = ref<boolean>(true);
+const title = ref<string>(route.meta.title ?? '标题');
 
 /**磁盘信息表格字段列 */
 let diskTableColumns: ColumnsType = [
@@ -71,55 +68,46 @@ let server: ServerType = reactive({
   time: {},
 });
 
-/**运行时长（秒）转换 */
+const { loading: loading, fetch: fetchServer } = useDetailQuery({
+  queryFn: getSystemInfo,
+});
+
+/** 运行时长（秒）转换 */
 function loadUpTime(uptime: string | number) {
-  if (typeof uptime === 'string') {
-    return uptime;
-  }
-  if (uptime <= 0) {
-    return '-';
-  }
-  let days = Math.floor(uptime / 86400);
-  let hours = Math.floor((uptime % 86400) / 3600);
-  let minutes = Math.floor((uptime % 3600) / 60);
-  let seconds = uptime % 60;
-  let strArr: string[] = [];
-  if (days !== 0) {
-    strArr.push(`${days}天`);
-  }
-  if (hours !== 0) {
-    strArr.push(`${hours}小时`);
-  }
-  if (minutes !== 0) {
-    strArr.push(`${minutes}分钟`);
-  }
+  if (typeof uptime === 'string') return uptime;
+  if (uptime <= 0) return '-';
+  const days = Math.floor(uptime / 86400);
+  const hours = Math.floor((uptime % 86400) / 3600);
+  const minutes = Math.floor((uptime % 3600) / 60);
+  const seconds = uptime % 60;
+  const strArr: string[] = [];
+  if (days !== 0) strArr.push(`${days}天`);
+  if (hours !== 0) strArr.push(`${hours}小时`);
+  if (minutes !== 0) strArr.push(`${minutes}分钟`);
   strArr.push(`${seconds}秒`);
   return strArr.join(' ');
 }
 
-onMounted(() => {
-  getSystemInfo().then(res => {
-    if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      // CPU信息
-      let cpu = res.data.cpu;
-      cpu.coreUsed = cpu.coreUsed.map((item: string) => item).join(' / ');
-      server.cpu = cpu;
-      // 磁盘信息
-      server.disk = res.data.disk;
-      // 内存信息
-      server.memory = res.data.memory;
-      // 网络信息
-      server.network = res.data.network;
-      // 项目信息
-      server.project = res.data.project;
-      // 系统信息
-      server.system = res.data.system;
-      // 时间信息
-      server.time = res.data.time;
-      // 加载状态
-      loading.value = false;
-    }
-  });
+onMounted(async () => {
+  const data = await fetchServer();
+  if (data) {
+    // CPU信息
+    const cpu = data.cpu;
+    cpu.coreUsed = cpu.coreUsed.map((item: string) => item).join(' / ');
+    server.cpu = cpu;
+    // 磁盘信息
+    server.disk = data.disk;
+    // 内存信息
+    server.memory = data.memory;
+    // 网络信息
+    server.network = data.network;
+    // 项目信息
+    server.project = data.project;
+    // 系统信息
+    server.system = data.system;
+    // 时间信息
+    server.time = data.time;
+  }
 });
 </script>
 
@@ -129,18 +117,9 @@ onMounted(() => {
       <a-typography-paragraph> 服务器与应用程序的信息 </a-typography-paragraph>
     </template>
 
-    <a-card
-      title="项目信息"
-      :bordered="false"
-      :body-style="{ marginBottom: '24px', padding: 0 }"
-    >
-      <a-descriptions
-        size="middle"
-        layout="horizontal"
-        :label-style="{ width: '140px' }"
-        :bordered="true"
-        :column="{ lg: 2, md: 2, xs: 1 }"
-      >
+    <a-card title="项目信息" :bordered="false" :body-style="{ marginBottom: '24px', padding: 0 }">
+      <a-descriptions size="middle" layout="horizontal" :label-style="{ width: '140px' }" :bordered="true"
+        :column="{ lg: 2, md: 2, xs: 1 }">
         <a-descriptions-item label="项目名称">
           {{ server.project.name }}
         </a-descriptions-item>
@@ -157,18 +136,9 @@ onMounted(() => {
       </a-descriptions>
     </a-card>
 
-    <a-card
-      title="系统信息"
-      :bordered="false"
-      :body-style="{ marginBottom: '24px', padding: 0 }"
-    >
-      <a-descriptions
-        size="middle"
-        layout="horizontal"
-        :label-style="{ width: '140px' }"
-        :column="{ lg: 3, md: 3, xs: 1 }"
-        :bordered="true"
-      >
+    <a-card title="系统信息" :bordered="false" :body-style="{ marginBottom: '24px', padding: 0 }">
+      <a-descriptions size="middle" layout="horizontal" :label-style="{ width: '140px' }"
+        :column="{ lg: 3, md: 3, xs: 1 }" :bordered="true">
         <a-descriptions-item label="系统平台">
           {{ server.system.platform }}
         </a-descriptions-item>
@@ -218,18 +188,8 @@ onMounted(() => {
       </a-descriptions>
     </a-card>
 
-    <a-card
-      title="CPU信息"
-      :bordered="false"
-      :body-style="{ marginBottom: '24px', padding: 0 }"
-    >
-      <a-descriptions
-        size="middle"
-        layout="horizontal"
-        :label-style="{ width: '140px' }"
-        :column="1"
-        :bordered="true"
-      >
+    <a-card title="CPU信息" :bordered="false" :body-style="{ marginBottom: '24px', padding: 0 }">
+      <a-descriptions size="middle" layout="horizontal" :label-style="{ width: '140px' }" :column="1" :bordered="true">
         <a-descriptions-item label="型号">
           {{ server.cpu.model }}
         </a-descriptions-item>
@@ -245,18 +205,9 @@ onMounted(() => {
       </a-descriptions>
     </a-card>
 
-    <a-card
-      title="内存信息"
-      :bordered="false"
-      :body-style="{ marginBottom: '24px', padding: 0 }"
-    >
-      <a-descriptions
-        size="middle"
-        layout="horizontal"
-        :label-style="{ width: '140px' }"
-        :column="{ lg: 2, md: 2, xs: 1 }"
-        :bordered="true"
-      >
+    <a-card title="内存信息" :bordered="false" :body-style="{ marginBottom: '24px', padding: 0 }">
+      <a-descriptions size="middle" layout="horizontal" :label-style="{ width: '140px' }"
+        :column="{ lg: 2, md: 2, xs: 1 }" :bordered="true">
         <a-descriptions-item label="总内存">
           {{ server.memory.totalmem }}
         </a-descriptions-item>
@@ -281,18 +232,9 @@ onMounted(() => {
       </a-descriptions>
     </a-card>
 
-    <a-card
-      title="时间信息"
-      :bordered="false"
-      :body-style="{ marginBottom: '24px', padding: 0 }"
-    >
-      <a-descriptions
-        size="middle"
-        layout="horizontal"
-        :label-style="{ width: '140px' }"
-        :column="{ lg: 3, md: 3, xs: 1 }"
-        :bordered="true"
-      >
+    <a-card title="时间信息" :bordered="false" :body-style="{ marginBottom: '24px', padding: 0 }">
+      <a-descriptions size="middle" layout="horizontal" :label-style="{ width: '140px' }"
+        :column="{ lg: 3, md: 3, xs: 1 }" :bordered="true">
         <a-descriptions-item label="时间">
           {{ server.time.current }}
         </a-descriptions-item>
@@ -305,38 +247,17 @@ onMounted(() => {
       </a-descriptions>
     </a-card>
 
-    <a-card
-      title="网络信息"
-      :bordered="false"
-      :body-style="{ marginBottom: '24px', padding: 0 }"
-    >
-      <a-descriptions
-        size="middle"
-        layout="horizontal"
-        :label-style="{ width: '140px' }"
-        :column="1"
-        :bordered="true"
-      >
-        <a-descriptions-item
-          :label="name"
-          v-for="(value, name) in server.network"
-          :key="name"
-        >
+    <a-card title="网络信息" :bordered="false" :body-style="{ marginBottom: '24px', padding: 0 }">
+      <a-descriptions size="middle" layout="horizontal" :label-style="{ width: '140px' }" :column="1" :bordered="true">
+        <a-descriptions-item :label="name" v-for="(value, name) in server.network" :key="name">
           {{ value }}
         </a-descriptions-item>
       </a-descriptions>
     </a-card>
 
     <a-card title="磁盘信息" :bordered="false" :body-style="{ padding: 0 }">
-      <a-table
-        class="disk"
-        row-key="target"
-        size="middle"
-        :columns="diskTableColumns"
-        :data-source="server.disk"
-        :pagination="false"
-        :scroll="{ x: true }"
-      >
+      <a-table class="disk" row-key="target" size="middle" :columns="diskTableColumns" :data-source="server.disk"
+        :pagination="false" :scroll="{ x: true }">
       </a-table>
     </a-card>
   </PageContainer>

@@ -1,5 +1,8 @@
 import { reactive } from 'vue';
 import { Form } from 'ant-design-vue';
+import { message } from 'ant-design-vue';
+import { isSuccess } from '@/plugins/http-fetch';
+import type { ResultType } from '@/plugins/http-fetch';
 
 export interface UseCrudModalOptions<TForm> {
   /** 表单初始值工厂函数，每次打开新增弹窗时使用 */
@@ -42,6 +45,8 @@ export interface UseCrudModalOptions<TForm> {
  * @returns setForm - 设置表单数据（合并到 modal.form）
  * @returns resetForm - 重置表单校验状态和值
  * @returns close - 关闭弹窗并重置表单
+ * @returns openView - 打开详情弹窗（只读）
+ * @returns openEdit - 打开编辑弹窗（新增/编辑）
  */
 export function useCrudModal<TForm extends Record<string, any>>(
   options: UseCrudModalOptions<TForm>
@@ -92,11 +97,79 @@ export function useCrudModal<TForm extends Record<string, any>>(
     resetForm();
   }
 
+  /**
+   * 打开详情弹窗（只读）
+   * 自动请求数据并赋值表单
+   *
+   * @param id - 数据 ID
+   * @param fetchFn - 查询详情的 API 函数
+   * @param title - 弹窗标题
+   */
+  async function openView(
+    id: string | number,
+    fetchFn: (id: string | number) => Promise<ResultType>,
+    title: string
+  ) {
+    if (!id) return;
+    modal.confirmLoading = true;
+    const hide = message.loading('正在打开...', 0);
+    try {
+      const res = await fetchFn(id);
+      if (isSuccess(res) && res.data) {
+        Object.assign(modal.form as Record<string, any>, res.data);
+        modal.title = title;
+        modal.visibleByView = true;
+      }
+    } finally {
+      hide();
+      modal.confirmLoading = false;
+    }
+  }
+
+  /**
+   * 打开编辑弹窗（新增/编辑）
+   * 新增时重置表单，编辑时自动请求数据并赋值
+   *
+   * @param id - 数据 ID，不传则为新增模式
+   * @param fetchFn - 查询详情的 API 函数（新增时也会调用，返回默认值/选项数据）
+   * @param addTitle - 新增时的弹窗标题
+   * @param editTitle - 编辑时的弹窗标题
+   */
+  async function openEdit(
+    id: string | number | undefined,
+    fetchFn: (id: string | number) => Promise<ResultType>,
+    addTitle: string,
+    editTitle: string
+  ) {
+    const fetchId = id || 0;
+    modal.confirmLoading = true;
+    const hide = message.loading('正在打开...', 0);
+    try {
+      formCtl.resetFields();
+      if (fetchId) {
+        const res = await fetchFn(fetchId);
+        if (isSuccess(res) && res.data) {
+          Object.assign(modal.form as Record<string, any>, res.data);
+          modal.title = editTitle;
+          modal.visibleByEdit = true;
+        }
+      } else {
+        modal.title = addTitle;
+        modal.visibleByEdit = true;
+      }
+    } finally {
+      hide();
+      modal.confirmLoading = false;
+    }
+  }
+
   return {
     modal,
     formCtl,
     setForm,
     resetForm,
     close,
+    openView,
+    openEdit,
   };
 }
