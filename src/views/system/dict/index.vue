@@ -167,11 +167,11 @@ function handleDelete(dictId: string = "0") {
 
 function handleExport() {
   confirmAction({
-    content: "确认根据搜索条件导出xlsx表格文件吗",
+    content: "确认根据搜索条件导出数据文件吗",
     action: () => exportType(toRaw(queryParams)),
     variables: undefined,
     successText: "已导出完成",
-    onSuccess: (res) => saveAs(res.data, `dict_${Date.now()}.xlsx`),
+    onSuccess: (res) => saveAs(res.data, `dict_${Date.now()}.csv`),
   });
 }
 

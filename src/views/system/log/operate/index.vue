@@ -113,9 +113,9 @@ function handleCleanList() {
 
 function handleExport() {
   confirmAction({
-    content: "确认根据搜索条件导出xlsx表格文件吗",
+    content: "确认根据搜索条件导出数据文件吗",
     action: () => exportSysLogOperate(toRaw(queryParams)), variables: undefined as any, successText: "已导出完成",
-    onSuccess: (res) => { saveAs(res.data, `sys_log_operate_${Date.now()}.xlsx`); },
+    onSuccess: (res) => { saveAs(res.data, `sys_log_operate_${Date.now()}.csv`); },
   });
 }
 </script>

@@ -149,11 +149,11 @@ function handleCleanAll() {
 
 function handleExport() {
   confirmAction({
-    content: '确认根据搜索条件导出xlsx表格文件吗?',
+    content: '确认根据搜索条件导出数据文件吗?',
     action: () => exportJobLog(toRaw(queryParams)),
     variables: undefined,
     successText: '已完成导出',
-    onSuccess: (res) => saveAs(res.data, `job_log_${Date.now()}.xlsx`),
+    onSuccess: (res) => saveAs(res.data, `job_log_${Date.now()}.csv`),
   });
 }
 

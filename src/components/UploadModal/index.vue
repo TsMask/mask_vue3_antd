@@ -20,7 +20,7 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
-  /**允许上传的文件拓展类型，默认任意，可指定['.xls', '.xlsx'] */
+  /**允许上传的文件拓展类型，默认任意，可指定['.txt', '.csv', '.xls', '.xlsx'] */
   ext: {
     type: Array<string>,
     default: [],

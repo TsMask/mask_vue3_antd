@@ -205,12 +205,12 @@ function handleDelete(configId: string = "0") {
 /** 导出参数配置列表 */
 function handleExport() {
   confirmAction({
-    content: "确认根据搜索条件导出xlsx表格文件吗",
+    content: "确认根据搜索条件导出数据文件吗",
     action: () => exportConfig(toRaw(queryParams)),
     variables: undefined as any,
     successText: "已导出完成",
     onSuccess: (res) => {
-      saveAs(res.data, `config_${Date.now()}.xlsx`);
+      saveAs(res.data, `config_${Date.now()}.csv`);
     },
   });
 }

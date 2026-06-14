@@ -367,11 +367,11 @@ function handleUnlock(userName: string) {
 
 function handleExport() {
   confirmAction({
-    content: '确认根据搜索条件导出xlsx表格文件吗?',
+    content: '确认根据搜索条件导出数据文件吗?',
     action: () => exportUser(toRaw(queryParams)),
     variables: undefined,
     successText: '已完成导出',
-    onSuccess: (res) => saveAs(res.data, `user_${Date.now()}.xlsx`),
+    onSuccess: (res) => saveAs(res.data, `user_${Date.now()}.csv`),
   });
 }
 
@@ -404,7 +404,10 @@ async function handleImportUpload(file: File) {
     formData.append('file', file);
     formData.append('subPath', 'import');
     const uploadRes = await uploadFile(formData);
-    if (!isSuccess(uploadRes)) return;
+    if (!isSuccess(uploadRes)) {
+      message.error(uploadRes.msg, 3);
+      return;
+    }
     const filePath = uploadRes.data.filePath;
     const importRes = await importData(filePath, importState.updateSupport);
     if (isSuccess(importRes)) {
@@ -425,7 +428,7 @@ async function handleDownloadTemplate() {
   try {
     const res = await importTemplate();
     if (isSuccess(res)) {
-      saveAs(res.data, `user_template_${Date.now()}.xlsx`);
+      saveAs(res.data, `user_template_${Date.now()}.csv`);
     }
   } finally {
     importState.templateDownload = false;
@@ -893,7 +896,7 @@ onMounted(() => {
 
     <!-- 上传导入表格数据文件框 -->
     <UploadModal :title="importState.title" :loading="importState.loading" @upload="handleImportUpload"
-      @close="handleCloseImport" v-model:open="importState.open" :ext="['.xls', '.xlsx']" :size="10">
+      @close="handleCloseImport" v-model:open="importState.open" :ext="['.csv']" :size="10">
       <template #default>
         <a-row justify="space-between" align="middle">
           <a-col :span="12">
