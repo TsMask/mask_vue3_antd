@@ -30,7 +30,7 @@ type UserInfo = {
   /** 用户邮箱 */
   email: string;
   /** 用户性别 */
-  sex: string | undefined;
+  gender: string | undefined;
 };
 
 /**
@@ -59,7 +59,7 @@ const useUserStore = defineStore('user', {
     nickName: '',
     phone: '',
     email: '',
-    sex: undefined,
+    gender: undefined,
   }),
   getters: {
     /**
@@ -80,7 +80,7 @@ const useUserStore = defineStore('user', {
         nickName: state.nickName,
         phone: state.phone,
         email: state.email,
-        sex: state.sex,
+        gender: state.gender,
         avatar: state.avatar,
       };
     },
@@ -94,7 +94,7 @@ const useUserStore = defineStore('user', {
       this.nickName = data.nickName;
       this.phone = data.phone;
       this.email = data.email;
-      this.sex = data.sex;
+      this.gender = data.gender;
     },
     /**
      * 更新头像
@@ -133,16 +133,16 @@ const useUserStore = defineStore('user', {
       if (res.code === RESULT_CODE_SUCCESS && res.data) {
         const { user, roles, permissions } = res.data;
         // 用户ID
-        this.userId = user.userId;
+        this.userId = user.id;
         // 登录账号
         this.userName = user.userName;
         // 用户头像
-        this.avatar = user.avatar;
+        this.avatar = user.userAvatar;
         // 基础信息
-        this.nickName = user.nickName;
-        this.phone = user.phone;
-        this.email = user.email;
-        this.sex = user.sex;
+        this.nickName = user.userNick;
+        this.phone = user.userPhone;
+        this.email = user.userEmail;
+        this.gender = user.userGender;
 
         // 验证返回的roles是否是一个非空数组
         if (Array.isArray(roles) && roles.length > 0) {

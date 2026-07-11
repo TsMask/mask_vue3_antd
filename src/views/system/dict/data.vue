@@ -66,7 +66,7 @@ const { queryParams, handleQuery, resetQuery: baseResetQuery, setQuery } = useQu
   {
     dictType: undefined as string | undefined,
     dataLabel: "",
-    statusFlag: undefined as string | undefined,
+    dataStatus: undefined as string | undefined,
     pageNum: 1,
     pageSize: 20,
   },
@@ -76,7 +76,7 @@ const { queryParams, handleQuery, resetQuery: baseResetQuery, setQuery } = useQu
 /** 重置查询条件；从字典类型页进入时仅重置数据标签和状态，保留 dictType */
 function resetQuery() {
   if (dictId && dictId !== "0") {
-    setQuery({ dataLabel: "", statusFlag: undefined, pageNum: 1, pageSize: 20 });
+    setQuery({ dataLabel: "", dataStatus: undefined, pageNum: 1, pageSize: 20 });
     resetPage();
   } else {
     baseResetQuery();
@@ -115,7 +115,7 @@ const {
   setForm,
 } = useCrudModal({
   initForm: () => ({
-    dataId: undefined as string | number | undefined,
+    id: undefined as string | number | undefined,
     dictType: undefined as string | undefined,
     dataLabel: "",
     dataSort: 0,
@@ -123,7 +123,7 @@ const {
     tagClass: "",
     tagType: "",
     remark: "",
-    statusFlag: "0",
+    dataStatus: "0",
     createTime: 0,
     createBy: undefined,
   }),
@@ -137,7 +137,7 @@ const {
 /** 新增/编辑 mutation */
 const { execute: submitExecute, loading: isSubmitting } = useAction({
   action: (form: Record<string, any>) =>
-    form.dataId ? updateData(form) : addData(form),
+    form.id ? updateData(form) : addData(form),
   successText: "操作成功",
   onSuccess() {
     handleCancel();
@@ -146,16 +146,16 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 });
 
 const tableColumns: ColumnsType = [
-  { title: "数据编号", dataIndex: "dataId", align: "left", width: 100 },
+  { title: "数据编号", dataIndex: "id", align: "left", width: 100 },
   { title: "数据标签", dataIndex: "dataLabel", align: "left", width: 200 },
   { title: "数据键值", dataIndex: "dataValue", align: "left", width: 200 },
   { title: "数据排序", dataIndex: "dataSort", align: "left", width: 100 },
-  { title: "数据状态", dataIndex: "statusFlag", key: "statusFlag", align: "left", width: 100 },
+  { title: "数据状态", dataIndex: "dataStatus", key: "dataStatus", align: "left", width: 100 },
   {
     title: "创建时间", dataIndex: "createTime", align: "left", width: 150,
     customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); },
   },
-  { title: "操作", key: "dataId", align: "left" },
+  { title: "操作", key: "id", align: "left" },
 ];
 
 /** 直接从行数据打开字典数据详情弹窗（无需再次请求接口） */
@@ -166,12 +166,12 @@ function handleView(row: Record<string, string>) {
 }
 
 /** 打开新增或编辑弹窗 */
-function handleEdit(dataId?: string | number) {
-  if (!dataId) {
+function handleEdit(id?: string | number) {
+  if (!id) {
     openEdit(undefined, getData, "添加字典数据", "修改字典数据");
     setTimeout(() => { modalState.form.dictType = queryParams.dictType; }, 0);
   } else {
-    openEdit(dataId, getData, "添加字典数据", "修改字典数据");
+    openEdit(id, getData, "添加字典数据", "修改字典数据");
   }
 }
 
@@ -185,17 +185,17 @@ async function handleSubmit() {
   await submitExecute(toRaw(modalState.form));
 }
 
-function handleDelete(dataId: string = "0") {
-  if (dataId === "0") {
-    dataId = tableState.selectedRowKeys.join(",");
+function handleDelete(id: string = "0") {
+  if (id === "0") {
+    id = tableState.selectedRowKeys.join(",");
   }
   confirmAction({
-    content: `确认删除字典数据编号为【${dataId}】的数据项?`,
-    action: () => delData(dataId),
+    content: `确认删除字典数据编号为【${id}】的数据项?`,
+    action: () => delData(id),
     variables: undefined,
     successText: "删除成功",
     onSuccess() {
-      const deletedCount = String(dataId).split(",").length;
+      const deletedCount = String(id).split(",").length;
       if (!clampPage(deletedCount)) fetchList();
     },
   });
@@ -256,8 +256,8 @@ onMounted(async () => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="数据状态" name="statusFlag">
-              <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择数据状态"
+            <a-form-item label="数据状态" name="dataStatus">
+              <a-select v-model:value="queryParams.dataStatus" allow-clear placeholder="请选择数据状态"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
@@ -353,17 +353,17 @@ onMounted(async () => {
         </a-space>
       </template>
 
-      <a-table class="antdv-table" row-key="dataId" :columns="tableColumns" :loading="loading" :data-source="tableListData"
+      <a-table class="antdv-table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="tableListData"
         :size="tableState.size" :row-class-name="rowClassName"
         :scroll="{ x: tableColumns.length * 120, scrollToFirstRowOnChange: true }" :pagination="{ ...pagination }"
         :row-selection="{
           type: 'checkbox', selectedRowKeys: tableState.selectedRowKeys, onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'statusFlag'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.statusFlag" />
+          <template v-if="column.key === 'dataStatus'">
+            <DictTag :options="dict.sysNormalDisable" :value="record.dataStatus" />
           </template>
-          <template v-if="column.key === 'dataId'">
+          <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
@@ -375,7 +375,7 @@ onMounted(async () => {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
-                <a-button type="link" @click.prevent="handleEdit(record.dataId)" v-perms:has="['system:dict:edit']">
+                <a-button type="link" @click.prevent="handleEdit(record.id)" v-perms:has="['system:dict:edit']">
                   <template #icon>
                     <FormOutlined />
                   </template>
@@ -383,7 +383,7 @@ onMounted(async () => {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>删除</template>
-                <a-button type="link" @click.prevent="handleDelete(record.dataId)" v-perms:has="['system:dict:remove']">
+                <a-button type="link" @click.prevent="handleDelete(record.id)" v-perms:has="['system:dict:remove']">
                   <template #icon>
                     <DeleteOutlined />
                   </template>
@@ -401,7 +401,7 @@ onMounted(async () => {
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据编号" name="dataId">{{ modalState.form.dataId }}</a-form-item>
+            <a-form-item label="数据编号" name="id">{{ modalState.form.id }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="创建时间" name="createTime">
@@ -418,8 +418,8 @@ onMounted(async () => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据状态" name="statusFlag">
-              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.statusFlag" />
+            <a-form-item label="数据状态" name="dataStatus">
+              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.dataStatus" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -475,8 +475,8 @@ onMounted(async () => {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据状态" name="statusFlag">
-              <a-select v-model:value="modalState.form.statusFlag" default-value="0" placeholder="数据状态"
+            <a-form-item label="数据状态" name="dataStatus">
+              <a-select v-model:value="modalState.form.dataStatus" default-value="0" placeholder="数据状态"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>

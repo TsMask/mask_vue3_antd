@@ -32,9 +32,9 @@ export function listJob(query: Record<string, any>) {
  * @param jobId 任务ID
  * @returns object
  */
-export function getJob(jobId: string | number) {
+export function getJob(id: string | number) {
   return request({
-    url: `/monitor/job/${jobId}`,
+    url: `/monitor/job/${id}`,
     method: 'GET',
   });
 }
@@ -70,9 +70,9 @@ export function updateJob(data: Record<string, any>) {
  * @param jobId 任务ID
  * @returns object
  */
-export function delJob(jobId: string | number) {
+export function delJob(id: string | number) {
   return request({
-    url: `/monitor/job/${jobId}`,
+    url: `/monitor/job/${id}`,
     method: 'DELETE',
   });
 }
@@ -80,19 +80,16 @@ export function delJob(jobId: string | number) {
 /**
  * 任务状态修改
  * @param jobId 任务ID
- * @param statusFlag 变更状态值
+ * @param jobStatus 变更状态值
  * @returns
  */
-export function changeStatus(
-  jobId: string | number,
-  statusFlag: string | number
-) {
+export function changeStatus(jobId: string | number, jobStatus: string | number) {
   return request({
     url: '/monitor/job/status',
     method: 'PUT',
     data: {
       jobId,
-      statusFlag,
+      jobStatus,
     },
   });
 }
@@ -102,9 +99,9 @@ export function changeStatus(
  * @param jobId 任务ID
  * @returns object
  */
-export function runJob(jobId: string) {
+export function runJob(id: string | number) {
   return request({
-    url: `/monitor/job/run/${jobId}`,
+    url: `/monitor/job/run/${id}`,
     method: 'PUT',
   });
 }

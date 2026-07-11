@@ -80,14 +80,14 @@ export function delRole(roleId: string | number) {
 /**
  * 角色状态修改
  * @param roleId 角色ID
- * @param statusFlag 角色状态
+ * @param roleStatus 角色状态
  * @returns object
  */
-export function changeStatus(roleId: string, statusFlag: string | number) {
+export function changeStatus(roleId: string, roleStatus: string | number) {
   return request({
     url: '/system/role/status',
     method: 'PUT',
-    data: { roleId, statusFlag },
+    data: { roleId, roleStatus },
   });
 }
 

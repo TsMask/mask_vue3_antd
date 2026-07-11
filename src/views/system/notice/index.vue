@@ -40,7 +40,7 @@ const { queryParams, handleQuery, resetQuery } = useQueryParams(
     noticeTitle: "",
     createBy: undefined as string | undefined,
     noticeType: undefined as string | undefined,
-    statusFlag: undefined as string | undefined,
+    noticeStatus: undefined as string | undefined,
     pageNum: 1,
     pageSize: 20,
   },
@@ -82,11 +82,11 @@ const {
   close: handleCancel,
 } = useCrudModal({
   initForm: () => ({
-    noticeId: undefined as string | number | undefined,
+    id: undefined as string | number | undefined,
     noticeTitle: "",
     noticeContent: "",
     noticeType: "2",
-    statusFlag: "1",
+    noticeStatus: "1",
     delFlag: "0",
     remark: "",
     createBy: undefined,
@@ -113,7 +113,7 @@ const {
 /** 新增/编辑 mutation */
 const { execute: submitExecute, loading: isSubmitting } = useAction({
   action: (form: Record<string, any>) =>
-    form.noticeId ? updateNotice(form) : addNotice(form),
+    form.id ? updateNotice(form) : addNotice(form),
   successText: "操作成功",
   onSuccess() {
     handleCancel();
@@ -123,7 +123,7 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 
 /** 表格字段列 */
 const tableColumns: ColumnsType = [
-  { title: "公告编号", dataIndex: "noticeId", align: "left", width: 100 },
+  { title: "公告编号", dataIndex: "id", align: "left", width: 100 },
   { title: "公告标题", dataIndex: "noticeTitle", align: "left", width: 300 },
   {
     title: "公告类型",
@@ -134,8 +134,8 @@ const tableColumns: ColumnsType = [
   },
   {
     title: "状态",
-    dataIndex: "statusFlag",
-    key: "statusFlag",
+    dataIndex: "noticeStatus",
+    key: "noticeStatus",
     align: "left",
     width: 100,
   },
@@ -150,17 +150,17 @@ const tableColumns: ColumnsType = [
       return parseDateToStr(+opt.value);
     },
   },
-  { title: "操作", key: "noticeId", align: "left" },
+  { title: "操作", key: "id", align: "left" },
 ];
 
 /** 打开公告详情弹窗 */
-function handleView(noticeId: string | number) {
-  openView(noticeId, getNotice, "公告信息");
+function handleView(id: string | number) {
+  openView(id, getNotice, "公告信息");
 }
 
 /** 打开新增或编辑弹窗 */
-function handleEdit(noticeId?: string | number) {
-  openEdit(noticeId, getNotice, "添加公告", "修改公告");
+function handleEdit(id?: string | number) {
+  openEdit(id, getNotice, "添加公告", "修改公告");
 }
 
 /** 校验表单后提交新增/编辑 */
@@ -179,17 +179,17 @@ async function handleSubmit() {
 }
 
 /** 删除公告（单条或批量） */
-function handleDelete(noticeId: string = "0") {
-  if (noticeId === "0") {
-    noticeId = tableState.selectedRowKeys.join(",");
+function handleDelete(id: string = "0") {
+  if (id === "0") {
+    id = tableState.selectedRowKeys.join(",");
   }
   confirmAction({
-    content: `确认删除公告编号为【${noticeId}】的数据项?`,
+    content: `确认删除公告编号为【${id}】的数据项?`,
     action: (id) => delNotice(id),
-    variables: noticeId,
+    variables: id,
     successText: "删除成功",
     onSuccess() {
-      const deletedCount = String(noticeId).split(",").length;
+      const deletedCount = String(id).split(",").length;
       if (!clampPage(deletedCount)) fetchList();
     },
   });
@@ -225,8 +225,8 @@ function handleDelete(noticeId: string = "0") {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="公告状态" name="statusFlag">
-              <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择公告状态"
+            <a-form-item label="公告状态" name="noticeStatus">
+              <a-select v-model:value="queryParams.noticeStatus" allow-clear placeholder="请选择公告状态"
                 :options="dict.sysNoticeStatus">
               </a-select>
             </a-form-item>
@@ -310,7 +310,7 @@ function handleDelete(noticeId: string = "0") {
         </a-space>
       </template>
 
-      <a-table class="antdv-table" row-key="noticeId" :columns="tableColumns" :loading="loading" :data-source="listData"
+      <a-table class="antdv-table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="listData"
         :size="tableState.size" :row-class-name="rowClassName" :pagination="pagination" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
@@ -323,14 +323,14 @@ function handleDelete(noticeId: string = "0") {
           <template v-if="column.key === 'noticeType'">
             <DictTag :options="dict.sysNoticeType" :value="record.noticeType" />
           </template>
-          <template v-if="column.key === 'statusFlag'">
-            <DictTag :options="dict.sysNoticeStatus" :value="record.statusFlag" />
+          <template v-if="column.key === 'noticeStatus'">
+            <DictTag :options="dict.sysNoticeStatus" :value="record.noticeStatus" />
           </template>
-          <template v-if="column.key === 'noticeId'">
+          <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
-                <a-button type="link" @click.prevent="handleView(record.noticeId)"
+                <a-button type="link" @click.prevent="handleView(record.id)"
                   v-perms:has="['system:notice:query']">
                   <template #icon>
                     <ProfileOutlined />
@@ -339,7 +339,7 @@ function handleDelete(noticeId: string = "0") {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
-                <a-button type="link" @click.prevent="handleEdit(record.noticeId)" v-perms:has="['system:notice:edit']">
+                <a-button type="link" @click.prevent="handleEdit(record.id)" v-perms:has="['system:notice:edit']">
                   <template #icon>
                     <FormOutlined />
                   </template>
@@ -347,7 +347,7 @@ function handleDelete(noticeId: string = "0") {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>删除</template>
-                <a-button type="link" @click.prevent="handleDelete(record.noticeId)"
+                <a-button type="link" @click.prevent="handleDelete(record.id)"
                   v-perms:has="['system:notice:remove']">
                   <template #icon>
                     <DeleteOutlined />
@@ -371,8 +371,8 @@ function handleDelete(noticeId: string = "0") {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="公告状态" name="statusFlag">
-              <DictTag :options="dict.sysNoticeStatus" :value="modalState.form.statusFlag" />
+            <a-form-item label="公告状态" name="noticeStatus">
+              <DictTag :options="dict.sysNoticeStatus" :value="modalState.form.noticeStatus" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -403,8 +403,8 @@ function handleDelete(noticeId: string = "0") {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="公告状态" name="statusFlag">
-              <a-select v-model:value="modalState.form.statusFlag" default-value="0" placeholder="公告状态"
+            <a-form-item label="公告状态" name="noticeStatus">
+              <a-select v-model:value="modalState.form.noticeStatus" default-value="0" placeholder="公告状态"
                 :options="dict.sysNoticeStatus">
               </a-select>
             </a-form-item>

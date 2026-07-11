@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { useRoute } from "vue-router";
 import { ref, toRaw } from "vue";
 import { PageContainer } from "antdv-pro-layout";
@@ -30,7 +30,7 @@ const route = useRoute();
 const title = ref<string>(route.meta.title ?? "标题");
 
 /** 字典数据初始化 */
-const { dict } = useDictSetup({ keyMap: { sysYesNo: "sys_yes_no", } });
+const { dict } = useDictSetup({ keyMap: { sysNormalDisable: "sys_normal_disable", } });
 
 /** 时间范围选择器 */
 const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
@@ -40,7 +40,7 @@ const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
   {
     configName: "",
     configKey: "",
-    configType: undefined as string | undefined,
+    configGroup: undefined as string | undefined,
     beginTime: undefined as number | undefined,
     endTime: undefined as number | undefined,
     pageNum: 1,
@@ -101,11 +101,14 @@ const {
   close: handleCancel,
 } = useCrudModal({
   initForm: () => ({
-    configId: undefined as string | number | undefined,
+    id: undefined as string | number | undefined,
     configName: "",
     configKey: "",
     configValue: "",
-    configType: "N",
+    configValueType: "string",
+    configGroup: "",
+    configSort: 0,
+    configStatus: "1",
     remark: undefined as string | undefined,
   }),
   rules: {
@@ -124,7 +127,7 @@ const {
 /** 新增/编辑 mutation */
 const { execute: submitExecute, loading: isSubmitting } = useAction({
   action: (form: Record<string, any>) =>
-    form.configId ? updateConfig(form) : addConfig(form),
+    form.id ? updateConfig(form) : addConfig(form),
   successText: "操作成功",
   onSuccess() {
     handleCancel();
@@ -134,14 +137,14 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 
 /** 表格字段列 */
 const tableColumns: ColumnsType = [
-  { title: "参数编号", dataIndex: "configId", align: "left", width: 100 },
+  { title: "参数编号", dataIndex: "id", align: "left", width: 100 },
   { title: "参数名称", dataIndex: "configName", align: "left", width: 200 },
   { title: "参数键名", dataIndex: "configKey", align: "left", width: 200 },
   { title: "参数键值", dataIndex: "configValue", align: "left", width: 100 },
   {
-    title: "系统内置",
-    dataIndex: "configType",
-    key: "configType",
+    title: "状态",
+    dataIndex: "configStatus",
+    key: "configStatus",
     align: "left",
     width: 100,
   },
@@ -155,17 +158,17 @@ const tableColumns: ColumnsType = [
       return parseDateToStr(+opt.value);
     },
   },
-  { title: "操作", key: "configId", align: "left" },
+  { title: "操作", key: "id", align: "left" },
 ];
 
 /** 打开参数配置详情弹窗 */
-function handleView(configId: string | number) {
-  openView(configId, getConfig, "参数配置信息");
+function handleView(id: string | number) {
+  openView(id, getConfig, "参数配置信息");
 }
 
 /** 打开新增或编辑弹窗 */
-function handleEdit(configId?: string | number) {
-  openEdit(configId, getConfig, "添加参数配置", "修改参数配置");
+function handleEdit(id?: string | number) {
+  openEdit(id, getConfig, "添加参数配置", "修改参数配置");
 }
 
 /** 校验表单后提交新增/编辑 */
@@ -184,17 +187,17 @@ async function handleSubmit() {
 }
 
 /** 删除参数配置（单条或批量） */
-function handleDelete(configId: string = "0") {
-  if (configId === "0") {
-    configId = tableState.selectedRowKeys.join(",");
+function handleDelete(id: string = "0") {
+  if (id === "0") {
+    id = tableState.selectedRowKeys.join(",");
   }
   confirmAction({
-    content: `确认删除参数编号为【${configId}】的数据项?`,
+    content: `确认删除参数编号为【${id}】的数据项?`,
     action: (id) => delConfig(id),
-    variables: configId,
+    variables: id,
     successText: "删除成功",
     onSuccess() {
-      const deletedCount = String(configId).split(",").length;
+      const deletedCount = String(id).split(",").length;
       if (!clampPage(deletedCount)) {
         fetchList();
       }
@@ -248,9 +251,8 @@ function handleRefreshConfig() {
             </a-form-item>
           </a-col>
           <a-col :lg="4" :md="12" :xs="24">
-            <a-form-item label="系统内置" name="configType">
-              <a-select v-model:value="queryParams.configType" allow-clear placeholder="请选择" :options="dict.sysYesNo">
-              </a-select>
+            <a-form-item label="参数组" name="configGroup">
+              <a-input v-model:value="queryParams.configGroup" allow-clear placeholder="请输入参数组"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="8" :md="12" :xs="24">
@@ -350,7 +352,7 @@ function handleRefreshConfig() {
         </a-space>
       </template>
 
-      <a-table class="antdv-table" row-key="configId" :columns="tableColumns" :loading="loading" :data-source="listData"
+      <a-table class="antdv-table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="listData"
         :size="tableState.size" :row-class-name="rowClassName" :pagination="pagination" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
@@ -360,14 +362,14 @@ function handleRefreshConfig() {
           onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'configType'">
-            <DictTag :options="dict.sysYesNo" :value="record.configType" />
+          <template v-if="column.key === 'configStatus'">
+            <DictTag :options="dict.sysNormalDisable" :value="record.configStatus" />
           </template>
-          <template v-if="column.key === 'configId'">
+          <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
-                <a-button type="link" @click.prevent="handleView(record.configId)"
+                <a-button type="link" @click.prevent="handleView(record.id)"
                   v-perms:has="['system:config:query']">
                   <template #icon>
                     <ProfileOutlined />
@@ -376,7 +378,7 @@ function handleRefreshConfig() {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
-                <a-button type="link" @click.prevent="handleEdit(record.configId)" v-perms:has="['system:config:edit']">
+                <a-button type="link" @click.prevent="handleEdit(record.id)" v-perms:has="['system:config:edit']">
                   <template #icon>
                     <FormOutlined />
                   </template>
@@ -384,7 +386,7 @@ function handleRefreshConfig() {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>删除</template>
-                <a-button type="link" @click.prevent="handleDelete(record.configId)"
+                <a-button type="link" @click.prevent="handleDelete(record.id)"
                   v-perms:has="['system:config:remove']">
                   <template #icon>
                     <DeleteOutlined />
@@ -408,8 +410,8 @@ function handleRefreshConfig() {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="系统内置" name="configType">
-              <DictTag :options="dict.sysYesNo" :value="modalState.form.configType" />
+            <a-form-item label="状态" name="configStatus">
+              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.configStatus" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -448,10 +450,29 @@ function handleRefreshConfig() {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="系统内置" name="configType">
-              <a-select v-model:value="modalState.form.configType" default-value="N" placeholder="系统内置"
-                :options="dict.sysYesNo">
+            <a-form-item label="参数组" name="configGroup">
+              <a-input v-model:value="modalState.form.configGroup" allow-clear placeholder="请输入参数组" :maxlength="64"></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="状态" name="configStatus">
+              <a-select v-model:value="modalState.form.configStatus" default-value="1" placeholder="状态"
+                :options="dict.sysNormalDisable">
               </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="键值类型" name="configValueType">
+              <a-select v-model:value="modalState.form.configValueType" default-value="string" placeholder="键值类型">
+                <a-select-option key="string" value="string">字符</a-select-option>
+                <a-select-option key="number" value="number">数字</a-select-option>
+                <a-select-option key="bool" value="bool">布尔</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="排序" name="configSort">
+              <a-input-number v-model:value="modalState.form.configSort" :min="0" :max="9999" :step="1" placeholder="排序值"></a-input-number>
             </a-form-item>
           </a-col>
         </a-row>

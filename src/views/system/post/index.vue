@@ -22,7 +22,7 @@ const title = ref<string>(route.meta.title ?? "标题");
 const { dict } = useDictSetup({ keyMap: { sysNormalDisable: "sys_normal_disable" } });
 
 const { queryParams, handleQuery, resetQuery } = useQueryParams(
-  { postCode: "", postName: "", statusFlag: undefined as string | undefined, pageNum: 1, pageSize: 20 },
+  { postCode: "", postName: "", postStatus: undefined as string | undefined, pageNum: 1, pageSize: 20 },
   () => { resetPage(); fetchList(); },
 );
 
@@ -39,7 +39,7 @@ const { tableState, setTableSize, rowClassName, setSelectedRowKeys } = useTableU
 
 const { modal: modalState, formCtl: modalStateForm, openView, openEdit, close: handleCancel } = useCrudModal({
   initForm: () => ({
-    postId: undefined as string | number | undefined, postCode: "", postName: "", postSort: 0, statusFlag: "0", remark: undefined as string | undefined, createTime: 0,
+    id: undefined as string | number | undefined, postCode: "", postName: "", postSort: 0, postStatus: "0", remark: undefined as string | undefined, createTime: 0,
   }),
   rules: {
     postCode: [{ required: true, min: 1, max: 50, message: "请输入岗位编码" }],
@@ -49,7 +49,7 @@ const { modal: modalState, formCtl: modalStateForm, openView, openEdit, close: h
 });
 
 const { execute: submitExecute, loading: isSubmitting } = useAction({
-  action: (form: Record<string, any>) => form.postId ? updatePost(form) : addPost(form),
+  action: (form: Record<string, any>) => form.id ? updatePost(form) : addPost(form),
   successText: "操作成功",
   onSuccess() {
     handleCancel();
@@ -58,17 +58,17 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 });
 
 const tableColumns: ColumnsType = [
-  { title: "岗位编号", dataIndex: "postId", align: "left", width: 100 },
+  { title: "岗位编号", dataIndex: "id", align: "left", width: 100 },
   { title: "岗位编码", dataIndex: "postCode", align: "left", width: 200 },
   { title: "岗位名称", dataIndex: "postName", align: "left", width: 200 },
   { title: "岗位排序", dataIndex: "postSort", align: "left", width: 100 },
-  { title: "状态", dataIndex: "statusFlag", key: "statusFlag", align: "left", width: 100 },
+  { title: "状态", dataIndex: "postStatus", key: "postStatus", align: "left", width: 100 },
   { title: "创建时间", dataIndex: "createTime", align: "left", width: 150, customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); } },
-  { title: "操作", key: "postId", align: "left" },
+  { title: "操作", key: "id", align: "left" },
 ];
 
-function handleView(postId: string | number) { openView(postId, getPost, "岗位信息"); }
-function handleEdit(postId?: string | number) { openEdit(postId, getPost, "添加岗位", "修改岗位"); }
+function handleView(id: string | number) { openView(id, getPost, "岗位信息"); }
+function handleEdit(id?: string | number) { openEdit(id, getPost, "添加岗位", "修改岗位"); }
 
 async function handleSubmit() {
   try {
@@ -80,13 +80,13 @@ async function handleSubmit() {
   submitExecute(toRaw(modalState.form));
 }
 
-function handleDelete(postId: string = "0") {
-  if (postId === "0") postId = tableState.selectedRowKeys.join(",");
+function handleDelete(id: string = "0") {
+  if (id === "0") id = tableState.selectedRowKeys.join(",");
   confirmAction({
-    content: `确认删除岗位编号为【${postId}】的数据项?`,
-    action: (id) => delPost(id), variables: postId, successText: "删除成功",
+    content: `确认删除岗位编号为【${id}】的数据项?`,
+    action: (id) => delPost(id), variables: id, successText: "删除成功",
     onSuccess() {
-      const deletedCount = String(postId).split(",").length;
+      const deletedCount = String(id).split(",").length;
       if (!clampPage(deletedCount)) fetchList();
     },
   });
@@ -121,8 +121,8 @@ function handleExport() {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="岗位状态" name="statusFlag">
-              <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择"
+            <a-form-item label="岗位状态" name="postStatus">
+              <a-select v-model:value="queryParams.postStatus" allow-clear placeholder="请选择"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
@@ -213,7 +213,7 @@ function handleExport() {
       </template>
 
       <!-- 表格列表 -->
-      <a-table class="antdv-table" row-key="postId" :columns="tableColumns" :loading="loading" :data-source="listData"
+      <a-table class="antdv-table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="listData"
         :size="tableState.size" :row-class-name="rowClassName" :pagination="pagination" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
@@ -223,14 +223,14 @@ function handleExport() {
           onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'statusFlag'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.statusFlag" />
+          <template v-if="column.key === 'postStatus'">
+            <DictTag :options="dict.sysNormalDisable" :value="record.postStatus" />
           </template>
-          <template v-if="column.key === 'postId'">
+          <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
-                <a-button type="link" @click.prevent="handleView(record.postId)" v-perms:has="['system:post:query']">
+                <a-button type="link" @click.prevent="handleView(record.id)" v-perms:has="['system:post:query']">
                   <template #icon>
                     <ProfileOutlined />
                   </template>
@@ -238,7 +238,7 @@ function handleExport() {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
-                <a-button type="link" @click.prevent="handleEdit(record.postId)" v-perms:has="['system:post:edit']">
+                <a-button type="link" @click.prevent="handleEdit(record.id)" v-perms:has="['system:post:edit']">
                   <template #icon>
                     <FormOutlined />
                   </template>
@@ -246,7 +246,7 @@ function handleExport() {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>删除</template>
-                <a-button type="link" @click.prevent="handleDelete(record.postId)" v-perms:has="['system:post:remove']">
+                <a-button type="link" @click.prevent="handleDelete(record.id)" v-perms:has="['system:post:remove']">
                   <template #icon>
                     <DeleteOutlined />
                   </template>
@@ -264,8 +264,8 @@ function handleExport() {
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位编号" name="postId">
-              {{ modalState.form.postId }}
+            <a-form-item label="岗位编号" name="id">
+              {{ modalState.form.id }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
@@ -283,8 +283,8 @@ function handleExport() {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位状态" name="statusFlag">
-              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.statusFlag" />
+            <a-form-item label="岗位状态" name="postStatus">
+              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.postStatus" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -323,8 +323,8 @@ function handleExport() {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位状态" name="statusFlag">
-              <a-select v-model:value="modalState.form.statusFlag" default-value="0" placeholder="岗位状态"
+            <a-form-item label="岗位状态" name="postStatus">
+              <a-select v-model:value="modalState.form.postStatus" default-value="0" placeholder="岗位状态"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>

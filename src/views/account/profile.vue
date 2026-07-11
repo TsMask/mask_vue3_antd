@@ -61,7 +61,7 @@ function fnGetProfile() {
       state.roleGroup = roleGroup;
       state.postGroup = postGroup;
       // 头像解析
-      state.user.avatar = useUserStore().fnAvatar(user.avatar);
+      state.user.userAvatar = useUserStore().fnAvatar(user.userAvatar);
       loading.value = false;
     } else {
       message.error(res.msg, 3);
@@ -82,15 +82,15 @@ onMounted(() => {
         <a-card :body-style="{ padding: '0px' }" style="margin-bottom: 16px">
           <template #title>
             <div class="info-top">
-              <div class="info-top-no">No：{{ state.user.userId }}</div>
+              <div class="info-top-no">No：{{ state.user.id }}</div>
               <a-avatar
                 shape="circle"
                 :size="96"
-                :src="state.user.avatar"
+                :src="state.user.userAvatar"
                 :alt="state.user.userName"
               ></a-avatar>
-              <div class="info-top-nickname" :title="state.user.nickName">
-                {{ state.user.nickName }}
+              <div class="info-top-nickname" :title="state.user.userNick">
+                {{ state.user.userNick }}
               </div>
             </div>
           </template>
@@ -101,10 +101,10 @@ onMounted(() => {
             :column="1"
           >
             <a-descriptions-item label="手机号码">
-              {{ state.user.phone || '-' }}
+              {{ state.user.userPhone || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="用户邮箱">
-              {{ state.user.email || '-' }}
+              {{ state.user.userEmail || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="所属部门">
               {{ state.user.dept?.deptName || '-' }}
@@ -122,11 +122,11 @@ onMounted(() => {
               </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="登录地址">
-              {{ state.user.loginIp || '-' }}
+              {{ state.user.userLoginIp || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="登录时间">
-              <span v-if="+state.user.loginTime > 0">
-                {{ parseDateToStr(+state.user.loginTime) }}
+              <span v-if="+state.user.userLoginTime > 0">
+                {{ parseDateToStr(+state.user.userLoginTime) }}
               </span>
               <span v-else>-</span>
             </a-descriptions-item>

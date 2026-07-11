@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
 import { ref, reactive, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
@@ -38,8 +38,8 @@ const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 /** 查询参数 */
 const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
   {
-    jobId: (route.params.jobId as string) || '',
-    statusFlag: undefined as string | undefined,
+    id: (route.params.jobId as string) || '',
+    logStatus: undefined as string | undefined,
     beginTime: undefined as number | undefined,
     endTime: undefined as number | undefined,
     pageNum: 1,
@@ -84,33 +84,33 @@ const { tableState, setTableSize, rowClassName, setSelectedRowKeys } = useTableU
 tableState.searched = true;
 
 const tableColumns: ColumnsType = [
-  { title: '日志编号', dataIndex: 'logId', align: 'left', width: 100 },
+  { title: '日志编号', dataIndex: 'id', align: 'left', width: 100 },
   { title: '任务名称', dataIndex: 'jobName', align: 'left', width: 200 },
-  { title: '调用目标', dataIndex: 'invokeTarget', align: 'left', width: 150 },
+  { title: '调用目标', dataIndex: 'jobInvokeTarget', align: 'left', width: 150 },
   { title: '任务组名', dataIndex: 'jobGroup', key: 'jobGroup', align: 'left', width: 100 },
-  { title: '执行状态', dataIndex: 'statusFlag', key: 'statusFlag', align: 'left', width: 100 },
+  { title: '执行状态', dataIndex: 'logStatus', key: 'logStatus', align: 'left', width: 100 },
   {
     title: '记录时间', dataIndex: 'createTime', align: 'left', width: 150,
     customRender(opt) { if (+opt.value <= 0) return ''; return parseDateToStr(+opt.value); },
   },
   {
-    title: '消耗时间', dataIndex: 'costTime', key: 'costTime', align: 'right', width: 100,
+    title: '消耗时间', dataIndex: 'logCostTime', key: 'logCostTime', align: 'right', width: 100,
     customRender(opt) { return `${opt.value} ms`; },
   },
-  { title: '操作', key: 'logId', align: 'left' },
+  { title: '操作', key: 'id', align: 'left' },
 ];
 
 /** 详情弹窗状态 */
 const detailVisible = ref(false);
 const detailTitle = ref('任务日志');
 const detailForm = reactive({
-  logId: undefined as string | number | undefined,
+  id: undefined as string | number | undefined,
   jobName: '',
   jobGroup: 'DEFAULT',
-  invokeTarget: '',
-  targetParams: '',
-  statusFlag: '0',
-  jobMsg: '',
+  jobInvokeTarget: '',
+  jobTargetParams: '',
+  logStatus: '0',
+  logMsg: '',
   createTime: 0,
 });
 
@@ -169,8 +169,8 @@ function handleClose() {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="执行状态" name="statusFlag">
-              <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择执行状态"
+            <a-form-item label="执行状态" name="logStatus">
+              <a-select v-model:value="queryParams.logStatus" allow-clear placeholder="请选择执行状态"
                 :options="dict.sysCommonStatus">
               </a-select>
             </a-form-item>
@@ -272,7 +272,7 @@ function handleClose() {
         </a-space>
       </template>
 
-      <a-table class="antdv-table" row-key="logId" :columns="tableColumns" :loading="loading" :data-source="listData"
+      <a-table class="antdv-table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="listData"
         :size="tableState.size" :row-class-name="rowClassName" :scroll="{
           x: tableColumns.length * 140, scrollToFirstRowOnChange: true,
         }" :pagination="{ ...pagination }" :row-selection="{
@@ -282,12 +282,12 @@ function handleClose() {
           <template v-if="column.key === 'jobGroup'">
             <DictTag :options="dict.sysJobGroup" :value="record.jobGroup" />
           </template>
-          <template v-if="column.key === 'statusFlag'">
-            <a-tag v-if="dict.sysCommonStatus.length > 0" :color="+record.statusFlag ? 'success' : 'error'">
-              {{ +record.statusFlag ? dict.sysCommonStatus[0].label : dict.sysCommonStatus[1].label }}
+          <template v-if="column.key === 'logStatus'">
+            <a-tag v-if="dict.sysCommonStatus.length > 0" :color="+record.logStatus ? 'success' : 'error'">
+              {{ +record.logStatus ? dict.sysCommonStatus[0].label : dict.sysCommonStatus[1].label }}
             </a-tag>
           </template>
-          <template v-if="column.key === 'logId'">
+          <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
@@ -309,12 +309,12 @@ function handleClose() {
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="日志编号" name="logId">{{ detailForm.logId }}</a-form-item>
+            <a-form-item label="日志编号" name="id">{{ detailForm.id }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="执行状态" name="statusFlag">
-              <a-tag v-if="dict.sysCommonStatus.length > 0" :color="+detailForm.statusFlag ? 'success' : 'error'">
-                {{ +detailForm.statusFlag ? dict.sysCommonStatus[0].label : dict.sysCommonStatus[1].label }}
+            <a-form-item label="执行状态" name="logStatus">
+              <a-tag v-if="dict.sysCommonStatus.length > 0" :color="+detailForm.logStatus ? 'success' : 'error'">
+                {{ +detailForm.logStatus ? dict.sysCommonStatus[0].label : dict.sysCommonStatus[1].label }}
               </a-tag>
             </a-form-item>
           </a-col>
@@ -331,7 +331,7 @@ function handleClose() {
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="调用目标" name="invokeTarget">{{ detailForm.invokeTarget }}</a-form-item>
+            <a-form-item label="调用目标" name="jobInvokeTarget">{{ detailForm.jobInvokeTarget }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="记录时间" name="createTime">
@@ -339,12 +339,12 @@ function handleClose() {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="传入参数" name="targetParams" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea :value="detailForm.targetParams" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
+        <a-form-item label="传入参数" name="jobTargetParams" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea :value="detailForm.jobTargetParams" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)" />
         </a-form-item>
-        <a-form-item label="日志信息" name="jobMsg" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea :value="detailForm.jobMsg" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
+        <a-form-item label="日志信息" name="logMsg" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea :value="detailForm.logMsg" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)" />
         </a-form-item>
       </a-form>

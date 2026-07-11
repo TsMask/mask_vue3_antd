@@ -41,7 +41,7 @@ const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
     dictName: "",
     dictType: "",
     dataLabel: "",
-    statusFlag: undefined as string | undefined,
+    dictStatus: undefined as string | undefined,
     beginTime: undefined as number | undefined,
     endTime: undefined as number | undefined,
     pageNum: 1,
@@ -96,10 +96,10 @@ const {
   close: handleCancel,
 } = useCrudModal({
   initForm: () => ({
-    dictId: undefined as string | number | undefined,
+    id: undefined as string | number | undefined,
     dictName: "",
     dictType: undefined as string | undefined,
-    statusFlag: "0",
+    dictStatus: "0",
     remark: undefined as string | undefined,
   }),
   rules: {
@@ -111,7 +111,7 @@ const {
 /** 新增/编辑 mutation */
 const { execute: submitExecute, loading: isSubmitting } = useAction({
   action: (form: Record<string, any>) =>
-    form.dictId ? updateType(form) : addType(form),
+    form.id ? updateType(form) : addType(form),
   successText: "操作成功",
   onSuccess() {
     handleCancel();
@@ -120,23 +120,23 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 });
 
 const tableColumns: ColumnsType = [
-  { title: "字典编号", dataIndex: "dictId", align: "left", width: 100 },
+  { title: "字典编号", dataIndex: "id", align: "left", width: 100 },
   { title: "字典名称", dataIndex: "dictName", align: "left", width: 200 },
   { title: "字典类型", dataIndex: "dictType", align: "left", width: 200 },
-  { title: "字典状态", dataIndex: "statusFlag", key: "statusFlag", align: "left", width: 100 },
+  { title: "字典状态", dataIndex: "dictStatus", key: "dictStatus", align: "left", width: 100 },
   {
     title: "创建时间", dataIndex: "createTime", align: "left", width: 150,
     customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); },
   },
-  { title: "操作", key: "dictId", align: "left" },
+  { title: "操作", key: "id", align: "left" },
 ];
 
-function handleView(dictId: string | number) {
-  openView(dictId, getType, "字典类型信息");
+function handleView(id: string | number) {
+  openView(id, getType, "字典类型信息");
 }
 
-function handleEdit(dictId?: string | number) {
-  openEdit(dictId, getType, "添加字典类型", "修改字典类型");
+function handleEdit(id?: string | number) {
+  openEdit(id, getType, "添加字典类型", "修改字典类型");
 }
 
 async function handleSubmit() {
@@ -149,17 +149,17 @@ async function handleSubmit() {
   await submitExecute(toRaw(modalState.form));
 }
 
-function handleDelete(dictId: string = "0") {
-  if (dictId === "0") {
-    dictId = tableState.selectedRowKeys.join(",");
+function handleDelete(id: string = "0") {
+  if (id === "0") {
+    id = tableState.selectedRowKeys.join(",");
   }
   confirmAction({
-    content: `确认删除字典编号为【${dictId}】的数据项?`,
-    action: () => delType(dictId),
+    content: `确认删除字典编号为【${id}】的数据项?`,
+    action: () => delType(id),
     variables: undefined,
     successText: "删除成功",
     onSuccess() {
-      const deletedCount = String(dictId).split(",").length;
+      const deletedCount = String(id).split(",").length;
       if (!clampPage(deletedCount)) fetchList();
     },
   });
@@ -184,8 +184,8 @@ function handleRefreshCache() {
   });
 }
 
-function handleDataView(dictId: string | number = "0") {
-  router.push(`${routePath}${MENU_PATH_INLINE}/data/${dictId}`);
+function handleDataView(id: string | number = "0") {
+  router.push(`${routePath}${MENU_PATH_INLINE}/data/${id}`);
 }
 </script>
 
@@ -211,8 +211,8 @@ function handleDataView(dictId: string | number = "0") {
             </a-form-item>
           </a-col>
           <a-col :lg="4" :md="12" :xs="24">
-            <a-form-item label="字典状态" name="statusFlag">
-              <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择"
+            <a-form-item label="字典状态" name="dictStatus">
+              <a-select v-model:value="queryParams.dictStatus" allow-clear placeholder="请选择"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
@@ -320,21 +320,21 @@ function handleDataView(dictId: string | number = "0") {
         </a-space>
       </template>
 
-      <a-table class="antdv-table" row-key="dictId" :columns="tableColumns" :loading="loading" :data-source="listData"
+      <a-table class="antdv-table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="listData"
         :size="tableState.size" :row-class-name="rowClassName" :pagination="{ ...pagination }" :scroll="{
           x: tableColumns.length * 120, scrollToFirstRowOnChange: true,
         }" :row-selection="{
           type: 'checkbox', selectedRowKeys: tableState.selectedRowKeys, onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'statusFlag'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.statusFlag" />
+          <template v-if="column.key === 'dictStatus'">
+            <DictTag :options="dict.sysNormalDisable" :value="record.dictStatus" />
           </template>
-          <template v-if="column.key === 'dictId'">
+          <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
-                <a-button type="link" @click.prevent="handleView(record.dictId)" v-perms:has="['system:dict:query']">
+                <a-button type="link" @click.prevent="handleView(record.id)" v-perms:has="['system:dict:query']">
                   <template #icon>
                     <ProfileOutlined />
                   </template>
@@ -342,7 +342,7 @@ function handleDataView(dictId: string | number = "0") {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
-                <a-button type="link" @click.prevent="handleEdit(record.dictId)" v-perms:has="['system:dict:edit']">
+                <a-button type="link" @click.prevent="handleEdit(record.id)" v-perms:has="['system:dict:edit']">
                   <template #icon>
                     <FormOutlined />
                   </template>
@@ -350,7 +350,7 @@ function handleDataView(dictId: string | number = "0") {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>删除</template>
-                <a-button type="link" @click.prevent="handleDelete(record.dictId)" v-perms:has="['system:dict:remove']">
+                <a-button type="link" @click.prevent="handleDelete(record.id)" v-perms:has="['system:dict:remove']">
                   <template #icon>
                     <DeleteOutlined />
                   </template>
@@ -358,7 +358,7 @@ function handleDataView(dictId: string | number = "0") {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>字典数据</template>
-                <a-button type="link" @click.prevent="handleDataView(record.dictId)" v-perms:has="['system:dict:data']">
+                <a-button type="link" @click.prevent="handleDataView(record.id)" v-perms:has="['system:dict:data']">
                   <template #icon>
                     <ContainerOutlined />
                   </template>
@@ -376,11 +376,11 @@ function handleDataView(dictId: string | number = "0") {
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典编号" name="dictId">{{ modalState.form.dictId }}</a-form-item>
+            <a-form-item label="字典编号" name="id">{{ modalState.form.id }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典状态" name="statusFlag">
-              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.statusFlag" />
+            <a-form-item label="字典状态" name="dictStatus">
+              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.dictStatus" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -413,8 +413,8 @@ function handleDataView(dictId: string | number = "0") {
         <a-form-item label="字典类型" name="dictType" v-bind="modalStateForm.validateInfos.dictType">
           <a-input v-model:value="modalState.form.dictType" allow-clear placeholder="请输入字典类型" :maxlength="50"></a-input>
         </a-form-item>
-        <a-form-item label="字典状态" name="statusFlag">
-          <a-select v-model:value="modalState.form.statusFlag" default-value="0" placeholder="字典状态"
+        <a-form-item label="字典状态" name="dictStatus">
+          <a-select v-model:value="modalState.form.dictStatus" default-value="0" placeholder="字典状态"
             :options="dict.sysNormalDisable">
           </a-select>
         </a-form-item>

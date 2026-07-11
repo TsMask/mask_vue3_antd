@@ -124,17 +124,17 @@ export function resetPassword(userId: string | number, password: string) {
 /**
  * 用户状态修改
  * @param userId 用户ID
- * @param statusFlag 变更状态值
+ * @param userStatus 变更状态值
  * @returns object
  */
 export function changeStatus(
   userId: string | number,
-  statusFlag: string | number
+  userStatus: string | number
 ) {
   return request({
     url: '/system/user/status',
     method: 'PUT',
-    data: { userId, statusFlag },
+    data: { userId, userStatus },
   });
 }
 

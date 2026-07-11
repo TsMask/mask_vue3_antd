@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
 import { ref, toRaw, watch } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
@@ -29,8 +29,8 @@ const { dict } = useDictSetup({ keyMap: { sysNormalDisable: 'sys_normal_disable'
 const { queryParams, handleQuery, resetQuery } = useQueryParams(
   {
     userName: '',
-    phone: '',
-    statusFlag: undefined as string | undefined,
+    userPhone: '',
+    userStatus: undefined as string | undefined,
     roleId: roleId,
     auth: true,
     pageNum: 1,
@@ -76,12 +76,12 @@ const { execute: authExecute } = useAction({
 
 /** 表格字段列 */
 let tableColumns: ColumnsType = [
-  { title: '用户编号', dataIndex: 'userId', align: 'left', width: 100 },
+  { title: '用户编号', dataIndex: 'id', align: 'left', width: 100 },
   { title: '登录账号', dataIndex: 'userName', align: 'left', width: 150 },
-  { title: '用户昵称', dataIndex: 'nickName', align: 'left', width: 150 },
-  { title: '手机号码', dataIndex: 'phone', align: 'left', width: 150 },
-  { title: '电子邮箱', dataIndex: 'email', align: 'left', width: 200 },
-  { title: '用户状态', dataIndex: 'statusFlag', key: 'statusFlag', align: 'left', width: 100 },
+  { title: '用户昵称', dataIndex: 'userNick', align: 'left', width: 150 },
+  { title: '手机号码', dataIndex: 'userPhone', align: 'left', width: 150 },
+  { title: '电子邮箱', dataIndex: 'userEmail', align: 'left', width: 200 },
+  { title: '用户状态', dataIndex: 'userStatus', key: 'userStatus', align: 'left', width: 100 },
   {
     title: '创建时间',
     dataIndex: 'createTime',
@@ -92,7 +92,7 @@ let tableColumns: ColumnsType = [
       return parseDateToStr(+opt.value);
     },
   },
-  { title: '操作', key: 'userId', align: 'left' },
+  { title: '操作', key: 'id', align: 'left' },
 ];
 
 /** 选择用户弹窗状态 */
@@ -176,13 +176,13 @@ function handleClose() {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="手机号码" name="phone">
-              <a-input v-model:value="queryParams.phone" allow-clear :maxlength="11" placeholder="请输入手机号码"></a-input>
+            <a-form-item label="手机号码" name="userPhone">
+              <a-input v-model:value="queryParams.userPhone" allow-clear :maxlength="11" placeholder="请输入手机号码"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="用户状态" name="statusFlag">
-              <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择用户状态"
+            <a-form-item label="用户状态" name="userStatus">
+              <a-select v-model:value="queryParams.userStatus" allow-clear placeholder="请选择用户状态"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
@@ -270,7 +270,7 @@ function handleClose() {
         </a-space>
       </template>
 
-      <a-table class="antdv-table" row-key="userId" :columns="tableColumns" :loading="loading" :data-source="listData"
+      <a-table class="antdv-table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="listData"
         :size="tableState.size" :row-class-name="rowClassName" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
@@ -280,14 +280,14 @@ function handleClose() {
           onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'statusFlag'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.statusFlag" />
+          <template v-if="column.key === 'userStatus'">
+            <DictTag :options="dict.sysNormalDisable" :value="record.userStatus" />
           </template>
-          <template v-if="column.key === 'userId'">
+          <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>取消授权</template>
-                <a-button type="link" @click.prevent="handleRevokeAuth(record.userId)"
+                <a-button type="link" @click.prevent="handleRevokeAuth(record.id)"
                   v-perms:has="['system:role:remove']">
                   <template #icon>
                     <UserDeleteOutlined />

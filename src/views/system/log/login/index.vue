@@ -33,8 +33,8 @@ function syncDateRange() {
 
 const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
   {
-    loginIp: "", userName: "",
-    statusFlag: undefined as string | undefined,
+    loginIp: "", loginUserName: "",
+    loginStatus: undefined as string | undefined,
     beginTime: undefined as number | undefined,
     endTime: undefined as number | undefined,
     pageNum: 1, pageSize: 20,
@@ -58,20 +58,20 @@ const { tableState, setTableSize, rowClassName } = useTableUI();
 
 const tableColumns: ColumnsType = [
   { title: "日志编号", dataIndex: "id", align: "left", width: 100 },
-  { title: "登录账号", dataIndex: "userName", align: "left", width: 150, sorter: true },
+  { title: "登录账号", dataIndex: "loginUserName", align: "left", width: 150, sorter: true },
   { title: "登录IP", dataIndex: "loginIp", align: "left", width: 150 },
   { title: "登录地点", dataIndex: "loginLocation", align: "left", width: 150 },
-  { title: "操作系统", dataIndex: "os", align: "left", width: 150 },
-  { title: "浏览器", dataIndex: "browser", align: "left", width: 200 },
-  { title: "登录状态", dataIndex: "statusFlag", key: "statusFlag", align: "left", width: 100 },
+  { title: "操作系统", dataIndex: "loginOs", align: "left", width: 150 },
+  { title: "浏览器", dataIndex: "loginBrowser", align: "left", width: 200 },
+  { title: "登录状态", dataIndex: "loginStatus", key: "loginStatus", align: "left", width: 100 },
   {
-    title: "登录时间", dataIndex: "loginTime", align: "left", width: 150, sorter: true,
+    title: "登录时间", dataIndex: "createTime", align: "left", width: 150, sorter: true,
     customRender(opt) {
       if (+opt.value <= 0) return "";
       return parseDateToStr(+opt.value);
     }
   },
-  { title: "登录信息", dataIndex: "msg", align: "left", ellipsis: true },
+  { title: "登录信息", dataIndex: "loginMsg", align: "left", ellipsis: true },
 ];
 
 function handleTableChange(_pagination: any, _filters: any, sorter: any) {
@@ -112,8 +112,8 @@ function handleExport() {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录账号" name="userName">
-              <a-input v-model:value="queryParams.userName" allow-clear :maxlength="30" placeholder="请输入登录账号"></a-input>
+            <a-form-item label="登录账号" name="loginUserName">
+              <a-input v-model:value="queryParams.loginUserName" allow-clear :maxlength="30" placeholder="请输入登录账号"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
@@ -122,8 +122,8 @@ function handleExport() {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录状态" name="statusFlag">
-              <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择登录状态"
+            <a-form-item label="登录状态" name="loginStatus">
+              <a-select v-model:value="queryParams.loginStatus" allow-clear placeholder="请选择登录状态"
                 :options="dict.sysCommonStatus">
               </a-select>
             </a-form-item>
@@ -218,8 +218,8 @@ function handleExport() {
           scrollToFirstRowOnChange: true,
         }" :pagination="pagination" @change="handleTableChange">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'statusFlag'">
-            <DictTag :options="dict.sysCommonStatus" :value="record.statusFlag" />
+          <template v-if="column.key === 'loginStatus'">
+            <DictTag :options="dict.sysCommonStatus" :value="record.loginStatus" />
           </template>
         </template>
       </a-table>

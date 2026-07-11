@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { ref, reactive, computed, toRaw, watch } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
@@ -33,7 +33,7 @@ const { dict } = useDictSetup({ keyMap: { sysNormalDisable: 'sys_normal_disable'
 /** 查询参数 */
 const { queryParams, handleQuery, resetQuery } = useQueryParams({
   deptName: '',
-  statusFlag: undefined as string | undefined,
+  deptStatus: undefined as string | undefined,
 }, () => { fetchList(); });
 
 /** 表格UI状态 */
@@ -52,7 +52,7 @@ const { listData, loading, fetch: fetchList } = useListQuery({
 });
 
 /** 解析为树结构（响应式，listData 变化自动重算） */
-const treeData = computed(() => parseDataToTree(listData.value, 'deptId'));
+const treeData = computed(() => parseDataToTree(listData.value, 'id'));
 
 /** 弹窗表单中的上级部门树 */
 const treeDataForModal = computed(() => treeData.value);
@@ -70,10 +70,10 @@ watch(listData, (newData) => {
 /** 表格字段列 */
 const tableColumns: ColumnsType = [
   { title: '部门名称', dataIndex: 'deptName', align: 'left', width: 200 },
-  { title: '部门编号', dataIndex: 'deptId', align: 'left', width: 100 },
+  { title: '部门编号', dataIndex: 'id', align: 'left', width: 100 },
   { title: '部门排序', dataIndex: 'deptSort', align: 'left', width: 100 },
   {
-    title: '部门状态', dataIndex: 'statusFlag', key: 'statusFlag', align: 'left', width: 100,
+    title: '部门状态', dataIndex: 'deptStatus', key: 'deptStatus', align: 'left', width: 100,
   },
   {
     title: '创建时间', dataIndex: 'createTime', align: 'left', width: 150,
@@ -82,7 +82,7 @@ const tableColumns: ColumnsType = [
       return parseDateToStr(+opt.value);
     },
   },
-  { title: '操作', key: 'deptId', align: 'left' },
+  { title: '操作', key: 'id', align: 'left' },
 ];
 
 /** 表格展开/折叠控制 */
@@ -111,15 +111,15 @@ const modalTreeData = reactive<Record<string, any>[]>([]);
 
 /** 表单数据 */
 const modalForm = reactive({
-  deptId: undefined as string | number | undefined,
+  id: undefined as string | number | undefined,
   deptName: '',
-  email: '',
-  leader: '',
+  deptEmail: '',
+  deptLeader: '',
   deptSort: 0,
   parentId: 100 as string | number,
   ancestors: '',
-  phone: '',
-  statusFlag: '0',
+  deptPhone: '',
+  deptStatus: '0',
 });
 
 /** 表单校验规则 */
@@ -128,14 +128,14 @@ const modalFormCtl = Form.useForm(
   reactive({
     parentId: [{ required: true, message: '上级部门不能为空' }],
     deptName: [{ required: true, min: 1, max: 50, message: '请正确输入部门名称' }],
-    email: [{ required: false, pattern: regExpEmail, message: '请输入正确的邮箱地址' }],
-    phone: [{ required: false, pattern: regExpMobile, message: '请输入正确的手机号码' }],
+    deptEmail: [{ required: false, pattern: regExpEmail, message: '请输入正确的邮箱地址' }],
+    deptPhone: [{ required: false, pattern: regExpMobile, message: '请输入正确的手机号码' }],
   }),
 );
 
 /** 新增/编辑操作 */
 const { execute: submitExecute, loading: isSubmitting } = useAction({
-  action: (form: any) => form.deptId ? updateDept(form) : addDept(form),
+  action: (form: any) => form.id ? updateDept(form) : addDept(form),
   successText: '操作成功',
   onSuccess() {
     handleCloseModal();
@@ -144,15 +144,15 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 });
 
 /** 打开详情弹窗 */
-async function handleView(deptId: string | number) {
-  if (!deptId || modalConfirmLoading.value) return;
+async function handleView(id: string | number) {
+  if (!id || modalConfirmLoading.value) return;
   modalConfirmLoading.value = true;
   const hide = message.loading('正在打开...', 0);
   try {
-    const res = await getDept(deptId);
+    const res = await getDept(id);
     if (isSuccess(res) && res.data) {
       if (res.data.parentId === 0) {
-        Object.assign(modalTreeData, [{ deptId: 0, parentId: 0, deptName: '根节点' }]);
+        Object.assign(modalTreeData, [{ id: 0, parentId: 0, deptName: '根节点' }]);
       } else {
         Object.assign(modalTreeData, treeDataForModal.value);
       }
@@ -167,8 +167,8 @@ async function handleView(deptId: string | number) {
 }
 
 /** 打开新增/编辑弹窗 */
-async function handleOpenEdit(deptId?: string | number, parentId?: string | number) {
-  if (!deptId) {
+async function handleOpenEdit(id?: string | number, parentId?: string | number) {
+  if (!id) {
     modalFormCtl.resetFields();
     if (parentId) modalForm.parentId = parentId;
     Object.assign(modalTreeData, treeDataForModal.value);
@@ -180,16 +180,16 @@ async function handleOpenEdit(deptId?: string | number, parentId?: string | numb
     const hide = message.loading('正在打开...', 0);
     try {
       const [deptRes, excludeRes] = await Promise.all([
-        getDept(deptId),
-        listDeptExcludeChild(deptId),
+        getDept(id),
+        listDeptExcludeChild(id),
       ]);
       if (isSuccess(deptRes) && deptRes.data) {
         Object.assign(modalForm, deptRes.data);
         if (isSuccess(excludeRes) && Array.isArray(excludeRes.data)) {
           if (excludeRes.data.length === 0) {
-            Object.assign(modalTreeData, [{ deptId: 0, parentId: 0, deptName: '根节点' }]);
+            Object.assign(modalTreeData, [{ id: 0, parentId: 0, deptName: '根节点' }]);
           } else {
-            Object.assign(modalTreeData, parseDataToTree(excludeRes.data, 'deptId'));
+            Object.assign(modalTreeData, parseDataToTree(excludeRes.data, 'id'));
           }
         }
         modalTitle.value = '修改部门信息';
@@ -221,10 +221,10 @@ function handleCloseModal() {
 }
 
 /** 删除部门 */
-function handleDelete(deptId: string | number) {
+function handleDelete(id: string | number) {
   confirmAction({
-    content: `确认删除部门编号为 【${deptId}】 的数据项?`,
-    action: () => delDept(deptId),
+    content: `确认删除部门编号为 【${id}】 的数据项?`,
+    action: () => delDept(id),
     variables: undefined,
     successText: '删除成功',
     onSuccess: () => fetchList(),
@@ -247,8 +247,8 @@ function handleDelete(deptId: string | number) {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="部门状态" name="statusFlag">
-              <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择"
+            <a-form-item label="部门状态" name="deptStatus">
+              <a-select v-model:value="queryParams.deptStatus" allow-clear placeholder="请选择"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
@@ -330,19 +330,19 @@ function handleDelete(deptId: string | number) {
         </a-space>
       </template>
 
-      <a-table class="antdv-table" row-key="deptId" :columns="tableColumns" :loading="loading" :data-source="treeData"
+      <a-table class="antdv-table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="treeData"
         :size="tableState.size" :row-class-name="rowClassName" :pagination="false"
         :scroll="{ x: tableColumns.length * 120, scrollToFirstRowOnChange: true }" children-column-name="children"
         :expanded-row-keys="expandedRowKeys" @expandedRowsChange="handleExpandedRowsChange">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'statusFlag'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.statusFlag" />
+          <template v-if="column.key === 'deptStatus'">
+            <DictTag :options="dict.sysNormalDisable" :value="record.deptStatus" />
           </template>
-          <template v-if="column.key === 'deptId'">
+          <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
-                <a-button type="link" @click.prevent="handleView(record.deptId)" v-perms:has="['system:dept:query']">
+                <a-button type="link" @click.prevent="handleView(record.id)" v-perms:has="['system:dept:query']">
                   <template #icon>
                     <ProfileOutlined />
                   </template>
@@ -350,7 +350,7 @@ function handleDelete(deptId: string | number) {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
-                <a-button type="link" @click.prevent="handleOpenEdit(record.deptId)" v-perms:has="['system:dept:edit']">
+                <a-button type="link" @click.prevent="handleOpenEdit(record.id)" v-perms:has="['system:dept:edit']">
                   <template #icon>
                     <FormOutlined />
                   </template>
@@ -358,15 +358,15 @@ function handleDelete(deptId: string | number) {
               </a-tooltip>
               <a-tooltip placement="topRight" v-if="record.parentId !== 0">
                 <template #title>删除</template>
-                <a-button type="link" @click.prevent="handleDelete(record.deptId)" v-perms:has="['system:dept:remove']">
+                <a-button type="link" @click.prevent="handleDelete(record.id)" v-perms:has="['system:dept:remove']">
                   <template #icon>
                     <DeleteOutlined />
                   </template>
                 </a-button>
               </a-tooltip>
-              <a-tooltip placement="topRight" v-if="record.statusFlag !== '0'">
+              <a-tooltip placement="topRight" v-if="record.deptStatus !== '0'">
                 <template #title>新增子部门</template>
-                <a-button type="link" @click.prevent="handleOpenEdit(undefined, record.deptId)"
+                <a-button type="link" @click.prevent="handleOpenEdit(undefined, record.id)"
                   v-perms:has="['system:dept:add']">
                   <template #icon>
                     <PlusOutlined />
@@ -382,19 +382,19 @@ function handleDelete(deptId: string | number) {
     <!-- 详情框 -->
     <ProModal :drag="true" :width="800" :open="modalVisibleByView" :title="modalTitle" @cancel="handleCloseModal">
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
-        <a-form-item label="部门编号" name="deptId" :label-col="{ span: 3 }" :label-wrap="true">
-          {{ modalForm.deptId }}
+        <a-form-item label="部门编号" name="id" :label-col="{ span: 3 }" :label-wrap="true">
+          {{ modalForm.id }}
         </a-form-item>
         <a-form-item label="上级部门" name="parentId" :label-col="{ span: 3 }" :label-wrap="true">
           <a-tree-select :value="modalForm.parentId" placeholder="上级部门" disabled :tree-data="modalTreeData"
-            :field-names="{ children: 'children', label: 'deptName', value: 'deptId' }" tree-node-label-prop="deptName">
+            :field-names="{ children: 'children', label: 'deptName', value: 'id' }" tree-node-label-prop="deptName">
             <template #suffixIcon></template>
           </a-tree-select>
         </a-form-item>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="部门状态" name="statusFlag">
-              <DictTag :options="dict.sysNormalDisable" :value="modalForm.statusFlag" />
+            <a-form-item label="部门状态" name="deptStatus">
+              <DictTag :options="dict.sysNormalDisable" :value="modalForm.deptStatus" />
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
@@ -406,15 +406,15 @@ function handleDelete(deptId: string | number) {
         </a-form-item>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="负责人" name="leader">{{ modalForm.leader }}</a-form-item>
+            <a-form-item label="负责人" name="deptLeader">{{ modalForm.deptLeader }}</a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="联系电话" name="phone">{{ modalForm.phone }}</a-form-item>
+            <a-form-item label="联系电话" name="deptPhone">{{ modalForm.deptPhone }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="邮箱" name="email">{{ modalForm.email }}</a-form-item>
+            <a-form-item label="邮箱" name="deptEmail">{{ modalForm.deptEmail }}</a-form-item>
           </a-col>
         </a-row>
       </a-form>
@@ -431,7 +431,7 @@ function handleDelete(deptId: string | number) {
         <a-form-item label="上级部门" name="parentId" v-bind="modalFormCtl.validateInfos.parentId" :label-col="{ span: 3 }"
           :label-wrap="true">
           <a-tree-select v-model:value="modalForm.parentId" placeholder="上级部门" show-search tree-default-expand-all
-            :tree-data="modalTreeData" :field-names="{ children: 'children', label: 'deptName', value: 'deptId' }"
+            :tree-data="modalTreeData" :field-names="{ children: 'children', label: 'deptName', value: 'id' }"
             tree-node-label-prop="deptName" tree-node-filter-prop="deptName" style="width: 100%"
             :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }">
           </a-tree-select>
@@ -442,8 +442,8 @@ function handleDelete(deptId: string | number) {
         </a-form-item>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="部门状态" name="statusFlag">
-              <a-select v-model:value="modalForm.statusFlag" default-value="0" placeholder="部门状态"
+            <a-form-item label="部门状态" name="deptStatus">
+              <a-select v-model:value="modalForm.deptStatus" default-value="0" placeholder="部门状态"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
@@ -457,20 +457,20 @@ function handleDelete(deptId: string | number) {
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="负责人" name="leader" v-bind="modalFormCtl.validateInfos.leader">
-              <a-input v-model:value="modalForm.leader" allow-clear placeholder="请输入负责人名称" :maxlength="50"></a-input>
+            <a-form-item label="负责人" name="deptLeader" v-bind="modalFormCtl.validateInfos.deptLeader">
+              <a-input v-model:value="modalForm.deptLeader" allow-clear placeholder="请输入负责人名称" :maxlength="50"></a-input>
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="联系电话" name="phone" v-bind="modalFormCtl.validateInfos.phone">
-              <a-input v-model:value="modalForm.phone" allow-clear :maxlength="11" placeholder="请输入负责人联系电话"></a-input>
+            <a-form-item label="联系电话" name="deptPhone" v-bind="modalFormCtl.validateInfos.deptPhone">
+              <a-input v-model:value="modalForm.deptPhone" allow-clear :maxlength="11" placeholder="请输入负责人联系电话"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="邮箱" name="email" v-bind="modalFormCtl.validateInfos.email">
-              <a-input v-model:value="modalForm.email" allow-clear :maxlength="40" placeholder="请输入负责人邮箱"></a-input>
+            <a-form-item label="邮箱" name="deptEmail" v-bind="modalFormCtl.validateInfos.deptEmail">
+              <a-input v-model:value="modalForm.deptEmail" allow-clear :maxlength="40" placeholder="请输入负责人邮箱"></a-input>
             </a-form-item>
           </a-col>
         </a-row>

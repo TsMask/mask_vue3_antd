@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
 import { ref, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
@@ -46,7 +46,7 @@ const { queryParams, handleQuery, resetQuery } = useQueryParams(
   {
     jobName: '',
     jobGroup: undefined as string | undefined,
-    statusFlag: undefined as string | undefined,
+    jobStatus: undefined as string | undefined,
     pageNum: 1,
     pageSize: 20,
   },
@@ -71,31 +71,31 @@ const { tableState, setTableSize, rowClassName, setSelectedRowKeys } = useTableU
 
 const { modal, formCtl, openView, openEdit, close: handleCancel, } = useCrudModal({
   initForm: () => ({
-    jobId: undefined as string | number | undefined,
+    id: undefined as string | number | undefined,
     jobName: '',
-    invokeTarget: '',
-    cronExpression: '',
-    misfirePolicy: '3',
-    concurrent: '0',
+    jobInvokeTarget: '',
+    jobCron: '',
+    jobMisfirePolicy: '3',
+    jobConcurrent: '0',
     jobGroup: 'DEFAULT',
-    statusFlag: '0',
-    saveLog: '0',
-    targetParams: '',
+    jobStatus: '0',
+    jobSaveLog: '0',
+    jobTargetParams: '',
     remark: '',
     status: '',
     createTime: 0,
   }),
   rules: {
     jobName: [{ required: true, min: 2, max: 40, message: '请正确输入任务名称，限2-40个字符' }],
-    invokeTarget: [{ required: true, min: 2, max: 40, message: '请正确输入调用目标，限2-40个字符' }],
-    cronExpression: [{ required: true, min: 6, message: '请输入或生成cron执行表达式' }],
+    jobInvokeTarget: [{ required: true, min: 2, max: 40, message: '请正确输入调用目标，限2-40个字符' }],
+    jobCron: [{ required: true, min: 6, message: '请输入或生成cron执行表达式' }],
   },
 });
 
 /** 新增/编辑 mutation */
 const { execute: submitExecute, loading: isSubmitting } = useAction({
   action: (form: Record<string, any>) =>
-    form.jobId ? updateJob(form) : addJob(form),
+    form.id ? updateJob(form) : addJob(form),
   successText: '操作成功',
   onSuccess() {
     handleCancel();
@@ -106,26 +106,26 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 const cronVisible = ref(false);
 
 const tableColumns: ColumnsType = [
-  { title: '任务编号', dataIndex: 'jobId', align: 'left', width: 100 },
+  { title: '任务编号', dataIndex: 'id', align: 'left', width: 100 },
   { title: '任务名称', dataIndex: 'jobName', align: 'left', width: 200 },
-  { title: '调用目标', dataIndex: 'invokeTarget', align: 'left', width: 150 },
+  { title: '调用目标', dataIndex: 'jobInvokeTarget', align: 'left', width: 150 },
   { title: '任务组名', dataIndex: 'jobGroup', key: 'jobGroup', align: 'left', width: 100 },
-  { title: 'cron表达式', dataIndex: 'cronExpression', align: 'left', width: 150 },
-  { title: '状态', dataIndex: 'statusFlag', key: 'statusFlag', align: 'left', width: 100 },
-  { title: '记录日志', dataIndex: 'saveLog', key: 'saveLog', align: 'left', width: 100 },
-  { title: '操作', key: 'jobId', align: 'left' },
+  { title: 'cron表达式', dataIndex: 'jobCron', align: 'left', width: 150 },
+  { title: '状态', dataIndex: 'jobStatus', key: 'jobStatus', align: 'left', width: 100 },
+  { title: '记录日志', dataIndex: 'jobSaveLog', key: 'jobSaveLog', align: 'left', width: 100 },
+  { title: '操作', key: 'id', align: 'left' },
 ];
 
 function handleCronOk(opt: boolean, cronStr?: string) {
   cronVisible.value = opt;
-  if (cronStr) modal.form.cronExpression = cronStr;
+  if (cronStr) modal.form.jobCron = cronStr;
 }
 
 function handleStatusChange(row: Record<string, string>) {
-  const text = row.status === '1' ? dict.sysJobStatus[0]?.label : dict.sysJobStatus[1]?.label;
+  const text = row.jobStatus === '1' ? dict.sysJobStatus[0]?.label : dict.sysJobStatus[1]?.label;
   confirmAction({
     content: `确定要${text} ${row.jobName} 任务吗?`,
-    action: () => changeStatus(row.jobId, row.statusFlag),
+    action: () => changeStatus(row.id, row.jobStatus),
     variables: undefined,
     successText: `${row.jobName} ${text}成功`,
   });
@@ -134,21 +134,21 @@ function handleStatusChange(row: Record<string, string>) {
 function handleRunOnce(row: Record<string, string>) {
   confirmAction({
     content: `确定要立即执行一次 【${row.jobName}】 任务吗?`,
-    action: () => runJob(row.jobId),
+    action: () => runJob(row.id),
     variables: undefined,
     successText: `${row.jobName} 执行成功`,
   });
 }
 
-function handleDelete(jobId: string = '0') {
-  if (jobId === '0') jobId = tableState.selectedRowKeys.join(',');
+function handleDelete(id: string = '0') {
+  if (id === '0') id = tableState.selectedRowKeys.join(',');
   confirmAction({
-    content: `确认删除定时任务编号为 【${jobId}】 任务吗?`,
-    action: () => delJob(jobId),
+    content: `确认删除定时任务编号为 【${id}】 任务吗?`,
+    action: () => delJob(id),
     variables: undefined,
     successText: '删除成功',
     onSuccess() {
-      const deletedCount = String(jobId).split(",").length;
+      const deletedCount = String(id).split(",").length;
       if (!clampPage(deletedCount)) fetchList();
     },
   });
@@ -173,8 +173,8 @@ function handleExport() {
   });
 }
 
-function handleViewLog(jobId: string | number = '0') {
-  router.push(`${routePath}${MENU_PATH_INLINE}/log/${jobId}`);
+function handleViewLog(id: string | number = '0') {
+  router.push(`${routePath}${MENU_PATH_INLINE}/log/${id}`);
 }
 
 async function handleSubmit() {
@@ -210,8 +210,8 @@ async function handleSubmit() {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="任务状态" name="statusFlag">
-              <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择任务状态"
+            <a-form-item label="任务状态" name="jobStatus">
+              <a-select v-model:value="queryParams.jobStatus" allow-clear placeholder="请选择任务状态"
                 :options="dict.sysJobStatus">
               </a-select>
             </a-form-item>
@@ -314,7 +314,7 @@ async function handleSubmit() {
         </a-space>
       </template>
 
-      <a-table class="antdv-table" row-key="jobId" :columns="tableColumns" :loading="loading" :data-source="listData"
+      <a-table class="antdv-table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="listData"
         :size="tableState.size" :row-class-name="rowClassName" :pagination="{ ...pagination }"
         :scroll="{ x: tableColumns.length * 120, scrollToFirstRowOnChange: true }"
         :row-selection="{ type: 'checkbox', selectedRowKeys: tableState.selectedRowKeys, onChange: setSelectedRowKeys }">
@@ -322,21 +322,21 @@ async function handleSubmit() {
           <template v-if="column.key === 'jobGroup'">
             <DictTag :options="dict.sysJobGroup" :value="record.jobGroup" />
           </template>
-          <template v-if="column.key === 'statusFlag'">
+          <template v-if="column.key === 'jobStatus'">
             <a-switch v-if="dict.sysJobStatus.length > 0 && hasPermissions(['monitor:job:changeStatus'])"
-              v-model:checked="record.statusFlag" checked-value="1" :checked-children="dict.sysJobStatus[0].label"
+              v-model:checked="record.jobStatus" checked-value="1" :checked-children="dict.sysJobStatus[0].label"
               un-checked-value="0" :un-checked-children="dict.sysJobStatus[1].label" size="small"
               @change="handleStatusChange(record)" />
-            <DictTag v-else :options="dict.sysJobStatus" :value="record.statusFlag" />
+            <DictTag v-else :options="dict.sysJobStatus" :value="record.jobStatus" />
           </template>
-          <template v-if="column.key === 'saveLog'">
-            <DictTag :options="dict.sysJobSaveLog" :value="record.saveLog" />
+          <template v-if="column.key === 'jobSaveLog'">
+            <DictTag :options="dict.sysJobSaveLog" :value="record.jobSaveLog" />
           </template>
-          <template v-if="column.key === 'jobId'">
+          <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
-                <a-button type="link" @click.prevent="openView(record.jobId, getJob, '任务信息')"
+                <a-button type="link" @click.prevent="openView(record.id, getJob, '任务信息')"
                   v-perms:has="['monitor:job:query']">
                   <template #icon>
                     <ProfileOutlined />
@@ -345,7 +345,7 @@ async function handleSubmit() {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>编辑</template>
-                <a-button type="link" @click.prevent="openEdit(record.jobId, getJob, '添加任务', '修改任务')"
+                <a-button type="link" @click.prevent="openEdit(record.id, getJob, '添加任务', '修改任务')"
                   v-perms:has="['monitor:job:edit']">
                   <template #icon>
                     <FormOutlined />
@@ -354,7 +354,7 @@ async function handleSubmit() {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>删除</template>
-                <a-button type="link" @click.prevent="handleDelete(record.jobId)" v-perms:has="['monitor:job:remove']">
+                <a-button type="link" @click.prevent="handleDelete(record.id)" v-perms:has="['monitor:job:remove']">
                   <template #icon>
                     <DeleteOutlined />
                   </template>
@@ -370,7 +370,7 @@ async function handleSubmit() {
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>任务日志</template>
-                <a-button type="link" @click.prevent="handleViewLog(record.jobId)" v-perms:has="['monitor:job:log']">
+                <a-button type="link" @click.prevent="handleViewLog(record.id)" v-perms:has="['monitor:job:log']">
                   <template #icon>
                     <ContainerOutlined />
                   </template>
@@ -390,19 +390,19 @@ async function handleSubmit() {
             <a-form-item label="任务名称" name="jobName">{{ modal.form.jobName }}</a-form-item>
           </a-col>
           <a-col :lg="6" :md="6" :xs="24">
-            <a-form-item label="出错策略" name="misfirePolicy">
-              {{ ['立即执行', '执行一次', '放弃执行'][+modal.form.misfirePolicy - 1] }}
+            <a-form-item label="出错策略" name="jobMisfirePolicy">
+              {{ ['立即执行', '执行一次', '放弃执行'][+modal.form.jobMisfirePolicy - 1] }}
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="6" :xs="24">
-            <a-form-item label="是否并发" name="concurrent">
-              {{ ['禁止', '允许'][+modal.form.concurrent] }}
+            <a-form-item label="是否并发" name="jobConcurrent">
+              {{ ['禁止', '允许'][+modal.form.jobConcurrent] }}
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="调用目标" name="invokeTarget">{{ modal.form.invokeTarget }}</a-form-item>
+            <a-form-item label="调用目标" name="jobInvokeTarget">{{ modal.form.jobInvokeTarget }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="任务组名" name="jobGroup">
@@ -412,18 +412,18 @@ async function handleSubmit() {
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="任务状态" name="status">{{ ['暂停', '正常'][+modal.form.status] }}</a-form-item>
+            <a-form-item label="任务状态" name="jobStatus">{{ ['暂停', '正常'][+modal.form.jobStatus] }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="记录日志" name="saveLog">
-              <DictTag :options="dict.sysJobSaveLog" :value="modal.form.saveLog" />
+            <a-form-item label="记录日志" name="jobSaveLog">
+              <DictTag :options="dict.sysJobSaveLog" :value="modal.form.jobSaveLog" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="cron表达式" name="cronExpression">
-              <a-tag color="default">{{ modal.form.cronExpression }}</a-tag>
+            <a-form-item label="cron表达式" name="jobCron">
+              <a-tag color="default">{{ modal.form.jobCron }}</a-tag>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
@@ -432,8 +432,8 @@ async function handleSubmit() {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="传入参数" name="targetParams" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea :value="modal.form.targetParams" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
+        <a-form-item label="传入参数" name="jobTargetParams" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea :value="modal.form.jobTargetParams" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)" />
         </a-form-item>
         <a-form-item label="备注说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
@@ -458,8 +458,8 @@ async function handleSubmit() {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="6" :xs="24">
-            <a-form-item label="出错策略" name="misfirePolicy">
-              <a-select :disabled="true" v-model:value="modal.form.misfirePolicy" default-value="3" placeholder="出错策略">
+            <a-form-item label="出错策略" name="jobMisfirePolicy">
+              <a-select :disabled="true" v-model:value="modal.form.jobMisfirePolicy" default-value="3" placeholder="出错策略">
                 <a-select-option key="1" value="1">立即执行</a-select-option>
                 <a-select-option key="2" value="2">执行一次</a-select-option>
                 <a-select-option key="3" value="3">放弃执行</a-select-option>
@@ -467,8 +467,8 @@ async function handleSubmit() {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="6" :xs="24">
-            <a-form-item label="是否并发" name="concurrent">
-              <a-select :disabled="true" v-model:value="modal.form.concurrent" default-value="0" placeholder="是否并发">
+            <a-form-item label="是否并发" name="jobConcurrent">
+              <a-select :disabled="true" v-model:value="modal.form.jobConcurrent" default-value="0" placeholder="是否并发">
                 <a-select-option key="1" value="1">允许</a-select-option>
                 <a-select-option key="0" value="0">禁止</a-select-option>
               </a-select>
@@ -477,8 +477,8 @@ async function handleSubmit() {
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="调用目标" name="invokeTarget" v-bind="formCtl.validateInfos.invokeTarget">
-              <a-input v-model:value="modal.form.invokeTarget" allow-clear placeholder="请输入调用目标" :maxlength="40">
+            <a-form-item label="调用目标" name="jobInvokeTarget" v-bind="formCtl.validateInfos.jobInvokeTarget">
+              <a-input v-model:value="modal.form.jobInvokeTarget" allow-clear placeholder="请输入调用目标" :maxlength="40">
                 <template #prefix>
                   <a-tooltip placement="topLeft">
                     <template #title>
@@ -504,23 +504,23 @@ async function handleSubmit() {
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="任务状态" name="statusFlag">
-              <a-select v-model:value="modal.form.statusFlag" default-value="0" placeholder="任务状态"
+            <a-form-item label="任务状态" name="jobStatus">
+              <a-select v-model:value="modal.form.jobStatus" default-value="0" placeholder="任务状态"
                 :options="dict.sysJobStatus">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="记录日志" name="saveLog">
-              <a-select v-model:value="modal.form.saveLog" default-value="0" placeholder="记录日志"
+            <a-form-item label="记录日志" name="jobSaveLog">
+              <a-select v-model:value="modal.form.jobSaveLog" default-value="0" placeholder="记录日志"
                 :options="dict.sysJobSaveLog">
               </a-select>
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="cron表达式" name="cronExpression" v-bind="formCtl.validateInfos.cronExpression"
+        <a-form-item label="cron表达式" name="jobCron" v-bind="formCtl.validateInfos.jobCron"
           :label-col="{ span: 3 }" :label-wrap="true">
-          <a-input v-model:value="modal.form.cronExpression" allow-clear placeholder="请输入或生成cron执行表达式">
+          <a-input v-model:value="modal.form.jobCron" allow-clear placeholder="请输入或生成cron执行表达式">
             <template #prefix>
               <a-tooltip placement="topLeft">
                 <template #title>
@@ -542,8 +542,8 @@ async function handleSubmit() {
             </template>
           </a-input>
         </a-form-item>
-        <a-form-item label="传入参数" name="targetParams" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea v-model:value="modal.form.targetParams" :auto-size="{ minRows: 2, maxRows: 6 }" :maxlength="480"
+        <a-form-item label="传入参数" name="jobTargetParams" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea v-model:value="modal.form.jobTargetParams" :auto-size="{ minRows: 2, maxRows: 6 }" :maxlength="480"
             placeholder="调用目标传入参数，仅支持json字符串" />
         </a-form-item>
         <a-form-item label="备注说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
@@ -554,7 +554,7 @@ async function handleSubmit() {
     </ProModal>
 
     <!-- 生成cron表达式 -->
-    <CronModal v-model:open="cronVisible" :cron="modal.form.cronExpression" @ok="handleCronOk(false, $event)">
+    <CronModal v-model:open="cronVisible" :cron="modal.form.jobCron" @ok="handleCronOk(false, $event)">
     </CronModal>
   </PageContainer>
 </template>

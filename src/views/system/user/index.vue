@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { reactive, ref, watch, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
@@ -51,7 +51,7 @@ const title = ref<string>(route.meta.title ?? '标题');
 const { dict } = useDictSetup({
   keyMap: {
     sysNormalDisable: 'sys_normal_disable',
-    sysUserSex: 'sys_user_sex',
+    sysUserGender: 'sys_user_gender',
   },
 });
 
@@ -72,9 +72,9 @@ function syncDateRange() {
 const { queryParams, handleQuery, resetQuery } = useQueryParams(
   {
     userName: '',
-    phone: '',
+    userPhone: '',
     deptId: '',
-    statusFlag: undefined as string | undefined,
+    userStatus: undefined as string | undefined,
     beginTime: undefined as undefined | number,
     endTime: undefined as undefined | number,
     pageNum: 1,
@@ -113,15 +113,15 @@ const deptTreeData = ref<Record<string, any>[]>([]);
 // ==================== 表格列 ====================
 
 const tableColumns: ColumnsType = [
-  { title: '用户编号', dataIndex: 'userId', align: 'left', width: 100 },
+  { title: '用户编号', dataIndex: 'id', align: 'left', width: 100 },
   { title: '登录账号', dataIndex: 'userName', align: 'left', width: 100 },
-  { title: '用户昵称', dataIndex: 'nickName', align: 'left', width: 100 },
-  { title: '手机号码', dataIndex: 'phone', align: 'left', width: 120 },
+  { title: '用户昵称', dataIndex: 'userNick', align: 'left', width: 100 },
+  { title: '手机号码', dataIndex: 'userPhone', align: 'left', width: 120 },
   { title: '部门名称', dataIndex: 'deptId', key: 'deptId', align: 'left', width: 100 },
-  { title: '登录地址', dataIndex: 'loginIp', key: 'loginIp', align: 'left', width: 100 },
+  { title: '登录地址', dataIndex: 'userLoginIp', key: 'userLoginIp', align: 'left', width: 100 },
   {
     title: '登录时间',
-    dataIndex: 'loginTime',
+    dataIndex: 'userLoginTime',
     align: 'left',
     width: 150,
     customRender(opt) {
@@ -129,31 +129,31 @@ const tableColumns: ColumnsType = [
       return parseDateToStr(+opt.value);
     },
   },
-  { title: '用户状态', dataIndex: 'statusFlag', key: 'statusFlag', align: 'left', width: 100 },
-  { title: '操作', key: 'userId', align: 'left' },
+  { title: '用户状态', dataIndex: 'userStatus', key: 'userStatus', align: 'left', width: 100 },
+  { title: '操作', key: 'id', align: 'left' },
 ];
 
 // ==================== 查看 / 编辑弹窗 ====================
 
 const { modal, formCtl, setForm, close: closeCrudModal } = useCrudModal({
   initForm: () => ({
-    userId: undefined as string | number | undefined,
+    id: undefined as string | number | undefined,
     userName: '',
     password: '',
     deptId: '100',
-    email: '',
+    userEmail: '',
     loginDate: 0,
-    loginIp: '',
-    nickName: '',
-    phone: '',
+    userLoginIp: '',
+    userNick: '',
+    userPhone: '',
     postIds: [] as (string | number)[],
     roleIds: [] as (string | number)[],
-    sex: '0',
-    statusFlag: '0',
+    userGender: '0',
+    userStatus: '0',
     remark: '',
     createTime: 0,
-    avatar: '',
-    loginTime: 0,
+    userAvatar: '',
+    userLoginTime: 0,
   }),
   rules: {
     userName: [
@@ -162,13 +162,13 @@ const { modal, formCtl, setForm, close: closeCrudModal } = useCrudModal({
     password: [
       { required: true, pattern: regExpPassword, message: '密码至少包含大小写字母、数字、特殊符号，且不少于6位' },
     ],
-    nickName: [
+    userNick: [
       { required: true, pattern: regExpNick, message: '昵称只能包含字母、数字、中文和下划线，且不少于2位' },
     ],
-    email: [
+    userEmail: [
       { required: false, pattern: regExpEmail, message: '请输入正确的邮箱地址' },
     ],
-    phone: [
+    userPhone: [
       { required: false, pattern: regExpMobile, message: '请输入正确的手机号码' },
     ],
   },
@@ -183,11 +183,11 @@ const formOptions = reactive<{ posts: Record<string, any>[]; roles: Record<strin
 /** 从 getUser 响应中解析用户数据、岗位/角色选项并填充表单 */
 function applyUserDetail(resData: any) {
   formOptions.roles = resData.roles.map((m: Record<string, any>) => {
-    m.disabled = m.statusFlag === '0';
+    m.disabled = m.roleStatus === '0';
     return m;
   });
   formOptions.posts = resData.posts.map((m: Record<string, any>) => {
-    m.disabled = m.statusFlag === '0';
+    m.disabled = m.postStatus === '0';
     return m;
   });
   const { user, roleIds, postIds } = resData;
@@ -205,7 +205,7 @@ async function handleView(userId: string | number) {
     const res = await getUser(userId);
     if (isSuccess(res) && res.data) {
       applyUserDetail(res.data);
-      modal.form.avatar = userStore.fnAvatar(modal.form.avatar);
+      modal.form.userAvatar = userStore.fnAvatar(modal.form.userAvatar);
       modal.title = '用户信息';
       modal.visibleByView = true;
     }
@@ -241,7 +241,7 @@ async function handleOpenEdit(userId?: string | number) {
 /** 新增/编辑提交 */
 const { execute: submitExecute, loading: isSubmitting } = useAction({
   action: (data: Record<string, any>) =>
-    data.userId ? updateUser(data) : addUser(data),
+    data.id ? updateUser(data) : addUser(data),
   successText: '操作成功',
   onSuccess: () => {
     handleCrudCancel();
@@ -250,8 +250,8 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 });
 
 async function handleSubmit() {
-  const validateNames = ['nickName', 'email', 'phone'];
-  if (!modal.form.userId) {
+  const validateNames = ['userNick', 'userEmail', 'userPhone'];
+  if (!modal.form.id) {
     validateNames.push('userName', 'password');
   }
   try {
@@ -296,7 +296,7 @@ const { execute: resetPwdExecute, loading: isResetPwdSubmitting } = useAction({
 
 function handleOpenResetPwd(row: Record<string, any>) {
   resetPwdFormCtl.resetFields();
-  resetPwdForm.userId = row.userId;
+  resetPwdForm.userId = row.id;
   resetPwdForm.userName = row.userName;
   resetPwdVisible.value = true;
 }
@@ -315,13 +315,13 @@ async function handleResetPwdSubmit() {
 
 /** 状态修改（保留 Modal.confirm 以支持取消回滚） */
 function handleStatusChange(row: Record<string, any>) {
-  const text = row.statusFlag === '1' ? '启用' : '停用';
+  const text = row.userStatus === '1' ? '启用' : '停用';
   Modal.confirm({
     title: '提示',
     content: `确定要${text} ${row.userName} 用户吗?`,
     onOk() {
       const hide = message.loading('请稍等...', 0);
-      return changeStatus(row.userId, row.statusFlag)
+      return changeStatus(row.id, row.userStatus)
         .then((res) => {
           hide();
           if (isSuccess(res)) {
@@ -337,7 +337,7 @@ function handleStatusChange(row: Record<string, any>) {
         });
     },
     onCancel() {
-      row.statusFlag = row.statusFlag === '1' ? '0' : '1';
+      row.userStatus = row.userStatus === '1' ? '0' : '1';
     },
   });
 }
@@ -461,13 +461,13 @@ onMounted(() => {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="手机号码" name="phone">
-              <a-input v-model:value="queryParams.phone" allow-clear :maxlength="11" placeholder="请输入手机号码"></a-input>
+            <a-form-item label="手机号码" name="userPhone">
+              <a-input v-model:value="queryParams.userPhone" allow-clear :maxlength="11" placeholder="请输入手机号码"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="4" :md="12" :xs="24">
-            <a-form-item label="用户状态" name="statusFlag">
-              <a-select v-model:value="queryParams.statusFlag" allow-clear placeholder="请选择"
+            <a-form-item label="用户状态" name="userStatus">
+              <a-select v-model:value="queryParams.userStatus" allow-clear placeholder="请选择"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
@@ -583,7 +583,7 @@ onMounted(() => {
         </a-space>
       </template>
 
-      <a-table class="antdv-table" row-key="userId" :columns="tableColumns" :loading="loading" :data-source="listData"
+      <a-table class="antdv-table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="listData"
         :size="tableState.size" :row-class-name="rowClassName" :pagination="{ ...pagination }" :scroll="{
           x: tableColumns.length * 120,
           scrollToFirstRowOnChange: true,
@@ -596,20 +596,20 @@ onMounted(() => {
           <template v-if="column.key === 'deptId'">
             {{ record.dept?.deptName }}
           </template>
-          <template v-if="column.key === 'statusFlag'">
+          <template v-if="column.key === 'userStatus'">
             <a-switch v-if="
               dict.sysNormalDisable.length > 0 &&
               !record.roleIds?.includes(SYS_ROLE_SYSTEM_ID)
-            " v-perms:has="['system:user:edit']" v-model:checked="record.statusFlag" checked-value="1"
+            " v-perms:has="['system:user:edit']" v-model:checked="record.userStatus" checked-value="1"
               :checked-children="dict.sysNormalDisable[0].label" un-checked-value="0"
               :un-checked-children="dict.sysNormalDisable[1].label" size="small" @change="handleStatusChange(record)" />
-            <DictTag v-else :options="dict.sysNormalDisable" :value="record.statusFlag" />
+            <DictTag v-else :options="dict.sysNormalDisable" :value="record.userStatus" />
           </template>
-          <template v-if="column.key === 'userId'">
+          <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>查看详情</template>
-                <a-button type="link" @click.prevent="handleView(record.userId)" v-perms:has="['system:user:query']">
+                <a-button type="link" @click.prevent="handleView(record.id)" v-perms:has="['system:user:query']">
                   <template #icon>
                     <ProfileOutlined />
                   </template>
@@ -617,7 +617,7 @@ onMounted(() => {
               </a-tooltip>
               <a-tooltip placement="topRight" v-if="!record.roleIds?.includes(SYS_ROLE_SYSTEM_ID)">
                 <template #title>编辑</template>
-                <a-button type="link" @click.prevent="handleOpenEdit(record.userId)" v-perms:has="['system:user:edit']">
+                <a-button type="link" @click.prevent="handleOpenEdit(record.id)" v-perms:has="['system:user:edit']">
                   <template #icon>
                     <FormOutlined />
                   </template>
@@ -625,7 +625,7 @@ onMounted(() => {
               </a-tooltip>
               <a-tooltip placement="topRight" v-if="!record.roleIds?.includes(SYS_ROLE_SYSTEM_ID)">
                 <template #title>删除</template>
-                <a-button type="link" @click.prevent="handleDelete(record.userId)" v-perms:has="['system:user:remove']">
+                <a-button type="link" @click.prevent="handleDelete(record.id)" v-perms:has="['system:user:remove']">
                   <template #icon>
                     <DeleteOutlined />
                   </template>
@@ -660,8 +660,8 @@ onMounted(() => {
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="用户编号" name="userId">
-              {{ modal.form.userId }}
+            <a-form-item label="用户编号" name="id">
+              {{ modal.form.id }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
@@ -674,22 +674,22 @@ onMounted(() => {
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="登录地址" name="loginIp">
-              {{ modal.form.loginIp }}
+            <a-form-item label="登录地址" name="userLoginIp">
+              {{ modal.form.userLoginIp }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="登录时间" name="loginTime">
-              <span v-if="+modal.form.loginTime > 0">
-                {{ parseDateToStr(+modal.form.loginTime) }}
+            <a-form-item label="登录时间" name="userLoginTime">
+              <span v-if="+modal.form.userLoginTime > 0">
+                {{ parseDateToStr(+modal.form.userLoginTime) }}
               </span>
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="用户头像" name="avatar">
-              <a-avatar shape="circle" size="default" :src="modal.form.avatar" :alt="modal.form.userName"></a-avatar>
+            <a-form-item label="用户头像" name="userAvatar">
+              <a-avatar shape="circle" size="default" :src="modal.form.userAvatar" :alt="modal.form.userName"></a-avatar>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
@@ -701,34 +701,34 @@ onMounted(() => {
 
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="用户昵称" name="nickName">
-              {{ modal.form.nickName }}
+            <a-form-item label="用户昵称" name="userNick">
+              {{ modal.form.userNick }}
             </a-form-item>
           </a-col>
         </a-row>
 
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="用户性别" name="sex">
-              <DictTag :options="dict.sysUserSex" :value="modal.form.sex" />
+            <a-form-item label="用户性别" name="userGender">
+              <DictTag :options="dict.sysUserGender" :value="modal.form.userGender" />
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="用户状态" name="statusFlag">
-              <DictTag :options="dict.sysNormalDisable" :value="modal.form.statusFlag" />
+            <a-form-item label="用户状态" name="userStatus">
+              <DictTag :options="dict.sysNormalDisable" :value="modal.form.userStatus" />
             </a-form-item>
           </a-col>
         </a-row>
 
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="手机号码" name="phone">
-              {{ modal.form.phone }}
+            <a-form-item label="手机号码" name="userPhone">
+              {{ modal.form.userPhone }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="电子邮箱" name="email">
-              {{ modal.form.email }}
+            <a-form-item label="电子邮箱" name="userEmail">
+              {{ modal.form.userEmail }}
             </a-form-item>
           </a-col>
         </a-row>
@@ -749,7 +749,7 @@ onMounted(() => {
             <a-form-item label="用户岗位" name="postIds">
               <a-select :value="modal.form.postIds" :disabled="true" mode="multiple" placeholder="请选择用户岗位"
                 option-label-prop="postName" :options="formOptions.posts"
-                :field-names="{ label: 'postName', value: 'postId' }">
+                :field-names="{ label: 'postName', value: 'id' }">
               </a-select>
             </a-form-item>
           </a-col>
@@ -757,7 +757,7 @@ onMounted(() => {
             <a-form-item label="用户角色" name="roleIds">
               <a-select :value="modal.form.roleIds" disabled mode="multiple" placeholder="请选择用户角色"
                 option-label-prop="roleName" :options="formOptions.roles"
-                :field-names="{ label: 'roleName', value: 'roleId' }">
+                :field-names="{ label: 'roleName', value: 'id' }">
               </a-select>
             </a-form-item>
           </a-col>
@@ -778,7 +778,7 @@ onMounted(() => {
       :open="modal.visibleByEdit" :title="modal.title" :confirm-loading="isSubmitting" @ok="handleSubmit"
       @cancel="handleCrudCancel">
       <a-form name="formCtlByEdit" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
-        <a-row v-if="!modal.form.userId">
+        <a-row v-if="!modal.form.id">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="登录账号" name="userName" v-bind="formCtl.validateInfos.userName">
               <a-input v-model:value="modal.form.userName" allow-clear :maxlength="30" placeholder="请输入登录账号">
@@ -801,22 +801,22 @@ onMounted(() => {
 
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="用户昵称" name="nickName" v-bind="formCtl.validateInfos.nickName">
-              <a-input v-model:value="modal.form.nickName" allow-clear :maxlength="30" placeholder="请输入用户昵称"></a-input>
+            <a-form-item label="用户昵称" name="userNick" v-bind="formCtl.validateInfos.userNick">
+              <a-input v-model:value="modal.form.userNick" allow-clear :maxlength="30" placeholder="请输入用户昵称"></a-input>
             </a-form-item>
           </a-col>
         </a-row>
 
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="用户性别" name="sex">
-              <a-select v-model:value="modal.form.sex" default-value="1" placeholder="用户性别" :options="dict.sysUserSex">
+            <a-form-item label="用户性别" name="userGender">
+              <a-select v-model:value="modal.form.userGender" default-value="1" placeholder="用户性别" :options="dict.sysUserGender">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="用户状态" name="statusFlag">
-              <a-select v-model:value="modal.form.statusFlag" default-value="0" placeholder="用户状态"
+            <a-form-item label="用户状态" name="userStatus">
+              <a-select v-model:value="modal.form.userStatus" default-value="0" placeholder="用户状态"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
@@ -825,13 +825,13 @@ onMounted(() => {
 
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="手机号码" name="phone" v-bind="formCtl.validateInfos.phone">
-              <a-input v-model:value="modal.form.phone" allow-clear :maxlength="11" placeholder="请输入手机号码"></a-input>
+            <a-form-item label="手机号码" name="userPhone" v-bind="formCtl.validateInfos.userPhone">
+              <a-input v-model:value="modal.form.userPhone" allow-clear :maxlength="11" placeholder="请输入手机号码"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="电子邮箱" name="email" v-bind="formCtl.validateInfos.email">
-              <a-input v-model:value="modal.form.email" allow-clear :maxlength="40" placeholder="请输入电子邮箱"></a-input>
+            <a-form-item label="电子邮箱" name="userEmail" v-bind="formCtl.validateInfos.userEmail">
+              <a-input v-model:value="modal.form.userEmail" allow-clear :maxlength="40" placeholder="请输入电子邮箱"></a-input>
             </a-form-item>
           </a-col>
         </a-row>
@@ -852,7 +852,7 @@ onMounted(() => {
             <a-form-item label="用户岗位" name="postIds">
               <a-select v-model:value="modal.form.postIds" allow-clear mode="multiple" placeholder="请选择用户岗位" show-search
                 option-filter-prop="postName" option-label-prop="postName" :options="formOptions.posts"
-                :field-names="{ label: 'postName', value: 'postId' }">
+                :field-names="{ label: 'postName', value: 'id' }">
               </a-select>
             </a-form-item>
           </a-col>
@@ -860,7 +860,7 @@ onMounted(() => {
             <a-form-item label="用户角色" name="roleIds">
               <a-select v-model:value="modal.form.roleIds" allow-clear mode="multiple" placeholder="请选择用户角色" show-search
                 option-filter-prop="roleName" option-label-prop="roleName" :options="formOptions.roles"
-                :field-names="{ label: 'roleName', value: 'roleId' }">
+                :field-names="{ label: 'roleName', value: 'id' }">
               </a-select>
             </a-form-item>
           </a-col>

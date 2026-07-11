@@ -13,7 +13,7 @@ const userStore = useUserStore();
 const { getDict } = useDictStore();
 
 /**用户性别字典 */
-let userSexOptions = ref<DictType[]>([
+let userGenderOptions = ref<DictType[]>([
   { label: '未选择', value: '0', tagType: '', tagClass: '' },
   { label: '男', value: '1', tagType: '', tagClass: '' },
   { label: '女', value: '2', tagType: '', tagClass: '' },
@@ -26,7 +26,7 @@ let stateForm = reactive({
     nickName: '',
     email: '',
     phone: '',
-    sex: undefined,
+    gender: undefined,
     avatar: '',
   },
   /**表单提交点击状态 */
@@ -145,9 +145,9 @@ function fnUpload(up: UploadRequestOption) {
 
 onMounted(() => {
   // 初始字典数据
-  getDict('sys_user_sex').then(res => {
+  getDict('sys_user_gender').then(res => {
     if (res.length > 0) {
-      userSexOptions.value = res;
+      userGenderOptions.value = res;
     }
   });
   // 初始表单值
@@ -225,7 +225,7 @@ onMounted(() => {
 
         <a-form-item
           label="用户性别"
-          name="sex"
+          name="gender"
           :rules="[
             {
               required: true,
@@ -234,9 +234,9 @@ onMounted(() => {
           ]"
         >
           <a-select
-            v-model:value="stateForm.form.sex"
+            v-model:value="stateForm.form.gender"
             placeholder="用户性别"
-            :options="userSexOptions"
+            :options="userGenderOptions"
           >
           </a-select>
         </a-form-item>
