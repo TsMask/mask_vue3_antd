@@ -40,7 +40,7 @@ watch(
       .filter(r => r.name !== 'Root')
       .map(r => r.path);
     // 路由地址含有内嵌地址标识又是隐藏菜单需要处理打开高亮菜单栏
-    if (v.path.includes(MENU_PATH_INLINE) && v.meta.hideInMenu) {
+    if (v.path.includes(MENU_PATH_INLINE) && v.meta.hide_in_menu) {
       const idx = v.path.lastIndexOf(MENU_PATH_INLINE);
       layoutState.openKeys.splice(-1);
       layoutState.selectedKeys[matched.length - 1] = v.path.slice(0, idx);
@@ -68,8 +68,8 @@ const breadcrumb = computed(() => {
   const matched = router.currentRoute.value.matched.concat();
   // 菜单中隐藏子节点不显示面包屑
   if (matched.length == 2) {
-    const hideChildInMenu = matched[0].meta?.hideChildInMenu || false;
-    if (hideChildInMenu) {
+    const hide_child_in_menu = matched[0].meta?.hide_child_in_menu || false;
+    if (hide_child_in_menu) {
       return [];
     }
   }
@@ -126,9 +126,6 @@ tabsStore.clear();
           <h1>{{ appName }}</h1>
         </RouterLink>
       </template>
-
-      <!--插槽-渲染顶部内容区域，仅布局side有效-->
-      <template #headerContentRender></template>
 
       <!--插槽-渲染顶部内容右端区域-->
       <template #headerContentRightRender>

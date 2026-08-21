@@ -20,7 +20,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  roleId: {
+  role_id: {
     type: [Number, String],
     required: true,
   },
@@ -32,13 +32,13 @@ const { dict, loadDicts } = useDictSetup({ keyMap: { sysNormalDisable: 'sys_norm
 /** 查询参数 */
 const { queryParams, handleQuery, resetQuery } = useQueryParams(
   {
-    userName: '',
-    userPhone: '',
-    userStatus: undefined as string | undefined,
-    roleId: props.roleId,
+    user_name: '',
+    user_phone: '',
+    user_status: undefined as string | undefined,
+    role_id: props.role_id,
     auth: false,
-    pageNum: 1,
-    pageSize: 20,
+    page_num: 1,
+    page_size: 20,
   },
   () => {
     resetPage();
@@ -48,9 +48,9 @@ const { queryParams, handleQuery, resetQuery } = useQueryParams(
 
 /** 分页管理 */
 const { pagination, resetPage } = usePagination({
-  onChange: (page, pageSize) => {
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
+  onChange: (page, page_size) => {
+    queryParams.page_num = page;
+    queryParams.page_size = page_size;
     fetchList()
   },
 });
@@ -69,12 +69,12 @@ const { tableState, setSelectedRowKeys, clearSelection } = useTableUI({
 /** 表格字段列 */
 let tableColumns: ColumnsType = [
   { title: '用户编号', dataIndex: 'id', align: 'left', width: 100 },
-  { title: '登录账号', dataIndex: 'userName', align: 'left', width: 150 },
-  { title: '用户昵称', dataIndex: 'userNick', align: 'left', width: 150 },
-  { title: '用户状态', dataIndex: 'userStatus', key: 'userStatus', align: 'left', width: 100 },
+  { title: '登录账号', dataIndex: 'user_name', align: 'left', width: 150 },
+  { title: '用户昵称', dataIndex: 'user_nick', align: 'left', width: 150 },
+  { title: '用户状态', dataIndex: 'user_status', key: 'user_status', align: 'left', width: 100 },
   {
     title: '创建时间',
-    dataIndex: 'createTime',
+    dataIndex: 'create_time',
     align: 'left',
     width: 150,
     customRender(opt) {
@@ -107,7 +107,7 @@ watch(
   (val) => {
     if (val) {
       loadDicts();
-      queryParams.pageNum = 1;
+      queryParams.page_num = 1;
       clearSelection();
     }
   },
@@ -121,18 +121,18 @@ watch(
     <a-form :model="queryParams" name="queryParams" layout="horizontal">
       <a-row :gutter="16">
         <a-col :lg="8" :md="12" :xs="24">
-          <a-form-item label="登录账号" name="userName">
-            <a-input v-model:value="queryParams.userName" allow-clear :maxlength="30" placeholder="请输入登录账号"></a-input>
+          <a-form-item label="登录账号" name="user_name">
+            <a-input v-model:value="queryParams.user_name" allow-clear :maxlength="30" placeholder="请输入登录账号"></a-input>
           </a-form-item>
         </a-col>
         <a-col :lg="10" :md="12" :xs="24">
-          <a-form-item label="手机号码" name="userPhone">
-            <a-input v-model:value="queryParams.userPhone" allow-clear :maxlength="11" placeholder="请输入手机号码"></a-input>
+          <a-form-item label="手机号码" name="user_phone">
+            <a-input v-model:value="queryParams.user_phone" allow-clear :maxlength="11" placeholder="请输入手机号码"></a-input>
           </a-form-item>
         </a-col>
         <a-col :lg="6" :md="12" :xs="24">
-          <a-form-item label="用户状态" name="userStatus">
-            <a-select v-model:value="queryParams.userStatus" allow-clear placeholder="请选择用户状态"
+          <a-form-item label="用户状态" name="user_status">
+            <a-select v-model:value="queryParams.user_status" allow-clear placeholder="请选择用户状态"
               :options="dict.sysNormalDisable">
             </a-select>
           </a-form-item>
@@ -169,8 +169,8 @@ watch(
         onChange: setSelectedRowKeys,
       }">
       <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'userStatus'">
-          <DictTag :options="dict.sysNormalDisable" :value="record.userStatus" />
+        <template v-if="column.key === 'user_status'">
+          <DictTag :options="dict.sysNormalDisable" :value="record.user_status" />
         </template>
       </template>
     </a-table>

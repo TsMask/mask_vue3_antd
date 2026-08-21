@@ -79,12 +79,12 @@ export function delData(dataId: string | number) {
 
 /**
  * 字典数据列表（指定字典类型）
- * @param dictType 字典类型
+ * @param dict_type 字典类型
  * @returns object
  */
-export function getDictDataType(dictType: string) {
+export function getDictDataType(dict_type: string) {
   return request({
-    url: `/system/dict/data/type/${dictType}`,
+    url: `/system/dict/data/type/${dict_type}`,
     method: 'GET',
   });
 }

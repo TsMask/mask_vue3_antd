@@ -24,28 +24,28 @@ export function listCacheName() {
 
 /**
  * 查询缓存名称下键名列表
- * @param cacheName 缓存名称列表中得到的缓存名称
+ * @param cache_name 缓存名称列表中得到的缓存名称
  * @returns object
  */
-export function listCacheKey(cacheName: string) {
+export function listCacheKey(cache_name: string) {
   return request({
     url: `/monitor/cache/keys`,
     method: 'GET',
-    params: { cacheName },
+    params: { cache_name },
   });
 }
 
 /**
  * 查询缓存内容
- * @param cacheName 键名列表中得到的缓存名称
- * @param cacheKey 键名列表中得到的缓存键名
+ * @param cache_name 键名列表中得到的缓存名称
+ * @param cache_key 键名列表中得到的缓存键名
  * @returns object
  */
-export function getCacheValue(cacheName: string, cacheKey: string) {
+export function getCacheValue(cache_name: string, cache_key: string) {
   return request({
     url: `/monitor/cache/value`,
     method: 'GET',
-    params: { cacheName, cacheKey },
+    params: { cache_name, cache_key },
   });
 }
 
@@ -64,27 +64,27 @@ export function clearCacheSafe() {
 
 /**
  * 删除缓存名称下键名列表
- * @param cacheName 缓存名称列表中得到的缓存名称
+ * @param cache_name 缓存名称列表中得到的缓存名称
  * @returns object
  */
-export function clearCacheName(cacheName: string) {
+export function clearCacheName(cache_name: string) {
   return request({
     url: `/monitor/cache/keys`,
     method: 'DELETE',
-    params: { cacheName },
+    params: { cache_name },
   });
 }
 
 /**
  * 删除缓存键名
- * @param cacheName 键名列表中得到的缓存名称
- * @param cacheKey 键名列表中得到的缓存键名
+ * @param cache_name 键名列表中得到的缓存名称
+ * @param cache_key 键名列表中得到的缓存键名
  * @returns object
  */
-export function clearCacheKey(cacheName: string, cacheKey: string) {
+export function clearCacheKey(cache_name: string, cache_key: string) {
   return request({
     url: `/monitor/cache/value`,
     method: 'DELETE',
-    params: { cacheName, cacheKey },
+    params: { cache_name, cache_key },
   });
 }

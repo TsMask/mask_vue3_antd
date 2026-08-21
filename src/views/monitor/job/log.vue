@@ -39,11 +39,11 @@ const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
   {
     id: (route.params.jobId as string) || '',
-    logStatus: undefined as string | undefined,
-    beginTime: undefined as number | undefined,
-    endTime: undefined as number | undefined,
-    pageNum: 1,
-    pageSize: 20,
+    log_status: undefined as string | undefined,
+    begin_time: undefined as number | undefined,
+    end_time: undefined as number | undefined,
+    page_num: 1,
+    page_size: 20,
   },
   () => { resetPage(); fetchList(); },
 );
@@ -57,18 +57,18 @@ function resetQuery() {
 /** 同步日期范围到查询参数 */
 function syncDateRange() {
   if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
-    queryParams.beginTime = queryRangePicker.value[0].startOf('day').valueOf();
-    queryParams.endTime = queryRangePicker.value[1].endOf('day').valueOf();
+    queryParams.begin_time = queryRangePicker.value[0].startOf('day').valueOf();
+    queryParams.end_time = queryRangePicker.value[1].endOf('day').valueOf();
   } else {
-    queryParams.beginTime = undefined;
-    queryParams.endTime = undefined;
+    queryParams.begin_time = undefined;
+    queryParams.end_time = undefined;
   }
 }
 
 const { pagination, resetPage, clampPage } = usePagination({
-  onChange: (page, pageSize) => {
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
+  onChange: (page, page_size) => {
+    queryParams.page_num = page;
+    queryParams.page_size = page_size;
     fetchList()
   },
 });
@@ -85,16 +85,16 @@ tableState.searched = true;
 
 const tableColumns: ColumnsType = [
   { title: '日志编号', dataIndex: 'id', align: 'left', width: 100 },
-  { title: '任务名称', dataIndex: 'jobName', align: 'left', width: 200 },
-  { title: '调用目标', dataIndex: 'jobInvokeTarget', align: 'left', width: 150 },
-  { title: '任务组名', dataIndex: 'jobGroup', key: 'jobGroup', align: 'left', width: 100 },
-  { title: '执行状态', dataIndex: 'logStatus', key: 'logStatus', align: 'left', width: 100 },
+  { title: '任务名称', dataIndex: 'job_name', align: 'left', width: 200 },
+  { title: '调用目标', dataIndex: 'job_invoke_target', align: 'left', width: 150 },
+  { title: '任务组名', dataIndex: 'job_group', key: 'job_group', align: 'left', width: 100 },
+  { title: '执行状态', dataIndex: 'log_status', key: 'log_status', align: 'left', width: 100 },
   {
-    title: '记录时间', dataIndex: 'createTime', align: 'left', width: 150,
+    title: '记录时间', dataIndex: 'create_time', align: 'left', width: 150,
     customRender(opt) { if (+opt.value <= 0) return ''; return parseDateToStr(+opt.value); },
   },
   {
-    title: '消耗时间', dataIndex: 'logCostTime', key: 'logCostTime', align: 'right', width: 100,
+    title: '消耗时间', dataIndex: 'log_cost_time', key: 'log_cost_time', align: 'right', width: 100,
     customRender(opt) { return `${opt.value} ms`; },
   },
   { title: '操作', key: 'id', align: 'left' },
@@ -105,13 +105,13 @@ const detailVisible = ref(false);
 const detailTitle = ref('任务日志');
 const detailForm = reactive({
   id: undefined as string | number | undefined,
-  jobName: '',
-  jobGroup: 'DEFAULT',
-  jobInvokeTarget: '',
-  jobTargetParams: '',
-  logStatus: '0',
-  logMsg: '',
-  createTime: 0,
+  job_name: '',
+  job_group: 'DEFAULT',
+  job_invoke_target: '',
+  job_target_params: '',
+  log_status: '0',
+  log_msg: '',
+  create_time: 0,
 });
 
 function handleViewDetail(row: Record<string, string>) {
@@ -169,8 +169,8 @@ function handleClose() {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="执行状态" name="logStatus">
-              <a-select v-model:value="queryParams.logStatus" allow-clear placeholder="请选择执行状态"
+            <a-form-item label="执行状态" name="log_status">
+              <a-select v-model:value="queryParams.log_status" allow-clear placeholder="请选择执行状态"
                 :options="dict.sysCommonStatus">
               </a-select>
             </a-form-item>
@@ -279,12 +279,12 @@ function handleClose() {
           type: 'checkbox', selectedRowKeys: tableState.selectedRowKeys, onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'jobGroup'">
-            <DictTag :options="dict.sysJobGroup" :value="record.jobGroup" />
+          <template v-if="column.key === 'job_group'">
+            <DictTag :options="dict.sysJobGroup" :value="record.job_group" />
           </template>
-          <template v-if="column.key === 'logStatus'">
-            <a-tag v-if="dict.sysCommonStatus.length > 0" :color="+record.logStatus ? 'success' : 'error'">
-              {{ +record.logStatus ? dict.sysCommonStatus[0].label : dict.sysCommonStatus[1].label }}
+          <template v-if="column.key === 'log_status'">
+            <a-tag v-if="dict.sysCommonStatus.length > 0" :color="+record.log_status ? 'success' : 'error'">
+              {{ +record.log_status ? dict.sysCommonStatus[0].label : dict.sysCommonStatus[1].label }}
             </a-tag>
           </template>
           <template v-if="column.key === 'id'">
@@ -312,39 +312,39 @@ function handleClose() {
             <a-form-item label="日志编号" name="id">{{ detailForm.id }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="执行状态" name="logStatus">
-              <a-tag v-if="dict.sysCommonStatus.length > 0" :color="+detailForm.logStatus ? 'success' : 'error'">
-                {{ +detailForm.logStatus ? dict.sysCommonStatus[0].label : dict.sysCommonStatus[1].label }}
+            <a-form-item label="执行状态" name="log_status">
+              <a-tag v-if="dict.sysCommonStatus.length > 0" :color="+detailForm.log_status ? 'success' : 'error'">
+                {{ +detailForm.log_status ? dict.sysCommonStatus[0].label : dict.sysCommonStatus[1].label }}
               </a-tag>
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="任务名称" name="jobName">{{ detailForm.jobName }}</a-form-item>
+            <a-form-item label="任务名称" name="job_name">{{ detailForm.job_name }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="任务组名" name="jobGroup">
-              <DictTag :options="dict.sysJobGroup" :value="detailForm.jobGroup" />
+            <a-form-item label="任务组名" name="job_group">
+              <DictTag :options="dict.sysJobGroup" :value="detailForm.job_group" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="调用目标" name="jobInvokeTarget">{{ detailForm.jobInvokeTarget }}</a-form-item>
+            <a-form-item label="调用目标" name="job_invoke_target">{{ detailForm.job_invoke_target }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="记录时间" name="createTime">
-              <span v-if="+detailForm.createTime > 0">{{ parseDateToStr(+detailForm.createTime) }}</span>
+            <a-form-item label="记录时间" name="create_time">
+              <span v-if="+detailForm.create_time > 0">{{ parseDateToStr(+detailForm.create_time) }}</span>
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="传入参数" name="jobTargetParams" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea :value="detailForm.jobTargetParams" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
+        <a-form-item label="传入参数" name="job_target_params" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea :value="detailForm.job_target_params" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)" />
         </a-form-item>
-        <a-form-item label="日志信息" name="logMsg" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea :value="detailForm.logMsg" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
+        <a-form-item label="日志信息" name="log_msg" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea :value="detailForm.log_msg" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)" />
         </a-form-item>
       </a-form>

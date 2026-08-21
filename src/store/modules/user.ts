@@ -14,9 +14,9 @@ import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 /** 用户信息类型 */
 type UserInfo = {
   /** 用户ID */
-  userId: string;
+  user_id: string;
   /** 登录账号 */
-  userName: string;
+  user_name: string;
   /** 用户角色 字符串数组 */
   roles: string[];
   /** 用户权限 字符串数组 */
@@ -51,8 +51,8 @@ function parseAvatar(avatar: string): string {
 
 const useUserStore = defineStore('user', {
   state: (): UserInfo => ({
-    userId: '',
-    userName: '',
+    user_id: '',
+    user_name: '',
     roles: [],
     permissions: [],
     avatar: '',
@@ -114,8 +114,8 @@ const useUserStore = defineStore('user', {
     async fnLogin(loginBody: Record<string, string>) {
       const res = await login(loginBody);
       if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        setAccessToken(res.data.accessToken, res.data.refreshExpiresIn);
-        setRefreshToken(res.data.refreshToken, res.data.refreshExpiresIn);
+        setAccessToken(res.data.access_token, res.data.refresh_expires_in);
+        setRefreshToken(res.data.refresh_token, res.data.refresh_expires_in);
       }
       return res;
     },
@@ -133,16 +133,16 @@ const useUserStore = defineStore('user', {
       if (res.code === RESULT_CODE_SUCCESS && res.data) {
         const { user, roles, permissions } = res.data;
         // 用户ID
-        this.userId = user.id;
+        this.user_id = user.id;
         // 登录账号
-        this.userName = user.userName;
+        this.user_name = user.user_name;
         // 用户头像
-        this.avatar = user.userAvatar;
+        this.avatar = user.user_avatar;
         // 基础信息
-        this.nickName = user.userNick;
-        this.phone = user.userPhone;
-        this.email = user.userEmail;
-        this.gender = user.userGender;
+        this.nickName = user.user_nick;
+        this.phone = user.user_phone;
+        this.email = user.user_email;
+        this.gender = user.user_gender;
 
         // 验证返回的roles是否是一个非空数组
         if (Array.isArray(roles) && roles.length > 0) {

@@ -19,8 +19,8 @@ const tabsStore = useTabsStore();
 const route = useRoute();
 const router = useRouter();
 /** 获取地址栏参数 */
-const roleId = route.params && (route.params.roleId as string);
-const roleName = route.query && (route.query.roleName as string);
+const role_id = route.params && (route.params.roleId as string);
+const role_name = route.query && (route.query.role_name as string);
 
 /** 字典数据初始化 */
 const { dict } = useDictSetup({ keyMap: { sysNormalDisable: 'sys_normal_disable', } });
@@ -28,13 +28,13 @@ const { dict } = useDictSetup({ keyMap: { sysNormalDisable: 'sys_normal_disable'
 /** 查询参数 */
 const { queryParams, handleQuery, resetQuery } = useQueryParams(
   {
-    userName: '',
-    userPhone: '',
-    userStatus: undefined as string | undefined,
-    roleId: roleId,
+    user_name: '',
+    user_phone: '',
+    user_status: undefined as string | undefined,
+    role_id: role_id,
     auth: true,
-    pageNum: 1,
-    pageSize: 20,
+    page_num: 1,
+    page_size: 20,
   },
   () => {
     resetPage();
@@ -44,9 +44,9 @@ const { queryParams, handleQuery, resetQuery } = useQueryParams(
 
 /** 分页管理 */
 const { pagination, resetPage, clampPage } = usePagination({
-  onChange: (page, pageSize) => {
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
+  onChange: (page, page_size) => {
+    queryParams.page_num = page;
+    queryParams.page_size = page_size;
     fetchList()
   },
 });
@@ -77,14 +77,14 @@ const { execute: authExecute } = useAction({
 /** 表格字段列 */
 let tableColumns: ColumnsType = [
   { title: '用户编号', dataIndex: 'id', align: 'left', width: 100 },
-  { title: '登录账号', dataIndex: 'userName', align: 'left', width: 150 },
-  { title: '用户昵称', dataIndex: 'userNick', align: 'left', width: 150 },
-  { title: '手机号码', dataIndex: 'userPhone', align: 'left', width: 150 },
-  { title: '电子邮箱', dataIndex: 'userEmail', align: 'left', width: 200 },
-  { title: '用户状态', dataIndex: 'userStatus', key: 'userStatus', align: 'left', width: 100 },
+  { title: '登录账号', dataIndex: 'user_name', align: 'left', width: 150 },
+  { title: '用户昵称', dataIndex: 'user_nick', align: 'left', width: 150 },
+  { title: '手机号码', dataIndex: 'user_phone', align: 'left', width: 150 },
+  { title: '电子邮箱', dataIndex: 'user_email', align: 'left', width: 200 },
+  { title: '用户状态', dataIndex: 'user_status', key: 'user_status', align: 'left', width: 100 },
   {
     title: '创建时间',
-    dataIndex: 'createTime',
+    dataIndex: 'create_time',
     align: 'left',
     width: 150,
     customRender(opt) {
@@ -113,32 +113,32 @@ async function handleAuthUserOk(userIds: string[] | number[]) {
   try {
     await authExecute({
       auth: true,
-      userIds: userIds.map((v: any) => parseInt(v)),
-      roleId: parseInt(roleId),
+      user_ids: userIds.map((v: any) => parseInt(v)),
+      role_id: parseInt(role_id),
     });
     message.success({ content: '授权用户添加成功', duration: 3 });
     selectUserVisible.value = false;
-    queryParams.pageNum = 1;
+    queryParams.page_num = 1;
   } catch {
     // 错误已由 useAction 统一处理
   }
 }
 
 /** 取消授权 */
-function handleRevokeAuth(userId: string | number) {
+function handleRevokeAuth(user_id: string | number) {
   let userIds: number[] = [];
-  if (userId === '0' || userId === 0) {
+  if (user_id === '0' || user_id === 0) {
     userIds = tableState.selectedRowKeys.map((v: any) => parseInt(v));
   } else {
-    userIds = [Number(userId)];
+    userIds = [Number(user_id)];
   }
   confirmAction({
     content: `确认取消用户编号为 【${userIds.map((v: any) => v).join(',')}】 的数据项授权?`,
     action: () => {
       return authUserChecked({
         auth: false,
-        userIds: userIds,
-        roleId: parseInt(roleId),
+        user_ids: userIds,
+        role_id: parseInt(role_id),
       });
     },
     variables: undefined,
@@ -166,23 +166,23 @@ function handleClose() {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="角色名称" name="roleName">
-              <a-input :value="roleName" disabled placeholder="请输入角色名称"></a-input>
+            <a-form-item label="角色名称" name="role_name">
+              <a-input :value="role_name" disabled placeholder="请输入角色名称"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录账号" name="userName">
-              <a-input v-model:value="queryParams.userName" allow-clear :maxlength="30" placeholder="请输入登录账号"></a-input>
+            <a-form-item label="登录账号" name="user_name">
+              <a-input v-model:value="queryParams.user_name" allow-clear :maxlength="30" placeholder="请输入登录账号"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="手机号码" name="userPhone">
-              <a-input v-model:value="queryParams.userPhone" allow-clear :maxlength="11" placeholder="请输入手机号码"></a-input>
+            <a-form-item label="手机号码" name="user_phone">
+              <a-input v-model:value="queryParams.user_phone" allow-clear :maxlength="11" placeholder="请输入手机号码"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="用户状态" name="userStatus">
-              <a-select v-model:value="queryParams.userStatus" allow-clear placeholder="请选择用户状态"
+            <a-form-item label="用户状态" name="user_status">
+              <a-select v-model:value="queryParams.user_status" allow-clear placeholder="请选择用户状态"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
@@ -280,8 +280,8 @@ function handleClose() {
           onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'userStatus'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.userStatus" />
+          <template v-if="column.key === 'user_status'">
+            <DictTag :options="dict.sysNormalDisable" :value="record.user_status" />
           </template>
           <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
@@ -300,7 +300,7 @@ function handleClose() {
       </a-table>
     </a-card>
 
-    <AuthUserSelect :role-id="roleId" :title="selectUserTitle" v-model:open="selectUserVisible"
+    <AuthUserSelect :role_id="role_id" :title="selectUserTitle" v-model:open="selectUserVisible"
       @ok="handleAuthUserOk" />
   </PageContainer>
 </template>

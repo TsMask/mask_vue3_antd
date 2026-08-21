@@ -29,12 +29,12 @@ export function listType(query: Record<string, any>) {
 
 /**
  * 查询字典类型详细
- * @param dictId 字典编号
+ * @param dict_id 字典编号
  * @returns object
  */
-export function getType(dictId: string | number) {
+export function getType(dict_id: string | number) {
   return request({
-    url: `/system/dict/type/${dictId}`,
+    url: `/system/dict/type/${dict_id}`,
     method: 'GET',
   });
 }
@@ -70,9 +70,9 @@ export function updateType(data: Record<string, any>) {
  * @param dataId 字典代码值
  * @returns object
  */
-export function delType(dictId: string | number) {
+export function delType(dict_id: string | number) {
   return request({
-    url: `/system/dict/type/${dictId}`,
+    url: `/system/dict/type/${dict_id}`,
     method: 'DELETE',
   });
 }

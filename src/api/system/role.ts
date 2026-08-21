@@ -29,12 +29,12 @@ export function listRole(query: Record<string, any>) {
 
 /**
  * 查询角色详细
- * @param roleId 角色ID
+ * @param role_id 角色ID
  * @returns object
  */
-export function getRole(roleId: string | number) {
+export function getRole(role_id: string | number) {
   return request({
-    url: `/system/role/${roleId}`,
+    url: `/system/role/${role_id}`,
     method: 'GET',
   });
 }
@@ -67,27 +67,27 @@ export function updateRole(data: Record<string, any>) {
 
 /**
  * 删除角色
- * @param roleId 角色ID
+ * @param role_id 角色ID
  * @returns object
  */
-export function delRole(roleId: string | number) {
+export function delRole(role_id: string | number) {
   return request({
-    url: `/system/role/${roleId}`,
+    url: `/system/role/${role_id}`,
     method: 'DELETE',
   });
 }
 
 /**
  * 角色状态修改
- * @param roleId 角色ID
- * @param roleStatus 角色状态
+ * @param role_id 角色ID
+ * @param role_status 角色状态
  * @returns object
  */
-export function changeStatus(roleId: string, roleStatus: string | number) {
+export function changeStatus(role_id: string, role_status: string | number) {
   return request({
     url: '/system/role/status',
     method: 'PUT',
-    data: { roleId, roleStatus },
+    data: { role_id, role_status },
   });
 }
 

@@ -105,7 +105,12 @@ function buildRouters(recordRaws: RecordRaws[]): RouteRecordRaw[] {
     if (!metaIcon.startsWith('icon-')) {
       metaIcon = '';
     }
-    Object.assign(item.meta, { icon: metaIcon });
+    Object.assign(item.meta, {
+      icon: metaIcon,
+      // antdv-pro-layout reads camelCase; backend delivers snake_case, keep both
+      hideInMenu: item.meta?.hide_in_menu === true,
+      hideChildInMenu: item.meta?.hide_child_in_menu === true,
+    });
 
     // 构建路由
     const router: RouteRecordRaw = {

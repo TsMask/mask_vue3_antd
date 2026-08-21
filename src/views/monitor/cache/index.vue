@@ -35,8 +35,8 @@ const { listData: cacheKeyData, loading: cacheKeyLoading, fetch: fetchCacheKeys 
 });
 
 /** 选择缓存名称，加载键名列表 */
-function handleSelectCacheName(cacheName: string) {
-  selectedCacheName = cacheName;
+function handleSelectCacheName(cache_name: string) {
+  selectedCacheName = cache_name;
   fetchCacheKeys();
 }
 
@@ -52,19 +52,19 @@ function handleRefreshKeys() {
 /** 缓存内容信息 */
 const cacheKeyInfo = reactive({
   loading: false,
-  data: { cacheKey: '', cacheName: '', cacheValue: '', remark: '' },
+  data: { cache_key: '', cache_name: '', cache_value: '', remark: '' },
 });
 
 /** 查询缓存内容详细 */
-function handleCacheKeyInfo(cacheKey: string) {
+function handleCacheKeyInfo(cache_key: string) {
   if (!hasPermissions(['monitor:cache:query'])) return;
   cacheKeyInfo.loading = true;
-  getCacheValue(selectedCacheName, cacheKey)
+  getCacheValue(selectedCacheName, cache_key)
     .then(res => {
       if (res.code === RESULT_CODE_SUCCESS) {
-        if (res.data.cacheValue) {
+        if (res.data.cache_value) {
           try {
-            res.data.cacheValue = JSON.stringify(JSON.parse(res.data.cacheValue), null, 2);
+            res.data.cache_value = JSON.stringify(JSON.parse(res.data.cache_value), null, 2);
           } catch {
             // 非 JSON 格式保持原样
           }
@@ -89,10 +89,10 @@ const { execute: clearSafeRun } = useAction({
 
 /** 清理缓存名称 mutation */
 const { execute: clearNameRun } = useAction({
-  action: (cacheName: string) => clearCacheName(cacheName),
+  action: (cache_name: string) => clearCacheName(cache_name),
   successText: '缓存名称已清理',
-  onSuccess: (_res, cacheName) => {
-    if (cacheKeyInfo.data.cacheName === cacheName) {
+  onSuccess: (_res, cache_name) => {
+    if (cacheKeyInfo.data.cache_name === cache_name) {
       cacheKeyInfo.loading = true;
     }
     fetchCacheKeys();
@@ -101,11 +101,11 @@ const { execute: clearNameRun } = useAction({
 
 /** 删除缓存键名 mutation */
 const { execute: clearKeyRun } = useAction({
-  action: (cacheKey: string) => clearCacheKey(selectedCacheName, cacheKey),
+  action: (cache_key: string) => clearCacheKey(selectedCacheName, cache_key),
   successText: '缓存键名已删除',
-  onSuccess: (_res, cacheKey) => {
+  onSuccess: (_res, cache_key) => {
     fetchCacheKeys();
-    if (cacheKeyInfo.data.cacheKey === cacheKey) {
+    if (cacheKeyInfo.data.cache_key === cache_key) {
       cacheKeyInfo.loading = true;
     }
   },
@@ -115,12 +115,12 @@ const { execute: clearKeyRun } = useAction({
 const cacheKeyTableColumns: ColumnsType = [
   { title: '序号', dataIndex: 'num', width: 50, align: 'left', customRender(opt) { return opt.index + 1; } },
   {
-    title: '缓存键名', dataIndex: 'cacheKey', align: 'left', width: 150, ellipsis: true,
+    title: '缓存键名', dataIndex: 'cache_key', align: 'left', width: 150, ellipsis: true,
     customRender(opt) { return opt.text; },
     customFilterDropdown: true,
     onFilter: (value, record) => {
       if (typeof value === 'string') {
-        return record.cacheKey.toLowerCase().includes(value.toLowerCase());
+        return record.cache_key.toLowerCase().includes(value.toLowerCase());
       }
     },
   },
@@ -131,12 +131,12 @@ const cacheKeyTableColumns: ColumnsType = [
 const cacheNameTableColumns: ColumnsType = [
   { title: '序号', dataIndex: 'num', width: 50, align: 'left', customRender(opt) { return opt.index + 1; } },
   {
-    title: '缓存名称', dataIndex: 'cacheName', align: 'left', width: 150, ellipsis: true,
+    title: '缓存名称', dataIndex: 'cache_name', align: 'left', width: 150, ellipsis: true,
     customRender(opt) { return opt.text; },
     customFilterDropdown: true,
     onFilter: (value, record) => {
       if (typeof value === 'string') {
-        return record.cacheName.toLowerCase().includes(value.toLowerCase());
+        return record.cache_name.toLowerCase().includes(value.toLowerCase());
       }
     },
   },
@@ -182,7 +182,7 @@ const cacheNameTableColumns: ColumnsType = [
               </a-tooltip>
             </a-space>
           </template>
-          <a-table row-key="cacheName" size="small" :columns="cacheNameTableColumns" :data-source="cacheNameData"
+          <a-table row-key="cache_name" size="small" :columns="cacheNameTableColumns" :data-source="cacheNameData"
             :loading="cacheNameLoading" :scroll="{ y: 'calc(100vh - 380px)' }" :pagination="false" :row-selection="{
               type: 'radio',
               onChange: (selectedRowKeys: (string | number)[]) => handleSelectCacheName(selectedRowKeys[0] as string),
@@ -210,7 +210,7 @@ const cacheNameTableColumns: ColumnsType = [
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'option'">
                 <a-popconfirm placement="topRight" title="确认要清理该缓存名称下的所有键名吗?" ok-text="确认" cancel-text="取消"
-                  @confirm="clearNameRun(record.cacheName)">
+                  @confirm="clearNameRun(record.cache_name)">
                   <a-button type="text" v-perms:has="['monitor:cache:remove']">
                     <template #icon>
                       <ClearOutlined />
@@ -235,7 +235,7 @@ const cacheNameTableColumns: ColumnsType = [
               </a-button>
             </a-tooltip>
           </template>
-          <a-table row-key="cacheKey" size="small" :columns="cacheKeyTableColumns" :data-source="cacheKeyData"
+          <a-table row-key="cache_key" size="small" :columns="cacheKeyTableColumns" :data-source="cacheKeyData"
             :loading="cacheKeyLoading" :scroll="{ y: 'calc(100vh - 380px)' }" :pagination="false" :row-selection="{
               type: 'radio',
               onChange: (selectedRowKeys: (string | number)[]) => handleCacheKeyInfo(selectedRowKeys[0] as string),
@@ -263,7 +263,7 @@ const cacheNameTableColumns: ColumnsType = [
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'option'">
                 <a-popconfirm placement="topRight" title="确认要删除该缓存键吗?" ok-text="确认" cancel-text="取消"
-                  @confirm="clearKeyRun(record.cacheKey)">
+                  @confirm="clearKeyRun(record.cache_key)">
                   <a-button type="text" v-perms:has="['monitor:cache:remove']">
                     <template #icon>
                       <DeleteOutlined />
@@ -281,14 +281,14 @@ const cacheNameTableColumns: ColumnsType = [
           :loading="cacheKeyInfo.loading">
           <a-descriptions size="small" layout="vertical" :bordered="true" :column="1">
             <a-descriptions-item label="缓存名称">
-              {{ cacheKeyInfo.data.cacheName }}
+              {{ cacheKeyInfo.data.cache_name }}
             </a-descriptions-item>
             <a-descriptions-item label="缓存键名">
-              {{ cacheKeyInfo.data.cacheKey }}
+              {{ cacheKeyInfo.data.cache_key }}
             </a-descriptions-item>
             <a-descriptions-item label="缓存内容">
               <a-typography-paragraph>
-                <a-textarea :value="cacheKeyInfo.data.cacheValue" :auto-size="{ minRows: 4, maxRows: 18 }"
+                <a-textarea :value="cacheKeyInfo.data.cache_value" :auto-size="{ minRows: 4, maxRows: 18 }"
                   :maxlength="4000" :disabled="true" style="color: rgba(0, 0, 0, 0.85)" placeholder="显示缓存内容" />
               </a-typography-paragraph>
             </a-descriptions-item>

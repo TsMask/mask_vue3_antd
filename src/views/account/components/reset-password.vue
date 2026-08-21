@@ -6,7 +6,7 @@ import { regExpPassword } from '@/utils/regular-utils';
 import useUserStore from '@/store/modules/user';
 import { useRouter } from 'vue-router';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
-const { userName, fnLogOut } = useUserStore();
+const { user_name, fnLogOut } = useUserStore();
 const router = useRouter();
 
 let state = reactive({
@@ -52,7 +52,7 @@ function fnFinish() {
           if (res.code === RESULT_CODE_SUCCESS) {
             Modal.success({
               title: '提示',
-              content: `恭喜您，${userName} 账号密码修改成功！`,
+              content: `恭喜您，${user_name} 账号密码修改成功！`,
               okText: '重新登录',
               onOk() {
                 fnLogOut().finally(() => router.push({ name: 'Login' }));

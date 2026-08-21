@@ -24,22 +24,22 @@ const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
 function syncDateRange() {
   if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
-    queryParams.beginTime = queryRangePicker.value[0].startOf("day").valueOf();
-    queryParams.endTime = queryRangePicker.value[1].endOf("day").valueOf();
+    queryParams.begin_time = queryRangePicker.value[0].startOf("day").valueOf();
+    queryParams.end_time = queryRangePicker.value[1].endOf("day").valueOf();
   } else {
-    queryParams.beginTime = undefined;
-    queryParams.endTime = undefined;
+    queryParams.begin_time = undefined;
+    queryParams.end_time = undefined;
   }
 }
 
 const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
   {
-    createBy: "", operateIp: "", title: "",
-    operateType: undefined as string | undefined,
-    operateStatus: undefined as string | undefined,
-    beginTime: undefined as number | undefined,
-    endTime: undefined as number | undefined,
-    pageNum: 1, pageSize: 20,
+    create_by: "", operate_ip: "", title: "",
+    operate_type: undefined as string | undefined,
+    operate_status: undefined as string | undefined,
+    begin_time: undefined as number | undefined,
+    end_time: undefined as number | undefined,
+    page_num: 1, page_size: 20,
     sort: ""
   },
   () => { resetPage(); fetchList(); },
@@ -48,7 +48,7 @@ const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
 function resetQuery() { queryRangePicker.value = undefined; baseResetQuery(); }
 
 const { pagination, resetPage, clampPage } = usePagination({
-  onChange: (page, pageSize) => { queryParams.pageNum = page; queryParams.pageSize = pageSize; fetchList(); },
+  onChange: (page, page_size) => { queryParams.page_num = page; queryParams.page_size = page_size; fetchList(); },
 });
 
 const { listData, loading, fetch: fetchList } = useListQuery({
@@ -61,11 +61,11 @@ const { tableState, setTableSize, rowClassName, setSelectedRowKeys } = useTableU
 const tableColumns: ColumnsType = [
   { title: "日志编号", dataIndex: "id", align: "left", width: 100 },
   { title: "系统模块", dataIndex: "title", align: "left", width: 150 },
-  { title: "操作类型", dataIndex: "operateType", key: "operateType", align: "left", width: 100 },
-  { title: "操作人员", dataIndex: "createBy", align: "left", width: 100 },
-  { title: "操作地址", dataIndex: "operateIp", align: "left", width: 150 },
-  { title: "操作状态", dataIndex: "operateStatus", key: "operateStatus", align: "left", width: 100 },
-  { title: "操作时间", dataIndex: "createTime", align: "left", width: 150, sorter: true, customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); } },
+  { title: "操作类型", dataIndex: "operate_type", key: "operate_type", align: "left", width: 100 },
+  { title: "操作人员", dataIndex: "create_by", align: "left", width: 100 },
+  { title: "操作地址", dataIndex: "operate_ip", align: "left", width: 150 },
+  { title: "操作状态", dataIndex: "operate_status", key: "operate_status", align: "left", width: 100 },
+  { title: "操作时间", dataIndex: "create_time", align: "left", width: 150, sorter: true, customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); } },
   { title: "操作", key: "id", align: "left" },
 ];
 
@@ -75,16 +75,16 @@ const detailForm = ref<Record<string, any>>({});
 
 /** 打开详情弹窗 */
 function handleView(row: Record<string, any>) {
-  if (row.operateParam) {
+  if (row.operate_param) {
     try {
-      row.operateParam = JSON.stringify(JSON.parse(row.operateParam), null, 2);
+      row.operate_param = JSON.stringify(JSON.parse(row.operate_param), null, 2);
     } catch {
       // 非 JSON 格式保持原样
     }
   }
-  if (row.operateMsg) {
+  if (row.operate_msg) {
     try {
-      row.operateMsg = JSON.stringify(JSON.parse(row.operateMsg), null, 2);
+      row.operate_msg = JSON.stringify(JSON.parse(row.operate_msg), null, 2);
     } catch {
       // 非 JSON 格式保持原样
     }
@@ -136,26 +136,26 @@ function handleExport() {
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="操作人员" name="createBy">
-              <a-input v-model:value="queryParams.createBy" allow-clear placeholder="请输入操作人员"></a-input>
+            <a-form-item label="操作人员" name="create_by">
+              <a-input v-model:value="queryParams.create_by" allow-clear placeholder="请输入操作人员"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="操作IP" name="operateIp">
-              <a-input v-model:value="queryParams.operateIp" allow-clear placeholder="请输入操作IP"
+            <a-form-item label="操作IP" name="operate_ip">
+              <a-input v-model:value="queryParams.operate_ip" allow-clear placeholder="请输入操作IP"
                 @keyup.enter="fetchList"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="业务类型" name="operateType">
-              <a-select v-model:value="queryParams.operateType" allow-clear placeholder="请选择业务类型"
+            <a-form-item label="业务类型" name="operate_type">
+              <a-select v-model:value="queryParams.operate_type" allow-clear placeholder="请选择业务类型"
                 :options="dict.sysBusinessType">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="操作状态" name="operateStatus">
-              <a-select v-model:value="queryParams.operateStatus" allow-clear placeholder="请选择操作状态"
+            <a-form-item label="操作状态" name="operate_status">
+              <a-select v-model:value="queryParams.operate_status" allow-clear placeholder="请选择操作状态"
                 :options="dict.sysCommonStatus">
               </a-select>
             </a-form-item>
@@ -250,11 +250,11 @@ function handleExport() {
           scrollToFirstRowOnChange: true,
         }" :pagination="pagination" @change="handleTableChange">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'operateType'">
-            <DictTag :options="dict.sysBusinessType" :value="record.operateType" />
+          <template v-if="column.key === 'operate_type'">
+            <DictTag :options="dict.sysBusinessType" :value="record.operate_type" />
           </template>
-          <template v-if="column.key === 'operateStatus'">
-            <DictTag :options="dict.sysCommonStatus" :value="record.operateStatus" />
+          <template v-if="column.key === 'operate_status'">
+            <DictTag :options="dict.sysCommonStatus" :value="record.operate_status" />
           </template>
           <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
@@ -283,60 +283,60 @@ function handleExport() {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="执行状态" name="operateStatus">
-              <a-tag :color="+detailForm.operateStatus ? 'success' : 'error'">
-                {{ ['失败', '正常'][+detailForm.operateStatus] }}
+            <a-form-item label="执行状态" name="operate_status">
+              <a-tag :color="+detailForm.operate_status ? 'success' : 'error'">
+                {{ ['失败', '正常'][+detailForm.operate_status] }}
               </a-tag>
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="业务类型" name="operateType">
+            <a-form-item label="业务类型" name="operate_type">
               {{ detailForm.title }} /
-              <DictTag :options="dict.sysBusinessType" :value="detailForm.operateType" />
+              <DictTag :options="dict.sysBusinessType" :value="detailForm.operate_type" />
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="操作人员" name="createBy">
-              {{ detailForm.createBy }} / {{ detailForm.operateIp }} /
-              {{ detailForm.operateLocation }}
+            <a-form-item label="操作人员" name="create_by">
+              {{ detailForm.create_by }} / {{ detailForm.operate_ip }} /
+              {{ detailForm.operate_location }}
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="请求地址" name="operateUrl">
-              {{ detailForm.operateMethod }}
-              {{ detailForm.operateUrl }}
+            <a-form-item label="请求地址" name="operate_url">
+              {{ detailForm.operate_method }}
+              {{ detailForm.operate_url }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="操作时间" name="createTime">
-              <span v-if="+detailForm.createTime > 0">
-                {{ parseDateToStr(+detailForm.createTime) }}
+            <a-form-item label="操作时间" name="create_time">
+              <span v-if="+detailForm.create_time > 0">
+                {{ parseDateToStr(+detailForm.create_time) }}
               </span>
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="请求耗时" name="operateCostTime">
-              {{ detailForm.operateCostTime }} ms
+            <a-form-item label="请求耗时" name="operate_cost_time">
+              {{ detailForm.operate_cost_time }} ms
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="操作方法" name="operateFunction">
-              {{ detailForm.operateFunction }}
+            <a-form-item label="操作方法" name="operate_function">
+              {{ detailForm.operate_function }}
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="请求参数" name="operateParam" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea v-model:value="detailForm.operateParam" :auto-size="{ minRows: 2, maxRows: 6 }" placeholder="请求参数"
+        <a-form-item label="请求参数" name="operate_param" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea v-model:value="detailForm.operate_param" :auto-size="{ minRows: 2, maxRows: 6 }" placeholder="请求参数"
             :disabled="true" />
         </a-form-item>
-        <a-form-item label="操作信息" name="operateMsg" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea v-model:value="detailForm.operateMsg" :auto-size="{ minRows: 2, maxRows: 6 }" placeholder="操作信息"
+        <a-form-item label="操作信息" name="operate_msg" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea v-model:value="detailForm.operate_msg" :auto-size="{ minRows: 2, maxRows: 6 }" placeholder="操作信息"
             :disabled="true" />
         </a-form-item>
       </a-form>

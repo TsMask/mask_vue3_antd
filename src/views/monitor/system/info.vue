@@ -93,7 +93,7 @@ onMounted(async () => {
   if (data) {
     // CPU信息
     const cpu = data.cpu;
-    cpu.coreUsed = cpu.coreUsed.map((item: string) => item).join(' / ');
+    cpu.core_used = (cpu.core_used || []).map((item: string) => item).join(' / ');
     server.cpu = cpu;
     // 磁盘信息
     server.disk = data.disk;
@@ -131,7 +131,7 @@ onMounted(async () => {
           {{ server.project.env }}
         </a-descriptions-item>
         <a-descriptions-item label="项目路径">
-          {{ server.project.appDir }}
+          {{ server.project.app_dir }}
         </a-descriptions-item>
       </a-descriptions>
     </a-card>
@@ -143,7 +143,7 @@ onMounted(async () => {
           {{ server.system.platform }}
         </a-descriptions-item>
         <a-descriptions-item label="平台版本">
-          {{ server.system.platformVersion }}
+          {{ server.system.platform_version }}
         </a-descriptions-item>
         <a-descriptions-item label="系统OS">
           {{ server.system.os }}
@@ -153,37 +153,37 @@ onMounted(async () => {
           {{ server.system.arch }}
         </a-descriptions-item>
         <a-descriptions-item label="架构版本">
-          {{ server.system.archVersion }}
+          {{ server.system.arch_version }}
         </a-descriptions-item>
         <a-descriptions-item label="系统运行">
-          {{ loadUpTime(server.system.bootTime) }}
+          {{ loadUpTime(server.system.boot_time) }}
         </a-descriptions-item>
 
         <a-descriptions-item label="程序环境">
-          {{ server.system.runVersion }}
+          {{ server.system.run_version }}
         </a-descriptions-item>
         <a-descriptions-item label="程序架构">
-          {{ server.system.runArch }}
+          {{ server.system.run_arch }}
         </a-descriptions-item>
         <a-descriptions-item label="程序运行">
-          {{ loadUpTime(server.system.runTime) }}
+          {{ loadUpTime(server.system.run_time) }}
         </a-descriptions-item>
 
         <a-descriptions-item label="主机名称">
           {{ server.system.hostname }}
         </a-descriptions-item>
         <a-descriptions-item label="主机用户目录">
-          {{ server.system.homeDir }}
+          {{ server.system.home_dir }}
         </a-descriptions-item>
         <a-descriptions-item label="程序PID">
-          {{ server.system.processId }}
+          {{ server.system.process_id }}
         </a-descriptions-item>
 
         <a-descriptions-item label="项目路径" :span="3">
           {{ server.system.cmd }}
         </a-descriptions-item>
         <a-descriptions-item label="执行命令" :span="3">
-          {{ server.system.execCommand }}
+          {{ server.system.exec_command }}
         </a-descriptions-item>
       </a-descriptions>
     </a-card>
@@ -200,7 +200,7 @@ onMounted(async () => {
           {{ server.cpu.core }}
         </a-descriptions-item>
         <a-descriptions-item label="使用率(%)">
-          {{ server.cpu.coreUsed }}
+          {{ server.cpu.core_used }}
         </a-descriptions-item>
       </a-descriptions>
     </a-card>
@@ -221,10 +221,10 @@ onMounted(async () => {
           {{ server.memory.rss }}
         </a-descriptions-item>
         <a-descriptions-item label="堆的总大小">
-          {{ server.memory.heapTotal }}
+          {{ server.memory.heap_total }}
         </a-descriptions-item>
         <a-descriptions-item label="堆已分配">
-          {{ server.memory.heapUsed }}
+          {{ server.memory.heap_used }}
         </a-descriptions-item>
         <a-descriptions-item label="链接库占用">
           {{ server.memory.external }}
@@ -242,7 +242,7 @@ onMounted(async () => {
           {{ server.time.timezone }}
         </a-descriptions-item>
         <a-descriptions-item label="时区名称">
-          {{ server.time.timezoneName }}
+          {{ server.time.timezone_name }}
         </a-descriptions-item>
       </a-descriptions>
     </a-card>

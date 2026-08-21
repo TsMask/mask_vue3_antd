@@ -31,7 +31,7 @@ const tabsStore = useTabsStore();
 const { parseDataDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
-const dictId = route.params && (route.params.dictId as string);
+const dict_id = route.params && (route.params.dictId as string);
 
 const tagTypeOptions = ref([
   { value: "", label: "普通文本" },
@@ -64,19 +64,19 @@ const dict = reactive({
 
 const { queryParams, handleQuery, resetQuery: baseResetQuery, setQuery } = useQueryParams(
   {
-    dictType: undefined as string | undefined,
-    dataLabel: "",
-    dataStatus: undefined as string | undefined,
-    pageNum: 1,
-    pageSize: 20,
+    dict_type: undefined as string | undefined,
+    data_label: "",
+    data_status: undefined as string | undefined,
+    page_num: 1,
+    page_size: 20,
   },
   () => { resetPage(); }
 );
 
-/** 重置查询条件；从字典类型页进入时仅重置数据标签和状态，保留 dictType */
+/** 重置查询条件；从字典类型页进入时仅重置数据标签和状态，保留 dict_type */
 function resetQuery() {
-  if (dictId && dictId !== "0") {
-    setQuery({ dataLabel: "", dataStatus: undefined, pageNum: 1, pageSize: 20 });
+  if (dict_id && dict_id !== "0") {
+    setQuery({ data_label: "", data_status: undefined, page_num: 1, page_size: 20 });
     resetPage();
   } else {
     baseResetQuery();
@@ -93,9 +93,9 @@ const {
 tableState.searched = true;
 
 const { pagination, resetPage, clampPage } = usePagination({
-  onChange: (page, pageSize) => {
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
+  onChange: (page, page_size) => {
+    queryParams.page_num = page;
+    queryParams.page_size = page_size;
     fetchList()
   },
 });
@@ -116,21 +116,21 @@ const {
 } = useCrudModal({
   initForm: () => ({
     id: undefined as string | number | undefined,
-    dictType: undefined as string | undefined,
-    dataLabel: "",
-    dataSort: 0,
-    dataValue: "",
-    tagClass: "",
-    tagType: "",
+    dict_type: undefined as string | undefined,
+    data_label: "",
+    data_sort: 0,
+    data_value: "",
+    tag_class: "",
+    tag_type: "",
     remark: "",
-    dataStatus: "0",
-    createTime: 0,
-    createBy: undefined,
+    data_status: "0",
+    create_time: 0,
+    create_by: undefined,
   }),
   rules: {
-    dictType: [{ required: true, message: "请选择字典类型" }],
-    dataLabel: [{ required: true, min: 1, max: 50, message: "请输入数据标签" }],
-    dataValue: [{ required: true, min: 1, max: 50, message: "请输入数据键值" }],
+    dict_type: [{ required: true, message: "请选择字典类型" }],
+    data_label: [{ required: true, min: 1, max: 50, message: "请输入数据标签" }],
+    data_value: [{ required: true, min: 1, max: 50, message: "请输入数据键值" }],
   },
 });
 
@@ -147,12 +147,12 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 
 const tableColumns: ColumnsType = [
   { title: "数据编号", dataIndex: "id", align: "left", width: 100 },
-  { title: "数据标签", dataIndex: "dataLabel", align: "left", width: 200 },
-  { title: "数据键值", dataIndex: "dataValue", align: "left", width: 200 },
-  { title: "数据排序", dataIndex: "dataSort", align: "left", width: 100 },
-  { title: "数据状态", dataIndex: "dataStatus", key: "dataStatus", align: "left", width: 100 },
+  { title: "数据标签", dataIndex: "data_label", align: "left", width: 200 },
+  { title: "数据键值", dataIndex: "data_value", align: "left", width: 200 },
+  { title: "数据排序", dataIndex: "data_sort", align: "left", width: 100 },
+  { title: "数据状态", dataIndex: "data_status", key: "data_status", align: "left", width: 100 },
   {
-    title: "创建时间", dataIndex: "createTime", align: "left", width: 150,
+    title: "创建时间", dataIndex: "create_time", align: "left", width: 150,
     customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); },
   },
   { title: "操作", key: "id", align: "left" },
@@ -169,7 +169,7 @@ function handleView(row: Record<string, string>) {
 function handleEdit(id?: string | number) {
   if (!id) {
     openEdit(undefined, getData, "添加字典数据", "修改字典数据");
-    setTimeout(() => { modalState.form.dictType = queryParams.dictType; }, 0);
+    setTimeout(() => { modalState.form.dict_type = queryParams.dict_type; }, 0);
   } else {
     openEdit(id, getData, "添加字典数据", "修改字典数据");
   }
@@ -226,10 +226,10 @@ onMounted(async () => {
     dict.sysDictType = optRes.data;
     dict.sysNormalDisable = sysDict.sysNormalDisable;
   }
-  if (dictId && dictId !== "0") {
-    const res = await getType(dictId);
+  if (dict_id && dict_id !== "0") {
+    const res = await getType(dict_id);
     if (isSuccess(res) && res.data) {
-      queryParams.dictType = res.data.dictType;
+      queryParams.dict_type = res.data.dict_type;
     } else {
       message.error({ content: "获取字典类型信息失败", duration: 3 });
     }
@@ -244,20 +244,20 @@ onMounted(async () => {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="字典名称" name="dictType">
-              <a-select v-model:value="queryParams.dictType" :allow-clear="dictId === '0'" :disabled="dictId !== '0'"
+            <a-form-item label="字典名称" name="dict_type">
+              <a-select v-model:value="queryParams.dict_type" :allow-clear="dict_id === '0'" :disabled="dict_id !== '0'"
                 placeholder="请选择字典名称" :options="dict.sysDictType">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="数据标签" name="dataLabel">
-              <a-input v-model:value="queryParams.dataLabel" allow-clear placeholder="请输入数据标签"></a-input>
+            <a-form-item label="数据标签" name="data_label">
+              <a-input v-model:value="queryParams.data_label" allow-clear placeholder="请输入数据标签"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="数据状态" name="dataStatus">
-              <a-select v-model:value="queryParams.dataStatus" allow-clear placeholder="请选择数据状态"
+            <a-form-item label="数据状态" name="data_status">
+              <a-select v-model:value="queryParams.data_status" allow-clear placeholder="请选择数据状态"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
@@ -360,8 +360,8 @@ onMounted(async () => {
           type: 'checkbox', selectedRowKeys: tableState.selectedRowKeys, onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'dataStatus'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.dataStatus" />
+          <template v-if="column.key === 'data_status'">
+            <DictTag :options="dict.sysNormalDisable" :value="record.data_status" />
           </template>
           <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
@@ -404,50 +404,50 @@ onMounted(async () => {
             <a-form-item label="数据编号" name="id">{{ modalState.form.id }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="创建时间" name="createTime">
-              <span v-if="+modalState.form.createTime > 0">{{ parseDateToStr(+modalState.form.createTime) }}</span>
+            <a-form-item label="创建时间" name="create_time">
+              <span v-if="+modalState.form.create_time > 0">{{ parseDateToStr(+modalState.form.create_time) }}</span>
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典类型" name="dictType">
-              <a-select v-model:value="modalState.form.dictType" placeholder="字典类型" :options="dict.sysDictType"
+            <a-form-item label="字典类型" name="dict_type">
+              <a-select v-model:value="modalState.form.dict_type" placeholder="字典类型" :options="dict.sysDictType"
                 :disabled="true">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据状态" name="dataStatus">
-              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.dataStatus" />
+            <a-form-item label="数据状态" name="data_status">
+              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.data_status" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据标签" name="dataLabel">{{ modalState.form.dataLabel }}</a-form-item>
+            <a-form-item label="数据标签" name="data_label">{{ modalState.form.data_label }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据键值" name="dataValue">{{ modalState.form.dataValue }}</a-form-item>
+            <a-form-item label="数据键值" name="data_value">{{ modalState.form.data_value }}</a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="标签类型" name="tagType">
-              <DictTag :options="tagTypeOptions" :value="modalState.form.tagType" />
+            <a-form-item label="标签类型" name="tag_type">
+              <DictTag :options="tagTypeOptions" :value="modalState.form.tag_type" />
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据排序" name="dataSort">{{ modalState.form.dataSort }}</a-form-item>
+            <a-form-item label="数据排序" name="data_sort">{{ modalState.form.data_sort }}</a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="样式属性" name="tagClass">{{ modalState.form.tagClass }}</a-form-item>
+            <a-form-item label="样式属性" name="tag_class">{{ modalState.form.tag_class }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="回显预览" name="tagType">
-              <DictTag :options="parseDataDict(modalState.form)" :value="modalState.form.dataValue" />
+            <a-form-item label="回显预览" name="tag_type">
+              <DictTag :options="parseDataDict(modalState.form)" :value="modalState.form.data_value" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -468,15 +468,15 @@ onMounted(async () => {
       <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典类型" name="dictType" v-bind="modalStateForm.validateInfos.dictType">
-              <a-select v-model:value="modalState.form.dictType" placeholder="字典类型" :options="dict.sysDictType"
-                :disabled="dictId !== '0'">
+            <a-form-item label="字典类型" name="dict_type" v-bind="modalStateForm.validateInfos.dict_type">
+              <a-select v-model:value="modalState.form.dict_type" placeholder="字典类型" :options="dict.sysDictType"
+                :disabled="dict_id !== '0'">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据状态" name="dataStatus">
-              <a-select v-model:value="modalState.form.dataStatus" default-value="0" placeholder="数据状态"
+            <a-form-item label="数据状态" name="data_status">
+              <a-select v-model:value="modalState.form.data_status" default-value="0" placeholder="数据状态"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
@@ -484,34 +484,34 @@ onMounted(async () => {
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据标签" name="dataLabel" v-bind="modalStateForm.validateInfos.dataLabel">
-              <a-input v-model:value="modalState.form.dataLabel" allow-clear placeholder="请输入数据标签"
+            <a-form-item label="数据标签" name="data_label" v-bind="modalStateForm.validateInfos.data_label">
+              <a-input v-model:value="modalState.form.data_label" allow-clear placeholder="请输入数据标签"
                 :maxlength="50"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据键值" name="dataValue" v-bind="modalStateForm.validateInfos.dataValue">
-              <a-input v-model:value="modalState.form.dataValue" allow-clear placeholder="请输入数据键值"
+            <a-form-item label="数据键值" name="data_value" v-bind="modalStateForm.validateInfos.data_value">
+              <a-input v-model:value="modalState.form.data_value" allow-clear placeholder="请输入数据键值"
                 :maxlength="50"></a-input>
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="标签类型" name="tagType">
-              <a-select v-model:value="modalState.form.tagType" placeholder="标签类型" :options="tagTypeOptions">
+            <a-form-item label="标签类型" name="tag_type">
+              <a-select v-model:value="modalState.form.tag_type" placeholder="标签类型" :options="tagTypeOptions">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据排序" name="dataSort">
-              <a-input-number v-model:value="modalState.form.dataSort" :min="0" :max="9999" :step="1"
+            <a-form-item label="数据排序" name="data_sort">
+              <a-input-number v-model:value="modalState.form.data_sort" :min="0" :max="9999" :step="1"
                 placeholder="请输入数据排序"></a-input-number>
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="样式属性" name="tagClass" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-input v-model:value="modalState.form.tagClass" allow-clear placeholder="请输入样式属性" :maxlength="50"></a-input>
+        <a-form-item label="样式属性" name="tag_class" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-input v-model:value="modalState.form.tag_class" allow-clear placeholder="请输入样式属性" :maxlength="50"></a-input>
         </a-form-item>
         <a-form-item label="数据说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
           <a-textarea v-model:value="modalState.form.remark" :auto-size="{ minRows: 2, maxRows: 6 }" :maxlength="200"

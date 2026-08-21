@@ -15,12 +15,12 @@ export function listMenu(query?: Record<string, any>) {
 
 /**
  * 查询菜单详细
- * @param menuId 菜单ID
+ * @param menu_id 菜单ID
  * @returns object
  */
-export function getMenu(menuId: string | number) {
+export function getMenu(menu_id: string | number) {
   return request({
-    url: `/system/menu/${menuId}`,
+    url: `/system/menu/${menu_id}`,
     method: 'GET',
   });
 }
@@ -38,12 +38,12 @@ export function menuTreeSelect() {
 
 /**
  * 根据角色ID查询菜单下拉树结构
- * @param roleId 角色ID
+ * @param role_id 角色ID
  * @returns object
  */
-export function menuTreeSelectRole(roleId: string | number) {
+export function menuTreeSelectRole(role_id: string | number) {
   return request({
-    url: `/system/menu/tree/role/${roleId}`,
+    url: `/system/menu/tree/role/${role_id}`,
     method: 'GET',
   });
 }
@@ -76,12 +76,12 @@ export function updateMenu(data: Record<string, any>) {
 
 /**
  * 删除菜单
- * @param menuId 菜单ID
+ * @param menu_id 菜单ID
  * @returns object
  */
-export function delMenu(menuId: string | number) {
+export function delMenu(menu_id: string | number) {
   return request({
-    url: `/system/menu/${menuId}`,
+    url: `/system/menu/${menu_id}`,
     method: 'DELETE',
   });
 }

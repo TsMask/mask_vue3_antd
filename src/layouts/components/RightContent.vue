@@ -127,7 +127,7 @@ function fnClick({ key }: MenuInfo) {
 
     <a-dropdown placement="bottomRight" trigger="click">
       <div class="account-user">
-        <a-avatar shape="circle" size="default" :src="userStore.getAvatar" :alt="userStore.userName"></a-avatar>
+        <a-avatar shape="circle" size="default" :src="userStore.getAvatar" :alt="userStore.user_name"></a-avatar>
         <span class="account-nickname">
           {{ userStore.nickName }}
         </span>

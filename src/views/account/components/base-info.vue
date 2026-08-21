@@ -14,9 +14,9 @@ const { getDict } = useDictStore();
 
 /**用户性别字典 */
 let userGenderOptions = ref<DictType[]>([
-  { label: '未选择', value: '0', tagType: '', tagClass: '' },
-  { label: '男', value: '1', tagType: '', tagClass: '' },
-  { label: '女', value: '2', tagType: '', tagClass: '' },
+  { label: '未选择', value: '0', tag_type: '', tag_class: '' },
+  { label: '男', value: '1', tag_type: '', tag_class: '' },
+  { label: '女', value: '2', tag_type: '', tag_class: '' },
 ]);
 
 /**表单数据状态 */
@@ -266,7 +266,7 @@ onMounted(() => {
             shape="circle"
             :size="128"
             :src="userStore.getAvatar"
-            :alt="userStore.userName"
+            :alt="userStore.user_name"
           ></a-avatar>
           <span>请选择等比大小图片作为头像，如200x200、400x400</span>
           <a-upload

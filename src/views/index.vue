@@ -35,7 +35,7 @@ function goTarget(type: string) {
           shape="circle"
           :size="72"
           :src="userStore.getAvatar"
-          :alt="userStore.userName"
+          :alt="userStore.user_name"
         ></a-avatar>
         <span class="nickname">
           {{ userStore.nickName }} ，想必你那里一切安好吧。

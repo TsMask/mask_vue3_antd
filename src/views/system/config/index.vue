@@ -38,13 +38,13 @@ const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 /** 查询参数 */
 const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
   {
-    configName: "",
-    configKey: "",
-    configGroup: undefined as string | undefined,
-    beginTime: undefined as number | undefined,
-    endTime: undefined as number | undefined,
-    pageNum: 1,
-    pageSize: 20,
+    config_name: "",
+    config_key: "",
+    config_group: undefined as string | undefined,
+    begin_time: undefined as number | undefined,
+    end_time: undefined as number | undefined,
+    page_num: 1,
+    page_size: 20,
   },
   () => {
     resetPage();
@@ -61,19 +61,19 @@ function resetQuery() {
 /** 同步日期范围到查询参数 */
 function syncDateRange() {
   if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
-    queryParams.beginTime = queryRangePicker.value[0].startOf("day").valueOf();
-    queryParams.endTime = queryRangePicker.value[1].endOf("day").valueOf();
+    queryParams.begin_time = queryRangePicker.value[0].startOf("day").valueOf();
+    queryParams.end_time = queryRangePicker.value[1].endOf("day").valueOf();
   } else {
-    queryParams.beginTime = undefined;
-    queryParams.endTime = undefined;
+    queryParams.begin_time = undefined;
+    queryParams.end_time = undefined;
   }
 }
 
 /** 分页管理 */
 const { pagination, resetPage, clampPage } = usePagination({
-  onChange: (page, pageSize) => {
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
+  onChange: (page, page_size) => {
+    queryParams.page_num = page;
+    queryParams.page_size = page_size;
     fetchList()
   },
 });
@@ -102,23 +102,23 @@ const {
 } = useCrudModal({
   initForm: () => ({
     id: undefined as string | number | undefined,
-    configName: "",
-    configKey: "",
-    configValue: "",
-    configValueType: "string",
-    configGroup: "",
-    configSort: 0,
-    configStatus: "1",
+    config_name: "",
+    config_key: "",
+    config_value: "",
+    config_value_type: "string",
+    config_group: "",
+    config_sort: 0,
+    config_status: "1",
     remark: undefined as string | undefined,
   }),
   rules: {
-    configName: [
+    config_name: [
       { required: true, min: 1, max: 50, message: "请输入参数名称" },
     ],
-    configKey: [
+    config_key: [
       { required: true, min: 1, max: 50, message: "请输入参数键名" },
     ],
-    configValue: [
+    config_value: [
       { required: true, min: 1, max: 50, message: "请输入参数键值" },
     ],
   },
@@ -138,19 +138,19 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 /** 表格字段列 */
 const tableColumns: ColumnsType = [
   { title: "参数编号", dataIndex: "id", align: "left", width: 100 },
-  { title: "参数名称", dataIndex: "configName", align: "left", width: 200 },
-  { title: "参数键名", dataIndex: "configKey", align: "left", width: 200 },
-  { title: "参数键值", dataIndex: "configValue", align: "left", width: 100 },
+  { title: "参数名称", dataIndex: "config_name", align: "left", width: 200 },
+  { title: "参数键名", dataIndex: "config_key", align: "left", width: 200 },
+  { title: "参数键值", dataIndex: "config_value", align: "left", width: 100 },
   {
     title: "状态",
-    dataIndex: "configStatus",
-    key: "configStatus",
+    dataIndex: "config_status",
+    key: "config_status",
     align: "left",
     width: 100,
   },
   {
     title: "创建时间",
-    dataIndex: "createTime",
+    dataIndex: "create_time",
     align: "left",
     width: 150,
     customRender(opt) {
@@ -241,18 +241,18 @@ function handleRefreshConfig() {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="参数名称" name="configName">
-              <a-input v-model:value="queryParams.configName" allow-clear placeholder="请输入参数名称"></a-input>
+            <a-form-item label="参数名称" name="config_name">
+              <a-input v-model:value="queryParams.config_name" allow-clear placeholder="请输入参数名称"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="参数键名" name="configKey">
-              <a-input v-model:value="queryParams.configKey" allow-clear placeholder="请输入参数键名"></a-input>
+            <a-form-item label="参数键名" name="config_key">
+              <a-input v-model:value="queryParams.config_key" allow-clear placeholder="请输入参数键名"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="4" :md="12" :xs="24">
-            <a-form-item label="参数组" name="configGroup">
-              <a-input v-model:value="queryParams.configGroup" allow-clear placeholder="请输入参数组"></a-input>
+            <a-form-item label="参数组" name="config_group">
+              <a-input v-model:value="queryParams.config_group" allow-clear placeholder="请输入参数组"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="8" :md="12" :xs="24">
@@ -362,8 +362,8 @@ function handleRefreshConfig() {
           onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'configStatus'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.configStatus" />
+          <template v-if="column.key === 'config_status'">
+            <DictTag :options="dict.sysNormalDisable" :value="record.config_status" />
           </template>
           <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
@@ -405,25 +405,25 @@ function handleRefreshConfig() {
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="参数名称" name="configName">
-              {{ modalState.form.configName }}
+            <a-form-item label="参数名称" name="config_name">
+              {{ modalState.form.config_name }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="状态" name="configStatus">
-              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.configStatus" />
+            <a-form-item label="状态" name="config_status">
+              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.config_status" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="参数键名" name="configKey">
-              {{ modalState.form.configKey }}
+            <a-form-item label="参数键名" name="config_key">
+              {{ modalState.form.config_key }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="参数键值" name="configValue">
-              {{ modalState.form.configValue }}
+            <a-form-item label="参数键值" name="config_value">
+              {{ modalState.form.config_value }}
             </a-form-item>
           </a-col>
         </a-row>
@@ -444,26 +444,26 @@ function handleRefreshConfig() {
       <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="参数名称" name="configName" v-bind="modalStateForm.validateInfos.configName">
-              <a-input v-model:value="modalState.form.configName" allow-clear placeholder="请输入参数名称"
+            <a-form-item label="参数名称" name="config_name" v-bind="modalStateForm.validateInfos.config_name">
+              <a-input v-model:value="modalState.form.config_name" allow-clear placeholder="请输入参数名称"
                 :maxlength="45"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="参数组" name="configGroup">
-              <a-input v-model:value="modalState.form.configGroup" allow-clear placeholder="请输入参数组" :maxlength="64"></a-input>
+            <a-form-item label="参数组" name="config_group">
+              <a-input v-model:value="modalState.form.config_group" allow-clear placeholder="请输入参数组" :maxlength="64"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="状态" name="configStatus">
-              <a-select v-model:value="modalState.form.configStatus" default-value="1" placeholder="状态"
+            <a-form-item label="状态" name="config_status">
+              <a-select v-model:value="modalState.form.config_status" default-value="1" placeholder="状态"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="键值类型" name="configValueType">
-              <a-select v-model:value="modalState.form.configValueType" default-value="string" placeholder="键值类型">
+            <a-form-item label="键值类型" name="config_value_type">
+              <a-select v-model:value="modalState.form.config_value_type" default-value="string" placeholder="键值类型">
                 <a-select-option key="string" value="string">字符</a-select-option>
                 <a-select-option key="number" value="number">数字</a-select-option>
                 <a-select-option key="bool" value="bool">布尔</a-select-option>
@@ -471,21 +471,21 @@ function handleRefreshConfig() {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="排序" name="configSort">
-              <a-input-number v-model:value="modalState.form.configSort" :min="0" :max="9999" :step="1" placeholder="排序值"></a-input-number>
+            <a-form-item label="排序" name="config_sort">
+              <a-input-number v-model:value="modalState.form.config_sort" :min="0" :max="9999" :step="1" placeholder="排序值"></a-input-number>
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="参数键名" name="configKey" v-bind="modalStateForm.validateInfos.configKey">
-              <a-input v-model:value="modalState.form.configKey" allow-clear placeholder="请输入参数键名"
+            <a-form-item label="参数键名" name="config_key" v-bind="modalStateForm.validateInfos.config_key">
+              <a-input v-model:value="modalState.form.config_key" allow-clear placeholder="请输入参数键名"
                 :maxlength="45"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="参数键值" name="configValue" v-bind="modalStateForm.validateInfos.configValue">
-              <a-input v-model:value="modalState.form.configValue" allow-clear placeholder="请输入参数键值"
+            <a-form-item label="参数键值" name="config_value" v-bind="modalStateForm.validateInfos.config_value">
+              <a-input v-model:value="modalState.form.config_value" allow-clear placeholder="请输入参数键值"
                 :maxlength="45"></a-input>
             </a-form-item>
           </a-col>

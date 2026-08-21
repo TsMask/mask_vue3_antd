@@ -19,10 +19,10 @@ const title = ref<string>(route.meta.title ?? '标题');
 /** 查询参数 */
 const { queryParams, handleQuery, resetQuery } = useQueryParams(
   {
-    loginIp: '',
-    userName: '',
-    pageNum: 1,
-    pageSize: 20,
+    login_ip: '',
+    user_name: '',
+    page_num: 1,
+    page_size: 20,
   },
   () => { resetPage(); fetchList(); },
 );
@@ -31,9 +31,9 @@ const { queryParams, handleQuery, resetQuery } = useQueryParams(
 const { tableState, setTableSize, rowClassName } = useTableUI();
 
 const { pagination, resetPage } = usePagination({
-  onChange: (page, pageSize) => {
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
+  onChange: (page, page_size) => {
+    queryParams.page_num = page;
+    queryParams.page_size = page_size;
     fetchList()
   },
 });
@@ -55,15 +55,14 @@ const tableColumns: ColumnsType = [
       return (opt.index as number) + 1;
     },
   },
-  { title: '登录账号', dataIndex: 'userName', align: 'left', width: 150 },
-  { title: '所属部门', dataIndex: 'deptName', align: 'left', width: 150 },
-  { title: '登录IP', dataIndex: 'loginIp', align: 'left', width: 120 },
-  { title: '登录地点', dataIndex: 'loginLocation', align: 'left', width: 120 },
-  { title: '操作系统', dataIndex: 'os', align: 'left', width: 120 },
-  { title: '浏览器', dataIndex: 'browser', align: 'left', width: 200 },
+  { title: '登录账号', dataIndex: 'user_name', align: 'left', width: 150 },
+  { title: '登录IP', dataIndex: 'login_ip', align: 'left', width: 120 },
+  { title: '登录地点', dataIndex: 'login_location', align: 'left', width: 120 },
+  { title: '操作系统', dataIndex: 'login_os', align: 'left', width: 120 },
+  { title: '浏览器', dataIndex: 'login_browser', align: 'left', width: 200 },
   {
     title: '登录时间',
-    dataIndex: 'loginTime',
+    dataIndex: 'login_time',
     align: 'left',
     width: 150,
     customRender(opt) {
@@ -71,17 +70,17 @@ const tableColumns: ColumnsType = [
       return parseDateToStr(+opt.value);
     },
   },
-  { title: '会话编号', dataIndex: 'tokenId', align: 'left', width: 250 },
-  { title: '操作', key: 'tokenId', align: 'left' },
+  { title: '会话编号', dataIndex: 'device_id', align: 'left', width: 250 },
+  { title: '操作', key: 'device_id', align: 'left' },
 ];
 
 /** 强退按钮操作 */
 function handleForceLogout(row: Record<string, string>) {
   confirmAction({
-    content: `确认强退登录账号为 ${row.userName} 的用户?`,
-    action: () => forceLogout(row.tokenId),
+    content: `确认强退登录账号为 ${row.user_name} 的用户?`,
+    action: () => forceLogout(row.device_id),
     variables: undefined,
-    successText: `已强退用户 ${row.userName}`,
+    successText: `已强退用户 ${row.user_name}`,
   });
 }
 </script>
@@ -102,13 +101,13 @@ function handleForceLogout(row: Record<string, string>) {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录账号" name="userName">
-              <a-input v-model:value="queryParams.userName" allow-clear :maxlength="30" placeholder="请输入登录账号"></a-input>
+            <a-form-item label="登录账号" name="user_name">
+              <a-input v-model:value="queryParams.user_name" allow-clear :maxlength="30" placeholder="请输入登录账号"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录IP" name="loginIp">
-              <a-input v-model:value="queryParams.loginIp" allow-clear :maxlength="128" placeholder="请输入登录IP"></a-input>
+            <a-form-item label="登录IP" name="login_ip">
+              <a-input v-model:value="queryParams.login_ip" allow-clear :maxlength="128" placeholder="请输入登录IP"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="24" :xs="24">
@@ -174,11 +173,11 @@ function handleForceLogout(row: Record<string, string>) {
         </a-space>
       </template>
 
-      <a-table class="antdv-table" row-key="tokenId" :columns="tableColumns" :loading="loading" :data-source="listData"
+      <a-table class="antdv-table" row-key="device_id" :columns="tableColumns" :loading="loading" :data-source="listData"
         :size="tableState.size" :row-class-name="rowClassName" :pagination="{ ...pagination }"
         :scroll="{ x: tableColumns.length * 150, scrollToFirstRowOnChange: true }">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'tokenId'">
+          <template v-if="column.key === 'device_id'">
             <a-button type="link" danger @click.prevent="handleForceLogout(record)"
               v-perms:has="['monitor:online:forceLogout']">
               <template #icon>

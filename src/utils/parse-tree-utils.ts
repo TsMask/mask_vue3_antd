@@ -3,14 +3,14 @@
  *
  * @param data 数组数据
  * @param fieldId 读取节点字段 默认 'id'
- * @param fieldParentId 读取节点父节点字段 默认 'parentId'
+ * @param fieldParentId 读取节点父节点字段 默认 'parent_id'
  * @param fieldChildren 设置子节点字段 默认 'children'
  * @returns 层级数组
  */
 export function parseDataToTree(
   data: Record<string, any>[],
   fieldId: string = 'id',
-  fieldParentId: string = 'parentId',
+  fieldParentId: string = 'parent_id',
   fieldChildren: string = 'children'
 ) {
   // 节点分组
@@ -21,11 +21,11 @@ export function parseDataToTree(
   let tree: Record<string, any>[] = [];
 
   for (const item of data) {
-    let parentId = item[fieldParentId];
+    let parent_id = item[fieldParentId];
     // 分组
-    let mapItem = map.get(parentId) ?? [];
+    let mapItem = map.get(parent_id) ?? [];
     mapItem.push(item);
-    map.set(parentId, mapItem);
+    map.set(parent_id, mapItem);
     // 记录节点id
     treeIds.push(item[fieldId]);
   }
@@ -64,7 +64,7 @@ export function parseDataToTree(
  * @param excludeField 排除节点字段 默认 'type'
  * @param excludeValue 排除节点值 默认 '0'
  * @param fieldId 读取节点字段 默认 'id'
- * @param fieldParentId 读取节点父节点字段 默认 'parentId'
+ * @param fieldParentId 读取节点父节点字段 默认 'parent_id'
  * @param fieldChildren 设置子节点字段 默认 'children'
  * @returns 层级数组
  */
@@ -73,7 +73,7 @@ export function parseDataToTreeExclude(
   excludeField = 'type',
   excludeValue = '0',
   fieldId: string = 'id',
-  fieldParentId: string = 'parentId',
+  fieldParentId: string = 'parent_id',
   fieldChildren: string = 'children'
 ) {
   // 节点分组
@@ -89,11 +89,11 @@ export function parseDataToTreeExclude(
     if (exclude && exclude === excludeValue) {
       continue;
     }
-    let parentId = item[fieldParentId];
+    let parent_id = item[fieldParentId];
     // 分组
-    let mapItem = map.get(parentId) ?? [];
+    let mapItem = map.get(parent_id) ?? [];
     mapItem.push(item);
-    map.set(parentId, mapItem);
+    map.set(parent_id, mapItem);
     // 记录节点id
     treeIds.push(item[fieldId]);
   }

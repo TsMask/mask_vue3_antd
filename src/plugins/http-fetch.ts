@@ -306,8 +306,8 @@ async function beforeResponse(
       const result = await refreshToken(getRefreshToken());
       if (result.code === RESULT_CODE_SUCCESS) {
         // 刷新成功，更新token
-        setAccessToken(result.data.accessToken, result.data.refreshExpiresIn);
-        setRefreshToken(result.data.refreshToken, result.data.refreshExpiresIn);
+        setAccessToken(result.data.access_token, result.data.refresh_expires_in);
+        setRefreshToken(result.data.refresh_token, result.data.refresh_expires_in);
         // 使用原始参数重放当前请求（未被 beforeRequest 修改，参数不会重复拼接）
         const retriedResult = await request(originalOptions);
         // 释放队列中的等待请求

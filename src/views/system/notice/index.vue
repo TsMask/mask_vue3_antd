@@ -37,12 +37,12 @@ const { dict } = useDictSetup({
 /** 查询参数 */
 const { queryParams, handleQuery, resetQuery } = useQueryParams(
   {
-    noticeTitle: "",
-    createBy: undefined as string | undefined,
-    noticeType: undefined as string | undefined,
-    noticeStatus: undefined as string | undefined,
-    pageNum: 1,
-    pageSize: 20,
+    notice_title: "",
+    create_by: undefined as string | undefined,
+    notice_type: undefined as string | undefined,
+    notice_status: undefined as string | undefined,
+    page_num: 1,
+    page_size: 20,
   },
   () => {
     resetPage();
@@ -52,9 +52,9 @@ const { queryParams, handleQuery, resetQuery } = useQueryParams(
 
 /** 分页管理 */
 const { pagination, resetPage, clampPage } = usePagination({
-  onChange: (page, pageSize) => {
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
+  onChange: (page, page_size) => {
+    queryParams.page_num = page;
+    queryParams.page_size = page_size;
     fetchList()
   },
 });
@@ -83,23 +83,23 @@ const {
 } = useCrudModal({
   initForm: () => ({
     id: undefined as string | number | undefined,
-    noticeTitle: "",
-    noticeContent: "",
-    noticeType: "2",
-    noticeStatus: "1",
+    notice_title: "",
+    notice_content: "",
+    notice_type: "2",
+    notice_status: "1",
     delFlag: "0",
     remark: "",
-    createBy: undefined,
-    createTime: undefined,
-    updateBy: undefined,
-    updateTime: undefined,
+    create_by: undefined,
+    create_time: undefined,
+    update_by: undefined,
+    update_time: undefined,
   }),
   rules: {
-    noticeTitle: [
+    notice_title: [
       { required: true, min: 2, max: 50, message: "请输入公告标题" },
     ],
-    noticeType: [{ required: true, message: "请选择公告类型" }],
-    noticeContent: [
+    notice_type: [{ required: true, message: "请选择公告类型" }],
+    notice_content: [
       {
         required: true,
         min: 2,
@@ -124,25 +124,25 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 /** 表格字段列 */
 const tableColumns: ColumnsType = [
   { title: "公告编号", dataIndex: "id", align: "left", width: 100 },
-  { title: "公告标题", dataIndex: "noticeTitle", align: "left", width: 300 },
+  { title: "公告标题", dataIndex: "notice_title", align: "left", width: 300 },
   {
     title: "公告类型",
-    dataIndex: "noticeType",
-    key: "noticeType",
+    dataIndex: "notice_type",
+    key: "notice_type",
     align: "left",
     width: 100,
   },
   {
     title: "状态",
-    dataIndex: "noticeStatus",
-    key: "noticeStatus",
+    dataIndex: "notice_status",
+    key: "notice_status",
     align: "left",
     width: 100,
   },
-  { title: "创建者", dataIndex: "createBy", align: "left", width: 100 },
+  { title: "创建者", dataIndex: "create_by", align: "left", width: 100 },
   {
     title: "创建时间",
-    dataIndex: "createTime",
+    dataIndex: "create_time",
     align: "left",
     width: 150,
     customRender(opt) {
@@ -208,25 +208,25 @@ function handleDelete(id: string = "0") {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="公告标题" name="noticeTitle">
-              <a-input v-model:value="queryParams.noticeTitle" allow-clear placeholder="请输入公告标题"></a-input>
+            <a-form-item label="公告标题" name="notice_title">
+              <a-input v-model:value="queryParams.notice_title" allow-clear placeholder="请输入公告标题"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="创建者" name="createBy">
-              <a-input v-model:value="queryParams.createBy" allow-clear placeholder="请输入创建者"></a-input>
+            <a-form-item label="创建者" name="create_by">
+              <a-input v-model:value="queryParams.create_by" allow-clear placeholder="请输入创建者"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="公告类型" name="noticeType">
-              <a-select v-model:value="queryParams.noticeType" allow-clear placeholder="请选择公告类型"
+            <a-form-item label="公告类型" name="notice_type">
+              <a-select v-model:value="queryParams.notice_type" allow-clear placeholder="请选择公告类型"
                 :options="dict.sysNoticeType">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="公告状态" name="noticeStatus">
-              <a-select v-model:value="queryParams.noticeStatus" allow-clear placeholder="请选择公告状态"
+            <a-form-item label="公告状态" name="notice_status">
+              <a-select v-model:value="queryParams.notice_status" allow-clear placeholder="请选择公告状态"
                 :options="dict.sysNoticeStatus">
               </a-select>
             </a-form-item>
@@ -320,11 +320,11 @@ function handleDelete(id: string = "0") {
           onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'noticeType'">
-            <DictTag :options="dict.sysNoticeType" :value="record.noticeType" />
+          <template v-if="column.key === 'notice_type'">
+            <DictTag :options="dict.sysNoticeType" :value="record.notice_type" />
           </template>
-          <template v-if="column.key === 'noticeStatus'">
-            <DictTag :options="dict.sysNoticeStatus" :value="record.noticeStatus" />
+          <template v-if="column.key === 'notice_status'">
+            <DictTag :options="dict.sysNoticeStatus" :value="record.notice_status" />
           </template>
           <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
@@ -366,21 +366,21 @@ function handleDelete(id: string = "0") {
       <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="公告类型" name="noticeType">
-              <DictTag :options="dict.sysNoticeType" :value="modalState.form.noticeType" />
+            <a-form-item label="公告类型" name="notice_type">
+              <DictTag :options="dict.sysNoticeType" :value="modalState.form.notice_type" />
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="公告状态" name="noticeStatus">
-              <DictTag :options="dict.sysNoticeStatus" :value="modalState.form.noticeStatus" />
+            <a-form-item label="公告状态" name="notice_status">
+              <DictTag :options="dict.sysNoticeStatus" :value="modalState.form.notice_status" />
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="公告标题" name="noticeTitle" :label-col="{ span: 3 }" :label-wrap="true">
-          {{ modalState.form.noticeTitle }}
+        <a-form-item label="公告标题" name="notice_title" :label-col="{ span: 3 }" :label-wrap="true">
+          {{ modalState.form.notice_title }}
         </a-form-item>
-        <a-form-item label="公告内容" name="noticeContent" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea v-model:value="modalState.form.noticeContent" :auto-size="{ minRows: 2, maxRows: 12 }"
+        <a-form-item label="公告内容" name="notice_content" :label-col="{ span: 3 }" :label-wrap="true">
+          <a-textarea v-model:value="modalState.form.notice_content" :auto-size="{ minRows: 2, maxRows: 12 }"
             placeholder="公告内容" :disabled="true" />
         </a-form-item>
       </a-form>
@@ -396,28 +396,28 @@ function handleDelete(id: string = "0") {
       <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="公告类型" name="noticeType" v-bind="modalStateForm.validateInfos.noticeType">
-              <a-select v-model:value="modalState.form.noticeType" default-value="1" placeholder="公告类型"
+            <a-form-item label="公告类型" name="notice_type" v-bind="modalStateForm.validateInfos.notice_type">
+              <a-select v-model:value="modalState.form.notice_type" default-value="1" placeholder="公告类型"
                 :options="dict.sysNoticeType">
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="公告状态" name="noticeStatus">
-              <a-select v-model:value="modalState.form.noticeStatus" default-value="0" placeholder="公告状态"
+            <a-form-item label="公告状态" name="notice_status">
+              <a-select v-model:value="modalState.form.notice_status" default-value="0" placeholder="公告状态"
                 :options="dict.sysNoticeStatus">
               </a-select>
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="公告标题" name="noticeTitle" v-bind="modalStateForm.validateInfos.noticeTitle"
+        <a-form-item label="公告标题" name="notice_title" v-bind="modalStateForm.validateInfos.notice_title"
           :label-col="{ span: 3 }" :label-wrap="true">
-          <a-input v-model:value="modalState.form.noticeTitle" allow-clear placeholder="请输入公告标题"
+          <a-input v-model:value="modalState.form.notice_title" allow-clear placeholder="请输入公告标题"
             :maxlength="50"></a-input>
         </a-form-item>
-        <a-form-item label="公告内容" name="noticeContent" v-bind="modalStateForm.validateInfos.noticeContent"
+        <a-form-item label="公告内容" name="notice_content" v-bind="modalStateForm.validateInfos.notice_content"
           :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea v-model:value="modalState.form.noticeContent" :auto-size="{ minRows: 4, maxRows: 14 }"
+          <a-textarea v-model:value="modalState.form.notice_content" :auto-size="{ minRows: 4, maxRows: 14 }"
             :maxlength="3000" :show-count="true" placeholder="请输入公告内容" />
         </a-form-item>
       </a-form>

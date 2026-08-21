@@ -80,16 +80,16 @@ export function delJob(id: string | number) {
 /**
  * 任务状态修改
  * @param jobId 任务ID
- * @param jobStatus 变更状态值
+ * @param job_status 变更状态值
  * @returns
  */
-export function changeStatus(jobId: string | number, jobStatus: string | number) {
+export function changeStatus(job_id: string | number, job_status: string | number) {
   return request({
     url: '/monitor/job/status',
     method: 'PUT',
     data: {
-      jobId,
-      jobStatus,
+      job_id,
+      job_status,
     },
   });
 }

@@ -29,12 +29,12 @@ export function listPost(query: Record<string, any>) {
 
 /**
  * 查询岗位详细
- * @param postId 岗位ID
+ * @param post_id 岗位ID
  * @returns object
  */
-export function getPost(postId: string | number) {
+export function getPost(post_id: string | number) {
   return request({
-    url: `/system/post/${postId}`,
+    url: `/system/post/${post_id}`,
     method: 'GET',
   });
 }
@@ -67,12 +67,12 @@ export function updatePost(data: Record<string, any>) {
 
 /**
  * 删除岗位
- * @param postId 岗位ID
+ * @param post_id 岗位ID
  * @returns object
  */
-export function delPost(postId: string | number) {
+export function delPost(post_id: string | number) {
   return request({
-    url: `/system/post/${postId}`,
+    url: `/system/post/${post_id}`,
     method: 'DELETE',
   });
 }

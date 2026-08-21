@@ -49,7 +49,7 @@ export function refreshToken(refreshToken: string) {
   return request({
     url: '/auth/refresh-token',
     method: 'POST',
-    data: { refreshToken },
+    data: { refresh_token: refreshToken },
     withToken: false,
   });
 }

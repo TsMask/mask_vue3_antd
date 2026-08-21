@@ -22,12 +22,12 @@ const title = ref<string>(route.meta.title ?? "标题");
 const { dict } = useDictSetup({ keyMap: { sysNormalDisable: "sys_normal_disable" } });
 
 const { queryParams, handleQuery, resetQuery } = useQueryParams(
-  { postCode: "", postName: "", postStatus: undefined as string | undefined, pageNum: 1, pageSize: 20 },
+  { post_code: "", post_name: "", post_status: undefined as string | undefined, page_num: 1, page_size: 20 },
   () => { resetPage(); fetchList(); },
 );
 
 const { pagination, resetPage, clampPage } = usePagination({
-  onChange: (page, pageSize) => { queryParams.pageNum = page; queryParams.pageSize = pageSize; fetchList(); },
+  onChange: (page, page_size) => { queryParams.page_num = page; queryParams.page_size = page_size; fetchList(); },
 });
 
 const { listData, loading, fetch: fetchList } = useListQuery({
@@ -39,12 +39,12 @@ const { tableState, setTableSize, rowClassName, setSelectedRowKeys } = useTableU
 
 const { modal: modalState, formCtl: modalStateForm, openView, openEdit, close: handleCancel } = useCrudModal({
   initForm: () => ({
-    id: undefined as string | number | undefined, postCode: "", postName: "", postSort: 0, postStatus: "0", remark: undefined as string | undefined, createTime: 0,
+    id: undefined as string | number | undefined, post_code: "", post_name: "", post_sort: 0, post_status: "0", remark: undefined as string | undefined, create_time: 0,
   }),
   rules: {
-    postCode: [{ required: true, min: 1, max: 50, message: "请输入岗位编码" }],
-    postName: [{ required: true, min: 1, max: 50, message: "请输入岗位名称" }],
-    postSort: [{ required: true, message: "请输入岗位排序" }],
+    post_code: [{ required: true, min: 1, max: 50, message: "请输入岗位编码" }],
+    post_name: [{ required: true, min: 1, max: 50, message: "请输入岗位名称" }],
+    post_sort: [{ required: true, message: "请输入岗位排序" }],
   },
 });
 
@@ -59,11 +59,11 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 
 const tableColumns: ColumnsType = [
   { title: "岗位编号", dataIndex: "id", align: "left", width: 100 },
-  { title: "岗位编码", dataIndex: "postCode", align: "left", width: 200 },
-  { title: "岗位名称", dataIndex: "postName", align: "left", width: 200 },
-  { title: "岗位排序", dataIndex: "postSort", align: "left", width: 100 },
-  { title: "状态", dataIndex: "postStatus", key: "postStatus", align: "left", width: 100 },
-  { title: "创建时间", dataIndex: "createTime", align: "left", width: 150, customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); } },
+  { title: "岗位编码", dataIndex: "post_code", align: "left", width: 200 },
+  { title: "岗位名称", dataIndex: "post_name", align: "left", width: 200 },
+  { title: "岗位排序", dataIndex: "post_sort", align: "left", width: 100 },
+  { title: "状态", dataIndex: "post_status", key: "post_status", align: "left", width: 100 },
+  { title: "创建时间", dataIndex: "create_time", align: "left", width: 150, customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); } },
   { title: "操作", key: "id", align: "left" },
 ];
 
@@ -111,18 +111,18 @@ function handleExport() {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="岗位编码" name="postCode">
-              <a-input v-model:value="queryParams.postCode" allow-clear placeholder="请输入岗位编码"></a-input>
+            <a-form-item label="岗位编码" name="post_code">
+              <a-input v-model:value="queryParams.post_code" allow-clear placeholder="请输入岗位编码"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="岗位名称" name="postName">
-              <a-input v-model:value="queryParams.postName" allow-clear placeholder="请输入岗位名称"></a-input>
+            <a-form-item label="岗位名称" name="post_name">
+              <a-input v-model:value="queryParams.post_name" allow-clear placeholder="请输入岗位名称"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="岗位状态" name="postStatus">
-              <a-select v-model:value="queryParams.postStatus" allow-clear placeholder="请选择"
+            <a-form-item label="岗位状态" name="post_status">
+              <a-select v-model:value="queryParams.post_status" allow-clear placeholder="请选择"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
@@ -223,8 +223,8 @@ function handleExport() {
           onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'postStatus'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.postStatus" />
+          <template v-if="column.key === 'post_status'">
+            <DictTag :options="dict.sysNormalDisable" :value="record.post_status" />
           </template>
           <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
@@ -269,34 +269,34 @@ function handleExport() {
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="创建时间" name="createTime">
-              <span v-if="+modalState.form.createTime > 0">
-                {{ parseDateToStr(+modalState.form.createTime) }}
+            <a-form-item label="创建时间" name="create_time">
+              <span v-if="+modalState.form.create_time > 0">
+                {{ parseDateToStr(+modalState.form.create_time) }}
               </span>
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位顺序" name="postSort">
-              {{ modalState.form.postSort }}
+            <a-form-item label="岗位顺序" name="post_sort">
+              {{ modalState.form.post_sort }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位状态" name="postStatus">
-              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.postStatus" />
+            <a-form-item label="岗位状态" name="post_status">
+              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.post_status" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位编码" name="postCode">
-              {{ modalState.form.postCode }}
+            <a-form-item label="岗位编码" name="post_code">
+              {{ modalState.form.post_code }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位名称" name="postName">
-              {{ modalState.form.postName }}
+            <a-form-item label="岗位名称" name="post_name">
+              {{ modalState.form.post_name }}
             </a-form-item>
           </a-col>
         </a-row>
@@ -317,14 +317,14 @@ function handleExport() {
       <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位编码" name="postCode" v-bind="modalStateForm.validateInfos.postCode">
-              <a-input v-model:value="modalState.form.postCode" allow-clear placeholder="请输入岗位编码"
+            <a-form-item label="岗位编码" name="post_code" v-bind="modalStateForm.validateInfos.post_code">
+              <a-input v-model:value="modalState.form.post_code" allow-clear placeholder="请输入岗位编码"
                 :maxlength="50"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位状态" name="postStatus">
-              <a-select v-model:value="modalState.form.postStatus" default-value="0" placeholder="岗位状态"
+            <a-form-item label="岗位状态" name="post_status">
+              <a-select v-model:value="modalState.form.post_status" default-value="0" placeholder="岗位状态"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
@@ -333,14 +333,14 @@ function handleExport() {
 
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位名称" name="postName" v-bind="modalStateForm.validateInfos.postName">
-              <a-input v-model:value="modalState.form.postName" allow-clear placeholder="请输入岗位名称"
+            <a-form-item label="岗位名称" name="post_name" v-bind="modalStateForm.validateInfos.post_name">
+              <a-input v-model:value="modalState.form.post_name" allow-clear placeholder="请输入岗位名称"
                 :maxlength="50"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="岗位顺序" name="postSort">
-              <a-input-number v-model:value="modalState.form.postSort" :min="0" :max="9999" :step="1"
+            <a-form-item label="岗位顺序" name="post_sort">
+              <a-input-number v-model:value="modalState.form.post_sort" :min="0" :max="9999" :step="1"
                 placeholder="排序值"></a-input-number>
             </a-form-item>
           </a-col>

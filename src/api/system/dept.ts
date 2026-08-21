@@ -15,24 +15,24 @@ export function listDept(query: Record<string, any>) {
 
 /**
  * 查询部门列表（排除节点）
- * @param deptId 部门ID
+ * @param dept_id 部门ID
  * @returns object
  */
-export function listDeptExcludeChild(deptId: string | number) {
+export function listDeptExcludeChild(dept_id: string | number) {
   return request({
-    url: `/system/dept/list/exclude/${deptId}`,
+    url: `/system/dept/list/exclude/${dept_id}`,
     method: 'GET',
   });
 }
 
 /**
  * 查询部门详细
- * @param deptId 部门ID
+ * @param dept_id 部门ID
  * @returns object
  */
-export function getDept(deptId: string | number) {
+export function getDept(dept_id: string | number) {
   return request({
-    url: `/system/dept/${deptId}`,
+    url: `/system/dept/${dept_id}`,
     method: 'GET',
   });
 }
@@ -65,12 +65,12 @@ export function updateDept(data: Record<string, any>) {
 
 /**
  * 删除部门
- * @param deptId 部门ID
+ * @param dept_id 部门ID
  * @returns object
  */
-export function delDept(deptId: string | number) {
+export function delDept(dept_id: string | number) {
   return request({
-    url: `/system/dept/${deptId}`,
+    url: `/system/dept/${dept_id}`,
     method: 'DELETE',
   });
 }
@@ -88,12 +88,12 @@ export function deptTree() {
 
 /**
  * 部门树结构列表（指定角色）
- * @param roleId 角色ID
+ * @param role_id 角色ID
  * @returns object
  */
-export function deptTreeRole(roleId: string | number) {
+export function deptTreeRole(role_id: string | number) {
   return request({
-    url: `/system/dept/tree/role/${roleId}`,
+    url: `/system/dept/tree/role/${role_id}`,
     method: 'GET',
   });
 }

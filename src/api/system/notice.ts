@@ -15,7 +15,7 @@ export function listNotice(query: Record<string, any>) {
 
 /**
  * 查询公告详细
- * @param menuId 公告ID
+ * @param menu_id 公告ID
  * @returns object
  */
 export function getNotice(noticeId: string | number) {

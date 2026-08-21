@@ -30,10 +30,10 @@ const useDictStore = defineStore('dict', {
     parseDataDict(data: Record<string, any>) {
       return [
         {
-          label: data.dataLabel,
-          value: data.dataValue,
-          tagClass: data.tagClass,
-          tagType: data.tagType,
+          label: data.data_label,
+          value: data.data_value,
+          tag_class: data.tag_class,
+          tag_type: data.tag_type,
         },
       ];
     },
@@ -45,10 +45,10 @@ const useDictStore = defineStore('dict', {
         const res = await getDictDataType(key);
         if (res.code === RESULT_CODE_SUCCESS && Array.isArray(res.data)) {
           const dictData: DictType[] = res.data.map(d => ({
-            label: d.dataLabel,
-            value: d.dataValue,
-            tagClass: d.tagClass,
-            tagType: d.tagType,
+            label: d.data_label,
+            value: d.data_value,
+            tag_class: d.tag_class,
+            tag_type: d.tag_type,
           }));
           this.dicts.set(key, dictData);
           disct = dictData;

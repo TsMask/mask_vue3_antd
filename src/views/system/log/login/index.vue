@@ -23,21 +23,21 @@ const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
 function syncDateRange() {
   if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
-    queryParams.beginTime = queryRangePicker.value[0].startOf("day").valueOf();
-    queryParams.endTime = queryRangePicker.value[1].endOf("day").valueOf();
+    queryParams.begin_time = queryRangePicker.value[0].startOf("day").valueOf();
+    queryParams.end_time = queryRangePicker.value[1].endOf("day").valueOf();
   } else {
-    queryParams.beginTime = undefined;
-    queryParams.endTime = undefined;
+    queryParams.begin_time = undefined;
+    queryParams.end_time = undefined;
   }
 }
 
 const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
   {
-    loginIp: "", loginUserName: "",
-    loginStatus: undefined as string | undefined,
-    beginTime: undefined as number | undefined,
-    endTime: undefined as number | undefined,
-    pageNum: 1, pageSize: 20,
+    login_ip: "", login_user_name: "",
+    login_status: undefined as string | undefined,
+    begin_time: undefined as number | undefined,
+    end_time: undefined as number | undefined,
+    page_num: 1, page_size: 20,
     sort: ""
   },
   () => { resetPage(); fetchList(); },
@@ -46,7 +46,7 @@ const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
 function resetQuery() { queryRangePicker.value = undefined; baseResetQuery(); }
 
 const { pagination, resetPage, clampPage } = usePagination({
-  onChange: (page, pageSize) => { queryParams.pageNum = page; queryParams.pageSize = pageSize; fetchList() },
+  onChange: (page, page_size) => { queryParams.page_num = page; queryParams.page_size = page_size; fetchList() },
 });
 
 const { listData, loading, fetch: fetchList } = useListQuery({
@@ -58,20 +58,20 @@ const { tableState, setTableSize, rowClassName } = useTableUI();
 
 const tableColumns: ColumnsType = [
   { title: "日志编号", dataIndex: "id", align: "left", width: 100 },
-  { title: "登录账号", dataIndex: "loginUserName", align: "left", width: 150, sorter: true },
-  { title: "登录IP", dataIndex: "loginIp", align: "left", width: 150 },
-  { title: "登录地点", dataIndex: "loginLocation", align: "left", width: 150 },
-  { title: "操作系统", dataIndex: "loginOs", align: "left", width: 150 },
-  { title: "浏览器", dataIndex: "loginBrowser", align: "left", width: 200 },
-  { title: "登录状态", dataIndex: "loginStatus", key: "loginStatus", align: "left", width: 100 },
+  { title: "登录账号", dataIndex: "login_user_name", align: "left", width: 150, sorter: true },
+  { title: "登录IP", dataIndex: "login_ip", align: "left", width: 150 },
+  { title: "登录地点", dataIndex: "login_location", align: "left", width: 150 },
+  { title: "操作系统", dataIndex: "login_os", align: "left", width: 150 },
+  { title: "浏览器", dataIndex: "login_browser", align: "left", width: 200 },
+  { title: "登录状态", dataIndex: "login_status", key: "login_status", align: "left", width: 100 },
   {
-    title: "登录时间", dataIndex: "createTime", align: "left", width: 150, sorter: true,
+    title: "登录时间", dataIndex: "create_time", align: "left", width: 150, sorter: true,
     customRender(opt) {
       if (+opt.value <= 0) return "";
       return parseDateToStr(+opt.value);
     }
   },
-  { title: "登录信息", dataIndex: "loginMsg", align: "left", ellipsis: true },
+  { title: "登录信息", dataIndex: "login_msg", align: "left", ellipsis: true },
 ];
 
 function handleTableChange(_pagination: any, _filters: any, sorter: any) {
@@ -112,18 +112,18 @@ function handleExport() {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录账号" name="loginUserName">
-              <a-input v-model:value="queryParams.loginUserName" allow-clear :maxlength="30" placeholder="请输入登录账号"></a-input>
+            <a-form-item label="登录账号" name="login_user_name">
+              <a-input v-model:value="queryParams.login_user_name" allow-clear :maxlength="30" placeholder="请输入登录账号"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录IP" name="loginIp">
-              <a-input v-model:value="queryParams.loginIp" allow-clear :maxlength="128" placeholder="请输入登录IP"></a-input>
+            <a-form-item label="登录IP" name="login_ip">
+              <a-input v-model:value="queryParams.login_ip" allow-clear :maxlength="128" placeholder="请输入登录IP"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="登录状态" name="loginStatus">
-              <a-select v-model:value="queryParams.loginStatus" allow-clear placeholder="请选择登录状态"
+            <a-form-item label="登录状态" name="login_status">
+              <a-select v-model:value="queryParams.login_status" allow-clear placeholder="请选择登录状态"
                 :options="dict.sysCommonStatus">
               </a-select>
             </a-form-item>
@@ -218,8 +218,8 @@ function handleExport() {
           scrollToFirstRowOnChange: true,
         }" :pagination="pagination" @change="handleTableChange">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'loginStatus'">
-            <DictTag :options="dict.sysCommonStatus" :value="record.loginStatus" />
+          <template v-if="column.key === 'login_status'">
+            <DictTag :options="dict.sysCommonStatus" :value="record.login_status" />
           </template>
         </template>
       </a-table>

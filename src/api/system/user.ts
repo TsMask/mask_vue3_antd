@@ -56,12 +56,12 @@ export function listUser(query: Record<string, any>) {
 
 /**
  * 查询用户详细
- * @param userId 用户ID，新增0
+ * @param user_id 用户ID，新增0
  * @returns object
  */
-export function getUser(userId: string | number = '0') {
+export function getUser(user_id: string | number = '0') {
   return request({
-    url: `/system/user/${userId}`,
+    url: `/system/user/${user_id}`,
     method: 'GET',
   });
 }
@@ -94,28 +94,28 @@ export function updateUser(data: Record<string, any>) {
 
 /**
  * 删除用户
- * @param userId 用户ID
+ * @param user_id 用户ID
  * @returns object
  */
-export function delUser(userId: string | number) {
+export function delUser(user_id: string | number) {
   return request({
-    url: `/system/user/${userId}`,
+    url: `/system/user/${user_id}`,
     method: 'DELETE',
   });
 }
 
 /**
  * 用户密码重置
- * @param userId 用户ID
+ * @param user_id 用户ID
  * @param password 密码
  * @returns object
  */
-export function resetPassword(userId: string | number, password: string) {
+export function resetPassword(user_id: string | number, password: string) {
   return request({
     url: '/system/user/password',
     method: 'PUT',
     data: {
-      userId,
+      user_id,
       password,
     },
   });
@@ -123,29 +123,29 @@ export function resetPassword(userId: string | number, password: string) {
 
 /**
  * 用户状态修改
- * @param userId 用户ID
- * @param userStatus 变更状态值
+ * @param user_id 用户ID
+ * @param user_status 变更状态值
  * @returns object
  */
 export function changeStatus(
-  userId: string | number,
-  userStatus: string | number
+  user_id: string | number,
+  user_status: string | number
 ) {
   return request({
     url: '/system/user/status',
     method: 'PUT',
-    data: { userId, userStatus },
+    data: { user_id, user_status },
   });
 }
 
 /**
  * 解锁用户登录状态
- * @param userName 登录账号
+ * @param user_name 登录账号
  * @returns object
  */
-export function unlock(userName: string) {
+export function unlock(user_name: string) {
   return request({
-    url: `/system/user/unlock/${userName}`,
+    url: `/system/user/unlock/${user_name}`,
     method: 'PUT',
   });
 }

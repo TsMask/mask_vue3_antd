@@ -41,12 +41,12 @@ export function getConfig(configId: string | number) {
 
 /**
  * 根据参数键名查询参数值
- * @param configKey 参数键名
+ * @param config_key 参数键名
  * @returns object
  */
-export function getConfigKey(configKey: string) {
+export function getConfigKey(config_key: string) {
   return request({
-    url: `/system/config/config-key/${configKey}`,
+    url: `/system/config/config-key/${config_key}`,
     method: 'GET',
   });
 }

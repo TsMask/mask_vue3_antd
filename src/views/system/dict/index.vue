@@ -38,14 +38,14 @@ const queryRangePicker = ref<[Dayjs, Dayjs] | undefined>();
 
 const { queryParams, handleQuery, resetQuery: baseResetQuery } = useQueryParams(
   {
-    dictName: "",
-    dictType: "",
-    dataLabel: "",
-    dictStatus: undefined as string | undefined,
-    beginTime: undefined as number | undefined,
-    endTime: undefined as number | undefined,
-    pageNum: 1,
-    pageSize: 20,
+    dict_name: "",
+    dict_type: "",
+    data_label: "",
+    dict_status: undefined as string | undefined,
+    begin_time: undefined as number | undefined,
+    end_time: undefined as number | undefined,
+    page_num: 1,
+    page_size: 20,
   },
   () => { resetPage(); fetchList(); },
 );
@@ -59,11 +59,11 @@ function resetQuery() {
 /** 同步日期范围到查询参数 */
 function syncDateRange() {
   if (Array.isArray(queryRangePicker.value) && queryRangePicker.value.length > 0) {
-    queryParams.beginTime = queryRangePicker.value[0].startOf("day").valueOf();
-    queryParams.endTime = queryRangePicker.value[1].endOf("day").valueOf();
+    queryParams.begin_time = queryRangePicker.value[0].startOf("day").valueOf();
+    queryParams.end_time = queryRangePicker.value[1].endOf("day").valueOf();
   } else {
-    queryParams.beginTime = undefined;
-    queryParams.endTime = undefined;
+    queryParams.begin_time = undefined;
+    queryParams.end_time = undefined;
   }
 }
 
@@ -75,9 +75,9 @@ const {
 } = useTableUI();
 
 const { pagination, resetPage, clampPage } = usePagination({
-  onChange: (page, pageSize) => {
-    queryParams.pageNum = page;
-    queryParams.pageSize = pageSize;
+  onChange: (page, page_size) => {
+    queryParams.page_num = page;
+    queryParams.page_size = page_size;
     fetchList()
   },
 });
@@ -97,14 +97,14 @@ const {
 } = useCrudModal({
   initForm: () => ({
     id: undefined as string | number | undefined,
-    dictName: "",
-    dictType: undefined as string | undefined,
-    dictStatus: "0",
+    dict_name: "",
+    dict_type: undefined as string | undefined,
+    dict_status: "0",
     remark: undefined as string | undefined,
   }),
   rules: {
-    dictName: [{ required: true, min: 1, max: 50, message: "请输入字典名称" }],
-    dictType: [{ required: true, min: 1, max: 50, message: "请输入字典类型" }],
+    dict_name: [{ required: true, min: 1, max: 50, message: "请输入字典名称" }],
+    dict_type: [{ required: true, min: 1, max: 50, message: "请输入字典类型" }],
   },
 });
 
@@ -121,11 +121,11 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 
 const tableColumns: ColumnsType = [
   { title: "字典编号", dataIndex: "id", align: "left", width: 100 },
-  { title: "字典名称", dataIndex: "dictName", align: "left", width: 200 },
-  { title: "字典类型", dataIndex: "dictType", align: "left", width: 200 },
-  { title: "字典状态", dataIndex: "dictStatus", key: "dictStatus", align: "left", width: 100 },
+  { title: "字典名称", dataIndex: "dict_name", align: "left", width: 200 },
+  { title: "字典类型", dataIndex: "dict_type", align: "left", width: 200 },
+  { title: "字典状态", dataIndex: "dict_status", key: "dict_status", align: "left", width: 100 },
   {
-    title: "创建时间", dataIndex: "createTime", align: "left", width: 150,
+    title: "创建时间", dataIndex: "create_time", align: "left", width: 150,
     customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); },
   },
   { title: "操作", key: "id", align: "left" },
@@ -201,18 +201,18 @@ function handleDataView(id: string | number = "0") {
       <a-form :model="queryParams" name="queryParams" layout="horizontal">
         <a-row :gutter="16">
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="字典名称" name="dictName">
-              <a-input v-model:value="queryParams.dictName" allow-clear placeholder="请输入字典名称"></a-input>
+            <a-form-item label="字典名称" name="dict_name">
+              <a-input v-model:value="queryParams.dict_name" allow-clear placeholder="请输入字典名称"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="数据标签" name="dataLabel">
-              <a-input v-model:value="queryParams.dataLabel" allow-clear placeholder="请输入数据标签"></a-input>
+            <a-form-item label="数据标签" name="data_label">
+              <a-input v-model:value="queryParams.data_label" allow-clear placeholder="请输入数据标签"></a-input>
             </a-form-item>
           </a-col>
           <a-col :lg="4" :md="12" :xs="24">
-            <a-form-item label="字典状态" name="dictStatus">
-              <a-select v-model:value="queryParams.dictStatus" allow-clear placeholder="请选择"
+            <a-form-item label="字典状态" name="dict_status">
+              <a-select v-model:value="queryParams.dict_status" allow-clear placeholder="请选择"
                 :options="dict.sysNormalDisable">
               </a-select>
             </a-form-item>
@@ -327,8 +327,8 @@ function handleDataView(id: string | number = "0") {
           type: 'checkbox', selectedRowKeys: tableState.selectedRowKeys, onChange: setSelectedRowKeys,
         }">
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'dictStatus'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.dictStatus" />
+          <template v-if="column.key === 'dict_status'">
+            <DictTag :options="dict.sysNormalDisable" :value="record.dict_status" />
           </template>
           <template v-if="column.key === 'id'">
             <a-space :size="8" align="center">
@@ -379,17 +379,17 @@ function handleDataView(id: string | number = "0") {
             <a-form-item label="字典编号" name="id">{{ modalState.form.id }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典状态" name="dictStatus">
-              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.dictStatus" />
+            <a-form-item label="字典状态" name="dict_status">
+              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.dict_status" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典名称" name="dictName">{{ modalState.form.dictName }}</a-form-item>
+            <a-form-item label="字典名称" name="dict_name">{{ modalState.form.dict_name }}</a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典类型" name="dictType">{{ modalState.form.dictType }}</a-form-item>
+            <a-form-item label="字典类型" name="dict_type">{{ modalState.form.dict_type }}</a-form-item>
           </a-col>
         </a-row>
         <a-form-item label="字典说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
@@ -407,14 +407,14 @@ function handleDataView(id: string | number = "0") {
       :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="isSubmitting" @ok="handleSubmit"
       @cancel="handleCancel">
       <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 3 }" :label-wrap="true">
-        <a-form-item label="字典名称" name="dictName" v-bind="modalStateForm.validateInfos.dictName">
-          <a-input v-model:value="modalState.form.dictName" allow-clear placeholder="请输入字典名称" :maxlength="50"></a-input>
+        <a-form-item label="字典名称" name="dict_name" v-bind="modalStateForm.validateInfos.dict_name">
+          <a-input v-model:value="modalState.form.dict_name" allow-clear placeholder="请输入字典名称" :maxlength="50"></a-input>
         </a-form-item>
-        <a-form-item label="字典类型" name="dictType" v-bind="modalStateForm.validateInfos.dictType">
-          <a-input v-model:value="modalState.form.dictType" allow-clear placeholder="请输入字典类型" :maxlength="50"></a-input>
+        <a-form-item label="字典类型" name="dict_type" v-bind="modalStateForm.validateInfos.dict_type">
+          <a-input v-model:value="modalState.form.dict_type" allow-clear placeholder="请输入字典类型" :maxlength="50"></a-input>
         </a-form-item>
-        <a-form-item label="字典状态" name="dictStatus">
-          <a-select v-model:value="modalState.form.dictStatus" default-value="0" placeholder="字典状态"
+        <a-form-item label="字典状态" name="dict_status">
+          <a-select v-model:value="modalState.form.dict_status" default-value="0" placeholder="字典状态"
             :options="dict.sysNormalDisable">
           </a-select>
         </a-form-item>

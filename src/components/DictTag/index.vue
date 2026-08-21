@@ -41,10 +41,10 @@ const item = computed(() => {
 
 <template>
   <template v-if="item">
-    <a-tag v-if="item.tagType" :class="item.tagClass" :color="item.tagType">
+    <a-tag v-if="item.tag_type" :class="item.tag_class" :color="item.tag_type">
       {{ item.label }}
     </a-tag>
-    <span v-else :class="item.tagClass">
+    <span v-else :class="item.tag_class">
       {{ item.label }}
     </span>
   </template>
