@@ -10,6 +10,7 @@ import {
 import { defineStore } from 'pinia';
 import { validHttp } from '@/utils/regular-utils';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import { clearTabsView } from '@/layouts/hooks/useTabsView';
 
 /** 用户信息类型 */
 type UserInfo = {
@@ -176,6 +177,7 @@ const useUserStore = defineStore('user', {
       } catch {
         // 忽略登出接口错误，本地状态已在 finally 中清理
       } finally {
+        clearTabsView();
         this.roles = [];
         this.permissions = [];
         delAccessToken();

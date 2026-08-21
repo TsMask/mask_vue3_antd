@@ -4,22 +4,27 @@ import {
   GlobalFooter,
   getMenuData,
   clearMenuItem,
+  TabsView,
 } from 'antdv-pro-layout';
 import RightContent from './components/RightContent.vue';
-import Tabs from './components/Tabs.vue';
+import { useTabsView } from './hooks/useTabsView';
 import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import { computed, reactive, watch } from 'vue';
 import useLayoutStore from '@/store/modules/layout';
 import useAppStore from '@/store/modules/app';
 import useRouterStore from '@/store/modules/router';
-import useTabsStore from '@/store/modules/tabs';
 import { useRouter } from 'vue-router';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
 const { proConfig, waterMarkContent } = useLayoutStore();
 const { appName } = useAppStore();
 const routerStore = useRouterStore();
-const tabsStore = useTabsStore();
 const router = useRouter();
+const {
+  tabsView,
+  handleTabSelect,
+  handleTabClose,
+  handleTabAction,
+} = useTabsView({ syncRoute: true });
 
 /**菜单面板 */
 const layoutState = reactive({
@@ -110,8 +115,6 @@ function fnComponentSetName(component: any, to: any) {
   return component;
 }
 
-// 清空导航栏标签
-tabsStore.clear();
 </script>
 
 <template>
@@ -134,7 +137,19 @@ tabsStore.clear();
 
       <!--插槽-导航标签项-->
       <template #tabRender="{ width, fixedHeader, headerRender }">
-        <Tabs :width="width" :fixed-header="fixedHeader" :header-render="headerRender" />
+        <TabsView
+          v-model:activeKey="tabsView.activePath"
+          :tabs="tabsView.tabs"
+          :home-path="tabsView.homePath"
+          :iconfont-url="scriptUrl"
+          :height="36"
+          :width="width"
+          :fixed-header="fixedHeader"
+          :header-render="headerRender"
+          @select="handleTabSelect"
+          @close="handleTabClose"
+          @action="handleTabAction"
+        />
       </template>
 
       <!--插槽-页面路由导航面包屑-->
@@ -150,7 +165,7 @@ tabsStore.clear();
       <!--内容页面视图-->
       <RouterView v-slot="{ Component, route }">
         <transition name="slide-left" mode="out-in">
-          <KeepAlive :include="tabsStore.getCaches">
+          <KeepAlive :include="tabsView.caches">
             <component :is="fnComponentSetName(Component, route)" :key="route.path" />
           </KeepAlive>
         </transition>

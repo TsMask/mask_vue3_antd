@@ -1,16 +1,23 @@
 <script setup lang="ts">
 import type { MenuInfo } from 'ant-design-vue/es/menu/src/interface';
 import type { SizeType } from 'ant-design-vue/es/config-provider';
-import { viewTransitionTheme } from 'antdv-pro-layout';
+import {
+  viewTransitionTheme,
+  GlobalSearch,
+  type SearchFlatItem,
+} from 'antdv-pro-layout';
 import { toggle, isFullscreen } from '@/utils/fullscreen-utils';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import useLayoutStore from '@/store/modules/layout';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
+import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 const { proConfig, changeConf } = useLayoutStore();
 const userStore = useUserStore();
 const appStore = useAppStore();
 const router = useRouter();
+const searchOpen = ref(false);
 
 // 手动变更主题-过渡动画
 function changeTheme(e: any) {
@@ -23,6 +30,19 @@ function changeTheme(e: any) {
 /**组件尺寸点击选择 */
 function fnComponentSize({ key }: MenuInfo) {
   appStore.setComponentSize(key as SizeType);
+}
+
+/** 全局搜索结果跳转 */
+function handleSearchSelect(item: SearchFlatItem) {
+  if (item.isExternal) {
+    if (item.target === '_blank') {
+      window.open(item.path, item.target, 'noopener,noreferrer');
+    } else {
+      window.location.href = item.path;
+    }
+    return;
+  }
+  router.push(item.path);
 }
 
 /**头像展开项点击 */
@@ -86,6 +106,17 @@ function fnClick({ key }: MenuInfo) {
         </template>
       </a-button>
     </a-tooltip>
+
+    <a-tooltip placement="bottomRight">
+      <template #title>搜索菜单</template>
+      <a-button type="text" style="color: inherit" @click="searchOpen = true">
+        <template #icon>
+          <SearchOutlined />
+        </template>
+      </a-button>
+    </a-tooltip>
+    <GlobalSearch v-model:open="searchOpen" :iconfont-url="scriptUrl" placeholder="搜索菜单" empty-text="未找到相关菜单"
+      :labels="{ toggle: '打开搜索', select: '选择', close: '关闭' }" @select="handleSearchSelect" />
 
     <a-tooltip placement="bottomRight">
       <template #title>主题明暗模式</template>

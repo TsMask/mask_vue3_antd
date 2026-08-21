@@ -7,7 +7,7 @@ import type { ColumnsType } from 'ant-design-vue/es/table';
 import AuthUserSelect from './components/auth-user-select.vue';
 import { authUserList, authUserChecked } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
-import useTabsStore from '@/store/modules/tabs';
+import { useTabsView } from '@/layouts/hooks/useTabsView';
 import { useTableUI } from '@/hooks/useTableUI';
 import { usePagination } from '@/hooks/usePagination';
 import { useDictSetup } from '@/hooks/useDictSetup';
@@ -15,7 +15,7 @@ import { useQueryParams } from '@/hooks/useQueryParams';
 import { useListQuery } from '@/hooks/useListQuery';
 import { useAction, confirmAction } from '@/hooks/useAction';
 
-const tabsStore = useTabsStore();
+const { closeTab } = useTabsView();
 const route = useRoute();
 const router = useRouter();
 /** 获取地址栏参数 */
@@ -151,7 +151,7 @@ function handleRevokeAuth(user_id: string | number) {
 
 /** 关闭跳转 */
 function handleClose() {
-  const to = tabsStore.tabClose(route.path);
+  const to = closeTab(route.path);
   if (to) {
     router.push(to);
   } else {

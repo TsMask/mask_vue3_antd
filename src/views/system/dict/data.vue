@@ -16,7 +16,7 @@ import {
 import { getDictOption, getType } from "@/api/system/dict/type";
 import { saveAs } from "file-saver";
 import { parseDateToStr } from "@/utils/date-utils";
-import useTabsStore from "@/store/modules/tabs";
+import { useTabsView } from "@/layouts/hooks/useTabsView";
 import useDictStore from "@/store/modules/dict";
 import { isSuccess } from "@/plugins/http-fetch";
 import { useQueryParams } from "@/hooks/useQueryParams";
@@ -27,7 +27,7 @@ import { useDictSetup } from "@/hooks/useDictSetup";
 import { useListQuery } from "@/hooks/useListQuery";
 import { useAction, confirmAction } from "@/hooks/useAction";
 
-const tabsStore = useTabsStore();
+const { closeTab } = useTabsView();
 const { parseDataDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
@@ -212,7 +212,7 @@ function handleExport() {
 }
 
 function handleClose() {
-  const to = tabsStore.tabClose(route.path);
+  const to = closeTab(route.path);
   if (to) {
     router.push(to);
   } else {

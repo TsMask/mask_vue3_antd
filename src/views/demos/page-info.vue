@@ -1,5 +1,5 @@
 <template>
-  <PageContainer :title="`${route.meta.title} ${route.params.id}`">
+  <PageContainer :title="title">
     <template #content>
       <a-descriptions size="small" :column="2">
         <a-descriptions-item label="创建人">张三</a-descriptions-item>
@@ -29,59 +29,38 @@
       </a-space>
     </template>
     <!-- 主内容区 -->
-    <div style="height: 300px">
-      <p>路由参数联动 分页器 组件</p>
-      <a-space>
-        <a-button type="dashed" @click="prev">跳转上一页</a-button>
-        <a-button type="dashed" @click="next">跳转下一页</a-button>
-      </a-space>
-      <a-divider />
-      <a-pagination
-        :current="currentId"
-        :total="total"
-        show-less-items
-        @change="handlePageChange"
-      />
+    <div style="height: 120vh">
+      <a-result
+        status="404"
+        title="Hello World"
+        sub-title="Sorry, you are not authorized to access this page."
+        class="result-box"
+      >
+        <template #extra>
+          <a-button type="primary">Back Home</a-button>
+        </template>
+      </a-result>
     </div>
   </PageContainer>
 </template>
 
 <script setup lang="ts">
 import { PageContainer } from "antdv-pro-layout";
-import { computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { ref } from "vue";
+import { useRoute } from "vue-router";
 import { LikeOutlined } from "@ant-design/icons-vue";
 const route = useRoute();
-const router = useRouter();
 
-const currentId = computed(() => {
-  let id = route.params && (route.params.id as string);
-  return Number.parseInt(id as string, 10) || 1;
-});
-const total = computed(() => {
-  const v = currentId.value * 20;
-  if (v >= Number.MAX_SAFE_INTEGER) {
-    return Number.MAX_SAFE_INTEGER;
-  }
-  return v;
-});
-
-const next = () => {
-  router.push({
-    name: "DynamicMatch",
-    params: { id: currentId.value + 1 },
-  });
-};
-const prev = () => {
-  router.push({
-    name: "DynamicMatch",
-    params: { id: currentId.value > 1 ? currentId.value - 1 : 1 },
-  });
-};
-const handlePageChange = (currentPage: number) => {
-  router.push({
-    name: "DynamicMatch",
-    params: { id: currentPage },
-  });
-};
+/**路由标题 */
+let title = ref<string>(route.meta?.title as any);
 </script>
+
+<style scoped lang="css">
+.result-box {
+  height: 100%;
+  background: rgb(255, 255, 255);
+}
+[data-theme="dark"] .result-box {
+  background: #141414;
+}
+</style>

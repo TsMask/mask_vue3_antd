@@ -13,7 +13,7 @@ import {
 } from '@/api/monitor/jobLog';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
-import useTabsStore from '@/store/modules/tabs';
+import { useTabsView } from '@/layouts/hooks/useTabsView';
 import { useTableUI } from '@/hooks/useTableUI';
 import { usePagination } from '@/hooks/usePagination';
 import { useDictSetup } from '@/hooks/useDictSetup';
@@ -21,7 +21,7 @@ import { useQueryParams } from '@/hooks/useQueryParams';
 import { useListQuery } from '@/hooks/useListQuery';
 import { confirmAction } from '@/hooks/useAction';
 
-const tabsStore = useTabsStore();
+const { closeTab } = useTabsView();
 const route = useRoute();
 const router = useRouter();
 /** 字典数据初始化 */
@@ -158,7 +158,7 @@ function handleExport() {
 }
 
 function handleClose() {
-  const to = tabsStore.tabClose(route.path);
+  const to = closeTab(route.path);
   if (to) { router.push(to); } else { router.back(); }
 }
 </script>
