@@ -23,4 +23,4 @@
   </a-result>
 </template>
 
-<style lang="less" scoped></style>
+<style scoped></style>

@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
-import { message, Form } from 'ant-design-vue';
-import type { ColumnsType } from 'ant-design-vue/es/table';
+import { message } from 'ant-design-vue';
+import {
+  ProTable,
+  type ProColumns,
+  type ProColumnsSearch,
+} from 'antdv-pro-table';
 import IconFont from '@/components/IconFont/index.vue';
 import { iconFonts } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import { useRoute } from 'vue-router';
@@ -26,11 +30,10 @@ import {
   MENU_TYPE_AUTH,
 } from '@/constants/menu-constants';
 import { isSuccess } from '@/plugins/http-fetch';
-import { useTableUI } from '@/hooks/useTableUI';
 import { useDictSetup } from '@/hooks/useDictSetup';
-import { useQueryParams } from '@/hooks/useQueryParams';
-import { useListQuery } from '@/hooks/useListQuery';
+import { useCrudModal } from '@/hooks/useCrudModal';
 import { useAction, confirmAction } from '@/hooks/useAction';
+import { toProValueEnum, useProTable, useProTableScroll } from '@/hooks/useProTable';
 
 const route = useRoute();
 const icons = reactive(iconFonts.map((item) => ({ value: item, label: item })));
@@ -40,24 +43,26 @@ const title = ref<string>(route.meta.title ?? '标题');
 /** 字典数据初始化 */
 const { dict } = useDictSetup({ keyMap: { sysNormalDisable: 'sys_normal_disable', } });
 
-/** 查询参数 */
-const { queryParams, handleQuery, resetQuery } = useQueryParams(
-  { menu_name: '', menu_status: undefined as string | undefined },
-  () => { fetchList(); },
-);
-
 /** 列表数据查询 */
-const { listData, loading, fetch: fetchList } = useListQuery({
-  queryFn: () => listMenu(toRaw(queryParams)),
+const {
+  dataSource,
+  loading,
+  onSearch,
+  onReset,
+  onTableChange,
+  reload,
+} = useProTable({
+  queryFn: listMenu,
+  defaultPageSize: 20,
 });
 
 /** 树形表格数据（由列表数据自动转换） */
-const treeTableData = computed(() => parseDataToTree(listData.value as any[], 'id'));
+const treeTableData = computed(() => parseDataToTree(dataSource.value as any[], 'id'));
 
 /** 弹窗用父菜单树数据（排除权限类型，带根节点） */
 const treeDataAll = computed(() => {
-  if (listData.value.length === 0) return [];
-  const data = JSON.parse(JSON.stringify(listData.value));
+  if (dataSource.value.length === 0) return [];
+  const data = JSON.parse(JSON.stringify(dataSource.value));
   return [
     {
       id: '0',
@@ -69,16 +74,9 @@ const treeDataAll = computed(() => {
 
 /** 所有父节点 ID（用于展开/折叠全部） */
 const expandedRowKeysAll = computed(() => {
-  return [...new Set(listData.value.map((item: any) => item.parent_id))];
+  return [...new Set(dataSource.value.map((item: any) => item.parent_id))];
 });
 
-const {
-  tableState,
-  setTableSize,
-  rowClassName,
-} = useTableUI();
-
-tableState.searched = false;
 const expandedRowKeys = ref<(string | number)[]>([]);
 const expandedRowAll = ref(false);
 
@@ -100,7 +98,7 @@ watch(expandedRowKeysAll, (keys) => {
   }
 });
 
-const tableColumns: ColumnsType = [
+const tableColumns = computed<ProColumns[]>(() => [
   { title: '菜单名称', dataIndex: 'menu_name', align: 'left', width: 200 },
   { title: '菜单编号', dataIndex: 'id', align: 'left', width: 100 },
   { title: '菜单排序', dataIndex: 'menu_sort', align: 'left', width: 100 },
@@ -108,33 +106,49 @@ const tableColumns: ColumnsType = [
   { title: '权限标识', dataIndex: 'menu_perms', align: 'left', width: 200 },
   { title: '组件路径', dataIndex: 'menu_component', align: 'left', width: 200 },
   { title: '显示状态', dataIndex: 'menu_visible', key: 'menu_visible', align: 'left', width: 100 },
-  { title: '菜单状态', dataIndex: 'menu_status', key: 'menu_status', align: 'left', width: 100 },
+  {
+    title: '菜单状态',
+    dataIndex: 'menu_status',
+    key: 'menu_status',
+    align: 'left',
+    width: 100,
+    valueType: 'select',
+    valueEnum: toProValueEnum(dict.sysNormalDisable),
+  },
   {
     title: '创建时间',
     dataIndex: 'create_time',
     align: 'left',
     width: 200,
-    customRender(opt) {
-      if (+opt.value <= 0) return '';
-      return parseDateToStr(+opt.value);
-    },
+    renderText: value => (+value <= 0 ? '' : parseDateToStr(+value)),
   },
-  { title: '操作', key: 'id', align: 'left' },
-];
+  { title: '操作', key: 'operation', align: 'left', width: 200 },
+]);
+
+const tableScroll = useProTableScroll(tableColumns);
+
+const searchColumns = computed<ProColumnsSearch[]>(() => [
+  { title: '菜单名称', dataIndex: 'menu_name' },
+  {
+    title: '菜单状态',
+    dataIndex: 'menu_status',
+    valueType: 'select',
+    valueEnum: toProValueEnum(dict.sysNormalDisable),
+  },
+]);
 
 // ==================== 弹窗状态 ====================
 
-const modalState = reactive({
-  visibleByView: false,
-  visibleByEdit: false,
-  title: '菜单',
-  form: {} as Record<string, any>,
-  confirmLoading: false,
-});
-
-const modalStateForm = Form.useForm(
-  modalState.form,
-  reactive({
+const {
+  modal: modalState,
+  formCtl: modalStateForm,
+  isView,
+  setForm,
+  open,
+  close: handleCancel,
+} = useCrudModal({
+  initForm: () => getDefaultForm(),
+  rules: {
     parent_id: [{ required: true, message: '上级菜单不能为空' }],
     menu_name: [
       { required: true, min: 1, max: 50, message: '请正确输入菜单名称' },
@@ -148,8 +162,8 @@ const modalStateForm = Form.useForm(
     menu_perms: [
       { required: true, min: 1, max: 100, message: '请正确输入权限标识' },
     ],
-  })
-);
+  },
+});
 
 /** 新增/编辑提交 mutation */
 const { execute: submitExecute, loading: isSubmitting } = useAction({
@@ -158,7 +172,7 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
   successText: '操作成功',
   onSuccess: () => {
     handleCancel();
-    fetchList();
+    reload();
   },
 });
 
@@ -166,7 +180,7 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 function getDefaultForm() {
   return {
     id: undefined,
-    parent_id: 0,
+    parent_id: 0 as string | number,
     menu_name: '',
     menu_sort: 0,
     menu_type: MENU_TYPE_AUTH,
@@ -180,16 +194,14 @@ function getDefaultForm() {
     menu_status: '0',
     create_time: 0,
     remark: '',
-    parentType: '',
+    parentType: '' as string | number | undefined,
   };
 }
-
-Object.assign(modalState.form, getDefaultForm());
 
 /** 上级菜单选择变化时，自动推断子菜单类型（目录->菜单，菜单->权限） */
 function handleTreeDataChange(value: any) {
   if (!value) return;
-  const menu = listData.value.find((m: any) => m.id === value);
+  const menu = dataSource.value.find((m: any) => m.id === value);
   if (!menu) return;
   if ((menu as any).menu_type === MENU_TYPE_DIR) {
     modalState.form.menu_type = MENU_TYPE_MENU;
@@ -213,8 +225,7 @@ function handleView(id: string | number) {
     .then((res) => {
       if (isSuccess(res) && res.data) {
         Object.assign(modalState.form, res.data);
-        modalState.title = '菜单信息';
-        modalState.visibleByView = true;
+        open('view', '菜单信息');
       } else {
         message.error({ content: '获取菜单信息失败', duration: 3 });
       }
@@ -237,13 +248,12 @@ function handleEdit(
   parentType?: string | number,
 ) {
   if (!id) {
-    Object.assign(modalState.form, getDefaultForm());
+    modalStateForm.resetFields();
     if (parent_id) {
       modalState.form.parent_id = parent_id;
       modalState.form.parentType = parentType;
     }
-    modalState.title = '添加菜单信息';
-    modalState.visibleByEdit = true;
+    open('add', '添加菜单信息');
   } else {
     if (modalState.confirmLoading) return;
     const hide = message.loading('正在打开...', 0);
@@ -251,9 +261,8 @@ function handleEdit(
     getMenu(id)
       .then((res) => {
         if (isSuccess(res) && res.data) {
-          Object.assign(modalState.form, res.data);
-          modalState.title = '修改菜单信息';
-          modalState.visibleByEdit = true;
+          setForm(res.data);
+          open('edit', '修改菜单信息');
         } else {
           message.error({ content: '获取菜单信息失败', duration: 3 });
         }
@@ -263,12 +272,6 @@ function handleEdit(
         modalState.confirmLoading = false;
       });
   }
-}
-
-/** 关闭菜单详情/编辑弹窗 */
-function handleCancel() {
-  modalState.visibleByEdit = false;
-  modalState.visibleByView = false;
 }
 
 /** 提交新增/编辑菜单 */
@@ -283,6 +286,7 @@ function handleDelete(id: string | number) {
     action: () => delMenu(id),
     variables: undefined,
     successText: '删除成功',
+    onSuccess: () => reload(),
   });
 }
 </script>
@@ -295,46 +299,14 @@ function handleDelete(id: string | number) {
       </a-typography-paragraph>
     </template>
 
-    <a-card v-show="tableState.searched" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
-      <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row :gutter="16">
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="菜单名称" name="menu_name">
-              <a-input v-model:value="queryParams.menu_name" allow-clear placeholder="请输入菜单名称"></a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="状态" name="menu_status">
-              <a-select v-model:value="queryParams.menu_status" allow-clear placeholder="请选择菜单状态"
-                :options="dict.sysNormalDisable">
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item>
-              <a-space :size="8">
-                <a-button type="primary" @click.prevent="handleQuery">
-                  <template #icon>
-                    <SearchOutlined />
-                  </template>
-                  搜索
-                </a-button>
-                <a-button type="default" @click.prevent="resetQuery">
-                  <template #icon>
-                    <ClearOutlined />
-                  </template>
-                  重置
-                </a-button>
-              </a-space>
-            </a-form-item>
-          </a-col>
-        </a-row>
-      </a-form>
-    </a-card>
-
-    <a-card :bordered="false" :body-style="{ padding: '0px' }">
-      <template #title>
-        <a-space :size="8" align="center">
+    <ProTable row-key="id" :columns="tableColumns" :data-source="treeTableData" :loading="loading" :pagination="false"
+      @change="onTableChange" :scroll="tableScroll" :expanded-row-keys="expandedRowKeys" children-column-name="children"
+      @expandedRowsChange="handleExpandedRowsChange" :search="{ columns: searchColumns, onSearch, onReset }" :toolbar="{
+        setting: { columnsStateKey: 'system-menu', columnsStateType: 'local' },
+        onReload: reload,
+      }">
+      <template #toolBarRender>
+        <a-space :size="8" align="center" :style="{ flexWrap: 'wrap', marginBottom: '8px' }">
           <a-button type="primary" @click.prevent="handleEdit()" v-perms:has="['system:menu:add']">
             <template #icon>
               <PlusOutlined />
@@ -343,119 +315,78 @@ function handleDelete(id: string | number) {
           </a-button>
         </a-space>
       </template>
+      <template #toolbarRight>
+        <a-tooltip placement="topRight">
+          <template #title>展开/折叠</template>
+          <a-switch v-model:checked="expandedRowAll" checked-children="展" un-checked-children="折" size="small"
+            @change="handleExpandAll" />
+        </a-tooltip>
+      </template>
 
-      <template #extra>
-        <a-space :size="8" align="center">
-          <a-tooltip placement="topRight">
-            <template #title>展开/折叠</template>
-            <a-switch v-model:checked="expandedRowAll" checked-children="展" un-checked-children="折" size="small"
-              @change="handleExpandAll" />
-          </a-tooltip>
-          <a-tooltip placement="topRight">
-            <template #title>搜索栏</template>
-            <a-switch v-model:checked="tableState.searched" checked-children="显" un-checked-children="隐" size="small" />
-          </a-tooltip>
-          <a-tooltip placement="topRight">
-            <template #title>表格斑马纹</template>
-            <a-switch v-model:checked="tableState.striped" checked-children="开" un-checked-children="关" size="small" />
-          </a-tooltip>
-          <a-tooltip placement="topRight">
-            <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList">
-              <template #icon>
-                <ReloadOutlined />
-              </template>
-            </a-button>
-          </a-tooltip>
-          <a-tooltip placement="topRight">
-            <template #title>密度</template>
-            <a-dropdown placement="bottomRight" trigger="click">
-              <a-button type="text">
+      <template #bodyCell="{ column, record }">
+
+        <template v-if="column.key === 'menu_icon'">
+          <IconFont :type="record.menu_icon" style="font-size: 18px"></IconFont>
+        </template>
+        <template v-if="column.key === 'menu_visible'">
+          <a-tag :color="+record.menu_visible ? 'processing' : 'warning'">
+            {{ ['隐藏', '显示'][+record.menu_visible] }}
+          </a-tag>
+        </template>
+        <template v-if="column.key === 'menu_status'">
+          <DictTag :options="dict.sysNormalDisable" :value="record.menu_status" />
+        </template>
+        <template v-if="column.key === 'operation'">
+          <a-space :size="8" align="center">
+            <a-tooltip placement="topRight">
+              <template #title>查看详情</template>
+              <a-button type="link" @click.prevent="handleView(record.id)" v-perms:has="['system:menu:query']">
                 <template #icon>
-                  <ColumnHeightOutlined />
+                  <ProfileOutlined />
                 </template>
               </a-button>
-              <template #overlay>
-                <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
-                  <a-menu-item key="default">默认</a-menu-item>
-                  <a-menu-item key="middle">中等</a-menu-item>
-                  <a-menu-item key="small">紧凑</a-menu-item>
-                </a-menu>
-              </template>
-            </a-dropdown>
-          </a-tooltip>
-        </a-space>
-      </template>
-      <!-- 表格列表 -->
-      <a-table class="antdv-table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="treeTableData"
-        :size="tableState.size" :row-class-name="rowClassName" :pagination="false" :scroll="{
-          x: tableColumns.length * 120,
-          scrollToFirstRowOnChange: true,
-        }" children-column-name="children" :expanded-row-keys="expandedRowKeys"
-        @expandedRowsChange="handleExpandedRowsChange">
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'menu_icon'">
-            <IconFont :type="record.menu_icon" style="font-size: 18px"></IconFont>
-          </template>
-          <template v-if="column.key === 'menu_visible'">
-            <a-tag :color="+record.menu_visible ? 'processing' : 'warning'">
-              {{ ['隐藏', '显示'][+record.menu_visible] }}
-            </a-tag>
-          </template>
-          <template v-if="column.key === 'menu_status'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.menu_status" />
-          </template>
-          <template v-if="column.key === 'id'">
-            <a-space :size="8" align="center">
-              <a-tooltip placement="topRight">
-                <template #title>查看详情</template>
-                <a-button type="link" @click.prevent="handleView(record.id)" v-perms:has="['system:menu:query']">
-                  <template #icon>
-                    <ProfileOutlined />
-                  </template>
-                </a-button>
-              </a-tooltip>
-              <a-tooltip placement="topRight">
-                <template #title>编辑</template>
-                <a-button type="link" @click.prevent="handleEdit(record.id)" v-perms:has="['system:menu:edit']">
-                  <template #icon>
-                    <FormOutlined />
-                  </template>
-                </a-button>
-              </a-tooltip>
-              <a-tooltip placement="topRight">
-                <template #title>删除</template>
-                <a-button type="link" @click.prevent="handleDelete(record.id)" v-perms:has="['system:menu:remove']">
-                  <template #icon>
-                    <DeleteOutlined />
-                  </template>
-                </a-button>
-              </a-tooltip>
-              <a-tooltip placement="topRight" v-if="record.menu_type !== MENU_TYPE_AUTH">
-                <template #title>新增子菜单</template>
-                <a-button type="link" @click.prevent="
-                  handleEdit(
-                    undefined,
-                    record.id,
-                    record.menu_type
-                  )
-                  " v-perms:has="['system:menu:add']">
-                  <template #icon>
-                    <PlusOutlined />
-                  </template>
-                </a-button>
-              </a-tooltip>
-            </a-space>
-          </template>
+            </a-tooltip>
+            <a-tooltip placement="topRight">
+              <template #title>编辑</template>
+              <a-button type="link" @click.prevent="handleEdit(record.id)" v-perms:has="['system:menu:edit']">
+                <template #icon>
+                  <FormOutlined />
+                </template>
+              </a-button>
+            </a-tooltip>
+            <a-tooltip placement="topRight">
+              <template #title>删除</template>
+              <a-button type="link" @click.prevent="handleDelete(record.id)" v-perms:has="['system:menu:remove']">
+                <template #icon>
+                  <DeleteOutlined />
+                </template>
+              </a-button>
+            </a-tooltip>
+            <a-tooltip placement="topRight" v-if="record.menu_type !== MENU_TYPE_AUTH">
+              <template #title>新增子菜单</template>
+              <a-button type="link" @click.prevent="
+                handleEdit(
+                  undefined,
+                  record.id,
+                  record.menu_type
+                )
+                " v-perms:has="['system:menu:add']">
+                <template #icon>
+                  <PlusOutlined />
+                </template>
+              </a-button>
+            </a-tooltip>
+          </a-space>
         </template>
-      </a-table>
-    </a-card>
+      </template>
+    </ProTable>
 
-    <!-- 详情框 -->
-    <ProModal :drag="true" :width="800" :open="modalState.visibleByView" :title="modalState.title"
-      @cancel="handleCancel">
-      <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
-        <a-row>
+    <!-- 详情框或新增修改框 -->
+    <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="!isView" :mask-closable="isView"
+      :open="modalState.visible" :title="modalState.title" :confirm-loading="isSubmitting"
+      :footer="isView ? null : undefined" @ok="handleSubmit" @cancel="handleCancel">
+      <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true" :disabled="isView">
+        <a-row v-if="isView">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="菜单编号" name="id">
               {{ modalState.form.id }}
@@ -469,115 +400,10 @@ function handleDelete(id: string | number) {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="上级菜单" name="parent_id" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-tree-select :value="modalState.form.parent_id" placeholder="上级菜单" disabled :tree-data="treeDataAll"
-            :field-names="{
-              children: 'children',
-              label: 'menu_name',
-              value: 'id',
-            }" tree-node-label-prop="menu_name">
-            <template #suffixIcon></template>
-          </a-tree-select>
-        </a-form-item>
-
-        <a-row>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="菜单名称" name="menu_name">
-              {{ modalState.form.menu_name }}
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="菜单排序" name="menu_sort">
-              {{ modalState.form.menu_sort }}
-            </a-form-item>
-          </a-col>
-        </a-row>
-
-        <a-form-item label="菜单类型" name="menu_type" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-tag v-if="modalState.form.menu_type === MENU_TYPE_DIR" color="purple">
-            目录
-          </a-tag>
-          <a-tag v-if="modalState.form.menu_type === MENU_TYPE_MENU" color="cyan">
-            菜单
-          </a-tag>
-          <a-tag v-if="modalState.form.menu_type === MENU_TYPE_AUTH" color="orange">
-            权限
-          </a-tag>
-        </a-form-item>
-
-        <a-row v-if="modalState.form.menu_type !== MENU_TYPE_AUTH">
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="菜单图标" name="menu_icon">
-              <IconFont :type="modalState.form.menu_icon || '#'" style="font-size: 18px"></IconFont>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="路由地址" name="menu_path">
-              {{ modalState.form.menu_path }}
-            </a-form-item>
-          </a-col>
-        </a-row>
-
-        <a-row v-if="modalState.form.menu_type !== MENU_TYPE_AUTH">
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="是否外链" name="menu_external">
-              <a-tag color="default">
-                {{ ['否', '是'][+modalState.form.menu_external] }}
-              </a-tag>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="页面缓存" name="menu_cache">
-              <a-tag color="default">
-                {{ ['不缓存', '缓存'][+modalState.form.menu_cache] }}
-              </a-tag>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="显示状态" name="menu_visible">
-              <a-tag color="default">
-                {{ ['隐藏', '显示'][+modalState.form.menu_visible] }}
-              </a-tag>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="菜单状态" name="menu_status">
-              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.menu_status" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-
-        <a-form-item label="组件路径" name="menu_component" :label-col="{ span: 3 }" :label-wrap="true"
-          v-if="modalState.form.menu_type === MENU_TYPE_MENU">
-          {{ modalState.form.menu_component }}
-        </a-form-item>
-
-        <a-form-item label="权限标识" name="menu_perms" :label-col="{ span: 3 }" :label-wrap="true"
-          v-if="modalState.form.menu_type !== MENU_TYPE_DIR">
-          {{ modalState.form.menu_perms }}
-        </a-form-item>
-
-        <a-form-item label="菜单说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea :value="modalState.form.remark" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
-            style="color: rgba(0, 0, 0, 0.85)" />
-        </a-form-item>
-      </a-form>
-      <template #footer>
-        <a-button key="cancel" @click="handleCancel">关闭</a-button>
-      </template>
-    </ProModal>
-
-    <!-- 新增框或修改框 -->
-    <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
-      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="isSubmitting" @ok="handleSubmit"
-      @cancel="handleCancel">
-      <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-form-item label="上级菜单" name="parent_id" v-bind="modalStateForm.validateInfos.parent_id"
           :label-col="{ span: 3 }" :label-wrap="true">
-          <a-tree-select v-model:value="modalState.form.parent_id" placeholder="上级菜单" show-search tree-default-expand-all
-            :tree-data="treeDataAll" :field-names="{
+          <a-tree-select v-model:value="modalState.form.parent_id" placeholder="上级菜单" show-search
+            tree-default-expand-all :tree-data="treeDataAll" :field-names="{
               children: 'children',
               label: 'menu_name',
               value: 'id',
@@ -719,8 +545,8 @@ function handleDelete(id: string | number) {
           </a-input>
         </a-form-item>
 
-        <a-form-item label="权限标识" name="menu_perms" v-bind="modalStateForm.validateInfos.menu_perms" :label-col="{ span: 3 }"
-          :label-wrap="true" v-if="modalState.form.menu_type !== MENU_TYPE_DIR">
+        <a-form-item label="权限标识" name="menu_perms" v-bind="modalStateForm.validateInfos.menu_perms"
+          :label-col="{ span: 3 }" :label-wrap="true" v-if="modalState.form.menu_type !== MENU_TYPE_DIR">
           <a-input v-model:value="modalState.form.menu_perms" allow-clear placeholder="请输入权限标识" :maxlength="100">
             <template #prefix>
               <a-tooltip placement="topLeft">
@@ -744,8 +570,4 @@ function handleDelete(id: string | number) {
   </PageContainer>
 </template>
 
-<style lang="less" scoped>
-.antdv-table :deep(.antdv-striped) td {
-  background-color: #fafafa;
-}
-</style>
+<style scoped></style>

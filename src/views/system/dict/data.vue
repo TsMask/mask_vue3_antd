@@ -1,10 +1,14 @@
 ﻿<script setup lang="ts">
 import { useRoute, useRouter } from "vue-router";
-import { ref, reactive, toRaw, computed, watch, onMounted } from "vue";
+import { ref, reactive, toRaw, computed, onMounted } from "vue";
 import { PageContainer } from "antdv-pro-layout";
 import { ProModal } from "antdv-pro-modal";
 import { message } from "ant-design-vue";
-import type { ColumnsType } from "ant-design-vue/es/table";
+import {
+  ProTable,
+  type ProColumns,
+  type ProColumnsSearch,
+} from "antdv-pro-table";
 import {
   exportData,
   listData,
@@ -19,19 +23,17 @@ import { parseDateToStr } from "@/utils/date-utils";
 import { useTabsView } from "@/layouts/hooks/useTabsView";
 import useDictStore from "@/store/modules/dict";
 import { isSuccess } from "@/plugins/http-fetch";
-import { useQueryParams } from "@/hooks/useQueryParams";
-import { usePagination } from "@/hooks/usePagination";
-import { useTableUI } from "@/hooks/useTableUI";
 import { useCrudModal } from "@/hooks/useCrudModal";
 import { useDictSetup } from "@/hooks/useDictSetup";
-import { useListQuery } from "@/hooks/useListQuery";
 import { useAction, confirmAction } from "@/hooks/useAction";
+import { toProValueEnum, useProTable, useProTableScroll } from "@/hooks/useProTable";
 
 const { closeTab } = useTabsView();
 const { parseDataDict } = useDictStore();
 const route = useRoute();
 const router = useRouter();
 const dict_id = route.params && (route.params.dictId as string);
+const defaultDictType = ref<string>();
 
 const tagTypeOptions = ref([
   { value: "", label: "普通文本" },
@@ -62,54 +64,31 @@ const dict = reactive({
   sysDictType: [] as DictType[],
 });
 
-const { queryParams, handleQuery, resetQuery: baseResetQuery, setQuery } = useQueryParams(
-  {
-    dict_type: undefined as string | undefined,
-    data_label: "",
-    data_status: undefined as string | undefined,
-    page_num: 1,
-    page_size: 20,
-  },
-  () => { resetPage(); }
-);
-
-/** 重置查询条件；从字典类型页进入时仅重置数据标签和状态，保留 dict_type */
-function resetQuery() {
-  if (dict_id && dict_id !== "0") {
-    setQuery({ data_label: "", data_status: undefined, page_num: 1, page_size: 20 });
-    resetPage();
-  } else {
-    baseResetQuery();
-  }
-}
-
-const {
-  tableState,
-  setTableSize,
-  rowClassName,
-  setSelectedRowKeys,
-} = useTableUI({ defaultSize: "middle" });
-
-tableState.searched = true;
-
-const { pagination, resetPage, clampPage } = usePagination({
-  onChange: (page, page_size) => {
-    queryParams.page_num = page;
-    queryParams.page_size = page_size;
-    fetchList()
-  },
-});
-
 /** 列表数据查询 */
-const { listData: tableListData, loading, fetch: fetchList } = useListQuery({
-  immediate: false,
-  paginationRef: pagination,
-  queryFn: () => listData(toRaw(queryParams)),
+const {
+  dataSource,
+  loading,
+  pagination,
+  current,
+  pageSize,
+  searchValues,
+  onSearch,
+  onReset,
+  onTableChange,
+  reload,
+  rowSelection, selectedRowKeys, removeSelectedRowKeys
+} = useProTable({
+  queryFn: listData,
+  defaultPageSize: 20,
+  manual: true,
+  rowKey: "id"
 });
 
 const {
   modal: modalState,
   formCtl: modalStateForm,
+  isView,
+  open,
   openEdit,
   close: handleCancel,
   setForm,
@@ -141,35 +120,72 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
   successText: "操作成功",
   onSuccess() {
     handleCancel();
-    fetchList();
+    reload();
   }
 });
 
-const tableColumns: ColumnsType = [
+const tableColumns = computed<ProColumns[]>(() => [
   { title: "数据编号", dataIndex: "id", align: "left", width: 100 },
   { title: "数据标签", dataIndex: "data_label", align: "left", width: 200 },
   { title: "数据键值", dataIndex: "data_value", align: "left", width: 200 },
   { title: "数据排序", dataIndex: "data_sort", align: "left", width: 100 },
-  { title: "数据状态", dataIndex: "data_status", key: "data_status", align: "left", width: 100 },
   {
-    title: "创建时间", dataIndex: "create_time", align: "left", width: 150,
-    customRender(opt) { if (+opt.value <= 0) return ""; return parseDateToStr(+opt.value); },
+    title: "数据状态",
+    dataIndex: "data_status",
+    key: "data_status",
+    align: "left",
+    width: 100,
+    valueType: "select",
+    valueEnum: toProValueEnum(dict.sysNormalDisable),
   },
-  { title: "操作", key: "id", align: "left" },
-];
+  {
+    title: "创建时间",
+    dataIndex: "create_time",
+    align: "left",
+    width: 150,
+    renderText: value => (+value <= 0 ? "" : parseDateToStr(+value)),
+  },
+  {
+    title: "字典类型",
+    dataIndex: "dict_type",
+    valueType: "select",
+    valueEnum: toProValueEnum(dict.sysDictType),
+    fieldProps: { showSearch: true, disabled: !!defaultDictType },
+  },
+  { title: "操作", key: "operation", align: "left", width: 130 },
+]);
+
+const tableScroll = useProTableScroll(tableColumns);
+
+const searchColumns = computed<ProColumnsSearch[]>(() => [
+  {
+    title: "字典类型",
+    dataIndex: "dict_type",
+    valueType: "select",
+    valueEnum: toProValueEnum(dict.sysDictType),
+    defaultValue: defaultDictType.value,
+    fieldProps: { showSearch: true },
+  },
+  { title: "数据标签", dataIndex: "data_label" },
+  {
+    title: "数据状态",
+    dataIndex: "data_status",
+    valueType: "select",
+    valueEnum: toProValueEnum(dict.sysNormalDisable),
+  },
+]);
 
 /** 直接从行数据打开字典数据详情弹窗（无需再次请求接口） */
 function handleView(row: Record<string, string>) {
   setForm(row);
-  modalState.title = "字典数据信息";
-  modalState.visibleByView = true;
+  open("view", "字典数据信息");
 }
 
 /** 打开新增或编辑弹窗 */
 function handleEdit(id?: string | number) {
   if (!id) {
     openEdit(undefined, getData, "添加字典数据", "修改字典数据");
-    setTimeout(() => { modalState.form.dict_type = queryParams.dict_type; }, 0);
+    modalState.form.dict_type = searchValues.value.dict_type ?? defaultDictType.value;
   } else {
     openEdit(id, getData, "添加字典数据", "修改字典数据");
   }
@@ -187,7 +203,7 @@ async function handleSubmit() {
 
 function handleDelete(id: string = "0") {
   if (id === "0") {
-    id = tableState.selectedRowKeys.join(",");
+    id = selectedRowKeys.value.join(",");
   }
   confirmAction({
     content: `确认删除字典数据编号为【${id}】的数据项?`,
@@ -195,8 +211,8 @@ function handleDelete(id: string = "0") {
     variables: undefined,
     successText: "删除成功",
     onSuccess() {
-      const deletedCount = String(id).split(",").length;
-      if (!clampPage(deletedCount)) fetchList();
+      removeSelectedRowKeys(String(id).split(",").map(Number));
+      reload();
     },
   });
 }
@@ -204,7 +220,11 @@ function handleDelete(id: string = "0") {
 function handleExport() {
   confirmAction({
     content: "确认根据搜索条件导出数据文件吗",
-    action: () => exportData(toRaw(queryParams)),
+    action: () => exportData({
+      ...toRaw(searchValues.value),
+      page_num: current.value,
+      page_size: pageSize.value,
+    }),
     variables: undefined,
     successText: "已导出完成",
     onSuccess: (res) => saveAs(res.data, `dict_data_${Date.now()}.csv`),
@@ -229,64 +249,33 @@ onMounted(async () => {
   if (dict_id && dict_id !== "0") {
     const res = await getType(dict_id);
     if (isSuccess(res) && res.data) {
-      queryParams.dict_type = res.data.dict_type;
+      defaultDictType.value = res.data.dict_type;
     } else {
       message.error({ content: "获取字典类型信息失败", duration: 3 });
     }
   }
-  await fetchList()
+  await onSearch(
+    defaultDictType.value ? { dict_type: defaultDictType.value } : {}
+  );
 });
 </script>
 
 <template>
   <PageContainer>
-    <a-card v-show="tableState.searched" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
-      <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row :gutter="16">
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="字典名称" name="dict_type">
-              <a-select v-model:value="queryParams.dict_type" :allow-clear="dict_id === '0'" :disabled="dict_id !== '0'"
-                placeholder="请选择字典名称" :options="dict.sysDictType">
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="数据标签" name="data_label">
-              <a-input v-model:value="queryParams.data_label" allow-clear placeholder="请输入数据标签"></a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="数据状态" name="data_status">
-              <a-select v-model:value="queryParams.data_status" allow-clear placeholder="请选择数据状态"
-                :options="dict.sysNormalDisable">
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item>
-              <a-space :size="8">
-                <a-button type="primary" @click.prevent="handleQuery">
-                  <template #icon>
-                    <SearchOutlined />
-                  </template>
-                  搜索
-                </a-button>
-                <a-button type="default" @click.prevent="resetQuery">
-                  <template #icon>
-                    <ClearOutlined />
-                  </template>
-                  重置
-                </a-button>
-              </a-space>
-            </a-form-item>
-          </a-col>
-        </a-row>
-      </a-form>
-    </a-card>
+    <template #content>
+      <a-typography-paragraph>
+        字典数据按类型分类，每个字典类型下包含多个数据项，每个数据项都有一个唯一的键值对，映射数据。
+      </a-typography-paragraph>
+    </template>
 
-    <a-card :bordered="false" :body-style="{ padding: '0px' }">
-      <template #title>
-        <a-space :size="8" align="center">
+    <ProTable row-key="id" :columns="tableColumns" :data-source="dataSource" :loading="loading" :pagination="pagination"
+      :row-selection="rowSelection" @change="onTableChange" :scroll="tableScroll"
+      :search="{ columns: searchColumns, onSearch, onReset }" :toolbar="{
+        setting: { columnsStateKey: 'system-dict-data', columnsStateType: 'local' },
+        onReload: reload,
+      }">
+      <template #toolBarRender>
+        <a-space :size="8" align="center" :style="{ flexWrap: 'wrap', marginBottom: '8px' }">
           <a-button type="default" @click.prevent="handleClose()">
             <template #icon>
               <CloseOutlined />
@@ -299,8 +288,8 @@ onMounted(async () => {
             </template>
             新增
           </a-button>
-          <a-button type="default" danger :disabled="tableState.selectedRowKeys.length <= 0"
-            @click.prevent="handleDelete()" v-perms:has="['system:dict:remove']">
+          <a-button type="default" danger :disabled="selectedRowKeys.length <= 0" @click.prevent="handleDelete()"
+            v-perms:has="['system:dict:remove']">
             <template #icon>
               <DeleteOutlined />
             </template>
@@ -315,91 +304,47 @@ onMounted(async () => {
         </a-space>
       </template>
 
-      <template #extra>
-        <a-space :size="8" align="center">
-          <a-tooltip placement="topRight">
-            <template #title>搜索栏</template>
-            <a-switch v-model:checked="tableState.searched" checked-children="是" un-checked-children="否" size="small" />
-          </a-tooltip>
-          <a-tooltip placement="topRight">
-            <template #title>表格斑马纹</template>
-            <a-switch v-model:checked="tableState.striped" checked-children="开" un-checked-children="关" size="small" />
-          </a-tooltip>
-          <a-tooltip placement="topRight">
-            <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList">
-              <template #icon>
-                <ReloadOutlined />
-              </template>
-            </a-button>
-          </a-tooltip>
-          <a-tooltip placement="topRight">
-            <template #title>密度</template>
-            <a-dropdown placement="bottomRight" trigger="click">
-              <a-button type="text">
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'data_status'">
+          <DictTag :options="dict.sysNormalDisable" :value="record.data_status" />
+        </template>
+        <template v-if="column.key === 'operation'">
+          <a-space :size="8" align="center">
+            <a-tooltip placement="topRight">
+              <template #title>查看详情</template>
+              <a-button type="link" @click.prevent="handleView(record)" v-perms:has="['system:dict:query']">
                 <template #icon>
-                  <ColumnHeightOutlined />
+                  <ProfileOutlined />
                 </template>
               </a-button>
-              <template #overlay>
-                <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
-                  <a-menu-item key="default">默认</a-menu-item>
-                  <a-menu-item key="middle">中等</a-menu-item>
-                  <a-menu-item key="small">紧凑</a-menu-item>
-                </a-menu>
-              </template>
-            </a-dropdown>
-          </a-tooltip>
-        </a-space>
-      </template>
-
-      <a-table class="antdv-table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="tableListData"
-        :size="tableState.size" :row-class-name="rowClassName"
-        :scroll="{ x: tableColumns.length * 120, scrollToFirstRowOnChange: true }" :pagination="{ ...pagination }"
-        :row-selection="{
-          type: 'checkbox', selectedRowKeys: tableState.selectedRowKeys, onChange: setSelectedRowKeys,
-        }">
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'data_status'">
-            <DictTag :options="dict.sysNormalDisable" :value="record.data_status" />
-          </template>
-          <template v-if="column.key === 'id'">
-            <a-space :size="8" align="center">
-              <a-tooltip placement="topRight">
-                <template #title>查看详情</template>
-                <a-button type="link" @click.prevent="handleView(record)" v-perms:has="['system:dict:query']">
-                  <template #icon>
-                    <ProfileOutlined />
-                  </template>
-                </a-button>
-              </a-tooltip>
-              <a-tooltip placement="topRight">
-                <template #title>编辑</template>
-                <a-button type="link" @click.prevent="handleEdit(record.id)" v-perms:has="['system:dict:edit']">
-                  <template #icon>
-                    <FormOutlined />
-                  </template>
-                </a-button>
-              </a-tooltip>
-              <a-tooltip placement="topRight">
-                <template #title>删除</template>
-                <a-button type="link" @click.prevent="handleDelete(record.id)" v-perms:has="['system:dict:remove']">
-                  <template #icon>
-                    <DeleteOutlined />
-                  </template>
-                </a-button>
-              </a-tooltip>
-            </a-space>
-          </template>
+            </a-tooltip>
+            <a-tooltip placement="topRight">
+              <template #title>编辑</template>
+              <a-button type="link" @click.prevent="handleEdit(record.id)" v-perms:has="['system:dict:edit']">
+                <template #icon>
+                  <FormOutlined />
+                </template>
+              </a-button>
+            </a-tooltip>
+            <a-tooltip placement="topRight">
+              <template #title>删除</template>
+              <a-button type="link" @click.prevent="handleDelete(record.id)" v-perms:has="['system:dict:remove']">
+                <template #icon>
+                  <DeleteOutlined />
+                </template>
+              </a-button>
+            </a-tooltip>
+          </a-space>
         </template>
-      </a-table>
-    </a-card>
+      </template>
+    </ProTable>
 
-    <!-- 详情框 -->
-    <ProModal :drag="true" :width="800" :open="modalState.visibleByView" :title="modalState.title"
-      @cancel="handleCancel">
-      <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
-        <a-row>
+    <!-- 详情框或新增修改框 -->
+    <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="!isView" :mask-closable="isView"
+      :open="modalState.visible" :title="modalState.title" :confirm-loading="isSubmitting"
+      :footer="isView ? null : undefined" @ok="handleSubmit" @cancel="handleCancel">
+      <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true" :disabled="isView">
+        <a-row v-if="isView">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="数据编号" name="id">{{ modalState.form.id }}</a-form-item>
           </a-col>
@@ -409,63 +354,6 @@ onMounted(async () => {
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="字典类型" name="dict_type">
-              <a-select v-model:value="modalState.form.dict_type" placeholder="字典类型" :options="dict.sysDictType"
-                :disabled="true">
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据状态" name="data_status">
-              <DictTag :options="dict.sysNormalDisable" :value="modalState.form.data_status" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据标签" name="data_label">{{ modalState.form.data_label }}</a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据键值" name="data_value">{{ modalState.form.data_value }}</a-form-item>
-          </a-col>
-        </a-row>
-        <a-row>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="标签类型" name="tag_type">
-              <DictTag :options="tagTypeOptions" :value="modalState.form.tag_type" />
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据排序" name="data_sort">{{ modalState.form.data_sort }}</a-form-item>
-          </a-col>
-        </a-row>
-        <a-row>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="样式属性" name="tag_class">{{ modalState.form.tag_class }}</a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="回显预览" name="tag_type">
-              <DictTag :options="parseDataDict(modalState.form)" :value="modalState.form.data_value" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-form-item label="数据说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea :value="modalState.form.remark" :auto-size="{ minRows: 2, maxRows: 6 }" :disabled="true"
-            style="color: rgba(0, 0, 0, 0.85)" />
-        </a-form-item>
-      </a-form>
-      <template #footer>
-        <a-button key="cancel" @click="handleCancel">关闭</a-button>
-      </template>
-    </ProModal>
-
-    <!-- 新增框或修改框 -->
-    <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
-      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="isSubmitting" @ok="handleSubmit"
-      @cancel="handleCancel">
-      <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="字典类型" name="dict_type" v-bind="modalStateForm.validateInfos.dict_type">
@@ -511,23 +399,19 @@ onMounted(async () => {
           </a-col>
         </a-row>
         <a-form-item label="样式属性" name="tag_class" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-input v-model:value="modalState.form.tag_class" allow-clear placeholder="请输入样式属性" :maxlength="50"></a-input>
+          <a-input v-model:value="modalState.form.tag_class" allow-clear placeholder="请输入样式属性"
+            :maxlength="50"></a-input>
+        </a-form-item>
+        <a-form-item v-if="isView" label="回显预览" name="tag_type" :label-col="{ span: 3 }" :label-wrap="true">
+          <DictTag :options="parseDataDict(modalState.form)" :value="modalState.form.data_value" />
         </a-form-item>
         <a-form-item label="数据说明" name="remark" :label-col="{ span: 3 }" :label-wrap="true">
           <a-textarea v-model:value="modalState.form.remark" :auto-size="{ minRows: 2, maxRows: 6 }" :maxlength="200"
-            :show-count="true" placeholder="请输入数据说明" />
+            :show-count="!isView" placeholder="请输入数据说明" />
         </a-form-item>
       </a-form>
     </ProModal>
   </PageContainer>
 </template>
 
-<style lang="less" scoped>
-.antdv-table :deep(.antdv-striped) td {
-  background-color: #fafafa;
-}
-
-.antdv-table :deep(.ant-pagination) {
-  padding: 0 24px;
-}
-</style>
+<style scoped></style>

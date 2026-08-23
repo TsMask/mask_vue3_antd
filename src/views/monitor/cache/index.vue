@@ -3,7 +3,7 @@ import { useRoute } from 'vue-router';
 import { reactive, ref } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { message } from 'ant-design-vue';
-import type { ColumnsType } from 'ant-design-vue/es/table/Table';
+import { ProTable, type ProColumns } from 'antdv-pro-table';
 import {
   listCacheName,
   listCacheKey,
@@ -14,24 +14,47 @@ import {
 } from '@/api/monitor/cache';
 import { hasPermissions } from '@/plugins/auth-user';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
-import { useListQuery } from '@/hooks/useListQuery';
 import { useAction } from '@/hooks/useAction';
+import { useProTable } from '@/hooks/useProTable';
 
 const route = useRoute();
 const title = ref<string>(route.meta.title ?? '标题');
 
 /** 缓存名称列表 */
-const { listData: cacheNameData, loading: cacheNameLoading, fetch: fetchCacheNames } = useListQuery({
-  queryFn: () => listCacheName(),
+const {
+  dataSource: cacheNameData,
+  loading: cacheNameLoading,
+  reload: fetchCacheNames,
+  rowSelection: cacheNameRowSelection,
+} = useProTable({
+  queryFn: listCacheName,
+  defaultPageSize: 20,
+  rowKey: 'cache_name',
+  selection: {
+    rowSelection: { type: 'radio' },
+    onChange: keys => handleSelectCacheName(String(keys[0])),
+  },
 });
 
 /** 当前选中的缓存名称 */
 let selectedCacheName = '';
 
 /** 缓存键名列表 */
-const { listData: cacheKeyData, loading: cacheKeyLoading, fetch: fetchCacheKeys } = useListQuery({
-  queryFn: () => listCacheKey(selectedCacheName),
-  immediate: false,
+const {
+  dataSource: cacheKeyData,
+  loading: cacheKeyLoading,
+  reload: fetchCacheKeys,
+  rowSelection: cacheKeyRowSelection,
+} = useProTable({
+  queryFn: params => listCacheKey(params.cache_name),
+  params: () => ({ cache_name: selectedCacheName }),
+  defaultPageSize: 20,
+  manual: true,
+  rowKey: 'cache_key',
+  selection: {
+    rowSelection: { type: 'radio' },
+    onChange: keys => handleCacheKeyInfo(String(keys[0])),
+  },
 });
 
 /** 选择缓存名称，加载键名列表 */
@@ -64,7 +87,11 @@ function handleCacheKeyInfo(cache_key: string) {
       if (res.code === RESULT_CODE_SUCCESS) {
         if (res.data.cache_value) {
           try {
-            res.data.cache_value = JSON.stringify(JSON.parse(res.data.cache_value), null, 2);
+            res.data.cache_value = JSON.stringify(
+              JSON.parse(res.data.cache_value),
+              null,
+              2
+            );
           } catch {
             // 非 JSON 格式保持原样
           }
@@ -112,38 +139,59 @@ const { execute: clearKeyRun } = useAction({
 });
 
 /** 键名列表表格字段列 */
-const cacheKeyTableColumns: ColumnsType = [
-  { title: '序号', dataIndex: 'num', width: 50, align: 'left', customRender(opt) { return opt.index + 1; } },
+const cacheKeyTableColumns: ProColumns[] = [
   {
-    title: '缓存键名', dataIndex: 'cache_key', align: 'left', width: 150, ellipsis: true,
-    customRender(opt) { return opt.text; },
+    title: '序号',
+    dataIndex: 'num',
+    width: 50,
+    align: 'left',
+    renderText: (_value, _record, index) => index + 1,
+  },
+  {
+    title: '缓存键名',
+    dataIndex: 'cache_key',
+    align: 'left',
+    width: 150,
+    ellipsis: true,
     customFilterDropdown: true,
-    onFilter: (value, record) => {
-      if (typeof value === 'string') {
-        return record.cache_key.toLowerCase().includes(value.toLowerCase());
-      }
-    },
+    onFilter: (value: any, record: Record<string, any>) =>
+      String(record.cache_key)
+        .toLowerCase()
+        .includes(String(value).toLowerCase()),
   },
   { title: '操作', key: 'option', align: 'left', width: 50 },
 ];
 
 /** 缓存列表表格字段列 */
-const cacheNameTableColumns: ColumnsType = [
-  { title: '序号', dataIndex: 'num', width: 50, align: 'left', customRender(opt) { return opt.index + 1; } },
+const cacheNameTableColumns: ProColumns[] = [
   {
-    title: '缓存名称', dataIndex: 'cache_name', align: 'left', width: 150, ellipsis: true,
-    customRender(opt) { return opt.text; },
-    customFilterDropdown: true,
-    onFilter: (value, record) => {
-      if (typeof value === 'string') {
-        return record.cache_name.toLowerCase().includes(value.toLowerCase());
-      }
-    },
+    title: '序号',
+    dataIndex: 'num',
+    width: 50,
+    align: 'left',
+    renderText: (_value, _record, index) => index + 1,
   },
-  { title: '备注', dataIndex: 'remark', align: 'left', width: 150, ellipsis: true },
+  {
+    title: '缓存名称',
+    dataIndex: 'cache_name',
+    align: 'left',
+    width: 150,
+    ellipsis: true,
+    customFilterDropdown: true,
+    onFilter: (value: any, record: Record<string, any>) =>
+      String(record.cache_name)
+        .toLowerCase()
+        .includes(String(value).toLowerCase()),
+  },
+  {
+    title: '备注',
+    dataIndex: 'remark',
+    align: 'left',
+    width: 150,
+    ellipsis: true,
+  },
   { title: '操作', key: 'option', align: 'left', width: 50 },
 ];
-
 </script>
 
 <template>
@@ -158,12 +206,16 @@ const cacheNameTableColumns: ColumnsType = [
 
     <a-row :gutter="20">
       <a-col :lg="8" :md="8" :xs="24">
-        <a-card title="缓存列表" :bordered="false" :body-style="{ marginBottom: '24px', padding: 0 }">
+        <a-card
+          title="缓存列表"
+          :bordered="false"
+          :body-style="{ marginBottom: '24px', padding: 0 }"
+        >
           <template #extra>
             <a-space :size="8" align="center">
               <a-tooltip placement="topRight">
                 <template #title>刷新</template>
-                <a-button type="text" @click.prevent="fetchCacheNames">
+                <a-button type="text" @click.prevent="() => fetchCacheNames()">
                   <template #icon>
                     <ReloadOutlined />
                   </template>
@@ -171,8 +223,13 @@ const cacheNameTableColumns: ColumnsType = [
               </a-tooltip>
               <a-tooltip placement="topRight">
                 <template #title>安全清理</template>
-                <a-popconfirm placement="bottomRight" title="确认要执行可安全清理的缓存下所有键名吗?" ok-text="确认" cancel-text="取消"
-                  @confirm="clearSafeRun(undefined)">
+                <a-popconfirm
+                  placement="bottomRight"
+                  title="确认要执行可安全清理的缓存下所有键名吗?"
+                  ok-text="确认"
+                  cancel-text="取消"
+                  @confirm="clearSafeRun(undefined)"
+                >
                   <a-button type="text" v-perms:has="['monitor:cache:remove']">
                     <template #icon>
                       <ClearOutlined />
@@ -182,35 +239,65 @@ const cacheNameTableColumns: ColumnsType = [
               </a-tooltip>
             </a-space>
           </template>
-          <a-table row-key="cache_name" size="small" :columns="cacheNameTableColumns" :data-source="cacheNameData"
-            :loading="cacheNameLoading" :scroll="{ y: 'calc(100vh - 380px)' }" :pagination="false" :row-selection="{
-              type: 'radio',
-              onChange: (selectedRowKeys: (string | number)[]) => handleSelectCacheName(selectedRowKeys[0] as string),
-            }">
-            <template #customFilterDropdown="{
-              setSelectedKeys,
-              selectedKeys,
-              confirm,
-              clearFilters,
-              column,
-            }">
+          <ProTable
+            row-key="cache_name"
+            size="small"
+            :columns="cacheNameTableColumns"
+            :data-source="cacheNameData"
+            :loading="cacheNameLoading"
+            :scroll="{ y: 'calc(100vh - 380px)' }"
+            :pagination="false"
+            :row-selection="cacheNameRowSelection"
+            :search="false"
+            :toolbar="false"
+            :card-props="false"
+          >
+            <template
+              #customFilterDropdown="{
+                setSelectedKeys,
+                selectedKeys,
+                confirm,
+                clearFilters,
+                column,
+              }"
+            >
               <div style="padding: 8px">
-                <a-input :placeholder="`模糊过滤 ${column.title}`" :value="selectedKeys[0]"
-                  style="width: 188px; margin-bottom: 8px; display: block" @change="
-                    (e: any) => setSelectedKeys(e.target.value ? [e.target.value] : [])
-                  " @pressEnter="confirm()" />
-                <a-button type="primary" size="small" style="width: 90px; margin-right: 8px" @click="confirm()">
+                <a-input
+                  :placeholder="`模糊过滤 ${column.title}`"
+                  :value="selectedKeys[0]"
+                  style="width: 188px; margin-bottom: 8px; display: block"
+                  @change="
+                    (e: any) =>
+                      setSelectedKeys(e.target.value ? [e.target.value] : [])
+                  "
+                  @pressEnter="confirm()"
+                />
+                <a-button
+                  type="primary"
+                  size="small"
+                  style="width: 90px; margin-right: 8px"
+                  @click="confirm()"
+                >
                   过滤
                 </a-button>
-                <a-button size="small" style="width: 90px" @click="clearFilters({ confirm: true })">
+                <a-button
+                  size="small"
+                  style="width: 90px"
+                  @click="clearFilters({ confirm: true })"
+                >
                   重置
                 </a-button>
               </div>
             </template>
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'option'">
-                <a-popconfirm placement="topRight" title="确认要清理该缓存名称下的所有键名吗?" ok-text="确认" cancel-text="取消"
-                  @confirm="clearNameRun(record.cache_name)">
+                <a-popconfirm
+                  placement="topRight"
+                  title="确认要清理该缓存名称下的所有键名吗?"
+                  ok-text="确认"
+                  cancel-text="取消"
+                  @confirm="clearNameRun(record.cache_name)"
+                >
                   <a-button type="text" v-perms:has="['monitor:cache:remove']">
                     <template #icon>
                       <ClearOutlined />
@@ -219,12 +306,16 @@ const cacheNameTableColumns: ColumnsType = [
                 </a-popconfirm>
               </template>
             </template>
-          </a-table>
+          </ProTable>
         </a-card>
       </a-col>
 
       <a-col :lg="8" :md="8" :xs="24">
-        <a-card title="键名列表" :bordered="false" :body-style="{ marginBottom: '24px', padding: 0 }">
+        <a-card
+          title="键名列表"
+          :bordered="false"
+          :body-style="{ marginBottom: '24px', padding: 0 }"
+        >
           <template #extra>
             <a-tooltip placement="topRight">
               <template #title>刷新</template>
@@ -235,35 +326,65 @@ const cacheNameTableColumns: ColumnsType = [
               </a-button>
             </a-tooltip>
           </template>
-          <a-table row-key="cache_key" size="small" :columns="cacheKeyTableColumns" :data-source="cacheKeyData"
-            :loading="cacheKeyLoading" :scroll="{ y: 'calc(100vh - 380px)' }" :pagination="false" :row-selection="{
-              type: 'radio',
-              onChange: (selectedRowKeys: (string | number)[]) => handleCacheKeyInfo(selectedRowKeys[0] as string),
-            }">
-            <template #customFilterDropdown="{
-              setSelectedKeys,
-              selectedKeys,
-              confirm,
-              clearFilters,
-              column,
-            }">
+          <ProTable
+            row-key="cache_key"
+            size="small"
+            :columns="cacheKeyTableColumns"
+            :data-source="cacheKeyData"
+            :loading="cacheKeyLoading"
+            :scroll="{ y: 'calc(100vh - 380px)' }"
+            :pagination="false"
+            :row-selection="cacheKeyRowSelection"
+            :search="false"
+            :toolbar="false"
+            :card-props="false"
+          >
+            <template
+              #customFilterDropdown="{
+                setSelectedKeys,
+                selectedKeys,
+                confirm,
+                clearFilters,
+                column,
+              }"
+            >
               <div style="padding: 8px">
-                <a-input :placeholder="`模糊过滤 ${column.title}`" :value="selectedKeys[0]"
-                  style="width: 188px; margin-bottom: 8px; display: block" @change="
-                    (e: any) => setSelectedKeys(e.target.value ? [e.target.value] : [])
-                  " @pressEnter="confirm()" />
-                <a-button type="primary" size="small" style="width: 90px; margin-right: 8px" @click="confirm()">
+                <a-input
+                  :placeholder="`模糊过滤 ${column.title}`"
+                  :value="selectedKeys[0]"
+                  style="width: 188px; margin-bottom: 8px; display: block"
+                  @change="
+                    (e: any) =>
+                      setSelectedKeys(e.target.value ? [e.target.value] : [])
+                  "
+                  @pressEnter="confirm()"
+                />
+                <a-button
+                  type="primary"
+                  size="small"
+                  style="width: 90px; margin-right: 8px"
+                  @click="confirm()"
+                >
                   过滤
                 </a-button>
-                <a-button size="small" style="width: 90px" @click="clearFilters({ confirm: true })">
+                <a-button
+                  size="small"
+                  style="width: 90px"
+                  @click="clearFilters({ confirm: true })"
+                >
                   重置
                 </a-button>
               </div>
             </template>
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'option'">
-                <a-popconfirm placement="topRight" title="确认要删除该缓存键吗?" ok-text="确认" cancel-text="取消"
-                  @confirm="clearKeyRun(record.cache_key)">
+                <a-popconfirm
+                  placement="topRight"
+                  title="确认要删除该缓存键吗?"
+                  ok-text="确认"
+                  cancel-text="取消"
+                  @confirm="clearKeyRun(record.cache_key)"
+                >
                   <a-button type="text" v-perms:has="['monitor:cache:remove']">
                     <template #icon>
                       <DeleteOutlined />
@@ -272,14 +393,23 @@ const cacheNameTableColumns: ColumnsType = [
                 </a-popconfirm>
               </template>
             </template>
-          </a-table>
+          </ProTable>
         </a-card>
       </a-col>
 
       <a-col :lg="8" :md="8" :xs="24" v-perms:has="['monitor:cache:query']">
-        <a-card title="缓存内容" :bordered="false" :body-style="{ marginBottom: '24px', padding: 0 }"
-          :loading="cacheKeyInfo.loading">
-          <a-descriptions size="small" layout="vertical" :bordered="true" :column="1">
+        <a-card
+          title="缓存内容"
+          :bordered="false"
+          :body-style="{ marginBottom: '24px', padding: 0 }"
+          :loading="cacheKeyInfo.loading"
+        >
+          <a-descriptions
+            size="small"
+            layout="vertical"
+            :bordered="true"
+            :column="1"
+          >
             <a-descriptions-item label="缓存名称">
               {{ cacheKeyInfo.data.cache_name }}
             </a-descriptions-item>
@@ -288,8 +418,14 @@ const cacheNameTableColumns: ColumnsType = [
             </a-descriptions-item>
             <a-descriptions-item label="缓存内容">
               <a-typography-paragraph>
-                <a-textarea :value="cacheKeyInfo.data.cache_value" :auto-size="{ minRows: 4, maxRows: 18 }"
-                  :maxlength="4000" :disabled="true" style="color: rgba(0, 0, 0, 0.85)" placeholder="显示缓存内容" />
+                <a-textarea
+                  :value="cacheKeyInfo.data.cache_value"
+                  :auto-size="{ minRows: 4, maxRows: 18 }"
+                  :maxlength="4000"
+                  :disabled="true"
+                  style="color: rgba(0, 0, 0, 0.85)"
+                  placeholder="显示缓存内容"
+                />
               </a-typography-paragraph>
             </a-descriptions-item>
           </a-descriptions>
@@ -299,4 +435,4 @@ const cacheNameTableColumns: ColumnsType = [
   </PageContainer>
 </template>
 
-<style lang="less" scoped></style>
+<style scoped></style>

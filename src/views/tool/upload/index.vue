@@ -71,7 +71,7 @@ function fnDownloadChunk() {
     return;
   }
   const hide = message.loading('请稍等..', 0);
-  downloadFileChunk(filePath, 5, (percent) => {
+  downloadFileChunk(filePath, 5, percent => {
     console.log(`下载进度: ${percent}%`);
   })
     .then(res => {
@@ -140,7 +140,7 @@ function fnUploadChunk(up: UploadRequestOption) {
     content: '确认要进行分片上传文件吗?',
     onOk() {
       const hide = message.loading('请稍等..', 0);
-      uploadFileChunk(fileData, 4, 'default', (percent) => {
+      uploadFileChunk(fileData, 4, 'default', percent => {
         console.log(`上传进度: ${percent}%`);
       })
         .then(res => {
@@ -177,8 +177,14 @@ function fnUploadChunk(up: UploadRequestOption) {
       <a-col :lg="12" :md="12" :xs="24">
         <a-card title="小文件普通上传" style="margin-bottom: 16px">
           <a-space direction="vertical" :size="16">
-            <a-upload name="file" list-type="picture" :max-count="1" :show-upload-list="false"
-              :before-upload="fnBeforeUpload" :custom-request="fnUpload">
+            <a-upload
+              name="file"
+              list-type="picture"
+              :max-count="1"
+              :show-upload-list="false"
+              :before-upload="fnBeforeUpload"
+              :custom-request="fnUpload"
+            >
               <a-button type="default" :loading="state.loading">
                 选择文件
               </a-button>
@@ -187,7 +193,12 @@ function fnUploadChunk(up: UploadRequestOption) {
           </a-space>
         </a-card>
         <a-card title="大文件分片上传">
-          <a-upload v-model:file-list="state.fileList" name="file" list-type="picture" :custom-request="fnUploadChunk">
+          <a-upload
+            v-model:file-list="state.fileList"
+            name="file"
+            list-type="picture"
+            :custom-request="fnUploadChunk"
+          >
             <a-button> 选择文件 </a-button>
           </a-upload>
         </a-card>
@@ -196,16 +207,23 @@ function fnUploadChunk(up: UploadRequestOption) {
         <a-card title="文件下载" style="margin-bottom: 16px">
           <a-row :gutter="8">
             <a-col :span="24" style="margin-bottom: 16px">
-              <a-input style="margin-bottom: 16px" type="text" placeholder="输入资源地址，列如：/upload/default/2024/12/xxx.png"
-                v-model:value="state.downloadFilePath">
+              <a-input
+                style="margin-bottom: 16px"
+                type="text"
+                placeholder="输入资源地址，列如：/upload/default/2024/12/xxx.png"
+                v-model:value="state.downloadFilePath"
+              >
                 <template #suffix>
                   <a-button type="primary" @click="fnDownload">
                     普通下载
                   </a-button>
                 </template>
               </a-input>
-              <a-input type="text" placeholder="输入资源地址，列如：/upload/default/2024/12/xxx.png"
-                v-model:value="state.downloadFilePath">
+              <a-input
+                type="text"
+                placeholder="输入资源地址，列如：/upload/default/2024/12/xxx.png"
+                v-model:value="state.downloadFilePath"
+              >
                 <template #suffix>
                   <a-button type="primary" @click="fnDownloadChunk">
                     分片下载
@@ -220,4 +238,4 @@ function fnUploadChunk(up: UploadRequestOption) {
   </PageContainer>
 </template>
 
-<style lang="less" scoped></style>
+<style scoped></style>

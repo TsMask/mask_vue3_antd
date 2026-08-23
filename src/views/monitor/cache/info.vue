@@ -56,7 +56,11 @@ type InfoType = {
   stats: Record<string, string>;
 };
 
-const { detail: cache, loading: loading, fetch: fetchCache } = useDetailQuery<CacheType>({
+const {
+  detail: cache,
+  loading: loading,
+  fetch: fetchCache,
+} = useDetailQuery<CacheType>({
   queryFn: getCache,
 });
 
@@ -66,7 +70,10 @@ function commandStatsChart() {
   if (!commandStatsDom || !cache.value) return;
   const commandStatsEchart = echarts.init(commandStatsDom);
   const option: echarts.ComposeOption<
-    ToolboxComponentOption | TooltipComponentOption | LegendComponentOption | PieSeriesOption
+    | ToolboxComponentOption
+    | TooltipComponentOption
+    | LegendComponentOption
+    | PieSeriesOption
   > = {
     // 鼠标悬浮提示
     tooltip: { trigger: 'item', formatter: '{a} <br/>{b} : {c} ({d}%)' },
@@ -121,9 +128,19 @@ onMounted(async () => {
       </a-typography-paragraph>
     </template>
 
-    <a-card v-if="cache" title="基本信息" :bordered="false" :body-style="{ marginBottom: '24px', padding: 0 }">
-      <a-descriptions size="middle" layout="horizontal" :label-style="{ width: '140px' }" :bordered="true"
-        :column="{ lg: 4, md: 2, xs: 1 }">
+    <a-card
+      v-if="cache"
+      title="基本信息"
+      :bordered="false"
+      :body-style="{ marginBottom: '24px', padding: 0 }"
+    >
+      <a-descriptions
+        size="middle"
+        layout="horizontal"
+        :label-style="{ width: '140px' }"
+        :bordered="true"
+        :column="{ lg: 4, md: 2, xs: 1 }"
+      >
         <a-descriptions-item label="Redis版本">
           {{ cache.info.server.redis_version }}
         </a-descriptions-item>
@@ -170,4 +187,4 @@ onMounted(async () => {
   </PageContainer>
 </template>
 
-<style lang="less" scoped></style>
+<style scoped></style>

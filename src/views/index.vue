@@ -122,7 +122,7 @@ function goTarget(type: string) {
   </PageContainer>
 </template>
 
-<style lang="less" scoped>
+<style scoped>
 .nickname {
   margin-bottom: 12px;
   color: inherit;

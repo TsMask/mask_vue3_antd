@@ -105,7 +105,7 @@ function fnCronModal(val: boolean) {
   </a-modal>
 </template>
 
-<style lang="less" scoped>
+<style scoped>
 .reultBox {
   margin-top: 48px;
   margin-bottom: 24px;

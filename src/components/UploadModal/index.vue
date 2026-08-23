@@ -113,4 +113,4 @@ function fnUpload(up: UploadRequestOption) {
   </ProModal>
 </template>
 
-<style lang="less" scoped></style>
+<style scoped></style>

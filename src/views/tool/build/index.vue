@@ -8,4 +8,4 @@ const msg = ref<string>('愿这世间美好与你环环相扣');
   <h1>{{ msg }}</h1>
 </template>
 
-<style lang="less" scoped></style>
+<style scoped></style>

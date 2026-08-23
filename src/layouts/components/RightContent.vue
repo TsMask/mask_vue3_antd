@@ -63,7 +63,11 @@ function fnClick({ key }: MenuInfo) {
 
 <template>
   <a-space :size="12" align="center">
-    <a-popover overlayClassName="head-notice" placement="bottomRight" trigger="click">
+    <a-popover
+      overlayClassName="head-notice"
+      placement="bottomRight"
+      trigger="click"
+    >
       <a-button type="text" style="color: inherit">
         <template #icon>
           <a-badge :count="9999" :overflow-count="99" style="color: inherit">
@@ -91,7 +95,12 @@ function fnClick({ key }: MenuInfo) {
 
     <a-tooltip placement="bottomRight">
       <template #title>开源仓库</template>
-      <a-button type="text" style="color: inherit" href="https://gitee.com/TsMask" target="_blank">
+      <a-button
+        type="text"
+        style="color: inherit"
+        href="https://gitee.com/TsMask"
+        target="_blank"
+      >
         <template #icon>
           <GithubOutlined />
         </template>
@@ -100,7 +109,12 @@ function fnClick({ key }: MenuInfo) {
 
     <a-tooltip placement="bottomRight">
       <template #title>文档手册</template>
-      <a-button type="text" style="color: inherit" href="https://juejin.cn/column/7188761626017792056" target="_blank">
+      <a-button
+        type="text"
+        style="color: inherit"
+        href="https://juejin.cn/column/7188761626017792056"
+        target="_blank"
+      >
         <template #icon>
           <QuestionCircleOutlined />
         </template>
@@ -115,8 +129,14 @@ function fnClick({ key }: MenuInfo) {
         </template>
       </a-button>
     </a-tooltip>
-    <GlobalSearch v-model:open="searchOpen" :iconfont-url="scriptUrl" placeholder="搜索菜单" empty-text="未找到相关菜单"
-      :labels="{ toggle: '打开搜索', select: '选择', close: '关闭' }" @select="handleSearchSelect" />
+    <GlobalSearch
+      v-model:open="searchOpen"
+      :iconfont-url="scriptUrl"
+      placeholder="搜索菜单"
+      empty-text="未找到相关菜单"
+      :labels="{ toggle: '打开搜索', select: '选择', close: '关闭' }"
+      @select="handleSearchSelect"
+    />
 
     <a-tooltip placement="bottomRight">
       <template #title>主题明暗模式</template>
@@ -147,7 +167,10 @@ function fnClick({ key }: MenuInfo) {
           </template>
         </a-button>
         <template #overlay>
-          <a-menu :selected-keys="[appStore.componentSize as string]" @click="fnComponentSize">
+          <a-menu
+            :selected-keys="[appStore.componentSize as string]"
+            @click="fnComponentSize"
+          >
             <a-menu-item key="large">大号</a-menu-item>
             <a-menu-item key="middle">中号</a-menu-item>
             <a-menu-item key="small">小号</a-menu-item>
@@ -158,7 +181,12 @@ function fnClick({ key }: MenuInfo) {
 
     <a-dropdown placement="bottomRight" trigger="click">
       <div class="account-user">
-        <a-avatar shape="circle" size="default" :src="userStore.getAvatar" :alt="userStore.user_name"></a-avatar>
+        <a-avatar
+          shape="circle"
+          size="default"
+          :src="userStore.getAvatar"
+          :alt="userStore.user_name"
+        ></a-avatar>
         <span class="account-nickname">
           {{ userStore.nickName }}
         </span>
@@ -190,7 +218,7 @@ function fnClick({ key }: MenuInfo) {
   </a-space>
 </template>
 
-<style lang="less" scoped>
+<style scoped>
 .account-user {
   display: flex;
   flex-direction: row;

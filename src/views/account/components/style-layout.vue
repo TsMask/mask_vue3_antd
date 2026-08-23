@@ -53,7 +53,7 @@ function changeTheme(e: any) {
         <a-radio-group
           style="margin-bottom: 12px"
           :value="proConfig.layout"
-          @change="(e:any) => changeConf('layout', e.target.value)"
+          @change="(e: any) => changeConf('layout', e.target.value)"
         >
           <a-radio value="side">左侧菜单布局</a-radio>
           <a-radio value="top">顶部菜单布局</a-radio>
@@ -99,7 +99,8 @@ function changeTheme(e: any) {
           un-checked-children="否"
           :checked="proConfig.menuTheme === 'dark'"
           @change="
-            (checked:any) => changeConf('menuTheme', checked ? 'dark' : 'light')
+            (checked: any) =>
+              changeConf('menuTheme', checked ? 'dark' : 'light')
           "
         ></a-switch>
       </template>
@@ -112,7 +113,7 @@ function changeTheme(e: any) {
           checked-children="是"
           un-checked-children="否"
           :checked="proConfig.fixedHeader"
-          @change="(checked:any) => changeConf('fixedHeader', checked)"
+          @change="(checked: any) => changeConf('fixedHeader', checked)"
         ></a-switch>
       </template>
     </a-list-item>
@@ -124,7 +125,7 @@ function changeTheme(e: any) {
           checked-children="是"
           un-checked-children="否"
           :checked="proConfig.fixSiderbar"
-          @change="(checked:any) => changeConf('fixSiderbar', checked)"
+          @change="(checked: any) => changeConf('fixSiderbar', checked)"
         ></a-switch>
       </template>
     </a-list-item>
@@ -138,7 +139,7 @@ function changeTheme(e: any) {
           checked-children="是"
           un-checked-children="否"
           :checked="proConfig.splitMenus"
-          @change="(checked:any) => changeConf('splitMenus', checked)"
+          @change="(checked: any) => changeConf('splitMenus', checked)"
         ></a-switch>
       </template>
     </a-list-item>
@@ -154,7 +155,8 @@ function changeTheme(e: any) {
           un-checked-children="隐藏"
           :checked="proConfig.headerRender === undefined"
           @change="
-            (checked:any) => changeConf('headerRender', checked === true && undefined)
+            (checked: any) =>
+              changeConf('headerRender', checked === true && undefined)
           "
         ></a-switch>
       </template>
@@ -168,7 +170,8 @@ function changeTheme(e: any) {
           un-checked-children="隐藏"
           :checked="proConfig.footerRender === undefined"
           @change="
-            (checked:any) => changeConf('footerRender', checked === true && undefined)
+            (checked: any) =>
+              changeConf('footerRender', checked === true && undefined)
           "
         ></a-switch>
       </template>
@@ -182,7 +185,8 @@ function changeTheme(e: any) {
           un-checked-children="隐藏"
           :checked="proConfig.menuHeaderRender === undefined"
           @change="
-            (checked:any) => changeConf('menuHeaderRender', checked === true && undefined)
+            (checked: any) =>
+              changeConf('menuHeaderRender', checked === true && undefined)
           "
         ></a-switch>
       </template>
@@ -196,7 +200,8 @@ function changeTheme(e: any) {
           un-checked-children="隐藏"
           :checked="proConfig.tabRender === undefined"
           @change="
-            (checked:any) => changeConf('tabRender', checked === true && undefined)
+            (checked: any) =>
+              changeConf('tabRender', checked === true && undefined)
           "
         ></a-switch>
       </template>
@@ -204,4 +209,4 @@ function changeTheme(e: any) {
   </a-list>
 </template>
 
-<style lang="less" scoped></style>
+<style scoped></style>

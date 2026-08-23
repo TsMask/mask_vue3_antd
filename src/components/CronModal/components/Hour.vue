@@ -134,4 +134,4 @@ onBeforeMount(() => {
   </a-radio-group>
 </template>
 
-<style lang="less" scoped></style>
+<style scoped></style>

@@ -19,12 +19,8 @@ const { proConfig, waterMarkContent } = useLayoutStore();
 const { appName } = useAppStore();
 const routerStore = useRouterStore();
 const router = useRouter();
-const {
-  tabsView,
-  handleTabSelect,
-  handleTabClose,
-  handleTabAction,
-} = useTabsView({ syncRoute: true });
+const { tabsView, handleTabSelect, handleTabClose, handleTabAction } =
+  useTabsView({ syncRoute: true });
 
 /**菜单面板 */
 const layoutState = reactive({
@@ -114,14 +110,19 @@ function fnComponentSetName(component: any, to: any) {
   }
   return component;
 }
-
 </script>
 
 <template>
   <a-watermark :content="waterMarkContent" :z-index="100">
-    <ProLayout v-model:collapsed="layoutState.collapsed" v-model:selectedKeys="layoutState.selectedKeys"
-      v-model:openKeys="layoutState.openKeys" :menu-data="menuData" :breadcrumb="{ routes: breadcrumb }"
-      v-bind="proConfig" :iconfont-url="scriptUrl">
+    <ProLayout
+      v-model:collapsed="layoutState.collapsed"
+      v-model:selectedKeys="layoutState.selectedKeys"
+      v-model:openKeys="layoutState.openKeys"
+      :menu-data="menuData"
+      :breadcrumb="{ routes: breadcrumb }"
+      v-bind="proConfig"
+      :iconfont-url="scriptUrl"
+    >
       <!--插槽-菜单头-->
       <template #menuHeaderRender>
         <RouterLink :to="{ name: 'Index' }" :replace="true">
@@ -166,37 +167,43 @@ function fnComponentSetName(component: any, to: any) {
       <RouterView v-slot="{ Component, route }">
         <transition name="slide-left" mode="out-in">
           <KeepAlive :include="tabsView.caches">
-            <component :is="fnComponentSetName(Component, route)" :key="route.path" />
+            <component
+              :is="fnComponentSetName(Component, route)"
+              :key="route.path"
+            />
           </KeepAlive>
         </transition>
       </RouterView>
 
       <!--插槽-内容底部-->
       <template #footerRender>
-        <GlobalFooter :links="[
-          {
-            blankTarget: true,
-            title: '开发手册',
-            href: 'https://juejin.cn/column/7188761626017792056',
-          },
-          {
-            blankTarget: true,
-            title: '开源仓库',
-            href: 'https://gitee.com/TsMask/',
-          },
-          {
-            blankTarget: true,
-            title: '接口文档',
-            href: 'https://mask-api-midwayjs.apifox.cn/',
-          },
-        ]" copyright="Copyright © 2023-2026 Gitee For TsMask">
+        <GlobalFooter
+          :links="[
+            {
+              blankTarget: true,
+              title: '开发手册',
+              href: 'https://juejin.cn/column/7188761626017792056',
+            },
+            {
+              blankTarget: true,
+              title: '开源仓库',
+              href: 'https://gitee.com/TsMask/',
+            },
+            {
+              blankTarget: true,
+              title: '接口文档',
+              href: 'https://mask-api-midwayjs.apifox.cn/',
+            },
+          ]"
+          copyright="Copyright © 2023-2026 Gitee For TsMask"
+        >
         </GlobalFooter>
       </template>
     </ProLayout>
   </a-watermark>
 </template>
 
-<style lang="less" scoped>
+<style scoped>
 .app-logo {
   height: 32px;
   vertical-align: middle;

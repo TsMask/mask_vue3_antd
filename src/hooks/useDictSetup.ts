@@ -2,8 +2,8 @@
 import useDictStore from '@/store/modules/dict';
 
 export interface UseDictSetupOptions<K extends string = string> {
-  /** 本地字段名到字典类型键的映射 */
-  keyMap: Record<K, string>;
+  /** 本地字段名到字典类型键的映射；值为固定字典数组时直接使用，不发起请求 */
+  keyMap: Record<K, string | DictType[]>;
   /**
    * 是否在 setup 阶段自动加载字典数据
    * 默认 true，页面无需手动调用 loadDicts()
@@ -26,6 +26,14 @@ export interface UseDictSetupOptions<K extends string = string> {
  *   keyMap: { sysNormalDisable: "sys_normal_disable" },
  * });
  *
+ * // 固定枚举不发请求，可与远程字典混用
+ * const { dict } = useDictSetup({
+ *   keyMap: {
+ *     sysNormalDisable: "sys_normal_disable",
+ *     configValueType: [{ label: "字符", value: "string" }],
+ *   },
+ * });
+ *
  * // 手动加载
  * const { dict, loadDicts } = useDictSetup({
  *   keyMap: { sysNormalDisable: "sys_normal_disable" },
@@ -44,9 +52,9 @@ export function useDictSetup<K extends string>(
   const dictLoading = ref(false);
 
   const dict = reactive<Record<K, DictType[]>>(
-    Object.keys(keyMap).reduce(
-      (acc, key) => {
-        acc[key as K] = [];
+    Object.entries(keyMap).reduce(
+      (acc, [key, value]) => {
+        acc[key as K] = Array.isArray(value) ? value : [];
         return acc;
       },
       {} as Record<K, DictType[]>
@@ -60,11 +68,14 @@ export function useDictSetup<K extends string>(
   async function loadDicts() {
     dictLoading.value = true;
     try {
-      const entries = Object.entries(keyMap) as [K, string][];
-      const results = await Promise.allSettled(
-        entries.map(([, dictKey]) => getDict(dictKey))
+      const entries = Object.entries(keyMap) as [K, string | DictType[]][];
+      const remoteEntries = entries.filter(
+        (entry): entry is [K, string] => typeof entry[1] === "string"
       );
-      entries.forEach(([localKey], index) => {
+      const results = await Promise.allSettled(
+        remoteEntries.map(([, dictKey]) => getDict(dictKey))
+      );
+      remoteEntries.forEach(([localKey], index) => {
         const result = results[index];
         if (result.status === 'fulfilled') {
           (dict as Record<K, DictType[]>)[localKey] =

@@ -155,4 +155,4 @@ function fnFinish() {
   </a-form>
 </template>
 
-<style lang="less" scoped></style>
+<style scoped></style>

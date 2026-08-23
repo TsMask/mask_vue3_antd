@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { toRaw, watch } from 'vue';
+import { computed, watch } from 'vue';
 import { message } from 'ant-design-vue';
-import type { ColumnsType } from 'ant-design-vue/es/table';
+import {
+  ProTable,
+  type ProColumns,
+  type ProColumnsSearch,
+} from 'antdv-pro-table';
 import { authUserList } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
-import { useTableUI } from '@/hooks/useTableUI';
-import { usePagination } from '@/hooks/usePagination';
 import { useDictSetup } from '@/hooks/useDictSetup';
-import { useQueryParams } from '@/hooks/useQueryParams';
-import { useListQuery } from '@/hooks/useListQuery';
+import {
+  toProValueEnum,
+  useProTable,
+  useProTableScroll,
+} from '@/hooks/useProTable';
 
 const emit = defineEmits(['ok', 'cancel', 'update:open']);
 const props = defineProps({
@@ -27,66 +32,69 @@ const props = defineProps({
 });
 
 /** 字典数据初始化 */
-const { dict, loadDicts } = useDictSetup({ keyMap: { sysNormalDisable: 'sys_normal_disable', } });
-
-/** 查询参数 */
-const { queryParams, handleQuery, resetQuery } = useQueryParams(
-  {
-    user_name: '',
-    user_phone: '',
-    user_status: undefined as string | undefined,
-    role_id: props.role_id,
-    auth: false,
-    page_num: 1,
-    page_size: 20,
-  },
-  () => {
-    resetPage();
-    fetchList();
-  },
-);
-
-/** 分页管理 */
-const { pagination, resetPage } = usePagination({
-  onChange: (page, page_size) => {
-    queryParams.page_num = page;
-    queryParams.page_size = page_size;
-    fetchList()
-  },
+const { dict, loadDicts } = useDictSetup({
+  keyMap: { sysNormalDisable: 'sys_normal_disable' },
 });
 
 /** 列表数据查询：仅在弹窗打开时自动查询 */
-const { listData, loading, fetch: fetchList } = useListQuery({
-  paginationRef: pagination,
-  queryFn: () => authUserList(toRaw(queryParams)),
-});
-
-/** 表格UI状态 */
-const { tableState, setSelectedRowKeys, clearSelection } = useTableUI({
-  defaultSize: 'small',
+const {
+  dataSource,
+  loading,
+  pagination,
+  onSearch,
+  onReset,
+  onTableChange,
+  reload,
+  rowSelection,
+  selectedRowKeys,
+  clearSelected,
+} = useProTable({
+  queryFn: authUserList,
+  params: () => ({ role_id: props.role_id, auth: false }),
+  defaultPageSize: 20,
+  manual: true,
+  rowKey: 'id',
 });
 
 /** 表格字段列 */
-let tableColumns: ColumnsType = [
+const tableColumns = computed<ProColumns[]>(() => [
   { title: '用户编号', dataIndex: 'id', align: 'left', width: 100 },
   { title: '登录账号', dataIndex: 'user_name', align: 'left', width: 150 },
-  { title: '用户昵称', dataIndex: 'user_nick', align: 'left', width: 150 },
-  { title: '用户状态', dataIndex: 'user_status', key: 'user_status', align: 'left', width: 100 },
+  { title: '手机号码', dataIndex: 'user_phone', align: 'left', width: 150 },
+  {
+    title: '用户状态',
+    dataIndex: 'user_status',
+    key: 'user_status',
+    align: 'left',
+    width: 100,
+    valueType: 'select',
+    valueEnum: toProValueEnum(dict.sysNormalDisable),
+  },
   {
     title: '创建时间',
     dataIndex: 'create_time',
     align: 'left',
-    width: 150,
-    customRender(opt) {
-      if (+opt.value <= 0) return '';
-      return parseDateToStr(+opt.value);
-    },
+    width: 200,
+    renderText: value => (+value <= 0 ? '' : parseDateToStr(+value)),
   },
-];
+]);
+
+const tableScroll = useProTableScroll(tableColumns, { y: 400 });
+
+const searchColumns = computed<ProColumnsSearch[]>(() => [
+  { title: '登录账号', dataIndex: 'user_name' },
+  { title: '手机号码', dataIndex: 'user_phone', fieldProps: { maxlength: 11 } },
+  {
+    title: '用户状态',
+    dataIndex: 'user_status',
+    valueType: 'select',
+    valueEnum: toProValueEnum(dict.sysNormalDisable),
+  },
+]);
 
 /** 弹框确认按钮事件 */
 function handleOk() {
-  const userIds = tableState.selectedRowKeys;
+  const userIds = selectedRowKeys.value;
   if (userIds.length <= 0) {
     message.error({ content: '请选择要分配的用户', duration: 3 });
     return;
@@ -104,77 +112,58 @@ function handleCancel() {
 /** 弹窗打开时初始化字典并重置页码 */
 watch(
   () => props.open,
-  (val) => {
+  val => {
     if (val) {
       loadDicts();
-      queryParams.page_num = 1;
-      clearSelection();
+      clearSelected();
+      reload(true);
     }
-  },
+  }
 );
 </script>
 
 <template>
-  <a-modal :drag="true" :fullscreen="true" :forceFullscreen="true" :destroyOnClose="true" :width="800"
-    :title="props.title" :open="props.open" :keyboard="false" :mask-closable="false" @ok="handleOk"
-    @cancel="handleCancel">
-    <a-form :model="queryParams" name="queryParams" layout="horizontal">
-      <a-row :gutter="16">
-        <a-col :lg="8" :md="12" :xs="24">
-          <a-form-item label="登录账号" name="user_name">
-            <a-input v-model:value="queryParams.user_name" allow-clear :maxlength="30" placeholder="请输入登录账号"></a-input>
-          </a-form-item>
-        </a-col>
-        <a-col :lg="10" :md="12" :xs="24">
-          <a-form-item label="手机号码" name="user_phone">
-            <a-input v-model:value="queryParams.user_phone" allow-clear :maxlength="11" placeholder="请输入手机号码"></a-input>
-          </a-form-item>
-        </a-col>
-        <a-col :lg="6" :md="12" :xs="24">
-          <a-form-item label="用户状态" name="user_status">
-            <a-select v-model:value="queryParams.user_status" allow-clear placeholder="请选择用户状态"
-              :options="dict.sysNormalDisable">
-            </a-select>
-          </a-form-item>
-        </a-col>
-        <a-col :lg="12" :md="12" :xs="24">
-          <a-form-item>
-            <a-space :size="8">
-              <a-button type="primary" @click.prevent="handleQuery">
-                <template #icon>
-                  <SearchOutlined />
-                </template>
-                搜索
-              </a-button>
-              <a-button type="default" @click.prevent="resetQuery">
-                <template #icon>
-                  <ClearOutlined />
-                </template>
-                重置
-              </a-button>
-            </a-space>
-          </a-form-item>
-        </a-col>
-      </a-row>
-    </a-form>
-
-    <a-table class="antdv-table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="listData"
-      :size="tableState.size" :scroll="{
-        x: tableColumns.length * 120,
-        scrollToFirstRowOnChange: true,
-        y: 400,
-      }" :pagination="{ ...pagination }" :row-selection="{
-        type: 'checkbox',
-        selectedRowKeys: tableState.selectedRowKeys,
-        onChange: setSelectedRowKeys,
-      }">
+  <a-modal
+    :drag="true"
+    :fullscreen="true"
+    :forceFullscreen="true"
+    :destroyOnClose="true"
+    :width="800"
+    :title="props.title"
+    :open="props.open"
+    :keyboard="false"
+    :mask-closable="false"
+    @ok="handleOk"
+    @cancel="handleCancel"
+  >
+    <ProTable
+      row-key="id"
+      size="small"
+      :columns="tableColumns"
+      :data-source="dataSource"
+      :loading="loading"
+      :pagination="pagination"
+      :row-selection="rowSelection"
+      :scroll="tableScroll"
+      :search="{
+        columns: searchColumns,
+        onSearch,
+        onReset,
+        defaultColsNumber: 2,
+      }"
+      :toolbar="false"
+      @change="onTableChange"
+    >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'user_status'">
-          <DictTag :options="dict.sysNormalDisable" :value="record.user_status" />
+          <DictTag
+            :options="dict.sysNormalDisable"
+            :value="record.user_status"
+          />
         </template>
       </template>
-    </a-table>
+    </ProTable>
   </a-modal>
 </template>
 
-<style lang="less" scoped></style>
+<style scoped></style>

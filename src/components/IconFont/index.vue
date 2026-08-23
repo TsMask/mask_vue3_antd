@@ -38,4 +38,4 @@ const renderIcon = () => {
   <component :is="renderIcon()" />
 </template>
 
-<style lang="less" scoped></style>
+<style scoped></style>

@@ -1,10 +1,14 @@
 ﻿<script setup lang="ts">
 import { useRoute } from "vue-router";
-import { ref, toRaw, computed, watch } from "vue";
+import { ref, toRaw, computed } from "vue";
 import { PageContainer } from "antdv-pro-layout";
 import { ProModal } from "antdv-pro-modal";
 import { message } from "ant-design-vue";
-import type { ColumnsType } from "ant-design-vue/es/table";
+import {
+  ProTable,
+  type ProColumns,
+  type ProColumnsSearch,
+} from "antdv-pro-table";
 import {
   listNotice,
   getNotice,
@@ -13,13 +17,10 @@ import {
   updateNotice,
 } from "@/api/system/notice";
 import { parseDateToStr } from "@/utils/date-utils";
-import { useQueryParams } from "@/hooks/useQueryParams";
-import { usePagination } from "@/hooks/usePagination";
-import { useTableUI } from "@/hooks/useTableUI";
 import { useCrudModal } from "@/hooks/useCrudModal";
 import { useDictSetup } from "@/hooks/useDictSetup";
-import { useListQuery } from "@/hooks/useListQuery";
 import { useAction, confirmAction } from "@/hooks/useAction";
+import { toProValueEnum, useProTable, useProTableScroll } from "@/hooks/useProTable";
 
 const route = useRoute();
 
@@ -34,49 +35,27 @@ const { dict } = useDictSetup({
   }
 });
 
-/** 查询参数 */
-const { queryParams, handleQuery, resetQuery } = useQueryParams(
-  {
-    notice_title: "",
-    create_by: undefined as string | undefined,
-    notice_type: undefined as string | undefined,
-    notice_status: undefined as string | undefined,
-    page_num: 1,
-    page_size: 20,
-  },
-  () => {
-    resetPage();
-    fetchList();
-  },
-);
-
-/** 分页管理 */
-const { pagination, resetPage, clampPage } = usePagination({
-  onChange: (page, page_size) => {
-    queryParams.page_num = page;
-    queryParams.page_size = page_size;
-    fetchList()
-  },
-});
-
 /** 列表数据查询 */
-const { listData, loading, fetch: fetchList } = useListQuery({
-  paginationRef: pagination,
-  queryFn: () => listNotice(toRaw(queryParams)),
-});
-
-/** 表格UI状态 */
 const {
-  tableState,
-  setTableSize,
-  rowClassName,
-  setSelectedRowKeys,
-} = useTableUI();
+  dataSource,
+  loading,
+  pagination,
+  onSearch,
+  onReset,
+  onTableChange,
+  reload,
+  rowSelection, selectedRowKeys, removeSelectedRowKeys
+} = useProTable({
+  queryFn: listNotice,
+  defaultPageSize: 20,
+  rowKey: "id"
+});
 
 /** CRUD 弹窗管理 */
 const {
   modal: modalState,
   formCtl: modalStateForm,
+  isView,
   openView,
   openEdit,
   close: handleCancel,
@@ -117,12 +96,12 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
   successText: "操作成功",
   onSuccess() {
     handleCancel();
-    fetchList();
+    reload();
   },
 });
 
 /** 表格字段列 */
-const tableColumns: ColumnsType = [
+const tableColumns = computed<ProColumns[]>(() => [
   { title: "公告编号", dataIndex: "id", align: "left", width: 100 },
   { title: "公告标题", dataIndex: "notice_title", align: "left", width: 300 },
   {
@@ -131,6 +110,8 @@ const tableColumns: ColumnsType = [
     key: "notice_type",
     align: "left",
     width: 100,
+    valueType: "select",
+    valueEnum: toProValueEnum(dict.sysNoticeType),
   },
   {
     title: "状态",
@@ -138,20 +119,38 @@ const tableColumns: ColumnsType = [
     key: "notice_status",
     align: "left",
     width: 100,
+    valueType: "select",
+    valueEnum: toProValueEnum(dict.sysNoticeStatus),
   },
   { title: "创建者", dataIndex: "create_by", align: "left", width: 100 },
   {
     title: "创建时间",
     dataIndex: "create_time",
     align: "left",
-    width: 150,
-    customRender(opt) {
-      if (+opt.value <= 0) return "";
-      return parseDateToStr(+opt.value);
-    },
+    width: 200,
+    renderText: value => (+value <= 0 ? "" : parseDateToStr(+value)),
   },
-  { title: "操作", key: "id", align: "left" },
-];
+  { title: "操作", key: "operation", align: "left", width: 150 },
+]);
+
+const tableScroll = useProTableScroll(tableColumns);
+
+const searchColumns = computed<ProColumnsSearch[]>(() => [
+  { title: "公告标题", dataIndex: "notice_title" },
+  {
+    title: "公告类型",
+    dataIndex: "notice_type",
+    valueType: "select",
+    valueEnum: toProValueEnum(dict.sysNoticeType),
+  },
+  {
+    title: "状态",
+    dataIndex: "notice_status",
+    valueType: "select",
+    valueEnum: toProValueEnum(dict.sysNoticeStatus),
+  },
+  { title: "创建者", dataIndex: "create_by" },
+]);
 
 /** 打开公告详情弹窗 */
 function handleView(id: string | number) {
@@ -181,7 +180,7 @@ async function handleSubmit() {
 /** 删除公告（单条或批量） */
 function handleDelete(id: string = "0") {
   if (id === "0") {
-    id = tableState.selectedRowKeys.join(",");
+    id = selectedRowKeys.value.join(",");
   }
   confirmAction({
     content: `确认删除公告编号为【${id}】的数据项?`,
@@ -189,8 +188,8 @@ function handleDelete(id: string = "0") {
     variables: id,
     successText: "删除成功",
     onSuccess() {
-      const deletedCount = String(id).split(",").length;
-      if (!clampPage(deletedCount)) fetchList();
+      removeSelectedRowKeys(String(id).split(",").map(Number));
+      reload();
     },
   });
 }
@@ -204,66 +203,23 @@ function handleDelete(id: string = "0") {
       </a-typography-paragraph>
     </template>
 
-    <a-card v-show="tableState.searched" :bordered="false" :body-style="{ marginBottom: '24px', paddingBottom: 0 }">
-      <a-form :model="queryParams" name="queryParams" layout="horizontal">
-        <a-row :gutter="16">
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="公告标题" name="notice_title">
-              <a-input v-model:value="queryParams.notice_title" allow-clear placeholder="请输入公告标题"></a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="创建者" name="create_by">
-              <a-input v-model:value="queryParams.create_by" allow-clear placeholder="请输入创建者"></a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="公告类型" name="notice_type">
-              <a-select v-model:value="queryParams.notice_type" allow-clear placeholder="请选择公告类型"
-                :options="dict.sysNoticeType">
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item label="公告状态" name="notice_status">
-              <a-select v-model:value="queryParams.notice_status" allow-clear placeholder="请选择公告状态"
-                :options="dict.sysNoticeStatus">
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="6" :md="12" :xs="24">
-            <a-form-item>
-              <a-space :size="8">
-                <a-button type="primary" @click.prevent="handleQuery">
-                  <template #icon>
-                    <SearchOutlined />
-                  </template>
-                  搜索
-                </a-button>
-                <a-button type="default" @click.prevent="resetQuery">
-                  <template #icon>
-                    <ClearOutlined />
-                  </template>
-                  重置
-                </a-button>
-              </a-space>
-            </a-form-item>
-          </a-col>
-        </a-row>
-      </a-form>
-    </a-card>
+    <ProTable row-key="id" :columns="tableColumns" :data-source="dataSource" :loading="loading" :pagination="pagination"
+      :row-selection="rowSelection" :scroll="tableScroll" @change="onTableChange"
+      :search="{ columns: searchColumns, onSearch, onReset }" :toolbar="{
+        setting: { columnsStateKey: 'system-notice', columnsStateType: 'local' },
+        onReload: reload,
+      }">
+      <template #toolBarRender>
 
-    <a-card :bordered="false" :body-style="{ padding: '0px' }">
-      <template #title>
-        <a-space :size="8" align="center">
+        <a-space :size="8" align="center" :style="{ flexWrap: 'wrap', marginBottom: '8px' }">
           <a-button type="primary" @click.prevent="handleEdit()" v-perms:has="['system:notice:add']">
             <template #icon>
               <PlusOutlined />
             </template>
             新建
           </a-button>
-          <a-button type="default" danger :disabled="tableState.selectedRowKeys.length <= 0"
-            @click.prevent="handleDelete()" v-perms:has="['system:notice:remove']">
+          <a-button type="default" danger :disabled="selectedRowKeys.length <= 0" @click.prevent="handleDelete()"
+            v-perms:has="['system:notice:remove']">
             <template #icon>
               <DeleteOutlined />
             </template>
@@ -271,129 +227,50 @@ function handleDelete(id: string = "0") {
           </a-button>
         </a-space>
       </template>
+      <template #bodyCell="{ column, record }">
 
-      <template #extra>
-        <a-space :size="8" align="center">
-          <a-tooltip placement="topRight">
-            <template #title>搜索栏</template>
-            <a-switch v-model:checked="tableState.searched" checked-children="显" un-checked-children="隐" size="small" />
-          </a-tooltip>
-          <a-tooltip placement="topRight">
-            <template #title>表格斑马纹</template>
-            <a-switch v-model:checked="tableState.striped" checked-children="开" un-checked-children="关" size="small" />
-          </a-tooltip>
-          <a-tooltip placement="topRight">
-            <template #title>刷新</template>
-            <a-button type="text" @click.prevent="fetchList">
-              <template #icon>
-                <ReloadOutlined />
-              </template>
-            </a-button>
-          </a-tooltip>
-          <a-tooltip placement="topRight">
-            <template #title>密度</template>
-            <a-dropdown placement="bottomRight" trigger="click">
-              <a-button type="text">
+        <template v-if="column.key === 'notice_type'">
+          <DictTag :options="dict.sysNoticeType" :value="record.notice_type" />
+        </template>
+        <template v-if="column.key === 'notice_status'">
+          <DictTag :options="dict.sysNoticeStatus" :value="record.notice_status" />
+        </template>
+        <template v-if="column.key === 'operation'">
+          <a-space :size="8" align="center">
+            <a-tooltip placement="topRight">
+              <template #title>查看详情</template>
+              <a-button type="link" @click.prevent="handleView(record.id)" v-perms:has="['system:notice:query']">
                 <template #icon>
-                  <ColumnHeightOutlined />
+                  <ProfileOutlined />
                 </template>
               </a-button>
-              <template #overlay>
-                <a-menu :selected-keys="[tableState.size as string]" @click="setTableSize">
-                  <a-menu-item key="default">默认</a-menu-item>
-                  <a-menu-item key="middle">中等</a-menu-item>
-                  <a-menu-item key="small">紧凑</a-menu-item>
-                </a-menu>
-              </template>
-            </a-dropdown>
-          </a-tooltip>
-        </a-space>
-      </template>
-
-      <a-table class="antdv-table" row-key="id" :columns="tableColumns" :loading="loading" :data-source="listData"
-        :size="tableState.size" :row-class-name="rowClassName" :pagination="pagination" :scroll="{
-          x: tableColumns.length * 120,
-          scrollToFirstRowOnChange: true,
-        }" :row-selection="{
-          type: 'checkbox',
-          selectedRowKeys: tableState.selectedRowKeys,
-          onChange: setSelectedRowKeys,
-        }">
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'notice_type'">
-            <DictTag :options="dict.sysNoticeType" :value="record.notice_type" />
-          </template>
-          <template v-if="column.key === 'notice_status'">
-            <DictTag :options="dict.sysNoticeStatus" :value="record.notice_status" />
-          </template>
-          <template v-if="column.key === 'id'">
-            <a-space :size="8" align="center">
-              <a-tooltip placement="topRight">
-                <template #title>查看详情</template>
-                <a-button type="link" @click.prevent="handleView(record.id)"
-                  v-perms:has="['system:notice:query']">
-                  <template #icon>
-                    <ProfileOutlined />
-                  </template>
-                </a-button>
-              </a-tooltip>
-              <a-tooltip placement="topRight">
-                <template #title>编辑</template>
-                <a-button type="link" @click.prevent="handleEdit(record.id)" v-perms:has="['system:notice:edit']">
-                  <template #icon>
-                    <FormOutlined />
-                  </template>
-                </a-button>
-              </a-tooltip>
-              <a-tooltip placement="topRight">
-                <template #title>删除</template>
-                <a-button type="link" @click.prevent="handleDelete(record.id)"
-                  v-perms:has="['system:notice:remove']">
-                  <template #icon>
-                    <DeleteOutlined />
-                  </template>
-                </a-button>
-              </a-tooltip>
-            </a-space>
-          </template>
+            </a-tooltip>
+            <a-tooltip placement="topRight">
+              <template #title>编辑</template>
+              <a-button type="link" @click.prevent="handleEdit(record.id)" v-perms:has="['system:notice:edit']">
+                <template #icon>
+                  <FormOutlined />
+                </template>
+              </a-button>
+            </a-tooltip>
+            <a-tooltip placement="topRight">
+              <template #title>删除</template>
+              <a-button type="link" @click.prevent="handleDelete(record.id)" v-perms:has="['system:notice:remove']">
+                <template #icon>
+                  <DeleteOutlined />
+                </template>
+              </a-button>
+            </a-tooltip>
+          </a-space>
         </template>
-      </a-table>
-    </a-card>
-
-    <!-- 详情框 -->
-    <ProModal :drag="true" :width="800" :open="modalState.visibleByView" :title="modalState.title"
-      @cancel="handleCancel">
-      <a-form layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
-        <a-row>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="公告类型" name="notice_type">
-              <DictTag :options="dict.sysNoticeType" :value="modalState.form.notice_type" />
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="公告状态" name="notice_status">
-              <DictTag :options="dict.sysNoticeStatus" :value="modalState.form.notice_status" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-form-item label="公告标题" name="notice_title" :label-col="{ span: 3 }" :label-wrap="true">
-          {{ modalState.form.notice_title }}
-        </a-form-item>
-        <a-form-item label="公告内容" name="notice_content" :label-col="{ span: 3 }" :label-wrap="true">
-          <a-textarea v-model:value="modalState.form.notice_content" :auto-size="{ minRows: 2, maxRows: 12 }"
-            placeholder="公告内容" :disabled="true" />
-        </a-form-item>
-      </a-form>
-      <template #footer>
-        <a-button key="cancel" @click="handleCancel">关闭</a-button>
       </template>
-    </ProModal>
+    </ProTable>
 
-    <!-- 新增框或修改框 -->
-    <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="false" :mask-closable="false"
-      :open="modalState.visibleByEdit" :title="modalState.title" :confirm-loading="isSubmitting" @ok="handleSubmit"
-      @cancel="handleCancel">
-      <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true">
+    <!-- 详情框或新增修改框 -->
+    <ProModal :drag="true" :destroyOnClose="true" :width="800" :keyboard="!isView" :mask-closable="isView"
+      :open="modalState.visible" :title="modalState.title" :confirm-loading="isSubmitting"
+      :footer="isView ? null : undefined" @ok="handleSubmit" @cancel="handleCancel">
+      <a-form name="modalStateForm" layout="horizontal" :label-col="{ span: 6 }" :label-wrap="true" :disabled="isView">
         <a-row>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="公告类型" name="notice_type" v-bind="modalStateForm.validateInfos.notice_type">
@@ -418,19 +295,11 @@ function handleDelete(id: string = "0") {
         <a-form-item label="公告内容" name="notice_content" v-bind="modalStateForm.validateInfos.notice_content"
           :label-col="{ span: 3 }" :label-wrap="true">
           <a-textarea v-model:value="modalState.form.notice_content" :auto-size="{ minRows: 4, maxRows: 14 }"
-            :maxlength="3000" :show-count="true" placeholder="请输入公告内容" />
+            :maxlength="3000" :show-count="!isView" placeholder="请输入公告内容" />
         </a-form-item>
       </a-form>
     </ProModal>
   </PageContainer>
 </template>
 
-<style lang="less" scoped>
-.antdv-table :deep(.antdv-striped) td {
-  background-color: #fafafa;
-}
-
-.antdv-table :deep(.ant-pagination) {
-  padding: 0 24px;
-}
-</style>
+<style scoped></style>

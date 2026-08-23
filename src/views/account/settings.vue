@@ -27,4 +27,4 @@ let activeKey = ref<string>('base-info');
   </PageContainer>
 </template>
 
-<style lang="less" scoped></style>
+<style scoped></style>

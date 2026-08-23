@@ -12,4 +12,4 @@ url.value = 'https://mask-api-gin.apifox.cn/';
   <LinkiFrame :src="url"></LinkiFrame>
 </template>
 
-<style lang="less" scoped></style>
+<style scoped></style>
