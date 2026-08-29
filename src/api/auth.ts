@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function login(data: Record<string, string>) {
   return request({
-    url: '/auth/login',
+    url: '/api/v1/auth/login',
     method: 'POST',
     data: data,
     withToken: false,
@@ -20,7 +20,7 @@ export function login(data: Record<string, string>) {
  */
 export function logout() {
   return request({
-    url: '/auth/logout',
+    url: '/api/v1/auth/logout',
     method: 'POST',
     repeatSubmit: false,
   });
@@ -33,7 +33,7 @@ export function logout() {
  */
 export function register(data: Record<string, any>) {
   return request({
-    url: '/auth/register',
+    url: '/api/v1/auth/register',
     method: 'POST',
     data: data,
     withToken: false,
@@ -47,7 +47,7 @@ export function register(data: Record<string, any>) {
  */
 export function refreshToken(refreshToken: string) {
   return request({
-    url: '/auth/refresh-token',
+    url: '/api/v1/auth/refresh-token',
     method: 'POST',
     data: { refresh_token: refreshToken },
     withToken: false,
@@ -60,7 +60,7 @@ export function refreshToken(refreshToken: string) {
  */
 export function getInfo() {
   return request({
-    url: '/me',
+    url: '/api/v1/auth/me',
     method: 'GET',
   });
 }
@@ -71,7 +71,7 @@ export function getInfo() {
  */
 export const getRouter = () => {
   return request({
-    url: '/router',
+    url: '/api/v1/auth/router',
     method: 'GET',
   });
 };
@@ -82,7 +82,7 @@ export const getRouter = () => {
  */
 export function getCaptchaImage() {
   return request({
-    url: '/captcha-image',
+    url: '/api/v1/auth/captcha-image',
     method: 'GET',
     withToken: false,
   });

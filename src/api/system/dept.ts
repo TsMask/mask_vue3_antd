@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function listDept(query: Record<string, any>) {
   return request({
-    url: '/system/dept/list',
+    url: '/api/v1/system/dept/list',
     method: 'GET',
     params: query,
   });
@@ -20,7 +20,7 @@ export function listDept(query: Record<string, any>) {
  */
 export function listDeptExcludeChild(dept_id: string | number) {
   return request({
-    url: `/system/dept/list/exclude/${dept_id}`,
+    url: `/api/v1/system/dept/list/exclude/${dept_id}`,
     method: 'GET',
   });
 }
@@ -32,7 +32,7 @@ export function listDeptExcludeChild(dept_id: string | number) {
  */
 export function getDept(dept_id: string | number) {
   return request({
-    url: `/system/dept/${dept_id}`,
+    url: `/api/v1/system/dept/${dept_id}`,
     method: 'GET',
   });
 }
@@ -44,7 +44,7 @@ export function getDept(dept_id: string | number) {
  */
 export function addDept(data: Record<string, any>) {
   return request({
-    url: '/system/dept',
+    url: '/api/v1/system/dept',
     method: 'POST',
     data: data,
   });
@@ -57,7 +57,7 @@ export function addDept(data: Record<string, any>) {
  */
 export function updateDept(data: Record<string, any>) {
   return request({
-    url: '/system/dept',
+    url: '/api/v1/system/dept',
     method: 'PUT',
     data: data,
   });
@@ -70,7 +70,7 @@ export function updateDept(data: Record<string, any>) {
  */
 export function delDept(dept_id: string | number) {
   return request({
-    url: `/system/dept/${dept_id}`,
+    url: `/api/v1/system/dept/${dept_id}`,
     method: 'DELETE',
   });
 }
@@ -81,7 +81,7 @@ export function delDept(dept_id: string | number) {
  */
 export function deptTree() {
   return request({
-    url: '/system/dept/tree',
+    url: '/api/v1/system/dept/tree',
     method: 'GET',
   });
 }
@@ -93,7 +93,7 @@ export function deptTree() {
  */
 export function deptTreeRole(role_id: string | number) {
   return request({
-    url: `/system/dept/tree/role/${role_id}`,
+    url: `/api/v1/system/dept/tree/role/${role_id}`,
     method: 'GET',
   });
 }

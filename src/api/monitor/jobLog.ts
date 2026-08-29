@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function exportJobLog(query: Record<string, any>) {
   return request({
-    url: '/monitor/job/log/export',
+    url: '/api/v1/job/log/export',
     method: 'GET',
     params: query,
     responseType: 'blob',
@@ -21,7 +21,7 @@ export function exportJobLog(query: Record<string, any>) {
  */
 export function listJobLog(query: Record<string, any>) {
   return request({
-    url: '/monitor/job/log/list',
+    url: '/api/v1/job/log/list',
     method: 'GET',
     params: query,
   });
@@ -34,7 +34,7 @@ export function listJobLog(query: Record<string, any>) {
  */
 export function delJobLog(jobLogId: string) {
   return request({
-    url: `/monitor/job/log/${jobLogId}`,
+    url: `/api/v1/job/log/${jobLogId}`,
     method: 'DELETE',
   });
 }
@@ -45,7 +45,7 @@ export function delJobLog(jobLogId: string) {
  */
 export function cleanJobLog() {
   return request({
-    url: '/monitor/job/log/clean',
+    url: '/api/v1/job/log/clean',
     method: 'DELETE',
   });
 }

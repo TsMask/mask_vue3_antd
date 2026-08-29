@@ -6,7 +6,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function getCache() {
   return request({
-    url: '/monitor/cache',
+    url: '/api/v1/monitor/cache',
     method: 'GET',
   });
 }
@@ -17,7 +17,7 @@ export function getCache() {
  */
 export function listCacheName() {
   return request({
-    url: '/monitor/cache/names',
+    url: '/api/v1/monitor/cache/names',
     method: 'GET',
   });
 }
@@ -29,7 +29,7 @@ export function listCacheName() {
  */
 export function listCacheKey(cache_name: string) {
   return request({
-    url: `/monitor/cache/keys`,
+    url: `/api/v1/monitor/cache/keys`,
     method: 'GET',
     params: { cache_name },
   });
@@ -43,7 +43,7 @@ export function listCacheKey(cache_name: string) {
  */
 export function getCacheValue(cache_name: string, cache_key: string) {
   return request({
-    url: `/monitor/cache/value`,
+    url: `/api/v1/monitor/cache/value`,
     method: 'GET',
     params: { cache_name, cache_key },
   });
@@ -57,7 +57,7 @@ export function getCacheValue(cache_name: string, cache_key: string) {
  */
 export function clearCacheSafe() {
   return request({
-    url: '/monitor/cache/names',
+    url: '/api/v1/monitor/cache/names',
     method: 'DELETE',
   });
 }
@@ -69,7 +69,7 @@ export function clearCacheSafe() {
  */
 export function clearCacheName(cache_name: string) {
   return request({
-    url: `/monitor/cache/keys`,
+    url: `/api/v1/monitor/cache/keys`,
     method: 'DELETE',
     params: { cache_name },
   });
@@ -83,7 +83,7 @@ export function clearCacheName(cache_name: string) {
  */
 export function clearCacheKey(cache_name: string, cache_key: string) {
   return request({
-    url: `/monitor/cache/value`,
+    url: `/api/v1/monitor/cache/value`,
     method: 'DELETE',
     params: { cache_name, cache_key },
   });

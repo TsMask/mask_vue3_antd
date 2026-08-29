@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function exportPost(query: Record<string, any>) {
   return request({
-    url: '/system/post/export',
+    url: '/api/v1/system/post/export',
     method: 'GET',
     params: query,
     responseType: 'blob',
@@ -21,7 +21,7 @@ export function exportPost(query: Record<string, any>) {
  */
 export function listPost(query: Record<string, any>) {
   return request({
-    url: '/system/post/list',
+    url: '/api/v1/system/post/list',
     method: 'GET',
     params: query,
   });
@@ -34,7 +34,7 @@ export function listPost(query: Record<string, any>) {
  */
 export function getPost(post_id: string | number) {
   return request({
-    url: `/system/post/${post_id}`,
+    url: `/api/v1/system/post/${post_id}`,
     method: 'GET',
   });
 }
@@ -46,7 +46,7 @@ export function getPost(post_id: string | number) {
  */
 export function addPost(data: Record<string, any>) {
   return request({
-    url: '/system/post',
+    url: '/api/v1/system/post',
     method: 'POST',
     data: data,
   });
@@ -59,7 +59,7 @@ export function addPost(data: Record<string, any>) {
  */
 export function updatePost(data: Record<string, any>) {
   return request({
-    url: '/system/post',
+    url: '/api/v1/system/post',
     method: 'PUT',
     data: data,
   });
@@ -72,7 +72,7 @@ export function updatePost(data: Record<string, any>) {
  */
 export function delPost(post_id: string | number) {
   return request({
-    url: `/system/post/${post_id}`,
+    url: `/api/v1/system/post/${post_id}`,
     method: 'DELETE',
   });
 }

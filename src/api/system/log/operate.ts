@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function exportSysLogOperate(query: Record<string, any>) {
   return request({
-    url: '/system/log/operate/export',
+    url: '/api/v1/system/log/operate/export',
     method: 'GET',
     params: query,
     responseType: 'blob',
@@ -21,7 +21,7 @@ export function exportSysLogOperate(query: Record<string, any>) {
  */
 export function listSysLogOperate(query: Record<string, any>) {
   return request({
-    url: '/system/log/operate/list',
+    url: '/api/v1/system/log/operate/list',
     method: 'GET',
     params: query,
   });
@@ -33,7 +33,7 @@ export function listSysLogOperate(query: Record<string, any>) {
  */
 export function cleanSysLogOperate() {
   return request({
-    url: '/system/log/operate/clean',
+    url: '/api/v1/system/log/operate/clean',
     method: 'DELETE',
   });
 }

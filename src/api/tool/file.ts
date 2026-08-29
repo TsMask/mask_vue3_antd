@@ -26,7 +26,7 @@ export async function downloadFile(
   range?: string
 ): Promise<ResultType> {
   return request({
-    url: `/file/download/${encode(filePath)}`,
+    url: `/api/v1/file/download/${encode(filePath)}`,
     method: 'GET',
     headers: range ? { range } : {},
     responseType: 'blob',
@@ -130,7 +130,7 @@ export async function downloadFileChunk(
  */
 export function uploadFile(data: FormData): Promise<ResultType> {
   return request({
-    url: '/file/upload',
+    url: '/api/v1/file/upload',
     method: 'POST',
     data,
     dataType: 'form-data',
@@ -219,7 +219,7 @@ export function chunkCheck(
   fileName: string
 ): Promise<ResultType> {
   return request({
-    url: '/file/chunk-check',
+    url: '/api/v1/file/chunk-check',
     method: 'POST',
     data: { identifier, fileName },
   });
@@ -239,7 +239,7 @@ export function chunkMerge(
   subPath: string = 'default'
 ): Promise<ResultType> {
   return request({
-    url: '/file/chunk-merge',
+    url: '/api/v1/file/chunk-merge',
     method: 'POST',
     data: { identifier, fileName, subPath },
   });
@@ -253,7 +253,7 @@ export function chunkMerge(
  */
 export function chunkUpload(data: FormData): Promise<ResultType> {
   return request({
-    url: '/file/chunk-upload',
+    url: '/api/v1/file/chunk-upload',
     method: 'POST',
     data,
     dataType: 'form-data',

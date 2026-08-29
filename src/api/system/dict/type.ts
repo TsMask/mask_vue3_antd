@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function exportType(query: Record<string, any>) {
   return request({
-    url: '/system/dict/type/export',
+    url: '/api/v1/system/dict/type/export',
     method: 'GET',
     params: query,
     responseType: 'blob',
@@ -21,7 +21,7 @@ export function exportType(query: Record<string, any>) {
  */
 export function listType(query: Record<string, any>) {
   return request({
-    url: '/system/dict/type/list',
+    url: '/api/v1/system/dict/type/list',
     method: 'GET',
     params: query,
   });
@@ -34,7 +34,7 @@ export function listType(query: Record<string, any>) {
  */
 export function getType(dict_id: string | number) {
   return request({
-    url: `/system/dict/type/${dict_id}`,
+    url: `/api/v1/system/dict/type/${dict_id}`,
     method: 'GET',
   });
 }
@@ -46,7 +46,7 @@ export function getType(dict_id: string | number) {
  */
 export function addType(data: Record<string, any>) {
   return request({
-    url: '/system/dict/type',
+    url: '/api/v1/system/dict/type',
     method: 'POST',
     data: data,
   });
@@ -59,7 +59,7 @@ export function addType(data: Record<string, any>) {
  */
 export function updateType(data: Record<string, any>) {
   return request({
-    url: '/system/dict/type',
+    url: '/api/v1/system/dict/type',
     method: 'PUT',
     data: data,
   });
@@ -72,7 +72,7 @@ export function updateType(data: Record<string, any>) {
  */
 export function delType(dict_id: string | number) {
   return request({
-    url: `/system/dict/type/${dict_id}`,
+    url: `/api/v1/system/dict/type/${dict_id}`,
     method: 'DELETE',
   });
 }
@@ -84,7 +84,7 @@ export function delType(dict_id: string | number) {
  */
 export function refreshCache() {
   return request({
-    url: '/system/dict/type/refresh',
+    url: '/api/v1/system/dict/type/refresh',
     method: 'PUT',
   });
 }
@@ -96,7 +96,7 @@ export function refreshCache() {
  */
 export function getDictOption() {
   return request({
-    url: '/system/dict/type/options',
+    url: '/api/v1/system/dict/type/options',
     method: 'GET',
   });
 }

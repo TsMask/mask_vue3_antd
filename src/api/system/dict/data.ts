@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function exportData(query: Record<string, any>) {
   return request({
-    url: '/system/dict/data/export',
+    url: '/api/v1/system/dict/data/export',
     method: 'GET',
     params: query,
     responseType: 'blob',
@@ -21,7 +21,7 @@ export function exportData(query: Record<string, any>) {
  */
 export function listData(query: Record<string, any>) {
   return request({
-    url: '/system/dict/data/list',
+    url: '/api/v1/system/dict/data/list',
     method: 'GET',
     params: query,
   });
@@ -34,7 +34,7 @@ export function listData(query: Record<string, any>) {
  */
 export function getData(dataId: string | number) {
   return request({
-    url: `/system/dict/data/${dataId}`,
+    url: `/api/v1/system/dict/data/${dataId}`,
     method: 'GET',
   });
 }
@@ -46,7 +46,7 @@ export function getData(dataId: string | number) {
  */
 export function addData(data: Record<string, any>) {
   return request({
-    url: '/system/dict/data',
+    url: '/api/v1/system/dict/data',
     method: 'POST',
     data: data,
   });
@@ -59,7 +59,7 @@ export function addData(data: Record<string, any>) {
  */
 export function updateData(data: Record<string, any>) {
   return request({
-    url: '/system/dict/data',
+    url: '/api/v1/system/dict/data',
     method: 'PUT',
     data: data,
   });
@@ -72,7 +72,7 @@ export function updateData(data: Record<string, any>) {
  */
 export function delData(dataId: string | number) {
   return request({
-    url: `/system/dict/data/${dataId}`,
+    url: `/api/v1/system/dict/data/${dataId}`,
     method: 'DELETE',
   });
 }
@@ -84,7 +84,7 @@ export function delData(dataId: string | number) {
  */
 export function getDictDataType(dict_type: string) {
   return request({
-    url: `/system/dict/data/type/${dict_type}`,
+    url: `/api/v1/system/dict/data/type/${dict_type}`,
     method: 'GET',
   });
 }

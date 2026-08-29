@@ -115,7 +115,7 @@ const useUserStore = defineStore('user', {
     async fnLogin(loginBody: Record<string, string>) {
       const res = await login(loginBody);
       if (res.code === RESULT_CODE_SUCCESS && res.data) {
-        setAccessToken(res.data.access_token, res.data.refresh_expires_in);
+        setAccessToken(res.data.access_token, res.data.expires_in);
         setRefreshToken(res.data.refresh_token, res.data.refresh_expires_in);
       }
       return res;

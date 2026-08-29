@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function exportJob(query: Record<string, any>) {
   return request({
-    url: '/monitor/job/export',
+    url: '/api/v1/job/export',
     method: 'GET',
     params: query,
     responseType: 'blob',
@@ -21,7 +21,7 @@ export function exportJob(query: Record<string, any>) {
  */
 export function listJob(query: Record<string, any>) {
   return request({
-    url: '/monitor/job/list',
+    url: '/api/v1/job/list',
     method: 'GET',
     params: query,
   });
@@ -34,7 +34,7 @@ export function listJob(query: Record<string, any>) {
  */
 export function getJob(id: string | number) {
   return request({
-    url: `/monitor/job/${id}`,
+    url: `/api/v1/job/${id}`,
     method: 'GET',
   });
 }
@@ -46,7 +46,7 @@ export function getJob(id: string | number) {
  */
 export function addJob(data: Record<string, any>) {
   return request({
-    url: '/monitor/job',
+    url: '/api/v1/job',
     method: 'POST',
     data: data,
   });
@@ -59,7 +59,7 @@ export function addJob(data: Record<string, any>) {
  */
 export function updateJob(data: Record<string, any>) {
   return request({
-    url: '/monitor/job',
+    url: '/api/v1/job',
     method: 'PUT',
     data: data,
   });
@@ -72,7 +72,7 @@ export function updateJob(data: Record<string, any>) {
  */
 export function delJob(id: string | number) {
   return request({
-    url: `/monitor/job/${id}`,
+    url: `/api/v1/job/${id}`,
     method: 'DELETE',
   });
 }
@@ -85,7 +85,7 @@ export function delJob(id: string | number) {
  */
 export function changeStatus(job_id: string | number, job_status: string | number) {
   return request({
-    url: '/monitor/job/status',
+    url: '/api/v1/job/status',
     method: 'PUT',
     data: {
       job_id,
@@ -101,7 +101,7 @@ export function changeStatus(job_id: string | number, job_status: string | numbe
  */
 export function runJob(id: string | number) {
   return request({
-    url: `/monitor/job/run/${id}`,
+    url: `/api/v1/job/run/${id}`,
     method: 'PUT',
   });
 }
@@ -112,7 +112,7 @@ export function runJob(id: string | number) {
  */
 export function resetJob() {
   return request({
-    url: '/monitor/job/reset',
+    url: '/api/v1/job/reset',
     method: 'PUT',
   });
 }

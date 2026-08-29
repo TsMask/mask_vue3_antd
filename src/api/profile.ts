@@ -6,7 +6,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function getUserProfile() {
   return request({
-    url: '/system/user/profile',
+    url: '/api/v1/system/user/profile',
     method: 'GET',
   });
 }
@@ -18,7 +18,7 @@ export function getUserProfile() {
  */
 export function updateUserProfile(data: Record<string, any>) {
   return request({
-    url: '/system/user/profile',
+    url: '/api/v1/system/user/profile',
     method: 'PUT',
     data: data,
   });
@@ -32,7 +32,7 @@ export function updateUserProfile(data: Record<string, any>) {
  */
 export function updateUserPassword(oldPassword: string, newPassword: string) {
   return request({
-    url: '/system/user/profile/password',
+    url: '/api/v1/system/user/profile/password',
     method: 'PUT',
     data: { oldPassword, newPassword },
   });
