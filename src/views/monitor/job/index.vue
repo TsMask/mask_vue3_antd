@@ -40,12 +40,39 @@ const routePath = route.path;
 const title = ref<string>(route.meta.title ?? '标题');
 
 const { dict } = useDictSetup({
-  keyMap: {
-    sysJobGroup: 'sys_job_group',
-    sysJobStatus: 'sys_job_status',
-    sysJobSaveLog: 'sys_job_save_log',
-  },
+  keyMap: { sysJobGroup: 'sys_job_group' },
 });
+
+const jobStatusOptions = [
+  { label: '正常', value: '1' },
+  { label: '暂停', value: '0' },
+];
+
+const jobSaveLogOptions = [
+  { label: '记录', value: '1' },
+  { label: '不记录', value: '0' },
+];
+
+const misfirePolicyText: Record<string, string> = {
+  1: '立即执行',
+  2: '执行一次',
+  3: '放弃执行',
+};
+
+const concurrentText: Record<string, string> = {
+  0: '禁止',
+  1: '允许',
+};
+
+function formatJobTargetParams(value: unknown) {
+  if (value === undefined || value === null || value === '') return '-';
+  if (typeof value !== 'string') return String(value);
+  try {
+    return JSON.stringify(JSON.parse(value));
+  } catch {
+    return value;
+  }
+}
 
 /** 列表数据查询 */
 const {
@@ -128,13 +155,30 @@ const { execute: submitExecute, loading: isSubmitting } = useAction({
 const cronVisible = ref(false);
 
 const tableColumns = computed<ProColumns[]>(() => [
-  { title: '任务编号', dataIndex: 'id', align: 'left', width: 100 },
-  { title: '任务名称', dataIndex: 'job_name', align: 'left', width: 200 },
+  {
+    title: '任务编号',
+    dataIndex: 'id',
+    align: 'left',
+    width: 90,
+    sorter: true,
+    fixed: 'left',
+  },
+  {
+    title: '任务名称',
+    dataIndex: 'job_name',
+    align: 'left',
+    width: 180,
+    sorter: true,
+    ellipsis: true,
+    fixed: 'left',
+  },
   {
     title: '调用目标',
     dataIndex: 'job_invoke_target',
     align: 'left',
-    width: 150,
+    width: 140,
+    sorter: true,
+    ellipsis: true,
   },
   {
     title: '任务组名',
@@ -145,15 +189,36 @@ const tableColumns = computed<ProColumns[]>(() => [
     valueType: 'select',
     valueEnum: toProValueEnum(dict.sysJobGroup),
   },
-  { title: 'cron表达式', dataIndex: 'job_cron', align: 'left', width: 150 },
+  {
+    title: 'Cron表达式',
+    dataIndex: 'job_cron',
+    align: 'left',
+    width: 140,
+    sorter: true,
+    ellipsis: true,
+  },
+  {
+    title: '出错策略',
+    dataIndex: 'job_misfire_policy',
+    align: 'left',
+    width: 100,
+    renderText: value => misfirePolicyText[String(value)] ?? '-',
+  },
+  {
+    title: '并发',
+    dataIndex: 'job_concurrent',
+    align: 'left',
+    width: 80,
+    renderText: value => concurrentText[String(value)] ?? '-',
+  },
   {
     title: '状态',
     dataIndex: 'job_status',
     key: 'job_status',
     align: 'left',
-    width: 100,
+    width: 120,
     valueType: 'select',
-    valueEnum: toProValueEnum(dict.sysJobStatus),
+    valueEnum: toProValueEnum(jobStatusOptions),
   },
   {
     title: '记录日志',
@@ -161,8 +226,24 @@ const tableColumns = computed<ProColumns[]>(() => [
     key: 'job_save_log',
     align: 'left',
     width: 100,
+    valueType: 'select',
+    valueEnum: toProValueEnum(jobSaveLogOptions),
   },
-  { title: '操作', key: 'operation', align: 'left', width: 210 },
+  {
+    title: '创建时间',
+    dataIndex: 'create_time',
+    align: 'left',
+    width: 160,
+    sorter: true,
+    renderText: value => (+value > 0 ? parseDateToStr(+value) : '-'),
+  },
+  {
+    title: '操作',
+    key: 'operation',
+    align: 'left',
+    width: 210,
+    fixed: 'right',
+  },
 ]);
 
 const tableScroll = useProTableScroll(tableColumns);
@@ -179,7 +260,7 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
     title: '状态',
     dataIndex: 'job_status',
     valueType: 'select',
-    valueEnum: toProValueEnum(dict.sysJobStatus),
+    valueEnum: toProValueEnum(jobStatusOptions),
   },
 ]);
 
@@ -189,15 +270,23 @@ function handleCronOk(opt: boolean, cronStr?: string) {
 }
 
 function handleStatusChange(row: Record<string, string>) {
+  const nextStatus = row.job_status === '1' ? '0' : '1';
   const text =
-    row.job_status === '1'
-      ? dict.sysJobStatus[0]?.label
-      : dict.sysJobStatus[1]?.label;
+    nextStatus === '1'
+      ? jobStatusOptions[0]?.label
+      : jobStatusOptions[1]?.label;
   confirmAction({
-    content: `确定要${text} ${row.job_name} 任务吗?`,
-    action: () => changeStatus(row.id, row.job_status),
+    content: `确定要${text} 【${row.job_name}】 任务吗?`,
+    action: () => changeStatus(row.id, nextStatus),
     variables: undefined,
     successText: `${row.job_name} ${text}成功`,
+    onSuccess() {
+      dataSource.value = dataSource.value.map(item =>
+        String(item.id) === String(row.id)
+          ? { ...item, job_status: nextStatus }
+          : item
+      );
+    },
   });
 }
 
@@ -354,26 +443,23 @@ async function handleSubmit() {
         </template>
         <template v-if="column.key === 'job_status'">
           <a-switch
-            v-if="
-              dict.sysJobStatus.length > 0 &&
-              hasPermissions(['monitor:job:changeStatus'])
-            "
-            v-model:checked="record.job_status"
+            v-if="hasPermissions(['job:status'])"
+            :checked="record.job_status"
             checked-value="1"
-            :checked-children="dict.sysJobStatus[0].label"
+            checked-children="正常"
             un-checked-value="0"
-            :un-checked-children="dict.sysJobStatus[1].label"
+            un-checked-children="暂停"
             size="small"
-            @change="handleStatusChange(record)"
+            @change="() => handleStatusChange(record)"
           />
           <DictTag
             v-else
-            :options="dict.sysJobStatus"
+            :options="jobStatusOptions"
             :value="record.job_status"
           />
         </template>
         <template v-if="column.key === 'job_save_log'">
-          <DictTag :options="dict.sysJobSaveLog" :value="record.job_save_log" />
+          <DictTag :options="jobSaveLogOptions" :value="record.job_save_log" />
         </template>
         <template v-if="column.key === 'operation'">
           <a-space :size="8" align="center">
@@ -420,7 +506,7 @@ async function handleSubmit() {
               <a-button
                 type="link"
                 @click.prevent="handleRunOnce(record)"
-                v-perms:has="['monitor:job:changeStatus']"
+                v-perms:has="['job:status']"
               >
                 <template #icon>
                   <RocketOutlined />
@@ -564,7 +650,7 @@ async function handleSubmit() {
                 v-model:value="modal.form.job_status"
                 default-value="0"
                 placeholder="任务状态"
-                :options="dict.sysJobStatus"
+                :options="jobStatusOptions"
               >
               </a-select>
             </a-form-item>
@@ -575,7 +661,7 @@ async function handleSubmit() {
                 v-model:value="modal.form.job_save_log"
                 default-value="0"
                 placeholder="记录日志"
-                :options="dict.sysJobSaveLog"
+                :options="jobSaveLogOptions"
               >
               </a-select>
             </a-form-item>

@@ -30,11 +30,13 @@ const route = useRoute();
 const router = useRouter();
 /** 字典数据初始化 */
 const { dict } = useDictSetup({
-  keyMap: {
-    sysJobGroup: 'sys_job_group',
-    sysCommonStatus: 'sys_common_status',
-  },
+  keyMap: { sysJobGroup: 'sys_job_group' },
 });
+
+const logStatusOptions = [
+  { label: '正常', value: '1' },
+  { label: '失败', value: '0' },
+];
 
 /** 列表数据查询 */
 const {
@@ -59,13 +61,28 @@ const {
 });
 
 const tableColumns = computed<ProColumns[]>(() => [
-  { title: '日志编号', dataIndex: 'id', align: 'left', width: 100 },
-  { title: '任务名称', dataIndex: 'job_name', align: 'left', width: 200 },
+  {
+    title: '日志编号',
+    dataIndex: 'id',
+    align: 'left',
+    width: 90,
+    sorter: true,
+  },
+  {
+    title: '任务名称',
+    dataIndex: 'job_name',
+    align: 'left',
+    width: 180,
+    sorter: true,
+    ellipsis: true,
+  },
   {
     title: '调用目标',
     dataIndex: 'job_invoke_target',
     align: 'left',
-    width: 150,
+    width: 140,
+    sorter: true,
+    ellipsis: true,
   },
   {
     title: '任务组名',
@@ -73,6 +90,7 @@ const tableColumns = computed<ProColumns[]>(() => [
     key: 'job_group',
     align: 'left',
     width: 100,
+    sorter: true,
     valueType: 'select',
     valueEnum: toProValueEnum(dict.sysJobGroup),
   },
@@ -83,13 +101,14 @@ const tableColumns = computed<ProColumns[]>(() => [
     align: 'left',
     width: 100,
     valueType: 'select',
-    valueEnum: toProValueEnum(dict.sysCommonStatus),
+    valueEnum: toProValueEnum(logStatusOptions),
   },
   {
     title: '记录时间',
     dataIndex: 'create_time',
     align: 'left',
-    width: 200,
+    width: 160,
+    sorter: true,
     renderText: value => (+value <= 0 ? '' : parseDateToStr(+value)),
   },
   {
@@ -98,9 +117,15 @@ const tableColumns = computed<ProColumns[]>(() => [
     key: 'log_cost_time',
     align: 'right',
     width: 100,
-    renderText: value => `${value} ms`,
+    renderText: value => `${Number(value) || 0} ms`,
   },
-  { title: '操作', key: 'operation', align: 'left', width: 150 },
+  {
+    title: '操作',
+    key: 'operation',
+    align: 'left',
+    width: 100,
+    fixed: 'right',
+  },
 ]);
 
 const tableScroll = useProTableScroll(tableColumns);
@@ -110,7 +135,7 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
     title: '执行状态',
     dataIndex: 'log_status',
     valueType: 'select',
-    valueEnum: toProValueEnum(dict.sysCommonStatus),
+    valueEnum: toProValueEnum(logStatusOptions),
   },
   {
     title: '记录时间范围',
@@ -137,6 +162,7 @@ const detailForm = reactive({
   job_target_params: '',
   log_status: '0',
   log_msg: '',
+  log_cost_time: 0,
   create_time: 0,
 });
 
@@ -165,11 +191,16 @@ function handleDeleteSelected() {
 }
 
 function handleCleanAll() {
+  const selectedKeys = [...selectedRowKeys.value];
   confirmAction({
     content: '确认清空所有调度日志数据项吗?',
     action: () => cleanJobLog(),
     variables: undefined,
     successText: '清空成功',
+    onSuccess() {
+      removeSelectedRowKeys(selectedKeys);
+      reload();
+    },
   });
 }
 
@@ -243,7 +274,7 @@ function handleClose() {
             danger
             :disabled="selectedRowKeys.length <= 0"
             @click.prevent="handleDeleteSelected()"
-            v-perms:has="['monitor:job:remove']"
+            v-perms:has="['job:remove']"
           >
             <template #icon>
               <DeleteOutlined />
@@ -254,7 +285,7 @@ function handleClose() {
             type="dashed"
             danger
             @click.prevent="handleCleanAll()"
-            v-perms:has="['monitor:job:remove']"
+            v-perms:has="['job:remove']"
           >
             <template #icon>
               <DeleteOutlined />
@@ -264,7 +295,7 @@ function handleClose() {
           <a-button
             type="dashed"
             @click.prevent="handleExport()"
-            v-perms:has="['monitor:job:export']"
+            v-perms:has="['job:export']"
           >
             <template #icon>
               <ExportOutlined />
@@ -278,15 +309,8 @@ function handleClose() {
           <DictTag :options="dict.sysJobGroup" :value="record.job_group" />
         </template>
         <template v-if="column.key === 'log_status'">
-          <a-tag
-            v-if="dict.sysCommonStatus.length > 0"
-            :color="+record.log_status ? 'success' : 'error'"
-          >
-            {{
-              +record.log_status
-                ? dict.sysCommonStatus[0].label
-                : dict.sysCommonStatus[1].label
-            }}
+          <a-tag :color="+record.log_status ? 'success' : 'error'">
+            {{ +record.log_status ? '正常' : '失败' }}
           </a-tag>
         </template>
         <template v-if="column.key === 'operation'">
@@ -296,7 +320,7 @@ function handleClose() {
               <a-button
                 type="link"
                 @click.prevent="handleViewDetail(record)"
-                v-perms:has="['monitor:job:query']"
+                v-perms:has="['job:query']"
               >
                 <template #icon>
                   <ProfileOutlined />
@@ -326,15 +350,8 @@ function handleClose() {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="执行状态" name="log_status">
-              <a-tag
-                v-if="dict.sysCommonStatus.length > 0"
-                :color="+detailForm.log_status ? 'success' : 'error'"
-              >
-                {{
-                  +detailForm.log_status
-                    ? dict.sysCommonStatus[0].label
-                    : dict.sysCommonStatus[1].label
-                }}
+              <a-tag :color="+detailForm.log_status ? 'success' : 'error'">
+                {{ +detailForm.log_status ? '正常' : '失败' }}
               </a-tag>
             </a-form-item>
           </a-col>
@@ -368,6 +385,13 @@ function handleClose() {
             </a-form-item>
           </a-col>
         </a-row>
+        <a-row>
+          <a-col :lg="12" :md="12" :xs="24">
+            <a-form-item label="消耗时间" name="log_cost_time">
+              {{ detailForm.log_cost_time ?? 0 }} ms
+            </a-form-item>
+          </a-col>
+        </a-row>
         <a-form-item
           label="传入参数"
           name="job_target_params"
@@ -375,7 +399,9 @@ function handleClose() {
           :label-wrap="true"
         >
           <a-textarea
-            :value="detailForm.job_target_params"
+            :value="
+              JSON.stringify(JSON.parse(detailForm.job_target_params), null, 2)
+            "
             :auto-size="{ minRows: 2, maxRows: 6 }"
             :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)"
@@ -388,7 +414,7 @@ function handleClose() {
           :label-wrap="true"
         >
           <a-textarea
-            :value="detailForm.log_msg"
+            :value="JSON.stringify(JSON.parse(detailForm.log_msg), null, 2)"
             :auto-size="{ minRows: 2, maxRows: 6 }"
             :disabled="true"
             style="color: rgba(0, 0, 0, 0.85)"
