@@ -13,7 +13,7 @@ import { LabelLayout } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
 import { PageContainer } from 'antdv-pro-layout';
 import { getCache } from '@/api/monitor/cache';
-import { onMounted, ref } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { useDetailQuery } from '@/hooks/useDetailQuery';
 
@@ -36,9 +36,9 @@ type CacheType = {
   /**服务信息 */
   info: InfoType;
   /**当前连接可用键Key总数 */
-  dbSize: number;
+  db_size: number;
   /**命令状态 */
-  commandStats: Record<string, string>[];
+  command_stats: Record<string, string>[];
 };
 
 /**数据参数服务信息类型 */
@@ -97,7 +97,7 @@ function commandStatsChart() {
         center: ['60%', '50%'],
         roseType: 'area',
         itemStyle: { borderRadius: 8 },
-        data: cache.value.commandStats,
+        data: cache.value.command_stats,
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
@@ -114,7 +114,10 @@ function commandStatsChart() {
 
 onMounted(async () => {
   await fetchCache();
-  commandStatsChart();
+  await nextTick();
+  if (cache.value) {
+    commandStatsChart();
+  }
 });
 </script>
 
@@ -172,7 +175,7 @@ onMounted(async () => {
           {{ cache.info.persistence.rdb_last_bgsave_status }}
         </a-descriptions-item>
         <a-descriptions-item label="Key数量">
-          {{ cache.dbSize }}
+          {{ cache.db_size }}
         </a-descriptions-item>
         <a-descriptions-item label="网络入口/出口">
           {{ cache.info.stats.instantaneous_input_kbps }} kps /

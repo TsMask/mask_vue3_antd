@@ -32,12 +32,12 @@ const {
   rowKey: 'cache_name',
   selection: {
     rowSelection: { type: 'radio' },
-    onChange: keys => handleSelectCacheName(String(keys[0])),
+    onChange: keys => handleSelectCacheName(keys[0] === undefined ? '' : String(keys[0])),
   },
 });
 
 /** 当前选中的缓存名称 */
-let selectedCacheName = '';
+const selectedCacheName = ref('');
 
 /** 缓存键名列表 */
 const {
@@ -45,31 +45,51 @@ const {
   loading: cacheKeyLoading,
   reload: fetchCacheKeys,
   rowSelection: cacheKeyRowSelection,
+  selectedRowKeys: selectedCacheKeyKeys,
+  removeSelectedRowKeys: removeSelectedCacheKeyKeys,
 } = useProTable({
   queryFn: params => listCacheKey(params.cache_name),
-  params: () => ({ cache_name: selectedCacheName }),
+  params: () => ({ cache_name: selectedCacheName.value }),
   defaultPageSize: 20,
   manual: true,
   rowKey: 'cache_key',
   selection: {
     rowSelection: { type: 'radio' },
-    onChange: keys => handleCacheKeyInfo(String(keys[0])),
+    onChange: keys => handleCacheKeyInfo(keys[0] === undefined ? '' : String(keys[0])),
   },
 });
 
 /** 选择缓存名称，加载键名列表 */
 function handleSelectCacheName(cache_name: string) {
-  selectedCacheName = cache_name;
+  if (!cache_name) {
+    selectedCacheName.value = '';
+    cacheKeyData.value = [];
+    removeSelectedCacheKeyKeys(selectedCacheKeyKeys.value);
+    resetCacheKeyInfo();
+    return;
+  }
+  selectedCacheName.value = cache_name;
+  removeSelectedCacheKeyKeys(selectedCacheKeyKeys.value);
+  resetCacheKeyInfo();
+  fetchCacheKeys();
+}
+
+/** 带空值防御刷新键名列表 */
+function refreshCacheKeys() {
+  if (!selectedCacheName.value) {
+    cacheKeyData.value = [];
+    return;
+  }
   fetchCacheKeys();
 }
 
 /** 刷新键名列表 */
 function handleRefreshKeys() {
-  if (!selectedCacheName) {
+  if (!selectedCacheName.value) {
     message.warning({ content: '请在缓存列表中选择数据项！', duration: 3 });
     return;
   }
-  fetchCacheKeys();
+  refreshCacheKeys();
 }
 
 /** 缓存内容信息 */
@@ -78,11 +98,25 @@ const cacheKeyInfo = reactive({
   data: { cache_key: '', cache_name: '', cache_value: '', remark: '' },
 });
 
+/** 重置缓存内容详情 */
+function resetCacheKeyInfo() {
+  Object.assign(cacheKeyInfo.data, {
+    cache_key: '',
+    cache_name: '',
+    cache_value: '',
+    remark: '',
+  });
+}
+
 /** 查询缓存内容详细 */
 function handleCacheKeyInfo(cache_key: string) {
+  if (!cache_key) {
+    resetCacheKeyInfo();
+    return;
+  }
   if (!hasPermissions(['monitor:cache:query'])) return;
   cacheKeyInfo.loading = true;
-  getCacheValue(selectedCacheName, cache_key)
+  getCacheValue(selectedCacheName.value, cache_key)
     .then(res => {
       if (res.code === RESULT_CODE_SUCCESS) {
         if (res.data.cache_value) {
@@ -97,6 +131,8 @@ function handleCacheKeyInfo(cache_key: string) {
           }
         }
         Object.assign(cacheKeyInfo.data, res.data);
+      } else {
+        message.error({ content: res.msg, duration: 3 });
       }
     })
     .finally(() => {
@@ -109,8 +145,14 @@ const { execute: clearSafeRun } = useAction({
   action: () => clearCacheSafe(),
   successText: '已完成安全清理缓存',
   onSuccess: () => {
-    cacheKeyInfo.loading = true;
-    cacheKeyData.value = [];
+    fetchCacheNames();
+    removeSelectedCacheKeyKeys(selectedCacheKeyKeys.value);
+    resetCacheKeyInfo();
+    if (selectedCacheName.value) {
+      refreshCacheKeys();
+    } else {
+      cacheKeyData.value = [];
+    }
   },
 });
 
@@ -120,21 +162,23 @@ const { execute: clearNameRun } = useAction({
   successText: '缓存名称已清理',
   onSuccess: (_res, cache_name) => {
     if (cacheKeyInfo.data.cache_name === cache_name) {
-      cacheKeyInfo.loading = true;
+      removeSelectedCacheKeyKeys(selectedCacheKeyKeys.value);
+      resetCacheKeyInfo();
     }
-    fetchCacheKeys();
+    if (selectedCacheName.value) refreshCacheKeys();
   },
 });
 
 /** 删除缓存键名 mutation */
 const { execute: clearKeyRun } = useAction({
-  action: (cache_key: string) => clearCacheKey(selectedCacheName, cache_key),
+  action: (cache_key: string) => clearCacheKey(selectedCacheName.value, cache_key),
   successText: '缓存键名已删除',
   onSuccess: (_res, cache_key) => {
-    fetchCacheKeys();
     if (cacheKeyInfo.data.cache_key === cache_key) {
-      cacheKeyInfo.loading = true;
+      removeSelectedCacheKeyKeys([cache_key]);
+      resetCacheKeyInfo();
     }
+    if (selectedCacheName.value) refreshCacheKeys();
   },
 });
 
