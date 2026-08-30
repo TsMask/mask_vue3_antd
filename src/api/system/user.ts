@@ -5,11 +5,11 @@ import { request } from '@/plugins/http-fetch';
  * @param data 表单数据对象
  * @returns object
  */
-export function importData(filePath: string, update: boolean) {
+export function importData(file_path: string, update: boolean) {
   return request({
     url: '/api/v1/system/user/import',
     method: 'POST',
-    data: { filePath, update },
+    data: { file_path, update },
     timeout: 60_000,
   });
 }

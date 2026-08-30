@@ -499,7 +499,7 @@ async function handleImportUpload(file: File) {
       message.error(uploadRes.msg, 3);
       return;
     }
-    const filePath = uploadRes.data.filePath;
+    const filePath = uploadRes.data.file_path;
     const importRes = await importData(filePath, importState.updateSupport);
     if (isSuccess(importRes)) {
       importState.msg = importRes.msg?.replaceAll(/<br\/>+/g, '\r');

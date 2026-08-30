@@ -126,7 +126,7 @@ export async function downloadFileChunk(
  * 通过 FormData 上传单个文件。
  *
  * @param data - FormData 对象，需包含 file 字段，可附带 subPath 等
- * @returns ResultType，成功时 data 包含 url / filePath 等文件信息
+ * @returns ResultType，成功时 data 包含 url / file_path 等文件信息
  */
 export function uploadFile(data: FormData): Promise<ResultType> {
   return request({
@@ -211,17 +211,17 @@ export async function uploadFileChunk(
  * 分片上传前检查：查询服务端已存储的分片索引
  *
  * @param identifier - 文件标识（文件名-文件大小）
- * @param fileName   - 原始文件名
+ * @param file_name   - 原始文件名
  * @returns ResultType，成功时 data 为已上传分片索引数组，如 ["0", "1", "2"]
  */
 export function chunkCheck(
   identifier: string,
-  fileName: string
+  file_name: string
 ): Promise<ResultType> {
   return request({
     url: '/api/v1/file/chunk-check',
     method: 'POST',
-    data: { identifier, fileName },
+    data: { identifier, file_name },
   });
 }
 
@@ -229,19 +229,19 @@ export function chunkCheck(
  * 分片合并：所有分片上传完成后通知服务端合并为完整文件
  *
  * @param identifier - 文件标识（文件名-文件大小）
- * @param fileName   - 原始文件名
- * @param subPath    - 文件归属子路径，默认 'default'
- * @returns ResultType，成功时 data 包含 url / filePath / newFileName 等
+ * @param file_name   - 原始文件名
+ * @param sub_path    - 文件归属子路径，默认 'default'
+ * @returns ResultType，成功时 data 包含 url / file_path / file_name 等
  */
 export function chunkMerge(
   identifier: string,
-  fileName: string,
-  subPath: string = 'default'
+  file_name: string,
+  sub_path: string = 'default'
 ): Promise<ResultType> {
   return request({
     url: '/api/v1/file/chunk-merge',
     method: 'POST',
-    data: { identifier, fileName, subPath },
+    data: { identifier, file_name, sub_path },
   });
 }
 

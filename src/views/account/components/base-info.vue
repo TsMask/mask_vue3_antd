@@ -113,12 +113,15 @@ function fnUpload(up: UploadRequestOption) {
       uploadFile(formData)
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
-            return res.data.filePath;
+            return res.data.file_path;
           }
           return '';
         })
         .then(filePath => {
-          if (filePath === '') return undefined;
+          if (!filePath) {
+            message.error('上传接口未返回文件地址', 3);
+            return undefined;
+          }
           const form = toRaw(stateForm.form);
           form.user_avatar = filePath;
           return updateUserProfile(form);

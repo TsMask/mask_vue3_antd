@@ -118,7 +118,7 @@ function fnUpload(up: UploadRequestOption) {
           if (isSuccess(res)) {
             message.success({ content: '文件上传成功！', duration: 3 });
             state.uploadFilePath = res.data.url;
-            state.downloadFilePath = res.data.filePath;
+            state.downloadFilePath = res.data.file_path;
           } else {
             message.error(res.msg, 3);
           }
@@ -148,10 +148,10 @@ function fnUploadChunk(up: UploadRequestOption) {
             message.success({ content: '文件上传成功！', duration: 3 });
             if (item) {
               item.url = res.data.url;
-              item.name = res.data.newFileName;
+              item.name = res.data.file_name;
               item.percent = 100;
               item.status = 'done';
-              state.downloadFilePath = res.data.filePath;
+              state.downloadFilePath = res.data.file_path;
             }
           } else {
             message.error(res.msg, 3);
