@@ -15,12 +15,12 @@ export function listOnline(query: Record<string, any>) {
 
 /**
  * 强退用户
- * @param device_id 设备会话标识
+ * @param session_id 会话唯一标识
  * @returns object
  */
-export function forceLogout(device_id: string) {
+export function forceLogout(session_id: string) {
   return request({
-    url: `/api/v1/monitor/user-online/logout/${device_id}`,
+    url: `/api/v1/monitor/user-online/logout/${session_id}`,
     method: 'DELETE',
   });
 }

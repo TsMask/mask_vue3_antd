@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { PageContainer } from 'antdv-pro-layout';
@@ -36,8 +36,17 @@ const tableColumns = computed<ProColumns[]>(() => [
     valueType: 'index',
     width: 50,
     align: 'left',
+    fixed: 'left',
   },
-  { title: '登录账号', dataIndex: 'user_name', align: 'left', width: 150 },
+  {
+    title: '登录账号',
+    dataIndex: 'user_name',
+    align: 'left',
+    width: 150,
+    sorter: true,
+    fixed: 'left',
+  },
+  { title: '角色', dataIndex: 'role_keys', align: 'left', width: 120 },
   { title: '登录IP', dataIndex: 'login_ip', align: 'left', width: 120 },
   { title: '登录地点', dataIndex: 'login_location', align: 'left', width: 120 },
   { title: '操作系统', dataIndex: 'login_os', align: 'left', width: 120 },
@@ -47,10 +56,17 @@ const tableColumns = computed<ProColumns[]>(() => [
     dataIndex: 'login_time',
     align: 'left',
     width: 150,
+    sorter: true,
     renderText: value => (+value <= 0 ? '' : parseDateToStr(+value)),
   },
-  { title: '会话编号', dataIndex: 'device_id', align: 'left', width: 250 },
-  { title: '操作', key: 'operation', align: 'left' },
+  {
+    title: '会话编号',
+    dataIndex: 'session_id',
+    align: 'left',
+    width: 260,
+    ellipsis: true,
+  },
+  { title: '操作', key: 'operation', align: 'left', width: 90, fixed: 'right' },
 ]);
 
 const tableScroll = useProTableScroll(tableColumns);
@@ -64,9 +80,12 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
 function handleForceLogout(row: Record<string, string>) {
   confirmAction({
     content: `确认强退登录账号为 ${row.user_name} 的用户?`,
-    action: () => forceLogout(row.device_id),
+    action: () => forceLogout(row.session_id),
     variables: undefined,
     successText: `已强退用户 ${row.user_name}`,
+    onSuccess() {
+      reload();
+    },
   });
 }
 </script>
@@ -84,7 +103,7 @@ function handleForceLogout(row: Record<string, string>) {
     </template>
 
     <ProTable
-      row-key="device_id"
+      row-key="session_id"
       :columns="tableColumns"
       :data-source="dataSource"
       :loading="loading"
@@ -100,19 +119,34 @@ function handleForceLogout(row: Record<string, string>) {
       }"
       @change="onTableChange"
     >
-      <template #toolbarLeft>{{ title }}</template>
       <template #bodyCell="{ column, record }">
+        <template v-if="column.dataIndex === 'role_keys'">
+          <a-space :size="4" :wrap="true">
+            <a-tag v-for="role in record.role_keys ?? []" :key="role">
+              {{ role }}
+            </a-tag>
+            <span v-if="!record.role_keys?.length">-</span>
+          </a-space>
+        </template>
         <template v-if="column.dataIndex === 'login_time'">
           <span>{{
             +record.login_time > 0 ? parseDateToStr(+record.login_time) : ''
           }}</span>
+        </template>
+        <template v-if="column.dataIndex === 'session_id'">
+          <a-typography-text
+            class="identifier-text"
+            :content="record.session_id"
+            :copyable="{ text: record.session_id }"
+            :ellipsis="true"
+          />
         </template>
         <template v-if="column.key === 'operation'">
           <a-button
             type="link"
             danger
             @click.prevent="handleForceLogout(record)"
-            v-perms:has="['monitor:online:forceLogout']"
+            v-perms:has="['monitor:online:logout']"
           >
             <template #icon>
               <LogoutOutlined />
@@ -125,4 +159,8 @@ function handleForceLogout(row: Record<string, string>) {
   </PageContainer>
 </template>
 
-<style scoped></style>
+<style scoped>
+.identifier-text {
+  max-width: 100%;
+}
+</style>
