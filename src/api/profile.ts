@@ -26,14 +26,14 @@ export function updateUserProfile(data: Record<string, any>) {
 
 /**
  * 用户个人密码重置
- * @param oldPassword 旧密码
- * @param newPassword 新密码
+ * @param old_password 旧密码
+ * @param new_password 新密码
  * @returns object
  */
-export function updateUserPassword(oldPassword: string, newPassword: string) {
+export function updateUserPassword(old_password: string, new_password: string) {
   return request({
     url: '/api/v1/system/user/profile/password',
     method: 'PUT',
-    data: { oldPassword, newPassword },
+    data: { old_password, new_password },
   });
 }

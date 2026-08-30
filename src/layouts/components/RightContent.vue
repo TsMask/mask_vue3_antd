@@ -188,7 +188,7 @@ function fnClick({ key }: MenuInfo) {
           :alt="userStore.user_name"
         ></a-avatar>
         <span class="account-nickname">
-          {{ userStore.nickName }}
+          {{ userStore.user_nick }}
         </span>
       </div>
       <template #overlay>

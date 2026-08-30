@@ -14,14 +14,16 @@ let loading = ref<boolean>(true);
 let activeKey = ref<string>('list');
 
 /**个人信息数据状态 */
-let state = reactive<{
-  user: Record<string, any>;
-  postGroup: string[];
-  roleGroup: string[];
-}>({
+type ProfileData = {
+  user?: Record<string, any>;
+  role_group?: string[];
+  post_group?: string[];
+};
+
+let state = reactive<ProfileData>({
   user: {},
-  postGroup: [],
-  roleGroup: [],
+  role_group: [],
+  post_group: [],
 });
 
 /**列表数据 */
@@ -56,12 +58,12 @@ let listData = ref([
 function fnGetProfile() {
   getUserProfile().then(res => {
     if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      const { user, roleGroup, postGroup } = res.data;
-      state.user = user;
-      state.roleGroup = roleGroup;
-      state.postGroup = postGroup;
+      const { user, role_group, post_group }: ProfileData = res.data;
+      state.user = user || {};
+      state.role_group = role_group || [];
+      state.post_group = post_group || [];
       // 头像解析
-      state.user.user_avatar = useUserStore().fnAvatar(user.user_avatar);
+      state.user.user_avatar = useUserStore().fnAvatar(state.user.user_avatar);
       loading.value = false;
     } else {
       message.error(res.msg, 3);
@@ -81,16 +83,16 @@ onMounted(() => {
       <a-col :lg="6" :md="6" :xs="24">
         <a-card :body-style="{ padding: '0px' }" style="margin-bottom: 16px">
           <template #title>
-            <div class="info-top">
-              <div class="info-top-no">No：{{ state.user.id }}</div>
+            <div class="info">
+              <div class="info-no">No：{{ state.user?.id || '-' }}</div>
               <a-avatar
                 shape="circle"
                 :size="96"
-                :src="state.user.user_avatar"
-                :alt="state.user.user_name"
+                :src="state.user?.user_avatar"
+                :alt="state.user?.user_name"
               ></a-avatar>
-              <div class="info-top-nickname" :title="state.user.user_nick">
-                {{ state.user.user_nick }}
+              <div class="info-nickname" :title="state.user?.user_nick">
+                {{ state.user?.user_nick }}
               </div>
             </div>
           </template>
@@ -101,32 +103,32 @@ onMounted(() => {
             :column="1"
           >
             <a-descriptions-item label="手机号码">
-              {{ state.user.user_phone || '-' }}
+              {{ state.user?.user_phone || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="用户邮箱">
-              {{ state.user.user_email || '-' }}
+              {{ state.user?.user_email || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="所属部门">
-              {{ state.user.dept?.dept_name || '-' }}
+              {{ state.user?.dept?.dept_name || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="拥有岗位">
-              <span v-if="state.postGroup.length === 0">-</span>
-              <a-tag v-else v-for="v in state.postGroup" :key="v">
+              <span v-if="state.post_group?.length === 0">-</span>
+              <a-tag v-else v-for="v in state.post_group" :key="v">
                 {{ v }}
               </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="拥有角色">
-              <span v-if="state.roleGroup.length === 0">-</span>
-              <a-tag v-else v-for="v in state.roleGroup" :key="v">
+              <span v-if="state.role_group?.length === 0">-</span>
+              <a-tag v-else v-for="v in state.role_group" :key="v">
                 {{ v }}
               </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="登录地址">
-              {{ state.user.user_login_ip || '-' }}
+              {{ state.user?.user_login_ip || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="登录时间">
-              <span v-if="+state.user.user_login_time > 0">
-                {{ parseDateToStr(+state.user.user_login_time) }}
+              <span v-if="+state.user?.user_login_time > 0">
+                {{ parseDateToStr(+state.user?.user_login_time) }}
               </span>
               <span v-else>-</span>
             </a-descriptions-item>
@@ -176,25 +178,25 @@ onMounted(() => {
   </PageContainer>
 </template>
 
-<style lang="less" scoped>
-.info-top {
+<style lang="css" scoped>
+.info {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 16px 0;
-  &-no {
-    align-self: flex-start;
-    font-size: 14px;
-    margin-bottom: 16px;
-  }
-  &-nickname {
-    margin-top: 16px;
-    font-size: 24px;
-    align-self: flex-start;
-    text-align: center;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    width: 100%;
-  }
+}
+.info-no {
+  align-self: flex-start;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+.info-nickname {
+  margin-top: 16px;
+  font-size: 24px;
+  align-self: flex-start;
+  text-align: center;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  width: 100%;
 }
 </style>

@@ -23,15 +23,15 @@ type UserInfo = {
   /** 用户权限 字符串数组 */
   permissions: string[];
   /** 用户头像 */
-  avatar: string;
+  user_avatar: string;
   /** 用户昵称 */
-  nickName: string;
+  user_nick: string;
   /** 用户手机号 */
-  phone: string;
+  user_phone: string;
   /** 用户邮箱 */
-  email: string;
+  user_email: string;
   /** 用户性别 */
-  gender: string | undefined;
+  user_gender: string | undefined;
 };
 
 /**
@@ -56,11 +56,11 @@ const useUserStore = defineStore('user', {
     user_name: '',
     roles: [],
     permissions: [],
-    avatar: '',
-    nickName: '',
-    phone: '',
-    email: '',
-    gender: undefined,
+    user_avatar: '',
+    user_nick: '',
+    user_phone: '',
+    user_email: '',
+    user_gender: undefined,
   }),
   getters: {
     /**
@@ -69,7 +69,7 @@ const useUserStore = defineStore('user', {
      * @returns 头像地址url
      */
     getAvatar(state) {
-      return parseAvatar(state.avatar);
+      return parseAvatar(state.user_avatar);
     },
     /**
      * 获取基础信息属性
@@ -78,11 +78,11 @@ const useUserStore = defineStore('user', {
      */
     getBaseInfo(state) {
       return {
-        nickName: state.nickName,
-        phone: state.phone,
-        email: state.email,
-        gender: state.gender,
-        avatar: state.avatar,
+        user_nick: state.user_nick,
+        user_phone: state.user_phone,
+        user_email: state.user_email,
+        user_gender: state.user_gender,
+        user_avatar: state.user_avatar,
       };
     },
   },
@@ -92,17 +92,18 @@ const useUserStore = defineStore('user', {
      * @param data 变更信息
      */
     setBaseInfo(data: Record<string, any>) {
-      this.nickName = data.nickName;
-      this.phone = data.phone;
-      this.email = data.email;
-      this.gender = data.gender;
+      this.user_nick = data.user_nick;
+      this.user_phone = data.user_phone;
+      this.user_email = data.user_email;
+      this.user_gender = data.user_gender;
+      this.user_avatar = data.user_avatar;
     },
     /**
      * 更新头像
      * @param avatar 上传后的地址
      */
-    setAvatar(avatar: string) {
-      this.avatar = avatar;
+    setAvatar(user_avatar: string) {
+      this.user_avatar = user_avatar;
     },
     /**
      * 获取正确头像地址
@@ -138,12 +139,12 @@ const useUserStore = defineStore('user', {
         // 登录账号
         this.user_name = user.user_name;
         // 用户头像
-        this.avatar = user.user_avatar;
+        this.user_avatar = user.user_avatar;
         // 基础信息
-        this.nickName = user.user_nick;
-        this.phone = user.user_phone;
-        this.email = user.user_email;
-        this.gender = user.user_gender;
+        this.user_nick = user.user_nick;
+        this.user_phone = user.user_phone;
+        this.user_email = user.user_email;
+        this.user_gender = user.user_gender;
 
         // 验证返回的roles是否是一个非空数组
         if (Array.isArray(roles) && roles.length > 0) {
@@ -155,9 +156,9 @@ const useUserStore = defineStore('user', {
         }
 
         // 水印文字信息=用户昵称 手机号
-        let waterMarkContent = this.nickName;
-        if (this.phone) {
-          waterMarkContent = `${this.nickName} ${this.phone}`;
+        let waterMarkContent = this.user_nick;
+        if (this.user_phone) {
+          waterMarkContent = `${this.user_nick} ${this.user_phone}`;
         }
         useLayoutStore().changeWaterMark(waterMarkContent);
         return res;

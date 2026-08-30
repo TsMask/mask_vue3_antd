@@ -27,6 +27,8 @@ type LayoutStore = {
     fixSiderbar: boolean;
     /**自动分割菜单 */
     splitMenus: boolean;
+    /**侧边菜单类型 */
+    siderMenuType: 'sub' | 'group';
     /**内容区域-顶栏 */
     headerRender: any | boolean | undefined;
     /**内容区域-页脚 */
@@ -76,6 +78,7 @@ const proConfigLocal: LayoutStore['proConfig'] = localGetJSON(
   fixSiderbar: true,
   fixedHeader: true,
   splitMenus: true,
+  siderMenuType: 'sub',
 };
 
 const useLayoutStore = defineStore('layout', {
@@ -87,6 +90,7 @@ const useLayoutStore = defineStore('layout', {
       fixedHeader: Boolean(proConfigLocal.fixedHeader),
       fixSiderbar: Boolean(proConfigLocal.fixSiderbar),
       splitMenus: Boolean(proConfigLocal.splitMenus),
+      siderMenuType: proConfigLocal.siderMenuType || 'sub',
       headerRender: proRender(proConfigLocal.headerRender),
       footerRender: proRender(proConfigLocal.footerRender),
       menuHeaderRender: proRender(proConfigLocal.menuHeaderRender),

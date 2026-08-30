@@ -1,212 +1,164 @@
 <script lang="ts" setup>
-import { usePrefersColorScheme, viewTransitionTheme } from 'antdv-pro-layout';
+import { viewTransitionTheme } from 'antdv-pro-layout';
 import useLayoutStore from '@/store/modules/layout';
-import { watch } from 'vue';
-const { proConfig, changeConf, themeConfig, changePrimaryColor } =
+
+const { proConfig, themeConfig, changeConf, changePrimaryColor } =
   useLayoutStore();
 
-let timerId: any = null;
+const themeOptions = [
+  { label: '亮色', value: 'light' },
+  { label: '暗色', value: 'dark' },
+];
 
-/**改变主题色 */
-function fnColorChange(e: Event) {
-  const target = e.target as HTMLInputElement;
-  // 需要防抖函数处理
-  clearTimeout(timerId);
-  timerId = setTimeout(() => {
-    if (target.nodeName === 'INPUT') {
-      changePrimaryColor(target.value ?? '#1890ff');
-    } else {
-      changePrimaryColor();
-    }
-  }, 300);
+const menuThemeOptions = [
+  { label: '亮色', value: 'light' },
+  { label: '暗色', value: 'dark' },
+];
+
+const layoutOptions = [
+  { label: '侧边', value: 'side' },
+  { label: '顶部', value: 'top' },
+  { label: '混合', value: 'mix' },
+];
+
+const siderMenuTypeOptions = [
+  { label: '经典', value: 'sub' },
+  { label: '分组', value: 'group' },
+];
+
+const colorOptions = [
+  { label: '科技蓝', value: '#1677ff' },
+  { label: '拂晓蓝', value: '#1890ff' },
+  { label: '薄暮', value: '#f5222d' },
+  { label: '火山', value: '#fa541c' },
+  { label: '日暮', value: '#faad14' },
+  { label: '明青', value: '#13c2c2' },
+  { label: '极光绿', value: '#52c41a' },
+  { label: '极客蓝', value: '#2f54eb' },
+  { label: '酱紫', value: '#722ed1' },
+];
+
+function changeThemeMode(mode: 'light' | 'dark') {
+  if (proConfig.theme === mode) return;
+  viewTransitionTheme(() => {
+    changeConf('theme', mode);
+    changeConf('menuTheme', mode);
+  });
 }
 
-// 偏好设置
-const colorScheme = usePrefersColorScheme();
-watch(
-  () => colorScheme.value,
-  themeMode => {
-    // 普通
-    // changeConf('theme', themeMode);
-    // document.documentElement.setAttribute('data-theme', themeMode);
-    // 过渡动画
-    changeTheme(undefined);
+function changeLayout(mode: 'side' | 'top' | 'mix') {
+  if (proConfig.layout === mode) return;
+  changeConf('layout', mode);
+  if (mode !== 'mix') {
+    changeConf('splitMenus', false);
   }
-);
-
-// 手动变更主题-过渡动画
-function changeTheme(e: any) {
-  viewTransitionTheme(isDarkMode => {
-    const themeMode = isDarkMode ? 'light' : 'dark';
-    changeConf('theme', themeMode);
-  }, e);
 }
 </script>
 
 <template>
-  <a-divider orientation="left">布局属性</a-divider>
-  <a-list item-layout="vertical" size="large" row-key="title">
-    <a-list-item>
-      整体布局
-      <template #actions> 导航模式模块设置 </template>
-      <template #extra>
-        <a-radio-group
-          style="margin-bottom: 12px"
-          :value="proConfig.layout"
-          @change="(e: any) => changeConf('layout', e.target.value)"
-        >
-          <a-radio value="side">左侧菜单布局</a-radio>
-          <a-radio value="top">顶部菜单布局</a-radio>
-          <a-radio value="mix">混合菜单布局</a-radio>
-        </a-radio-group>
-      </template>
-    </a-list-item>
-    <a-list-item>
-      风格配色
-      <template #actions> 整体风格配色设置 </template>
-      <template #extra>
-        <a-space :size="16" align="end" direction="horizontal">
-          <a-button type="primary" size="small" @click="fnColorChange">
-            随机
-          </a-button>
-          <input
-            type="color"
-            :value="themeConfig?.token?.colorPrimary"
-            @input="fnColorChange"
-          />
-        </a-space>
-      </template>
-    </a-list-item>
-    <a-list-item>
-      主题明暗模式
-      <template #actions> 全局主题主题暗黑/明亮色切换 </template>
-      <template #extra>
-        <a-button
-          :type="proConfig.theme === 'dark' ? 'primary' : 'default'"
-          size="small"
-          @click="changeTheme"
-        >
-          {{ proConfig.theme }}
-        </a-button>
-      </template>
-    </a-list-item>
-    <a-list-item>
-      深色菜单
-      <template #actions> 只能改变导航模式的菜单 </template>
-      <template #extra>
-        <a-switch
-          checked-children="是"
-          un-checked-children="否"
-          :checked="proConfig.menuTheme === 'dark'"
-          @change="
-            (checked: any) =>
-              changeConf('menuTheme', checked ? 'dark' : 'light')
-          "
-        ></a-switch>
-      </template>
-    </a-list-item>
-    <a-list-item>
-      固定顶部导航栏
-      <template #actions> 顶部导航栏是否固定，不随滚动条移动 </template>
-      <template #extra>
-        <a-switch
-          checked-children="是"
-          un-checked-children="否"
-          :checked="proConfig.fixedHeader"
-          @change="(checked: any) => changeConf('fixedHeader', checked)"
-        ></a-switch>
-      </template>
-    </a-list-item>
-    <a-list-item>
-      固定左侧菜单
-      <template #actions> 左侧菜单是否固定，仅左侧菜单布局时有效 </template>
-      <template #extra>
-        <a-switch
-          checked-children="是"
-          un-checked-children="否"
-          :checked="proConfig.fixSiderbar"
-          @change="(checked: any) => changeConf('fixSiderbar', checked)"
-        ></a-switch>
-      </template>
-    </a-list-item>
-    <a-list-item>
-      自动分割菜单
-      <template #actions>
-        顶部有多级菜单时显示左侧菜单，仅混合菜单布局时有效
-      </template>
-      <template #extra>
-        <a-switch
-          checked-children="是"
-          un-checked-children="否"
-          :checked="proConfig.splitMenus"
-          @change="(checked: any) => changeConf('splitMenus', checked)"
-        ></a-switch>
-      </template>
-    </a-list-item>
-  </a-list>
-  <a-divider orientation="left">内容区域</a-divider>
-  <a-list item-layout="vertical" size="large" row-key="title">
-    <a-list-item>
-      顶栏
-      <template #actions> 是否显示顶部导航栏 </template>
-      <template #extra>
-        <a-switch
-          checked-children="显示"
-          un-checked-children="隐藏"
-          :checked="proConfig.headerRender === undefined"
-          @change="
-            (checked: any) =>
-              changeConf('headerRender', checked === true && undefined)
-          "
-        ></a-switch>
-      </template>
-    </a-list-item>
-    <a-list-item>
-      页脚
-      <template #actions> 是否显示底部导航栏 </template>
-      <template #extra>
-        <a-switch
-          checked-children="显示"
-          un-checked-children="隐藏"
-          :checked="proConfig.footerRender === undefined"
-          @change="
-            (checked: any) =>
-              changeConf('footerRender', checked === true && undefined)
-          "
-        ></a-switch>
-      </template>
-    </a-list-item>
-    <a-list-item>
-      菜单头
-      <template #actions> 是否显示左侧菜单栏顶部LOGO区域 </template>
-      <template #extra>
-        <a-switch
-          checked-children="显示"
-          un-checked-children="隐藏"
-          :checked="proConfig.menuHeaderRender === undefined"
-          @change="
-            (checked: any) =>
-              changeConf('menuHeaderRender', checked === true && undefined)
-          "
-        ></a-switch>
-      </template>
-    </a-list-item>
-    <a-list-item>
-      导航标签项
-      <template #actions> 是否显示顶部Tab导航标签项 </template>
-      <template #extra>
-        <a-switch
-          checked-children="显示"
-          un-checked-children="隐藏"
-          :checked="proConfig.tabRender === undefined"
-          @change="
-            (checked: any) =>
-              changeConf('tabRender', checked === true && undefined)
-          "
-        ></a-switch>
-      </template>
-    </a-list-item>
-  </a-list>
+  <a-flex vertical :gap="24" class="style-layout">
+    <a-form layout="vertical">
+      <a-typography-title :level="5">主题风格</a-typography-title>
+      <a-row :gutter="[16, 0]">
+        <a-col :xs="24" :md="12">
+          <a-form-item label="整体风格">
+            <a-segmented
+              block
+              :value="proConfig.theme"
+              :options="themeOptions"
+              @change="(value: any) => changeThemeMode(value)"
+            />
+          </a-form-item>
+        </a-col>
+        <a-col :xs="24" :md="12">
+          <a-form-item label="菜单风格">
+            <a-segmented
+              block
+              :value="proConfig.menuTheme"
+              :options="menuThemeOptions"
+              @change="(value: any) => changeConf('menuTheme', value)"
+            />
+          </a-form-item>
+        </a-col>
+        <a-col :xs="24" :md="12">
+          <a-form-item label="主题色">
+            <a-select
+              :value="themeConfig.token?.colorPrimary"
+              :options="colorOptions"
+              @change="(value: any) => changePrimaryColor(value)"
+            />
+          </a-form-item>
+        </a-col>
+      </a-row>
+    </a-form>
+
+    <a-divider />
+
+    <a-form layout="vertical">
+      <a-typography-title :level="5">导航布局</a-typography-title>
+      <a-row :gutter="[16, 0]">
+        <a-col :xs="24" :md="12">
+          <a-form-item label="导航模式">
+            <a-segmented
+              block
+              :value="proConfig.layout"
+              :options="layoutOptions"
+              @change="(value: any) => changeLayout(value)"
+            />
+          </a-form-item>
+        </a-col>
+        <a-col v-if="proConfig.layout !== 'top'" :xs="24" :md="12">
+          <a-form-item label="侧边菜单类型">
+            <a-segmented
+              block
+              :value="proConfig.siderMenuType"
+              :options="siderMenuTypeOptions"
+              @change="(value: any) => changeConf('siderMenuType', value)"
+            />
+          </a-form-item>
+        </a-col>
+      </a-row>
+    </a-form>
+
+    <a-divider />
+
+    <a-form layout="vertical">
+      <a-typography-title :level="5">布局设置</a-typography-title>
+      <a-row :gutter="[16, 0]">
+        <a-col :xs="24" :md="8">
+          <a-form-item label="固定顶栏">
+            <a-switch
+              :checked="proConfig.fixedHeader"
+              @change="(checked: any) => changeConf('fixedHeader', checked)"
+            />
+          </a-form-item>
+        </a-col>
+        <a-col :xs="24" :md="8">
+          <a-form-item label="固定侧边菜单">
+            <a-switch
+              :disabled="proConfig.layout === 'top'"
+              :checked="proConfig.fixSiderbar"
+              @change="(checked: any) => changeConf('fixSiderbar', checked)"
+            />
+          </a-form-item>
+        </a-col>
+        <a-col :xs="24" :md="8">
+          <a-form-item label="自动分割菜单">
+            <a-switch
+              :disabled="proConfig.layout !== 'mix'"
+              :checked="proConfig.splitMenus"
+              @change="(checked: any) => changeConf('splitMenus', checked)"
+            />
+          </a-form-item>
+        </a-col>
+      </a-row>
+    </a-form>
+  </a-flex>
 </template>
 
-<style scoped></style>
+<style scoped>
+.style-layout {
+  width: 100%;
+  max-width: 560px;
+}
+</style>

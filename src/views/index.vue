@@ -38,7 +38,7 @@ function goTarget(type: string) {
           :alt="userStore.user_name"
         ></a-avatar>
         <span class="nickname">
-          {{ userStore.nickName }} ，想必你那里一切安好吧。
+          {{ userStore.user_nick }} ，想必你那里一切安好吧。
         </span>
       </a-space>
     </template>

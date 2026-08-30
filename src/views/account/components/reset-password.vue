@@ -12,9 +12,9 @@ const router = useRouter();
 let state = reactive({
   /**表单属性 */
   form: {
-    oldPassword: '',
-    newPassword: '',
-    confirmPassword: '',
+    old_password: '',
+    new_password: '',
+    confirm_password: '',
   },
   /**表单提交点击状态 */
   formClick: false,
@@ -29,10 +29,10 @@ function fnEqualToPassword(
   if (!value) {
     return Promise.reject('请输入确认新密码');
   }
-  if (state.form.oldPassword === value) {
+  if (state.form.old_password === value) {
     return Promise.reject('与旧密码一致，请重新输入新密码');
   }
-  if (state.form.newPassword === value) {
+  if (state.form.new_password === value) {
     return Promise.resolve();
   }
   return Promise.reject('两次输入的新密码不一致');
@@ -47,7 +47,7 @@ function fnFinish() {
       // 发送请求
       const hide = message.loading('请稍等...', 0);
       state.formClick = true;
-      updateUserPassword(state.form.oldPassword, state.form.confirmPassword)
+      updateUserPassword(state.form.old_password, state.form.confirm_password)
         .then(res => {
           if (res.code === RESULT_CODE_SUCCESS) {
             Modal.success({
@@ -78,14 +78,14 @@ function fnFinish() {
   <a-form
     :model="state.form"
     name="stateForm"
-    :wrapper-col="{ lg: 4, md: 12, xs: 14 }"
-    :label-col="{ lg: 2, md: 4, xs: 6 }"
+    :wrapper-col="{ lg: 8, md: 12, xs: 14 }"
+    :label-col="{ lg: 4, md: 4, xs: 6 }"
     :label-warp="true"
     @finish="fnFinish"
   >
     <a-form-item
       label="旧密码"
-      name="oldPassword"
+      name="old_password"
       :rules="[
         {
           required: true,
@@ -96,7 +96,7 @@ function fnFinish() {
       ]"
     >
       <a-input-password
-        v-model:value="state.form.oldPassword"
+        v-model:value="state.form.old_password"
         placeholder="请输入旧密码"
         :maxlength="26"
       >
@@ -107,7 +107,7 @@ function fnFinish() {
     </a-form-item>
     <a-form-item
       label="新密码"
-      name="newPassword"
+      name="new_password"
       :rules="[
         {
           required: true,
@@ -117,7 +117,7 @@ function fnFinish() {
       ]"
     >
       <a-input-password
-        v-model:value="state.form.newPassword"
+        v-model:value="state.form.new_password"
         placeholder="请输入新密码"
         :maxlength="26"
       >
@@ -128,7 +128,7 @@ function fnFinish() {
     </a-form-item>
     <a-form-item
       label="确认新密码"
-      name="confirmPassword"
+      name="confirm_password"
       :rules="[
         {
           required: true,
@@ -137,7 +137,7 @@ function fnFinish() {
       ]"
     >
       <a-input-password
-        v-model:value="state.form.confirmPassword"
+        v-model:value="state.form.confirm_password"
         placeholder="请确认新密码"
         :maxlength="26"
       >

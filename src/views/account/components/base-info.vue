@@ -23,11 +23,11 @@ let userGenderOptions = ref<DictType[]>([
 let stateForm = reactive({
   /**表单属性 */
   form: {
-    nickName: '',
-    email: '',
-    phone: '',
-    gender: undefined,
-    avatar: '',
+    user_nick: '',
+    user_email: '',
+    user_phone: '',
+    user_gender: undefined,
+    user_avatar: '',
   },
   /**表单提交点击状态 */
   formClick: false,
@@ -120,7 +120,7 @@ function fnUpload(up: UploadRequestOption) {
         .then(filePath => {
           if (filePath === '') return undefined;
           const form = toRaw(stateForm.form);
-          form.avatar = filePath;
+          form.user_avatar = filePath;
           return updateUserProfile(form);
         })
         .then(res => {
@@ -130,7 +130,7 @@ function fnUpload(up: UploadRequestOption) {
               content: '头像变更成功！',
               duration: 3,
             });
-            userStore.setAvatar(stateForm.form.avatar);
+            userStore.setAvatar(stateForm.form.user_avatar);
           } else {
             message.error(res.msg, 3);
           }
@@ -159,16 +159,40 @@ onMounted(() => {
   <a-form
     :model="stateForm.form"
     name="stateForm"
-    :wrapper-col="{ lg: 12, md: 16, xs: 14 }"
+    :wrapper-col="{ lg: 16, md: 16, xs: 16 }"
     :label-col="{ lg: 6, md: 6, xs: 6 }"
     :label-warp="true"
     @finish="fnFinish"
   >
     <a-row>
-      <a-col :lg="8" :md="18" :xs="24" style="margin-bottom: 30px">
+       <a-col :lg="6" :md="6" :xs="24"  style="margin-bottom: 24px">
+        <a-space direction="vertical" :size="16">
+          <a-avatar
+            shape="circle"
+            :size="128"
+            :src="userStore.getAvatar"
+            :alt="userStore.user_name"
+          ></a-avatar>
+          <span>请选择等比大小图片作为头像，如200x200、400x400</span>
+          <a-upload
+            name="file"
+            list-type="picture"
+            :max-count="1"
+            :show-upload-list="false"
+            :before-upload="fnBeforeUpload"
+            :custom-request="fnUpload"
+          >
+            <a-button type="default" :loading="upState">
+              上传/变更图片
+            </a-button>
+          </a-upload>
+        </a-space>
+      </a-col>
+
+      <a-col :lg="8" :md="18" :xs="24">
         <a-form-item
           label="用户昵称"
-          name="nickName"
+          name="user_nick"
           :rules="[
             {
               required: true,
@@ -178,7 +202,7 @@ onMounted(() => {
           ]"
         >
           <a-input
-            v-model:value="stateForm.form.nickName"
+            v-model:value="stateForm.form.user_nick"
             allow-clear
             :maxlength="26"
             placeholder="请输入用户昵称"
@@ -187,7 +211,7 @@ onMounted(() => {
 
         <a-form-item
           label="手机号码"
-          name="phone"
+          name="user_phone"
           :rules="[
             {
               required: false,
@@ -197,7 +221,7 @@ onMounted(() => {
           ]"
         >
           <a-input
-            v-model:value="stateForm.form.phone"
+            v-model:value="stateForm.form.user_phone"
             allow-clear
             :maxlength="11"
             placeholder="请输入手机号码"
@@ -206,7 +230,7 @@ onMounted(() => {
 
         <a-form-item
           label="电子邮箱"
-          name="email"
+          name="user_email"
           :rules="[
             {
               required: false,
@@ -216,7 +240,7 @@ onMounted(() => {
           ]"
         >
           <a-input
-            v-model:value="stateForm.form.email"
+            v-model:value="stateForm.form.user_email"
             allow-clear
             :maxlength="40"
             placeholder="请输入电子邮箱"
@@ -225,7 +249,7 @@ onMounted(() => {
 
         <a-form-item
           label="用户性别"
-          name="gender"
+          name="user_gender"
           :rules="[
             {
               required: true,
@@ -234,7 +258,7 @@ onMounted(() => {
           ]"
         >
           <a-select
-            v-model:value="stateForm.form.gender"
+            v-model:value="stateForm.form.user_gender"
             placeholder="用户性别"
             :options="userGenderOptions"
           >
@@ -259,29 +283,6 @@ onMounted(() => {
             </a-button>
           </a-space>
         </a-form-item>
-      </a-col>
-      <a-col :lg="6" :md="4" :xs="24">
-        <a-space direction="vertical" :size="16">
-          <a-avatar
-            shape="circle"
-            :size="128"
-            :src="userStore.getAvatar"
-            :alt="userStore.user_name"
-          ></a-avatar>
-          <span>请选择等比大小图片作为头像，如200x200、400x400</span>
-          <a-upload
-            name="file"
-            list-type="picture"
-            :max-count="1"
-            :show-upload-list="false"
-            :before-upload="fnBeforeUpload"
-            :custom-request="fnUpload"
-          >
-            <a-button type="default" :loading="upState">
-              上传/变更图片
-            </a-button>
-          </a-upload>
-        </a-space>
       </a-col>
     </a-row>
   </a-form>
