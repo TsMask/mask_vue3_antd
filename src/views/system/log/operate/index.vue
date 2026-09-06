@@ -28,8 +28,8 @@ const title = ref<string>(route.meta.title ?? '标题');
 
 const { dict } = useDictSetup({
   keyMap: {
-    sysBusinessType: 'sys_opera_type',
-    sysCommonStatus: 'sys_common_status',
+    sysBusinessType: 'sys_operate_type',
+    sysSuccessFail: 'sys_success_fail',
   },
 });
 
@@ -70,7 +70,7 @@ const tableColumns = computed<ProColumns[]>(() => [
     align: 'left',
     width: 100,
     valueType: 'select',
-    valueEnum: toProValueEnum(dict.sysCommonStatus),
+    valueEnum: toProValueEnum(dict.sysSuccessFail),
   },
   {
     title: '操作时间',
@@ -91,7 +91,11 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
     title: '操作类型',
     dataIndex: 'operate_type',
     valueType: 'select',
+    fieldProps: { mode: 'multiple', placeholder: '请选择操作类型' },
     valueEnum: toProValueEnum(dict.sysBusinessType),
+    searchTransform(value: string[]) {
+      return { operate_type: value.join(',') };
+    },
   },
   { title: '操作人员', dataIndex: 'create_by' },
   { title: '操作地址', dataIndex: 'operate_ip' },
@@ -99,7 +103,7 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
     title: '操作状态',
     dataIndex: 'operate_status',
     valueType: 'select',
-    valueEnum: toProValueEnum(dict.sysCommonStatus),
+    valueEnum: toProValueEnum(dict.sysSuccessFail),
   },
   {
     title: '操作时间范围',
@@ -239,7 +243,7 @@ function handleExport() {
         </template>
         <template v-if="column.key === 'operate_status'">
           <DictTag
-            :options="dict.sysCommonStatus"
+            :options="dict.sysSuccessFail"
             :value="record.operate_status"
           />
         </template>

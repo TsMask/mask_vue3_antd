@@ -26,7 +26,7 @@ const route = useRoute();
 const title = ref<string>(route.meta.title ?? '标题');
 
 const { dict } = useDictSetup({
-  keyMap: { sysCommonStatus: 'sys_common_status' },
+  keyMap: { sysSuccessFail: 'sys_success_fail' },
 });
 
 const {
@@ -71,7 +71,7 @@ const tableColumns = computed<ProColumns[]>(() => [
     align: 'left',
     width: 100,
     valueType: 'select',
-    valueEnum: toProValueEnum(dict.sysCommonStatus),
+    valueEnum: toProValueEnum(dict.sysSuccessFail),
   },
   {
     title: '登录时间',
@@ -93,7 +93,7 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
     title: '登录状态',
     dataIndex: 'login_status',
     valueType: 'select',
-    valueEnum: toProValueEnum(dict.sysCommonStatus),
+    valueEnum: toProValueEnum(dict.sysSuccessFail),
   },
   {
     title: '登录时间范围',
@@ -204,7 +204,7 @@ function handleExport() {
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'login_status'">
           <DictTag
-            :options="dict.sysCommonStatus"
+            :options="dict.sysSuccessFail"
             :value="record.login_status"
           />
         </template>
