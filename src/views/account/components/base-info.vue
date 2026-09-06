@@ -268,7 +268,7 @@ onMounted(() => {
           </a-select>
         </a-form-item>
 
-        <a-form-item :wrapper-col="{ offset: 4, span: 12 }">
+        <a-form-item :wrapper-col="{ offset: 6, span: 12 }">
           <a-space :size="8">
             <a-button
               type="primary"

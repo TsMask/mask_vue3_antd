@@ -99,19 +99,10 @@ const FETCH_OPTIONS: OptionsType = {
   withToken: true,
 };
 
-// ==================== Token 刷新队列 ====================
+// ==================== Token 刷新 ====================
 
-/** 是否正在刷新token */
-let isRefreshingToken = false;
-/** 等待token刷新完成的请求队列 */
-let pendingRequestsQueue: Array<{
-  /** 刷新成功后重放请求的函数 */
-  resolve: (value: ResultType | PromiseLike<ResultType>) => void;
-  /** 刷新失败后拒绝请求的函数 */
-  reject: (reason?: any) => void;
-  /** 待重放的请求参数（未经 beforeRequest 修改的原始参数） */
-  options: OptionsType;
-}> = [];
+/** 当前刷新请求；并发刷新共用同一个 Promise */
+let refreshingTokenPromise: Promise<ResultType> | null = null;
 
 /**
  * 是否正在执行强制登出（防止 window.location.reload 被多次触发）
@@ -119,45 +110,70 @@ let pendingRequestsQueue: Array<{
  */
 let isForceLoggingOut = false;
 
-/**
- * 处理token刷新队列
- * 刷新成功：重放所有等待中的请求
- * 刷新失败：立即清除 token，延迟刷新页面（确保 reject 能被调用方 catch 处理）
- *
- * @param isSuccess - 刷新是否成功
- * @param refreshResult - 刷新接口返回的结果
- */
-function processPendingQueue(isSuccess: boolean, refreshResult?: ResultType) {
-  const queue = pendingRequestsQueue;
-  pendingRequestsQueue = [];
-  isRefreshingToken = false;
+/** 需要走登录失效流程的业务码集合 */
+const AUTH_FAILURE_CODES = [401001, 401002, 401003, 401004];
 
-  if (isSuccess) {
-    // 刷新成功，重放所有等待中的请求
-    for (const { resolve, options } of queue) {
-      resolve(request(options));
-    }
-  } else {
-    // 刷新失败，拒绝所有等待中的请求
-    const error: ResultType = {
-      code: RESULT_CODE_ERROR,
-      msg: refreshResult?.msg || '登录已过期，请重新登录',
-    };
-    for (const { reject } of queue) {
-      reject(error);
-    }
-    // 立即清除 token（不延迟），防止路由守卫在 token 未清除时重复触发刷新
-    delAccessToken();
-    delRefreshToken();
-    // 延迟刷新页面，确保 reject 回调有时间被调用方处理
-    // 使用 isForceLoggingOut 标志防止多次触发
-    if (!isForceLoggingOut) {
-      isForceLoggingOut = true;
-      setTimeout(() => {
-        window.location.reload();
-      }, 0);
-    }
+function isAuthFailureCode(code: number) {
+  return AUTH_FAILURE_CODES.includes(code);
+}
+
+function forceLogout() {
+  delAccessToken();
+  delRefreshToken();
+  if (!isForceLoggingOut) {
+    isForceLoggingOut = true;
+    window.location.reload();
   }
+}
+
+function hasTokenPair(result: ResultType) {
+  return Boolean(
+    result.data?.access_token &&
+    result.data?.expires_in &&
+    result.data?.refresh_token &&
+    result.data?.refresh_expires_in
+  );
+}
+
+function authError(msg?: string): ResultType {
+  return { code: RESULT_CODE_ERROR, msg: msg || '登录已过期，请重新登录' };
+}
+
+/**
+ * 使用 refresh token 换取新的 token 组。
+ * 单飞执行：并发触发时共用同一次刷新请求，避免旧 refresh token 被重复轮换。
+ */
+export async function ensureAccessToken(): Promise<ResultType> {
+  if (refreshingTokenPromise) return refreshingTokenPromise;
+
+  const currentRefreshToken = getRefreshToken();
+  if (!currentRefreshToken) return authError();
+
+  refreshingTokenPromise = (async () => {
+    let result: ResultType;
+    try {
+      result = await refreshToken(currentRefreshToken);
+    } catch (error: any) {
+      result = {
+        code: RESULT_CODE_EXCEPTION,
+        msg: error?.message || RESULT_MSG_SERVER_ERROR,
+      };
+    }
+
+    const success = result.code === RESULT_CODE_SUCCESS && hasTokenPair(result);
+    if (success) {
+      setAccessToken(result.data.access_token, result.data.expires_in);
+      setRefreshToken(result.data.refresh_token, result.data.refresh_expires_in);
+    }
+
+    // 网络超时、服务异常不清理 refresh token；明确的登录失效才退出。
+    if (!success && isAuthFailureCode(result.code)) forceLogout();
+    return result;
+  })().finally(() => {
+    refreshingTokenPromise = null;
+  });
+
+  return refreshingTokenPromise;
 }
 
 // ==================== 请求前拦截 ====================
@@ -266,21 +282,9 @@ function beforeRequest(options: OptionsType): OptionsType | Promise<ResultType> 
 
 // ==================== 响应后拦截 ====================
 
-/** 需要走 token 刷新流程的登录失效业务码集合 */
-const AUTH_FAILURE_CODES = [401001, 401002, 401003];
-
-/**
- * 判断业务码是否属于登录失效
- * @param code - 业务响应码
- * @returns 是否为登录失效码
- */
-function isAuthFailureCode(code: number): boolean {
-  return AUTH_FAILURE_CODES.includes(code);
-}
-
 /**
  * 响应后的拦截处理
- * 统一处理token过期刷新（带并发队列），其他错误码直接透传给调用方
+ * 统一处理token过期刷新，其他错误码直接透传给调用方
  *
  * @param originalOptions - 未被 beforeRequest 修改的**原始**请求参数（用于token刷新后重试）
  * @param res - 响应结果
@@ -290,56 +294,17 @@ async function beforeResponse(
   originalOptions: OptionsType,
   res: ResultType
 ): Promise<ResultType> {
-  // 登录过期时，刷新token并重放请求
-  if (res.code === 401001) {
-    // 如果已经在刷新中，将当前请求加入等待队列
-    if (isRefreshingToken) {
-      return new Promise<ResultType>((resolve, reject) => {
-        pendingRequestsQueue.push({ resolve, reject, options: originalOptions });
-      });
+  // 只有携带 access token 的业务请求，才需要在刷新后重放。
+  // refresh-token 接口自身返回 401001 时，直接交回 ensureAccessToken 处理。
+  if (res.code === 401001 && originalOptions.withToken) {
+    const result = await ensureAccessToken();
+    if (result.code === RESULT_CODE_SUCCESS && hasTokenPair(result)) {
+      return request(originalOptions);
     }
-
-    // 标记开始刷新，锁定后续401请求进入队列
-    isRefreshingToken = true;
-
-    try {
-      const result = await refreshToken(getRefreshToken());
-      if (result.code === RESULT_CODE_SUCCESS) {
-        // 刷新成功，更新token
-        setAccessToken(result.data.access_token, result.data.expires_in);
-        setRefreshToken(result.data.refresh_token, result.data.refresh_expires_in);
-        // 使用原始参数重放当前请求（未被 beforeRequest 修改，参数不会重复拼接）
-        const retriedResult = await request(originalOptions);
-        // 释放队列中的等待请求
-        processPendingQueue(true);
-        return retriedResult;
-      } else {
-        // 刷新失败，拒绝所有等待请求
-        processPendingQueue(false, result);
-        return {
-          code: RESULT_CODE_ERROR,
-          msg: result.msg || '登录已过期，请重新登录',
-        };
-      }
-    } catch (error: any) {
-      // 刷新接口本身异常
-      processPendingQueue(false, { code: RESULT_CODE_ERROR, msg: error?.message });
-      return {
-        code: RESULT_CODE_ERROR,
-        msg: '登录已过期，请重新登录',
-      };
-    }
+    return authError(result.msg);
   }
 
-  // 其他登录失效码（401002 / 401003），清除token并跳转登录
-  if ([401002, 401003].includes(res.code)) {
-    delAccessToken();
-    delRefreshToken();
-    if (!isForceLoggingOut) {
-      isForceLoggingOut = true;
-      window.location.reload();
-    }
-  }
+  if (originalOptions.withToken && isAuthFailureCode(res.code)) forceLogout();
 
   return res;
 }
@@ -363,6 +328,15 @@ async function beforeResponse(
  */
 export async function request(options: OptionsType): Promise<ResultType> {
   const reqOptions = Object.assign({}, FETCH_OPTIONS, options);
+
+  if (
+    reqOptions.withToken &&
+    !getAccessToken() &&
+    getRefreshToken()
+  ) {
+    const refreshResult = await ensureAccessToken();
+    if (!getAccessToken()) return authError(refreshResult.msg);
+  }
 
   /**
    * 保存合并后的原始参数副本，用于 token 刷新后重试。

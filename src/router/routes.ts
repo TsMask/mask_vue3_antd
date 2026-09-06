@@ -26,7 +26,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         path: '/index',
         name: 'Index',
         meta: { title: '首页', icon: 'icon-pcduan', cache: true },
-        component: () => import('@/views/index.vue'),
+        component: () => import('@/views/home/index.vue'),
       },
       {
         path: '/demo1',
@@ -158,13 +158,13 @@ export const constantRoutes: RouteRecordRaw[] = [
     path: '/login',
     name: 'Login',
     meta: { title: '登录' },
-    component: () => import('@/views/login.vue'),
+    component: () => import('@/views/login/index.vue'),
   },
   {
     path: '/register',
     name: 'Register',
     meta: { title: '注册' },
-    component: () => import('@/views/register.vue'),
+    component: () => import('@/views/register/index.vue'),
   },
   {
     path: '/403',

@@ -1,6 +1,6 @@
 ﻿import defaultAvatar from '@/assets/images/default_avatar.png';
 import useLayoutStore from './layout';
-import { login, logout, getInfo } from '@/api/auth';
+import { login, loginByPhone, logout, getInfo } from '@/api/auth';
 import {
   delAccessToken,
   delRefreshToken,
@@ -114,7 +114,8 @@ const useUserStore = defineStore('user', {
     },
     // 登录
     async fnLogin(loginBody: Record<string, string>) {
-      const res = await login(loginBody);
+      const loginRequest = loginBody.phone ? loginByPhone(loginBody) : login(loginBody);
+      const res = await loginRequest;
       if (res.code === RESULT_CODE_SUCCESS && res.data) {
         setAccessToken(res.data.access_token, res.data.expires_in);
         setRefreshToken(res.data.refresh_token, res.data.refresh_expires_in);

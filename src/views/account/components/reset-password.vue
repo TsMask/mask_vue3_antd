@@ -78,7 +78,7 @@ function fnFinish() {
   <a-form
     :model="state.form"
     name="stateForm"
-    :wrapper-col="{ lg: 8, md: 12, xs: 14 }"
+    :wrapper-col="{ lg: 6, md: 8, xs: 14 }"
     :label-col="{ lg: 4, md: 4, xs: 6 }"
     :label-warp="true"
     @finish="fnFinish"
@@ -147,7 +147,7 @@ function fnFinish() {
       </a-input-password>
     </a-form-item>
 
-    <a-form-item :wrapper-col="{ offset: 2 }">
+    <a-form-item :wrapper-col="{ offset: 4 }">
       <a-button type="primary" html-type="submit" :loading="state.formClick">
         提交修改
       </a-button>

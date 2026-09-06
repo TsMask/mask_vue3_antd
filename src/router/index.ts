@@ -5,7 +5,8 @@
 } from 'vue-router';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
-import { getAccessToken } from '@/plugins/auth-token';
+import { getAccessToken, getRefreshToken } from '@/plugins/auth-token';
+import { ensureAccessToken, isSuccess } from '@/plugins/http-fetch';
 import { validHttp } from '@/utils/regular-utils';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
@@ -65,7 +66,13 @@ router.afterEach((to, from, failure) => {
  */
 router.beforeEach(async (to, from) => {
   NProgress.start();
-  const accessToken = getAccessToken();
+  let accessToken = getAccessToken();
+
+  // access cookie 过期后，先用 refresh token 恢复登录态，再进入路由初始化。
+  if (!accessToken && getRefreshToken()) {
+    const refreshResult = await ensureAccessToken();
+    if (isSuccess(refreshResult)) accessToken = getAccessToken();
+  }
 
   // 没有token
   if (!accessToken) {

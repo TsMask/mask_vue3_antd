@@ -16,6 +16,21 @@ export function login(data: Record<string, string>) {
 }
 
 /**
+ * 手机号登录方法
+ * @param data 数据
+ * @returns 结果
+ */
+export function loginByPhone(data: Record<string, string>) {
+  return request({
+    url: '/api/v1/auth/login-phone',
+    method: 'POST',
+    data: data,
+    withToken: false,
+    timeout: 60_000,
+  });
+}
+
+/**
  * 退出方法
  * @returns object
  */
@@ -36,6 +51,21 @@ export function logout() {
 export function register(data: Record<string, any>) {
   return request({
     url: '/api/v1/auth/register',
+    method: 'POST',
+    data: data,
+    withToken: false,
+    timeout: 60_000,
+  });
+}
+
+/**
+ * 手机号注册方法
+ * @param data 数据
+ * @returns 结果
+ */
+export function registerByPhone(data: Record<string, any>) {
+  return request({
+    url: '/api/v1/auth/register-phone',
     method: 'POST',
     data: data,
     withToken: false,
@@ -91,5 +121,21 @@ export function getCaptchaImage() {
     url: '/api/v1/auth/captcha-image',
     method: 'GET',
     withToken: false,
+    timeout: 60_000,
+  });
+}
+
+/**
+ * 发送短信登录验证码
+ * @param phone 手机号码
+ * @returns 结果
+ */
+export function getCaptchaSMS(phone: string) {
+  return request({
+    url: '/api/v1/auth/captcha-sms',
+    method: 'POST',
+    data: { phone },
+    withToken: false,
+    timeout: 60_000,
   });
 }
