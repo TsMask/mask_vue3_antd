@@ -11,6 +11,7 @@ export function login(data: Record<string, string>) {
     method: 'POST',
     data: data,
     withToken: false,
+    timeout: 60_000,
   });
 }
 
@@ -23,6 +24,7 @@ export function logout() {
     url: '/api/v1/auth/logout',
     method: 'POST',
     repeatSubmit: false,
+    timeout: 60_000,
   });
 }
 
@@ -37,6 +39,7 @@ export function register(data: Record<string, any>) {
     method: 'POST',
     data: data,
     withToken: false,
+    timeout: 60_000,
   });
 }
 
@@ -51,6 +54,7 @@ export function refreshToken(refreshToken: string) {
     method: 'POST',
     data: { refresh_token: refreshToken },
     withToken: false,
+    timeout: 60_000,
   });
 }
 
@@ -62,6 +66,7 @@ export function getInfo() {
   return request({
     url: '/api/v1/auth/me',
     method: 'GET',
+    timeout: 60_000,
   });
 }
 
@@ -73,6 +78,7 @@ export const getRouter = () => {
   return request({
     url: '/api/v1/auth/router',
     method: 'GET',
+    timeout: 60_000,
   });
 };
 

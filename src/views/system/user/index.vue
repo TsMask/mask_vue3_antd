@@ -628,9 +628,9 @@ onMounted(() => {
             v-perms:has="['system:user:edit']"
             v-model:checked="record.user_status"
             checked-value="1"
-            :checked-children="dict.sysNormalDisable[0].label"
+            :checked-children="dict.sysNormalDisable[1].label"
             un-checked-value="0"
-            :un-checked-children="dict.sysNormalDisable[1].label"
+            :un-checked-children="dict.sysNormalDisable[0].label"
             size="small"
             @change="handleStatusChange(record)"
           />

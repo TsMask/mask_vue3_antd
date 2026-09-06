@@ -141,7 +141,6 @@ const {
     dept_leader: '',
     dept_sort: 0,
     parent_id: 100 as string | number,
-    ancestors: '',
     dept_phone: '',
     dept_status: '0',
   }),
