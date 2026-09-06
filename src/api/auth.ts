@@ -139,3 +139,54 @@ export function getCaptchaSMS(phone: string) {
     timeout: 60_000,
   });
 }
+
+/**
+ * 查找密码找回联系方式
+ * @param username 用户账号
+ * @returns 结果
+ */
+export function lookupPasswordReset(username: string) {
+  return request({
+    url: '/api/v1/auth/password-reset/lookup',
+    method: 'POST',
+    data: { username },
+    withToken: false,
+    timeout: 60_000,
+  });
+}
+
+/**
+ * 发送密码找回验证码
+ * @param username 用户账号
+ * @returns 结果
+ */
+export function getPasswordResetCaptcha(username: string) {
+  return request({
+    url: '/api/v1/auth/password-reset/captcha-email',
+    method: 'POST',
+    data: { username },
+    withToken: false,
+    timeout: 60_000,
+  });
+}
+
+/**
+ * 重置登录密码
+ * @param data 重置密码对象
+ * @returns 结果
+ */
+export function resetPasswordByEmailOrPhone(data: {
+  username: string;
+  code: string;
+  uuid: string;
+  password: string;
+  confirm_password: string;
+}) {
+  return request({
+    url: '/api/v1/auth/password-reset',
+    method: 'POST',
+    data,
+    withToken: false,
+    timeout: 60_000,
+  });
+}

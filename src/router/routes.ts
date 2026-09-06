@@ -167,6 +167,12 @@ export const constantRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/register/index.vue'),
   },
   {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    meta: { title: '忘记密码' },
+    component: () => import('@/views/forgot-password/index.vue'),
+  },
+  {
     path: '/403',
     name: 'NotPermission',
     meta: { title: '没有访问权限' },

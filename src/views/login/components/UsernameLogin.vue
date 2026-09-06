@@ -18,6 +18,10 @@ const router = useRouter();
 function goRegister() {
   router.push({ name: 'Register' });
 }
+
+function goForgotPassword() {
+  router.push({ name: 'ForgotPassword' });
+}
 </script>
 
 <template>
@@ -108,7 +112,14 @@ function goRegister() {
       >
         注册账号
       </a-button>
-      <a-button size="small" type="link">忘记密码</a-button>
+      <a-button
+        size="small"
+        type="link"
+        title="忘记密码"
+        @click="goForgotPassword"
+      >
+        忘记密码
+      </a-button>
     </a-flex>
   </a-form-item>
 </template>

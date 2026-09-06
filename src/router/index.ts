@@ -44,6 +44,7 @@ const WHITE_LIST: string[] = [
   '/404',
   '/403',
   '/register',
+  '/forgot-password',
 ];
 
 /** 全局路由-后置守卫 */
