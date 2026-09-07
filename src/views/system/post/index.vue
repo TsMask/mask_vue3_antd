@@ -12,9 +12,9 @@ import {
 import { exportPost, listPost, addPost, delPost, getPost, updatePost } from "@/api/system/post";
 import { saveAs } from "file-saver";
 import { parseDateToStr } from "@/utils/date-utils";
-import { useCrudModal } from "@/hooks/useCrudModal";
+import { useModalForm } from "@/hooks/useModalForm";
 import { useDictSetup } from "@/hooks/useDictSetup";
-import { useAction, confirmAction } from "@/hooks/useAction";
+import { useModalAction } from "@/hooks/useModalAction";
 import { toProValueEnum, useProTable, useProTableScroll } from "@/hooks/useProTable";
 
 const route = useRoute();
@@ -40,7 +40,7 @@ const {
   rowKey: "id"
 });
 
-const { modal: modalState, formCtl: modalStateForm, isView, openView, openEdit, close: handleCancel } = useCrudModal({
+const { modal: modalState, formCtl: modalStateForm, isView, openModal, closeModal: handleCancel } = useModalForm({
   initForm: () => ({
     id: undefined as string | number | undefined, post_code: "", post_name: "", post_sort: 0, post_status: "0", remark: undefined as string | undefined, create_time: 0,
   }),
@@ -51,14 +51,7 @@ const { modal: modalState, formCtl: modalStateForm, isView, openView, openEdit, 
   },
 });
 
-const { execute: submitExecute, loading: isSubmitting } = useAction({
-  action: (form: Record<string, any>) => form.id ? updatePost(form) : addPost(form),
-  successText: "操作成功",
-  onSuccess() {
-    handleCancel();
-    reload();
-  },
-});
+const { confirmAction, executeAction, loading: isSubmitting } = useModalAction();
 
 const tableColumns = computed<ProColumns[]>(() => [
   { title: "岗位编号", dataIndex: "id", align: "left", width: 100 },
@@ -97,8 +90,30 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
   },
 ]);
 
-function handleView(id: string | number) { openView(id, getPost, "岗位信息"); }
-function handleEdit(id?: string | number) { openEdit(id, getPost, "添加岗位", "修改岗位"); }
+function handleView(id: string | number) {
+  openModal({
+    mode: "view",
+    title: "岗位信息",
+    fetchDetail: () => getPost(id),
+    errorMessage: "获取岗位信息失败",
+  });
+}
+
+function handleEdit(id?: string | number) {
+  openModal(
+    id
+      ? {
+          mode: "edit",
+          title: "修改岗位",
+          fetchDetail: () => getPost(id),
+          errorMessage: "获取岗位信息失败",
+        }
+      : {
+          mode: "add",
+          title: "添加岗位",
+        }
+  );
+}
 
 async function handleSubmit() {
   try {
@@ -107,14 +122,23 @@ async function handleSubmit() {
     message.error({ content: `请正确填写 ${e.errorFields.length} 处必填信息！`, duration: 3 });
     return;
   }
-  submitExecute(toRaw(modalState.form));
+  const form = toRaw(modalState.form);
+  await executeAction({
+    action: () => form.id ? updatePost(form) : addPost(form),
+    successText: "操作成功",
+    onSuccess() {
+      handleCancel();
+      reload();
+    },
+  });
 }
 
 function handleDelete(id: string = "0") {
   if (id === "0") id = selectedRowKeys.value.join(",");
   confirmAction({
     content: `确认删除岗位编号为【${id}】的数据项?`,
-    action: (id) => delPost(id), variables: id, successText: "删除成功",
+    action: () => delPost(id),
+    successText: "删除成功",
     onSuccess() {
       removeSelectedRowKeys(String(id).split(",").map(item => Number(item)));
       reload();
@@ -129,7 +153,8 @@ function handleExport() {
       ...toRaw(searchValues.value),
       page_num: current.value,
       page_size: pageSize.value,
-    }), variables: undefined as any, successText: "已导出完成",
+    }),
+    successText: "已导出完成",
     onSuccess: (res) => { saveAs(res.data, `post_${Date.now()}.csv`); },
   });
 }

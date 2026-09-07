@@ -16,12 +16,14 @@ import {
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import { useDictSetup } from '@/hooks/useDictSetup';
-import { confirmAction } from '@/hooks/useAction';
+import { useModalAction } from '@/hooks/useModalAction';
 import {
   toProValueEnum,
   useProTable,
   useProTableScroll,
 } from '@/hooks/useProTable';
+
+const { confirmAction } = useModalAction();
 
 const route = useRoute();
 const title = ref<string>(route.meta.title ?? '标题');
@@ -80,7 +82,13 @@ const tableColumns = computed<ProColumns[]>(() => [
     sorter: true,
     renderText: value => (+value <= 0 ? '' : parseDateToStr(+value)),
   },
-  { title: '操作', key: 'operation', align: 'left', width: 130 },
+  {
+    title: '操作',
+    key: 'operation',
+    align: 'left',
+    width: 130,
+    fixed: 'right',
+  },
 ]);
 
 const tableScroll = useProTableScroll(tableColumns);
@@ -151,7 +159,6 @@ function handleCleanList() {
   confirmAction({
     content: '确认清空所有操作日志数据项?',
     action: () => cleanSysLogOperate(),
-    variables: undefined as any,
     successText: '清空成功',
   });
 }
@@ -166,7 +173,6 @@ function handleExport() {
         page_size: pageSize.value,
       });
     },
-    variables: undefined as any,
     successText: '已导出完成',
     onSuccess: res => {
       saveAs(res.data, `sys_log_operate_${Date.now()}.csv`);

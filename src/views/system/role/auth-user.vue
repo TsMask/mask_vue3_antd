@@ -13,7 +13,7 @@ import { authUserList, authUserChecked } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
 import { useTabsView } from '@/layouts/hooks/useTabsView';
 import { useDictSetup } from '@/hooks/useDictSetup';
-import { useAction, confirmAction } from '@/hooks/useAction';
+import { useModalAction } from '@/hooks/useModalAction';
 import {
   toProValueEnum,
   useProTable,
@@ -53,10 +53,7 @@ const {
   rowKey: 'id',
 });
 
-/** 授权用户 mutation */
-const { execute: authExecute } = useAction({
-  action: (data: Record<string, any>) => authUserChecked(data),
-});
+const { confirmAction, executeAction } = useModalAction();
 
 /** 表格字段列 */
 const tableColumns = computed<ProColumns[]>(() => [
@@ -80,7 +77,7 @@ const tableColumns = computed<ProColumns[]>(() => [
     width: 200,
     renderText: value => (+value <= 0 ? '' : parseDateToStr(+value)),
   },
-  { title: '操作', key: 'operation', align: 'left' },
+  { title: '操作', key: 'operation', align: 'left', fixed: 'right' },
 ]);
 
 const tableScroll = useProTableScroll(tableColumns);
@@ -111,19 +108,20 @@ async function handleAuthUserOk(userIds: string[] | number[]) {
     message.error({ content: '请选择要分配的用户', duration: 3 });
     return;
   }
-  try {
-    await authExecute({
-      auth: true,
-      user_ids: userIds.map((v: any) => parseInt(v)),
-      role_id: parseInt(role_id),
-    });
-    message.success({ content: '授权用户添加成功', duration: 3 });
-    selectUserVisible.value = false;
-    current.value = 1;
-    reload();
-  } catch {
-    // 错误已由 useAction 统一处理
-  }
+  const params = {
+    auth: true,
+    user_ids: userIds.map((v: any) => parseInt(v)),
+    role_id: parseInt(role_id),
+  };
+  await executeAction({
+    action: () => authUserChecked(params),
+    successText: '授权用户添加成功',
+    onSuccess() {
+      selectUserVisible.value = false;
+      current.value = 1;
+      reload();
+    },
+  });
 }
 
 /** 取消授权 */
@@ -143,7 +141,6 @@ function handleRevokeAuth(user_id: string | number) {
         role_id: parseInt(role_id),
       });
     },
-    variables: undefined,
     successText: '取消授权成功',
     onSuccess() {
       removeSelectedRowKeys(userIds);

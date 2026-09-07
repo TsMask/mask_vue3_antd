@@ -3,7 +3,7 @@ import { useRoute } from 'vue-router';
 import { reactive, ref, computed, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
-import { message, Modal, Form } from 'ant-design-vue';
+import { message, Form } from 'ant-design-vue';
 import {
   ProTable,
   type ProColumns,
@@ -37,8 +37,8 @@ import { parseDateToStr } from '@/utils/date-utils';
 import { isSuccess } from '@/plugins/http-fetch';
 import { SYS_ROLE_SYSTEM_ID } from '@/constants/system-constants';
 import { useDictSetup } from '@/hooks/useDictSetup';
-import { useCrudModal } from '@/hooks/useCrudModal';
-import { useAction, confirmAction } from '@/hooks/useAction';
+import { useModalForm } from '@/hooks/useModalForm';
+import { useModalAction } from '@/hooks/useModalAction';
 import {
   toProValueEnum,
   useProTable,
@@ -121,7 +121,13 @@ const tableColumns = computed<ProColumns[]>(() => [
     align: 'left',
     width: 100,
   },
-  { title: '操作', key: 'operation', align: 'left', width: 210 },
+  {
+    title: '操作',
+    key: 'operation',
+    align: 'left',
+    width: 210,
+    fixed: 'right',
+  },
 ]);
 
 /** 查询表单项，独立于表格展示列 */
@@ -165,16 +171,15 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
   },
 ]);
 
-// ==================== 查看 / 编辑弹窗 ====================
+// ==================== 查看 / 编辑表单弹窗 ====================
 
 const {
   modal,
   formCtl,
   isView,
-  open,
-  setForm,
-  close: closeCrudModal,
-} = useCrudModal({
+  openModal,
+  closeModal: closeCrudModal,
+} = useModalForm({
   initForm: () => ({
     id: undefined as string | number | undefined,
     user_name: '',
@@ -242,8 +247,8 @@ const formOptions = reactive<{
   roles: [],
 });
 
-/** 从 getUser 响应中解析用户数据、岗位/角色选项并填充表单 */
-function applyUserDetail(resData: any) {
+/** 从 getUser 响应中同步岗位/角色下拉选项 */
+function applyUserFormOptions(resData: any) {
   formOptions.roles = resData.roles.map((m: Record<string, any>) => {
     m.disabled = m.role_status === '0';
     return m;
@@ -252,62 +257,53 @@ function applyUserDetail(resData: any) {
     m.disabled = m.post_status === '0';
     return m;
   });
+}
+
+/** 从 getUser 响应中提取表单字段，选项数据保留给 beforeOpen 处理 */
+function transformUserDetail(resData: any) {
   const { user, role_ids, post_ids } = resData;
-  setForm(user);
-  modal.form.role_ids = role_ids;
-  modal.form.post_ids = post_ids;
+  return { ...user, role_ids, post_ids };
 }
 
 /** 打开详情弹窗 */
-async function handleView(user_id: string | number) {
-  if (!user_id || modal.confirmLoading) return;
-  modal.confirmLoading = true;
-  const hide = message.loading('正在打开...', 0);
-  try {
-    const res = await getUser(user_id);
-    if (isSuccess(res) && res.data) {
-      applyUserDetail(res.data);
-      modal.form.user_avatar = userStore.fnAvatar(modal.form.user_avatar);
-      open('view', '用户信息');
-    }
-  } finally {
-    hide();
-    modal.confirmLoading = false;
-  }
+function handleView(user_id: string | number) {
+  if (!user_id) return;
+  openModal({
+    mode: 'view',
+    title: '用户信息',
+    fetchDetail: () => getUser(user_id),
+    transformDetail: transformUserDetail,
+    beforeOpen(form, data) {
+      if (!data) return;
+      applyUserFormOptions(data);
+      form.user_avatar = userStore.fnAvatar(form.user_avatar);
+    },
+  });
 }
 
 /** 打开新增/编辑弹窗 */
-async function handleOpenEdit(user_id?: string | number) {
-  if (modal.confirmLoading) return;
-  modal.confirmLoading = true;
-  const hide = message.loading('正在打开...', 0);
-  try {
-    const fetchId = user_id || 0;
-    const res = await getUser(fetchId);
-    if (isSuccess(res) && res.data) {
-      if (!user_id) formCtl.resetFields();
-      applyUserDetail(res.data);
-      if (!user_id && deptTreeData.value.length > 0) {
-        modal.form.dept_id = deptTreeData.value[0].id;
-      }
-      open(user_id ? 'edit' : 'add', user_id ? '修改用户信息' : '添加用户信息');
-    }
-  } finally {
-    hide();
-    modal.confirmLoading = false;
-  }
+function handleOpenEdit(user_id?: string | number) {
+  const defaultDept = deptTreeData.value[0];
+  openModal({
+    mode: user_id ? 'edit' : 'add',
+    title: user_id ? '修改用户信息' : '添加用户信息',
+    initialData:
+      !user_id && defaultDept ? { dept_id: defaultDept.id } : undefined,
+    fetchDetail: () => getUser(user_id || 0),
+    transformDetail: transformUserDetail,
+    beforeOpen(form, data) {
+      if (!data) return;
+      applyUserFormOptions(data);
+    },
+  });
 }
 
 /** 新增/编辑提交 */
-const { execute: submitExecute, loading: isSubmitting } = useAction({
-  action: (data: Record<string, any>) =>
-    data.id ? updateUser(data) : addUser(data),
-  successText: '操作成功',
-  onSuccess: () => {
-    handleCrudCancel();
-    reload();
-  },
-});
+const {
+  confirmAction,
+  executeAction,
+  loading: isSubmitting,
+} = useModalAction();
 
 async function handleSubmit() {
   const validateNames = ['user_nick', 'user_email', 'user_phone'];
@@ -324,7 +320,15 @@ async function handleSubmit() {
     return;
   }
   current.value = 1;
-  await submitExecute(toRaw(modal.form));
+  const form = toRaw(modal.form);
+  await executeAction({
+    action: () => (form.id ? updateUser(form) : addUser(form)),
+    successText: '操作成功',
+    onSuccess: () => {
+      handleCrudCancel();
+      reload();
+    },
+  });
 }
 
 function handleCrudCancel() {
@@ -355,15 +359,8 @@ const resetPwdFormCtl = Form.useForm(
   })
 );
 
-const { execute: resetPwdExecute, loading: isResetPwdSubmitting } = useAction({
-  action: (params: { user_id: string | number; password: string }) =>
-    resetPassword(params.user_id, params.password),
-  successText: '重置密码成功',
-  onSuccess: () => {
-    resetPwdVisible.value = false;
-    resetPwdFormCtl.resetFields();
-  },
-});
+const { executeAction: executeResetPwd, loading: isResetPwdSubmitting } =
+  useModalAction();
 
 function handleOpenResetPwd(row: Record<string, any>) {
   resetPwdFormCtl.resetFields();
@@ -387,39 +384,27 @@ async function handleResetPwdSubmit() {
     });
     return;
   }
-  await resetPwdExecute({
-    user_id: resetPwdForm.user_id!,
-    password: resetPwdForm.password,
+  await executeResetPwd({
+    action: () => resetPassword(resetPwdForm.user_id!, resetPwdForm.password),
+    successText: '重置密码成功',
+    onSuccess: () => {
+      resetPwdVisible.value = false;
+      resetPwdFormCtl.resetFields();
+    },
   });
 }
 
 // ==================== 列表操作 ====================
 
-/** 状态修改（保留 Modal.confirm 以支持取消回滚） */
+/** 状态修改（取消确认时回滚开关状态） */
 function handleStatusChange(row: Record<string, any>) {
   const text = row.user_status === '1' ? '启用' : '停用';
-  Modal.confirm({
-    title: '提示',
+  confirmAction({
     content: `确定要${text} ${row.user_name} 用户吗?`,
-    onOk() {
-      const hide = message.loading('请稍等...', 0);
-      return changeStatus(row.id, row.user_status)
-        .then(res => {
-          hide();
-          if (isSuccess(res)) {
-            message.success({
-              content: `${row.user_name} ${text}成功`,
-              duration: 3,
-            });
-            reload();
-          } else {
-            message.error({ content: res.msg, duration: 3 });
-          }
-        })
-        .catch(err => {
-          hide();
-          message.error({ content: err.message || '操作失败', duration: 3 });
-        });
+    action: () => changeStatus(row.id, row.user_status),
+    successText: `${row.user_name} ${text}成功`,
+    onSuccess() {
+      reload();
     },
     onCancel() {
       row.user_status = row.user_status === '1' ? '0' : '1';
@@ -432,7 +417,6 @@ function handleDelete(user_id: string = '0') {
   confirmAction({
     content: `确认删除用户编号为 【${id}】 的数据项?`,
     action: () => delUser(id),
-    variables: undefined,
     successText: '删除成功',
     onSuccess() {
       removeSelectedRowKeys(String(id).split(',').map(Number));
@@ -445,7 +429,6 @@ function handleUnlock(user_name: string) {
   confirmAction({
     content: `确认解锁用户 ${user_name} ?`,
     action: () => unlock(user_name),
-    variables: undefined,
     successText: `用户 ${user_name} 解锁成功`,
   });
 }
@@ -460,7 +443,6 @@ function handleExport() {
         page_size: pageSize.value,
       });
     },
-    variables: undefined,
     successText: '已完成导出',
     onSuccess: res => saveAs(res.data, `user_${Date.now()}.csv`),
   });
@@ -757,7 +739,7 @@ onMounted(() => {
         <a-row v-if="isView">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="登录地址" name="user_login_ip">
-              {{ modal.form.user_login_ip }}
+              {{ modal.form.user_login_ip || '-' }}
             </a-form-item>
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
@@ -765,6 +747,7 @@ onMounted(() => {
               <span v-if="+modal.form.user_login_time > 0">
                 {{ parseDateToStr(+modal.form.user_login_time) }}
               </span>
+              <span v-else>-</span>
             </a-form-item>
           </a-col>
         </a-row>

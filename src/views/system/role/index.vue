@@ -3,7 +3,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { computed, reactive, ref, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { ProModal } from 'antdv-pro-modal';
-import { message, Modal } from 'ant-design-vue';
+import { message } from 'ant-design-vue';
 import {
   ProTable,
   type ProColumns,
@@ -29,13 +29,13 @@ import {
 } from '@/utils/parse-tree-utils';
 import { parseDateToStr } from '@/utils/date-utils';
 import { hasPermissions } from '@/plugins/auth-user';
-import { isSuccess } from '@/plugins/http-fetch';
+import { isSuccess, type ResultType } from '@/plugins/http-fetch';
 import { saveAs } from 'file-saver';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
 import { SYS_ROLE_SYSTEM_ID } from '@/constants/system-constants';
 import { useDictSetup } from '@/hooks/useDictSetup';
-import { useCrudModal } from '@/hooks/useCrudModal';
-import { useAction, confirmAction } from '@/hooks/useAction';
+import { useModalForm } from '@/hooks/useModalForm';
+import { useModalAction } from '@/hooks/useModalAction';
 import {
   toProValueEnum,
   useProTable,
@@ -77,24 +77,16 @@ const {
   rowKey: 'id',
 });
 
-/** 新增/编辑提交 mutation */
-const { execute: submitExecute, loading: isSubmitting } = useAction({
-  action: (data: Record<string, any>) =>
-    data.id ? updateRole(data) : addRole(data),
-  successText: '操作成功',
-  onSuccess: () => {
-    handleCloseModal();
-    reload();
-  },
-});
+/** 新增/编辑提交状态 */
+const {
+  confirmAction,
+  executeAction,
+  loading: isSubmitting,
+} = useModalAction();
 
-/** 数据权限提交 mutation */
-const { execute: dataScopeExecute, loading: isDataScopeSubmitting } = useAction(
-  {
-    action: (data: Record<string, any>) => dataScope(data),
-    successText: '操作成功',
-  }
-);
+/** 数据权限提交状态 */
+const { executeAction: executeDataScope, loading: isDataScopeSubmitting } =
+  useModalAction();
 
 /** 表格字段列 */
 const tableColumns = computed<ProColumns[]>(() => [
@@ -118,7 +110,13 @@ const tableColumns = computed<ProColumns[]>(() => [
     width: 200,
     renderText: value => (+value <= 0 ? '' : parseDateToStr(+value)),
   },
-  { title: '操作', key: 'operation', align: 'left', width: 220 },
+  {
+    title: '操作',
+    key: 'operation',
+    align: 'left',
+    width: 220,
+    fixed: 'right',
+  },
 ]);
 
 const tableScroll = useProTableScroll(tableColumns);
@@ -176,16 +174,18 @@ let deptTreeCache: TreeDataType = {
 // ==================== 弹窗状态 ====================
 
 let visibleByDataScope = ref(false);
+const dataScopeOpening = ref(false);
 
-/** CRUD 弹窗管理（单弹窗 + 模式驱动） */
+/** 表单弹窗管理（单弹窗 + 模式驱动） */
 const {
   modal,
   formCtl,
   isView,
-  setForm,
-  open,
-  close: closeCrudModal,
-} = useCrudModal({
+  replaceForm,
+  resetForm,
+  openModal,
+  closeModal: closeCrudModal,
+} = useModalForm({
   initForm: () => ({
     id: undefined as string | number | undefined,
     role_name: '',
@@ -227,97 +227,100 @@ let deptTreeState = reactive<TreeDataType>({
 
 // ==================== 弹窗操作 ====================
 
-/** 打开详情弹窗 */
-async function handleView(role_id: string | number) {
-  if (!role_id || modal.confirmLoading) return;
-  modal.confirmLoading = true;
-  const hide = message.loading('正在打开...', 0);
-  try {
-    const [roleRes, menuRes] = await Promise.all([
-      getRole(role_id),
-      menuTreeSelectRole(role_id),
-    ]);
-    if (isSuccess(roleRes) && roleRes.data) {
-      setForm(roleRes.data);
-      if (isSuccess(menuRes) && menuRes.data) {
-        const { menus, checked_keys = [] } = menuRes.data;
-        menuTreeCache.checkedKeys = parseTreeKeys(menus, 'id');
-        menuTreeCache.expandedKeys = parseTreeNodeKeys(menus, 'id');
-        menuTreeCache.treeData = menus;
-        menuTreeState.treeData = menus;
-        menuTreeState.checkedKeys = checked_keys;
-        if (form.role_menu_check_strictly === '1') {
-          const ids = parseTreeNodeKeysByChecked(menus, checked_keys, 'id');
-          form.menu_ids = ids.concat(checked_keys);
-        } else {
-          form.menu_ids = checked_keys;
-        }
-      }
-      open('view', '角色信息');
-    }
-  } finally {
-    hide();
-    modal.confirmLoading = false;
+interface RoleModalDetail {
+  role: Record<string, any>;
+  menu?: { menus: any[]; checked_keys?: (string | number)[] };
+}
+
+/** 同步角色弹窗的菜单树缓存、展示状态和提交字段 */
+function applyRoleMenuTree(
+  targetForm: Record<string, any>,
+  menus: any[],
+  checkedKeys: (string | number)[] = []
+) {
+  menuTreeCache.checkedKeys = parseTreeKeys(menus, 'id');
+  menuTreeCache.expandedKeys = parseTreeNodeKeys(menus, 'id');
+  menuTreeCache.treeData = menus;
+  menuTreeState.treeData = menus;
+  menuTreeState.checkedKeys = checkedKeys;
+
+  if (targetForm.role_menu_check_strictly === '1') {
+    const ids = parseTreeNodeKeysByChecked(menus, checkedKeys, 'id');
+    targetForm.menu_ids = ids.concat(checkedKeys);
+  } else {
+    targetForm.menu_ids = checkedKeys;
   }
 }
 
-/** 打开新增/编辑弹窗 */
-async function handleOpenEdit(role_id?: string | number) {
-  if (!role_id) {
-    formCtl.resetFields();
-    if (menuTreeCache.treeData.length > 0) {
-      menuTreeState.treeData = menuTreeCache.treeData;
-      open('add', '添加角色信息');
-    } else {
-      if (modal.confirmLoading) return;
-      modal.confirmLoading = true;
-      const hide = message.loading('正在打开...', 0);
-      try {
-        const res = await menuTreeSelect();
-        if (isSuccess(res) && Array.isArray(res.data)) {
-          menuTreeCache.checkedKeys = parseTreeKeys(res.data, 'id');
-          menuTreeCache.expandedKeys = parseTreeNodeKeys(res.data, 'id');
-          menuTreeCache.treeData = res.data;
-          menuTreeState.treeData = res.data;
-          open('add', '添加角色信息');
-        }
-      } finally {
-        hide();
-        modal.confirmLoading = false;
+async function fetchRoleModalDetail(
+  role_id: string | number
+): Promise<ResultType> {
+  const [roleRes, menuRes] = await Promise.all([
+    getRole(role_id),
+    menuTreeSelectRole(role_id),
+  ]);
+  if (!isSuccess(roleRes)) return roleRes;
+
+  return {
+    ...roleRes,
+    data: {
+      role: roleRes.data,
+      menu: isSuccess(menuRes) && menuRes.data ? menuRes.data : undefined,
+    },
+  };
+}
+
+/** 打开已有角色的详情/编辑弹窗 */
+function openRoleDetailModal(mode: 'view' | 'edit', role_id: string | number) {
+  openModal<RoleModalDetail>({
+    mode,
+    title: mode === 'view' ? '角色信息' : '修改角色信息',
+    fetchDetail: () => fetchRoleModalDetail(role_id),
+    transformDetail: data => data.role,
+    beforeOpen(targetForm, data) {
+      if (data?.menu) {
+        applyRoleMenuTree(
+          targetForm,
+          data.menu.menus,
+          data.menu.checked_keys ?? []
+        );
       }
+    },
+  });
+}
+
+/** 打开新增/编辑弹窗 */
+function handleOpenEdit(role_id?: string | number) {
+  if (!role_id) {
+    if (menuTreeCache.treeData.length > 0) {
+      openModal({
+        mode: 'add',
+        title: '添加角色信息',
+        beforeOpen() {
+          menuTreeState.treeData = menuTreeCache.treeData;
+        },
+      });
+    } else {
+      openModal({
+        mode: 'add',
+        title: '添加角色信息',
+        fetchDetail: menuTreeSelect,
+        transformDetail: () => ({}),
+        beforeOpen(targetForm, menus) {
+          if (menus) applyRoleMenuTree(targetForm, menus);
+        },
+        errorMessage: '获取菜单信息失败',
+      });
     }
   } else {
-    if (modal.confirmLoading) return;
-    modal.confirmLoading = true;
-    const hide = message.loading('正在打开...', 0);
-    try {
-      const [roleRes, menuRes] = await Promise.all([
-        getRole(role_id),
-        menuTreeSelectRole(role_id),
-      ]);
-      if (isSuccess(roleRes) && roleRes.data) {
-        setForm(roleRes.data);
-        if (isSuccess(menuRes) && menuRes.data) {
-          const { menus, checked_keys = [] } = menuRes.data;
-          menuTreeCache.checkedKeys = parseTreeKeys(menus, 'id');
-          menuTreeCache.expandedKeys = parseTreeNodeKeys(menus, 'id');
-          menuTreeCache.treeData = menus;
-          menuTreeState.treeData = menus;
-          menuTreeState.checkedKeys = checked_keys;
-          if (form.role_menu_check_strictly === '1') {
-            const ids = parseTreeNodeKeysByChecked(menus, checked_keys, 'id');
-            form.menu_ids = ids.concat(checked_keys);
-          } else {
-            form.menu_ids = checked_keys;
-          }
-        }
-        open('edit', '修改角色信息');
-      }
-    } finally {
-      hide();
-      modal.confirmLoading = false;
-    }
+    openRoleDetailModal('edit', role_id);
   }
+}
+
+/** 打开详情弹窗 */
+function handleView(role_id: string | number) {
+  if (!role_id) return;
+  openRoleDetailModal('view', role_id);
 }
 
 /** 表单提交确认 */
@@ -332,14 +335,21 @@ async function handleSubmit() {
     return;
   }
   current.value = 1;
-  await submitExecute(toRaw(form));
+  const formRaw = toRaw(form);
+  await executeAction({
+    action: () => (formRaw.id ? updateRole(formRaw) : addRole(formRaw)),
+    successText: '操作成功',
+    onSuccess: () => {
+      handleCloseModal();
+      reload();
+    },
+  });
 }
 
 /** 关闭所有弹窗 */
 function handleCloseModal() {
   closeCrudModal();
   visibleByDataScope.value = false;
-  formCtl.resetFields();
   menuTreeState.checkedKeys = [];
   menuTreeState.expandedKeys = [];
   deptTreeState.checkedKeys = [];
@@ -393,19 +403,20 @@ function handleTreeCheckStrictly(checked: boolean, type: 'menu' | 'dept') {
 async function handleDataScopeSubmit() {
   const formRaw = toRaw(form);
   if (formRaw.role_data_scope !== '2') formRaw.dept_ids = [];
-  try {
-    await dataScopeExecute({ ...formRaw, role_id: formRaw.id });
-    visibleByDataScope.value = false;
-    formCtl.resetFields();
-  } catch {
-    // 错误已由 useAction 统一处理
-  }
+  await executeDataScope({
+    action: () => dataScope({ ...formRaw, role_id: formRaw.id }),
+    successText: '操作成功',
+    onSuccess() {
+      visibleByDataScope.value = false;
+      resetForm();
+    },
+  });
 }
 
 /** 打开分配数据权限弹窗 */
 async function handleOpenDataScope(role_id: string | number) {
-  if (!role_id || modal.confirmLoading) return;
-  modal.confirmLoading = true;
+  if (!role_id || dataScopeOpening.value) return;
+  dataScopeOpening.value = true;
   const hide = message.loading('正在打开...', 0);
   try {
     const [roleRes, deptRes] = await Promise.all([
@@ -413,7 +424,7 @@ async function handleOpenDataScope(role_id: string | number) {
       deptTreeRole(role_id),
     ]);
     if (isSuccess(roleRes) && roleRes.data) {
-      setForm(roleRes.data);
+      replaceForm(roleRes.data);
       if (isSuccess(deptRes) && deptRes.data) {
         const { depts, checked_keys = [] } = deptRes.data;
         deptTreeCache.checkedKeys = parseTreeKeys(depts, 'id');
@@ -432,7 +443,7 @@ async function handleOpenDataScope(role_id: string | number) {
     }
   } finally {
     hide();
-    modal.confirmLoading = false;
+    dataScopeOpening.value = false;
   }
 }
 
@@ -446,31 +457,15 @@ function handleAuthUser(row: Record<string, string>) {
   });
 }
 
-/** 角色状态修改（保留 Modal.confirm 以支持取消回滚） */
+/** 角色状态修改（取消确认时回滚开关状态） */
 function handleStatusChange(row: Record<string, string>) {
   const text = row.role_status === '1' ? '启用' : '停用';
-  Modal.confirm({
-    title: '提示',
+  confirmAction({
     content: `确定要${text} ${row.role_name} 角色吗?`,
-    onOk() {
-      const hide = message.loading('请稍等...', 0);
-      return changeStatus(row.id, row.role_status)
-        .then(res => {
-          hide();
-          if (isSuccess(res)) {
-            message.success({
-              content: `${row.role_name} ${text}成功`,
-              duration: 3,
-            });
-            reload();
-          } else {
-            message.error({ content: res.msg, duration: 3 });
-          }
-        })
-        .catch(err => {
-          hide();
-          message.error({ content: err.message || '操作失败', duration: 3 });
-        });
+    action: () => changeStatus(row.id, row.role_status),
+    successText: `${row.role_name} ${text}成功`,
+    onSuccess() {
+      reload();
     },
     onCancel() {
       row.role_status = row.role_status === '1' ? '0' : '1';
@@ -486,7 +481,6 @@ function handleDelete(role_id: string = '0') {
   confirmAction({
     content: `确认删除角色编号为 【${role_id}】 的数据项?`,
     action: () => delRole(role_id),
-    variables: undefined,
     successText: '删除成功',
     onSuccess() {
       removeSelectedRowKeys(String(role_id).split(',').map(Number));
@@ -506,7 +500,6 @@ function handleExport() {
         page_size: pageSize.value,
       });
     },
-    variables: undefined,
     successText: '已完成导出',
     onSuccess: res => saveAs(res.data, `role_${Date.now()}.csv`),
   });

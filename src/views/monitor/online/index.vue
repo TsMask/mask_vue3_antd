@@ -9,8 +9,10 @@ import {
 } from 'antdv-pro-table';
 import { forceLogout, listOnline } from '@/api/monitor/online';
 import { parseDateToStr } from '@/utils/date-utils';
-import { confirmAction } from '@/hooks/useAction';
+import { useModalAction } from '@/hooks/useModalAction';
 import { useProTable, useProTableScroll } from '@/hooks/useProTable';
+
+const { confirmAction } = useModalAction();
 
 const route = useRoute();
 /** 路由标题 */
@@ -66,7 +68,13 @@ const tableColumns = computed<ProColumns[]>(() => [
     width: 260,
     ellipsis: true,
   },
-  { title: '操作', key: 'operation', align: 'left', width: 90, fixed: 'right' },
+  {
+    title: '操作',
+    key: 'operation',
+    align: 'left',
+    width: 90,
+    fixed: 'right',
+  },
 ]);
 
 const tableScroll = useProTableScroll(tableColumns);
@@ -81,7 +89,6 @@ function handleForceLogout(row: Record<string, string>) {
   confirmAction({
     content: `确认强退登录账号为 ${row.user_name} 的用户?`,
     action: () => forceLogout(row.session_id),
-    variables: undefined,
     successText: `已强退用户 ${row.user_name}`,
     onSuccess() {
       reload();

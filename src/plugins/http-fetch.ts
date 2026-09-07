@@ -499,25 +499,3 @@ export async function request(options: OptionsType): Promise<ResultType> {
 export function isSuccess(res: ResultType): boolean {
   return res.code === RESULT_CODE_SUCCESS;
 }
-
-/**
- * 安全获取响应数据
- * @param res - 请求响应结果
- * @returns 响应数据，失败时返回 undefined
- */
-export function unwrapData<T = any>(res: ResultType): T | undefined {
-  return res.code === RESULT_CODE_SUCCESS ? (res.data as T) : undefined;
-}
-
-/**
- * 获取响应数据，失败时抛出异常
- * @param res - 请求响应结果
- * @returns 响应数据
- * @throws 响应失败时抛出错误
- */
-export function unwrapDataOrThrow<T = any>(res: ResultType): T {
-  if (res.code !== RESULT_CODE_SUCCESS) {
-    throw new Error(res.msg || '请求失败');
-  }
-  return res.data as T;
-}

@@ -15,12 +15,14 @@ import {
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import { useDictSetup } from '@/hooks/useDictSetup';
-import { confirmAction } from '@/hooks/useAction';
+import { useModalAction } from '@/hooks/useModalAction';
 import {
   toProValueEnum,
   useProTable,
   useProTableScroll,
 } from '@/hooks/useProTable';
+
+const { confirmAction } = useModalAction();
 
 const route = useRoute();
 const title = ref<string>(route.meta.title ?? '标题');
@@ -113,7 +115,6 @@ function handleCleanList() {
   confirmAction({
     content: '确认清空所有登录日志数据项?',
     action: () => cleanSysLogLogin(),
-    variables: undefined as any,
     successText: '清空成功',
   });
 }
@@ -131,7 +132,6 @@ function handleExport() {
   confirmAction({
     content: '确认根据搜索条件导出数据文件吗',
     action: () => exportSysLogLogin(buildExportParams()),
-    variables: undefined as any,
     successText: '已导出完成',
     onSuccess: res => {
       saveAs(res.data, `sys_log_login_${Date.now()}.csv`);

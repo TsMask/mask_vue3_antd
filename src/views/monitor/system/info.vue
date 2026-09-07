@@ -4,7 +4,7 @@ import { reactive, ref, onMounted } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import type { ColumnsType } from 'ant-design-vue/es/table';
 import { getSystemInfo } from '@/api/monitor/system';
-import { useDetailQuery } from '@/hooks/useDetailQuery';
+import { isSuccess } from '@/plugins/http-fetch';
 
 const route = useRoute();
 /**路由标题 */
@@ -43,7 +43,7 @@ let diskTableColumns: ColumnsType = [
 /**数据参数类型 */
 type ServerType = {
   /**CPU */
-  cpu: Record<string, string | number>;
+  cpu: Record<string, any>;
   /**磁盘 */
   disk: Record<string, string>[];
   /**内存 */
@@ -68,9 +68,27 @@ let server: ServerType = reactive({
   time: {},
 });
 
-const { loading: loading, fetch: fetchServer } = useDetailQuery({
-  queryFn: getSystemInfo,
-});
+const loading = ref(false);
+
+/** 获取服务器信息 */
+async function loadServerInfo() {
+  loading.value = true;
+  try {
+    const res = await getSystemInfo();
+    if (!isSuccess(res)) return;
+
+    const data = res.data as ServerType;
+
+    // CPU信息
+    const cpu = data.cpu;
+    cpu.core_used = (cpu.core_used || [])
+      .map((item: string) => item)
+      .join(' / ');
+    Object.assign(server, data);
+  } finally {
+    loading.value = false;
+  }
+}
 
 /** 运行时长（秒）转换 */
 function loadUpTime(uptime: string | number) {
@@ -88,29 +106,7 @@ function loadUpTime(uptime: string | number) {
   return strArr.join(' ');
 }
 
-onMounted(async () => {
-  const data = await fetchServer();
-  if (data) {
-    // CPU信息
-    const cpu = data.cpu;
-    cpu.core_used = (cpu.core_used || [])
-      .map((item: string) => item)
-      .join(' / ');
-    server.cpu = cpu;
-    // 磁盘信息
-    server.disk = data.disk;
-    // 内存信息
-    server.memory = data.memory;
-    // 网络信息
-    server.network = data.network;
-    // 项目信息
-    server.project = data.project;
-    // 系统信息
-    server.system = data.system;
-    // 时间信息
-    server.time = data.time;
-  }
-});
+onMounted(() => loadServerInfo());
 </script>
 
 <template>

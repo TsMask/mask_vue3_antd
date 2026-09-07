@@ -23,9 +23,9 @@ import { parseDateToStr } from "@/utils/date-utils";
 import { useTabsView } from "@/layouts/hooks/useTabsView";
 import useDictStore from "@/store/modules/dict";
 import { isSuccess } from "@/plugins/http-fetch";
-import { useCrudModal } from "@/hooks/useCrudModal";
+import { useModalForm } from "@/hooks/useModalForm";
 import { useDictSetup } from "@/hooks/useDictSetup";
-import { useAction, confirmAction } from "@/hooks/useAction";
+import { useModalAction } from "@/hooks/useModalAction";
 import { toProValueEnum, useProTable, useProTableScroll } from "@/hooks/useProTable";
 
 const { closeTab } = useTabsView();
@@ -88,11 +88,9 @@ const {
   modal: modalState,
   formCtl: modalStateForm,
   isView,
-  open,
-  openEdit,
-  close: handleCancel,
-  setForm,
-} = useCrudModal({
+  openModal,
+  closeModal: handleCancel,
+} = useModalForm({
   initForm: () => ({
     id: undefined as string | number | undefined,
     dict_type: undefined as string | undefined,
@@ -113,16 +111,8 @@ const {
   },
 });
 
-/** 新增/编辑 mutation */
-const { execute: submitExecute, loading: isSubmitting } = useAction({
-  action: (form: Record<string, any>) =>
-    form.id ? updateData(form) : addData(form),
-  successText: "操作成功",
-  onSuccess() {
-    handleCancel();
-    reload();
-  }
-});
+/** 新增/编辑提交状态 */
+const { confirmAction, executeAction, loading: isSubmitting } = useModalAction();
 
 const tableColumns = computed<ProColumns[]>(() => [
   { title: "数据编号", dataIndex: "id", align: "left", width: 100 },
@@ -177,18 +167,30 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
 
 /** 直接从行数据打开字典数据详情弹窗（无需再次请求接口） */
 function handleView(row: Record<string, string>) {
-  setForm(row);
-  open("view", "字典数据信息");
+  openModal({
+    mode: "view",
+    title: "字典数据信息",
+    initialData: row,
+  });
 }
 
 /** 打开新增或编辑弹窗 */
 function handleEdit(id?: string | number) {
-  if (!id) {
-    openEdit(undefined, getData, "添加字典数据", "修改字典数据");
-    modalState.form.dict_type = searchValues.value.dict_type ?? defaultDictType.value;
-  } else {
-    openEdit(id, getData, "添加字典数据", "修改字典数据");
-  }
+  openModal(
+    id
+      ? {
+          mode: "edit",
+          title: "修改字典数据",
+          fetchDetail: () => getData(id),
+        }
+      : {
+          mode: "add",
+          title: "添加字典数据",
+          beforeOpen(form) {
+            form.dict_type = searchValues.value.dict_type ?? defaultDictType.value;
+          },
+        }
+  );
 }
 
 async function handleSubmit() {
@@ -198,7 +200,15 @@ async function handleSubmit() {
     message.error({ content: `请正确填写 ${e.errorFields.length} 处必填信息！`, duration: 3 });
     return;
   }
-  await submitExecute(toRaw(modalState.form));
+  const form = toRaw(modalState.form);
+  await executeAction({
+    action: () => form.id ? updateData(form) : addData(form),
+    successText: "操作成功",
+    onSuccess() {
+      handleCancel();
+      reload();
+    },
+  });
 }
 
 function handleDelete(id: string = "0") {
@@ -208,7 +218,6 @@ function handleDelete(id: string = "0") {
   confirmAction({
     content: `确认删除字典数据编号为【${id}】的数据项?`,
     action: () => delData(id),
-    variables: undefined,
     successText: "删除成功",
     onSuccess() {
       removeSelectedRowKeys(String(id).split(",").map(Number));
@@ -225,7 +234,6 @@ function handleExport() {
       page_num: current.value,
       page_size: pageSize.value,
     }),
-    variables: undefined,
     successText: "已导出完成",
     onSuccess: (res) => saveAs(res.data, `dict_data_${Date.now()}.csv`),
   });

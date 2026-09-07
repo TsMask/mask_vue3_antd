@@ -18,12 +18,14 @@ import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import { useTabsView } from '@/layouts/hooks/useTabsView';
 import { useDictSetup } from '@/hooks/useDictSetup';
-import { confirmAction } from '@/hooks/useAction';
+import { useModalAction } from '@/hooks/useModalAction';
 import {
   toProValueEnum,
   useProTable,
   useProTableScroll,
 } from '@/hooks/useProTable';
+
+const { confirmAction } = useModalAction();
 
 const { closeTab } = useTabsView();
 const route = useRoute();
@@ -181,7 +183,6 @@ function handleDeleteSelected() {
   confirmAction({
     content: `确认删除调度日志编号为 【${ids}】 的数据项吗?`,
     action: () => delJobLog(ids),
-    variables: undefined,
     successText: '删除成功',
     onSuccess() {
       removeSelectedRowKeys(String(ids).split(',').map(Number));
@@ -195,7 +196,6 @@ function handleCleanAll() {
   confirmAction({
     content: '确认清空所有调度日志数据项吗?',
     action: () => cleanJobLog(),
-    variables: undefined,
     successText: '清空成功',
     onSuccess() {
       removeSelectedRowKeys(selectedKeys);
@@ -215,7 +215,6 @@ function handleExport() {
         page_size: pageSize.value,
       });
     },
-    variables: undefined,
     successText: '已完成导出',
     onSuccess: res => saveAs(res.data, `job_log_${Date.now()}.csv`),
   });

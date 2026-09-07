@@ -25,8 +25,8 @@ import { parseDateToStr } from '@/utils/date-utils';
 import { hasPermissions } from '@/plugins/auth-user';
 import { MENU_PATH_INLINE } from '@/constants/menu-constants';
 import { useDictSetup } from '@/hooks/useDictSetup';
-import { useCrudModal } from '@/hooks/useCrudModal';
-import { useAction, confirmAction } from '@/hooks/useAction';
+import { useModalForm } from '@/hooks/useModalForm';
+import { useModalAction } from '@/hooks/useModalAction';
 import {
   toProValueEnum,
   useProTable,
@@ -99,10 +99,9 @@ const {
   modal,
   formCtl,
   isView,
-  openView,
-  openEdit,
-  close: handleCancel,
-} = useCrudModal({
+  openModal,
+  closeModal: handleCancel,
+} = useModalForm({
   initForm: () => ({
     id: undefined as string | number | undefined,
     job_name: '',
@@ -141,16 +140,8 @@ const {
   },
 });
 
-/** 新增/编辑 mutation */
-const { execute: submitExecute, loading: isSubmitting } = useAction({
-  action: (form: Record<string, any>) =>
-    form.id ? updateJob(form) : addJob(form),
-  successText: '操作成功',
-  onSuccess() {
-    handleCancel();
-    reload();
-  },
-});
+/** 新增/编辑提交状态 */
+const { confirmAction, executeAction, loading: isSubmitting } = useModalAction();
 
 const cronVisible = ref(false);
 
@@ -278,7 +269,6 @@ function handleStatusChange(row: Record<string, string>) {
   confirmAction({
     content: `确定要${text} 【${row.job_name}】 任务吗?`,
     action: () => changeStatus(row.id, nextStatus),
-    variables: undefined,
     successText: `${row.job_name} ${text}成功`,
     onSuccess() {
       dataSource.value = dataSource.value.map(item =>
@@ -294,7 +284,6 @@ function handleRunOnce(row: Record<string, string>) {
   confirmAction({
     content: `确定要立即执行一次 【${row.job_name}】 任务吗?`,
     action: () => runJob(row.id),
-    variables: undefined,
     successText: `${row.job_name} 执行成功`,
   });
 }
@@ -304,7 +293,6 @@ function handleDelete(id: string = '0') {
   confirmAction({
     content: `确认删除定时任务编号为 【${id}】 任务吗?`,
     action: () => delJob(id),
-    variables: undefined,
     successText: '删除成功',
     onSuccess() {
       removeSelectedRowKeys(String(id).split(',').map(Number));
@@ -317,7 +305,6 @@ function handleResetQueue() {
   confirmAction({
     content: '确定要重置并刷新调度任务吗?',
     action: () => resetJob(),
-    variables: undefined,
     successText: '重置成功',
   });
 }
@@ -331,10 +318,32 @@ function handleExport() {
         page_num: current.value,
         page_size: pageSize.value,
       }),
-    variables: undefined,
     successText: '已完成导出',
     onSuccess: res => saveAs(res.data, `job_${Date.now()}.csv`),
   });
+}
+
+function handleView(id: string | number) {
+  openModal({
+    mode: 'view',
+    title: '任务信息',
+    fetchDetail: () => getJob(id),
+  });
+}
+
+function handleEdit(id?: string | number) {
+  openModal(
+    id
+      ? {
+          mode: 'edit',
+          title: '修改任务',
+          fetchDetail: () => getJob(id),
+        }
+      : {
+          mode: 'add',
+          title: '添加任务',
+        }
+  );
 }
 
 function handleViewLog(id: string | number = '0') {
@@ -351,7 +360,15 @@ async function handleSubmit() {
     });
     return;
   }
-  await submitExecute(toRaw(modal.form));
+  const form = toRaw(modal.form);
+  await executeAction({
+    action: () => form.id ? updateJob(form) : addJob(form),
+    successText: "操作成功",
+    onSuccess() {
+      handleCancel();
+      reload();
+    },
+  });
 }
 </script>
 
@@ -384,7 +401,7 @@ async function handleSubmit() {
         >
           <a-button
             type="primary"
-            @click.prevent="openEdit(undefined, getJob, '添加任务', '修改任务')"
+            @click.prevent="handleEdit()"
             v-perms:has="['monitor:job:add']"
           >
             <template #icon>
@@ -467,7 +484,7 @@ async function handleSubmit() {
               <template #title>查看详情</template>
               <a-button
                 type="link"
-                @click.prevent="openView(record.id, getJob, '任务信息')"
+                @click.prevent="handleView(record.id)"
                 v-perms:has="['monitor:job:query']"
               >
                 <template #icon>
@@ -480,7 +497,7 @@ async function handleSubmit() {
               <a-button
                 type="link"
                 @click.prevent="
-                  openEdit(record.id, getJob, '添加任务', '修改任务')
+                  handleEdit(record.id)
                 "
                 v-perms:has="['monitor:job:edit']"
               >

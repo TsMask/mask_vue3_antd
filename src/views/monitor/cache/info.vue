@@ -15,7 +15,7 @@ import { PageContainer } from 'antdv-pro-layout';
 import { getCache } from '@/api/monitor/cache';
 import { nextTick, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { useDetailQuery } from '@/hooks/useDetailQuery';
+import { isSuccess } from '@/plugins/http-fetch';
 
 const route = useRoute();
 
@@ -56,13 +56,19 @@ type InfoType = {
   stats: Record<string, string>;
 };
 
-const {
-  detail: cache,
-  loading: loading,
-  fetch: fetchCache,
-} = useDetailQuery<CacheType>({
-  queryFn: getCache,
-});
+const cache = ref<CacheType>();
+const loading = ref(false);
+
+/** 获取缓存信息 */
+async function loadCache() {
+  loading.value = true;
+  try {
+    const res = await getCache();
+    if (isSuccess(res)) cache.value = res.data as CacheType;
+  } finally {
+    loading.value = false;
+  }
+}
 
 /** 生成命令统计图 */
 function commandStatsChart() {
@@ -113,7 +119,7 @@ function commandStatsChart() {
 }
 
 onMounted(async () => {
-  await fetchCache();
+  await loadCache();
   await nextTick();
   if (cache.value) {
     commandStatsChart();

@@ -14,7 +14,7 @@ import {
 } from '@/api/monitor/cache';
 import { hasPermissions } from '@/plugins/auth-user';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
-import { useAction } from '@/hooks/useAction';
+import { useModalAction } from '@/hooks/useModalAction';
 import { useProTable } from '@/hooks/useProTable';
 
 const route = useRoute();
@@ -32,7 +32,8 @@ const {
   rowKey: 'cache_name',
   selection: {
     rowSelection: { type: 'radio' },
-    onChange: keys => handleSelectCacheName(keys[0] === undefined ? '' : String(keys[0])),
+    onChange: keys =>
+      handleSelectCacheName(keys[0] === undefined ? '' : String(keys[0])),
   },
 });
 
@@ -55,7 +56,8 @@ const {
   rowKey: 'cache_key',
   selection: {
     rowSelection: { type: 'radio' },
-    onChange: keys => handleCacheKeyInfo(keys[0] === undefined ? '' : String(keys[0])),
+    onChange: keys =>
+      handleCacheKeyInfo(keys[0] === undefined ? '' : String(keys[0])),
   },
 });
 
@@ -140,47 +142,55 @@ function handleCacheKeyInfo(cache_key: string) {
     });
 }
 
-/** 安全清理缓存 mutation */
-const { execute: clearSafeRun } = useAction({
-  action: () => clearCacheSafe(),
-  successText: '已完成安全清理缓存',
-  onSuccess: () => {
-    fetchCacheNames();
-    removeSelectedCacheKeyKeys(selectedCacheKeyKeys.value);
-    resetCacheKeyInfo();
-    if (selectedCacheName.value) {
-      refreshCacheKeys();
-    } else {
-      cacheKeyData.value = [];
-    }
-  },
-});
+const { executeAction } = useModalAction();
 
-/** 清理缓存名称 mutation */
-const { execute: clearNameRun } = useAction({
-  action: (cache_name: string) => clearCacheName(cache_name),
-  successText: '缓存名称已清理',
-  onSuccess: (_res, cache_name) => {
-    if (cacheKeyInfo.data.cache_name === cache_name) {
+/** 安全清理缓存 */
+function clearSafeRun() {
+  return executeAction({
+    action: () => clearCacheSafe(),
+    successText: '已完成安全清理缓存',
+    onSuccess: () => {
+      fetchCacheNames();
       removeSelectedCacheKeyKeys(selectedCacheKeyKeys.value);
       resetCacheKeyInfo();
-    }
-    if (selectedCacheName.value) refreshCacheKeys();
-  },
-});
+      if (selectedCacheName.value) {
+        refreshCacheKeys();
+      } else {
+        cacheKeyData.value = [];
+      }
+    },
+  });
+}
 
-/** 删除缓存键名 mutation */
-const { execute: clearKeyRun } = useAction({
-  action: (cache_key: string) => clearCacheKey(selectedCacheName.value, cache_key),
-  successText: '缓存键名已删除',
-  onSuccess: (_res, cache_key) => {
-    if (cacheKeyInfo.data.cache_key === cache_key) {
-      removeSelectedCacheKeyKeys([cache_key]);
-      resetCacheKeyInfo();
-    }
-    if (selectedCacheName.value) refreshCacheKeys();
-  },
-});
+/** 清理指定缓存名称 */
+function clearNameRun(cache_name: string) {
+  return executeAction({
+    action: () => clearCacheName(cache_name),
+    successText: '缓存名称已清理',
+    onSuccess: () => {
+      if (cacheKeyInfo.data.cache_name === cache_name) {
+        removeSelectedCacheKeyKeys(selectedCacheKeyKeys.value);
+        resetCacheKeyInfo();
+      }
+      if (selectedCacheName.value) refreshCacheKeys();
+    },
+  });
+}
+
+/** 删除指定缓存键名 */
+function clearKeyRun(cache_key: string) {
+  return executeAction({
+    action: () => clearCacheKey(selectedCacheName.value, cache_key),
+    successText: '缓存键名已删除',
+    onSuccess: () => {
+      if (cacheKeyInfo.data.cache_key === cache_key) {
+        removeSelectedCacheKeyKeys([cache_key]);
+        resetCacheKeyInfo();
+      }
+      if (selectedCacheName.value) refreshCacheKeys();
+    },
+  });
+}
 
 /** 键名列表表格字段列 */
 const cacheKeyTableColumns: ProColumns[] = [
@@ -272,7 +282,7 @@ const cacheNameTableColumns: ProColumns[] = [
                   title="确认要执行可安全清理的缓存下所有键名吗?"
                   ok-text="确认"
                   cancel-text="取消"
-                  @confirm="clearSafeRun(undefined)"
+                  @confirm="clearSafeRun()"
                 >
                   <a-button type="text" v-perms:has="['monitor:cache:remove']">
                     <template #icon>
