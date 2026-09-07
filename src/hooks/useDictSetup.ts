@@ -1,4 +1,4 @@
-﻿import { reactive, ref } from 'vue';
+import { reactive, ref } from 'vue';
 import useDictStore from '@/store/modules/dict';
 
 export interface UseDictSetupOptions<K extends string = string> {
@@ -70,7 +70,7 @@ export function useDictSetup<K extends string>(
     try {
       const entries = Object.entries(keyMap) as [K, string | DictType[]][];
       const remoteEntries = entries.filter(
-        (entry): entry is [K, string] => typeof entry[1] === "string"
+        (entry): entry is [K, string] => typeof entry[1] === 'string'
       );
       const results = await Promise.allSettled(
         remoteEntries.map(([, dictKey]) => getDict(dictKey))

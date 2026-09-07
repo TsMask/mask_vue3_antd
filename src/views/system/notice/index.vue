@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { ref, toRaw, computed } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';

@@ -1,4 +1,4 @@
-﻿<script lang="ts" setup>
+<script lang="ts" setup>
 import { reactive } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { Modal, message } from 'ant-design-vue';

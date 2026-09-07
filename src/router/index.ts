@@ -1,4 +1,4 @@
-﻿import {
+import {
   createRouter,
   createWebHistory,
   createWebHashHistory,

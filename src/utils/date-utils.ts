@@ -5,21 +5,6 @@ import dayjs from 'dayjs';
 // import('dayjs/locale/zh-cn');
 // dayjs.locale('zh-cn');
 
-/**年 列如：2022 */
-export const YYYY = 'YYYY';
-
-/**年-月 列如：2022-12 */
-export const YYYY_MM = 'YYYY-MM';
-
-/**年-月-日 列如：2022-12-30 */
-export const YYYY_MM_DD = 'YYYY-MM-DD';
-
-/**年月日时分秒 列如：20221230010159 */
-export const YYYYMMDDHHMMSS = 'YYYYMMDDHHmmss';
-
-/**年-月-日 时:分:秒 列如：2022-12-30 01:01:59 */
-export const YYYY_MM_DD_HH_MM_SS = 'YYYY-MM-DD HH:mm:ss';
-
 /**
  * 格式时间字符串
  * @param dateStr 时间字符串
@@ -28,7 +13,7 @@ export const YYYY_MM_DD_HH_MM_SS = 'YYYY-MM-DD HH:mm:ss';
  */
 export function parseStrToDate(
   dateStr: string,
-  formatStr: string = YYYY_MM_DD_HH_MM_SS
+  formatStr: string = 'YYYY-MM-DD HH:mm:ss'
 ): Date {
   return dayjs(dateStr, formatStr).toDate();
 }
@@ -41,7 +26,7 @@ export function parseStrToDate(
  */
 export function parseDateToStr(
   date: string | number | Date,
-  formatStr: string = YYYY_MM_DD_HH_MM_SS
+  formatStr: string = 'YYYY-MM-DD HH:mm:ss'
 ): string {
   return dayjs(date).format(formatStr);
 }

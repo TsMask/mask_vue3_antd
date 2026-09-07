@@ -1,4 +1,4 @@
-﻿import defaultAvatar from '@/assets/images/default_avatar.png';
+import defaultAvatar from '@/assets/images/default_avatar.png';
 import useLayoutStore from './layout';
 import { login, loginByPhone, logout, getInfo } from '@/api/auth';
 import {

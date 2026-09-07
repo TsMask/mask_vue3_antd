@@ -1,4 +1,4 @@
-﻿import {
+import {
   getAccessToken,
   setAccessToken,
   delAccessToken,
