@@ -40,29 +40,31 @@ const routePath = route.path;
 const title = ref<string>(route.meta.title ?? '标题');
 
 const { dict } = useDictSetup({
-  keyMap: { sysJobGroup: 'sys_job_group' },
+  keyMap: {
+    sysJobGroup: 'sys_job_group',
+    /** 任务状态 */
+    jobStatus: [
+      { label: '正常', value: '1' },
+      { label: '暂停', value: '0' },
+    ],
+    /** 任务执行日志记录 */
+    jobSaveLog: [
+      { label: '记录', value: '1' },
+      { label: '不记录', value: '0' },
+    ],
+    /** 任务出错策略 */
+    jobMisfirePolicy: [
+      { label: '立即执行', value: '1' },
+      { label: '执行一次', value: '2' },
+      { label: '放弃执行', value: '3' },
+    ],
+    /** 任务是否并发 */
+    jobConcurrent: [
+      { label: '允许', value: '1' },
+      { label: '禁止', value: '0' },
+    ],
+  },
 });
-
-const jobStatusOptions = [
-  { label: '正常', value: '1' },
-  { label: '暂停', value: '0' },
-];
-
-const jobSaveLogOptions = [
-  { label: '记录', value: '1' },
-  { label: '不记录', value: '0' },
-];
-
-const misfirePolicyText: Record<string, string> = {
-  1: '立即执行',
-  2: '执行一次',
-  3: '放弃执行',
-};
-
-const concurrentText: Record<string, string> = {
-  0: '禁止',
-  1: '允许',
-};
 
 function formatJobTargetParams(value: unknown) {
   if (value === undefined || value === null || value === '') return '-';
@@ -193,14 +195,16 @@ const tableColumns = computed<ProColumns[]>(() => [
     dataIndex: 'job_misfire_policy',
     align: 'left',
     width: 100,
-    renderText: value => misfirePolicyText[String(value)] ?? '-',
+    valueType: 'select',
+    valueEnum: toProValueEnum(dict.jobMisfirePolicy),
   },
   {
     title: '并发',
     dataIndex: 'job_concurrent',
     align: 'left',
     width: 80,
-    renderText: value => concurrentText[String(value)] ?? '-',
+    valueType: 'select',
+    valueEnum: toProValueEnum(dict.jobConcurrent),
   },
   {
     title: '状态',
@@ -209,7 +213,7 @@ const tableColumns = computed<ProColumns[]>(() => [
     align: 'left',
     width: 120,
     valueType: 'select',
-    valueEnum: toProValueEnum(jobStatusOptions),
+    valueEnum: toProValueEnum(dict.jobStatus),
   },
   {
     title: '记录日志',
@@ -218,7 +222,7 @@ const tableColumns = computed<ProColumns[]>(() => [
     align: 'left',
     width: 100,
     valueType: 'select',
-    valueEnum: toProValueEnum(jobSaveLogOptions),
+    valueEnum: toProValueEnum(dict.jobSaveLog),
   },
   {
     title: '创建时间',
@@ -251,7 +255,7 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
     title: '状态',
     dataIndex: 'job_status',
     valueType: 'select',
-    valueEnum: toProValueEnum(jobStatusOptions),
+    valueEnum: toProValueEnum(dict.jobStatus),
   },
 ]);
 
@@ -263,9 +267,8 @@ function handleCronOk(opt: boolean, cronStr?: string) {
 function handleStatusChange(row: Record<string, string>) {
   const nextStatus = row.job_status === '1' ? '0' : '1';
   const text =
-    nextStatus === '1'
-      ? jobStatusOptions[0]?.label
-      : jobStatusOptions[1]?.label;
+    dict.jobStatus.find(item => item.value === nextStatus)?.label ??
+    nextStatus;
   confirmAction({
     content: `确定要${text} 【${row.job_name}】 任务吗?`,
     action: () => changeStatus(row.id, nextStatus),
@@ -471,12 +474,12 @@ async function handleSubmit() {
           />
           <DictTag
             v-else
-            :options="jobStatusOptions"
+            :options="dict.jobStatus"
             :value="record.job_status"
           />
         </template>
         <template v-if="column.key === 'job_save_log'">
-          <DictTag :options="jobSaveLogOptions" :value="record.job_save_log" />
+          <DictTag :options="dict.jobSaveLog" :value="record.job_save_log" />
         </template>
         <template v-if="column.key === 'operation'">
           <a-space :size="8" align="center">
@@ -599,10 +602,8 @@ async function handleSubmit() {
                 v-model:value="modal.form.job_misfire_policy"
                 default-value="3"
                 placeholder="出错策略"
+                :options="dict.jobMisfirePolicy"
               >
-                <a-select-option key="1" value="1">立即执行</a-select-option>
-                <a-select-option key="2" value="2">执行一次</a-select-option>
-                <a-select-option key="3" value="3">放弃执行</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -613,9 +614,8 @@ async function handleSubmit() {
                 v-model:value="modal.form.job_concurrent"
                 default-value="0"
                 placeholder="是否并发"
+                :options="dict.jobConcurrent"
               >
-                <a-select-option key="1" value="1">允许</a-select-option>
-                <a-select-option key="0" value="0">禁止</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -667,7 +667,7 @@ async function handleSubmit() {
                 v-model:value="modal.form.job_status"
                 default-value="0"
                 placeholder="任务状态"
-                :options="jobStatusOptions"
+                :options="dict.jobStatus"
               >
               </a-select>
             </a-form-item>
@@ -678,7 +678,7 @@ async function handleSubmit() {
                 v-model:value="modal.form.job_save_log"
                 default-value="0"
                 placeholder="记录日志"
-                :options="jobSaveLogOptions"
+                :options="dict.jobSaveLog"
               >
               </a-select>
             </a-form-item>

@@ -45,7 +45,10 @@ const title = ref<string>(route.meta.title ?? '标题');
 
 /** 字典数据初始化 */
 const { dict } = useDictSetup({
-  keyMap: { sysNormalDisable: 'sys_normal_disable' },
+  keyMap: {
+    sysNormalDisable: 'sys_normal_disable',
+    sysShowHide: 'sys_show_hide',
+  },
 });
 
 /** 列表数据查询 */
@@ -118,6 +121,8 @@ const tableColumns = computed<ProColumns[]>(() => [
     key: 'menu_visible',
     align: 'left',
     width: 100,
+    valueType: 'select',
+    valueEnum: toProValueEnum(dict.sysShowHide),
   },
   {
     title: '菜单状态',
@@ -356,9 +361,7 @@ function handleDelete(id: string | number) {
           <IconFont :type="record.menu_icon" style="font-size: 18px"></IconFont>
         </template>
         <template v-if="column.key === 'menu_visible'">
-          <a-tag :color="+record.menu_visible ? 'processing' : 'warning'">
-            {{ ['隐藏', '显示'][+record.menu_visible] }}
-          </a-tag>
+          <DictTag :options="dict.sysShowHide" :value="record.menu_visible" />
         </template>
         <template v-if="column.key === 'menu_status'">
           <DictTag
@@ -609,9 +612,8 @@ function handleDelete(id: string | number) {
                   v-model:value="modalState.form.menu_visible"
                   default-value="0"
                   placeholder="显示状态"
+                  :options="dict.sysShowHide"
                 >
-                  <a-select-option key="0" value="0">隐藏</a-select-option>
-                  <a-select-option key="1" value="1">显示</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>

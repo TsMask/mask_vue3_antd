@@ -53,7 +53,17 @@ const title = ref<string>(route.meta.title ?? '标题');
 
 /** 字典数据初始化 */
 const { dict } = useDictSetup({
-  keyMap: { sysNormalDisable: 'sys_normal_disable' },
+  keyMap: {
+    sysNormalDisable: 'sys_normal_disable',
+    /**数据范围选项 */
+    sysDataScope: [
+      { label: '全部数据权限', value: '1' },
+      { label: '自定数据权限', value: '2' },
+      { label: '本部门数据权限', value: '3' },
+      { label: '本部门及以下数据权限', value: '4' },
+      { label: '仅本人数据权限', value: '5' },
+    ],
+  },
 });
 
 /** 列表数据查询 */
@@ -142,15 +152,6 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
       };
     },
   },
-]);
-
-/** 数据范围选项 */
-const dataScopeOptions = ref<{ value: string; label: string }[]>([
-  { value: '1', label: '全部数据权限' },
-  { value: '2', label: '自定数据权限' },
-  { value: '3', label: '本部门数据权限' },
-  { value: '4', label: '本部门及以下数据权限' },
-  { value: '5', label: '仅本人数据权限' },
 ]);
 
 type TreeDataType = {
@@ -928,7 +929,7 @@ function handleExport() {
             v-model:value="form.role_data_scope"
             default-value="5"
             placeholder="权限范围"
-            :options="dataScopeOptions"
+            :options="dict.sysDataScope"
           >
           </a-select>
         </a-form-item>

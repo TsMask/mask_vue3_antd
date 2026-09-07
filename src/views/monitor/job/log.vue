@@ -32,13 +32,11 @@ const route = useRoute();
 const router = useRouter();
 /** 字典数据初始化 */
 const { dict } = useDictSetup({
-  keyMap: { sysJobGroup: 'sys_job_group' },
+  keyMap: {
+    sysJobGroup: 'sys_job_group',
+    sysSuccessFail: 'sys_success_fail',
+  },
 });
-
-const logStatusOptions = [
-  { label: '正常', value: '1' },
-  { label: '失败', value: '0' },
-];
 
 /** 列表数据查询 */
 const {
@@ -103,7 +101,7 @@ const tableColumns = computed<ProColumns[]>(() => [
     align: 'left',
     width: 100,
     valueType: 'select',
-    valueEnum: toProValueEnum(logStatusOptions),
+    valueEnum: toProValueEnum(dict.sysSuccessFail),
   },
   {
     title: '记录时间',
@@ -137,7 +135,7 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
     title: '执行状态',
     dataIndex: 'log_status',
     valueType: 'select',
-    valueEnum: toProValueEnum(logStatusOptions),
+    valueEnum: toProValueEnum(dict.sysSuccessFail),
   },
   {
     title: '记录时间范围',
@@ -308,9 +306,7 @@ function handleClose() {
           <DictTag :options="dict.sysJobGroup" :value="record.job_group" />
         </template>
         <template v-if="column.key === 'log_status'">
-          <a-tag :color="+record.log_status ? 'success' : 'error'">
-            {{ +record.log_status ? '正常' : '失败' }}
-          </a-tag>
+          <DictTag :options="dict.sysSuccessFail" :value="record.log_status" />
         </template>
         <template v-if="column.key === 'operation'">
           <a-space :size="8" align="center">
@@ -349,9 +345,10 @@ function handleClose() {
           </a-col>
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="执行状态" name="log_status">
-              <a-tag :color="+detailForm.log_status ? 'success' : 'error'">
-                {{ +detailForm.log_status ? '正常' : '失败' }}
-              </a-tag>
+              <DictTag
+                :options="dict.sysSuccessFail"
+                :value="detailForm.log_status"
+              />
             </a-form-item>
           </a-col>
         </a-row>

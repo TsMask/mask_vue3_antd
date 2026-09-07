@@ -38,12 +38,7 @@ const { dict } = useDictSetup({
   keyMap: {
     sysNormalDisable: 'sys_normal_disable',
     sysConfigGroup: 'sys_config_group',
-    configValueType: [
-      { label: '字符', value: 'string' },
-      { label: '数字', value: 'number' },
-      { label: '布尔', value: 'bool' },
-      { label: 'JSON', value: 'json' },
-    ],
+    configValueType: 'sys_config_value_type',
   },
 });
 
