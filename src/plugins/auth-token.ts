@@ -16,7 +16,11 @@ export function getAccessToken(): string {
  */
 export function setAccessToken(token: string, exp: number): void {
   const expires = new Date(new Date().getTime() + exp * 1000);
-  Cookies.set(TOKEN_ACCESS_COOKIE, token, { expires });
+  Cookies.set(TOKEN_ACCESS_COOKIE, token, {
+    expires,
+    sameSite: 'strict',
+    secure: window.location.protocol === 'https:',
+  });
 }
 
 /**移除访问令牌 */
@@ -36,7 +40,11 @@ export function getRefreshToken(): string {
  */
 export function setRefreshToken(token: string, exp: number): void {
   const expires = new Date(new Date().getTime() + exp * 1000);
-  Cookies.set(TOKEN_REFRESH_COOKIE, token, { expires });
+  Cookies.set(TOKEN_REFRESH_COOKIE, token, {
+    expires,
+    sameSite: 'strict',
+    secure: window.location.protocol === 'https:',
+  });
 }
 
 /**移除刷新令牌 */
