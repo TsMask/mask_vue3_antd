@@ -1,38 +1,37 @@
 import { hasRoles, matchRoles } from '@/plugins/auth-user';
-import { DirectiveBinding } from 'vue';
+import type { DirectiveBinding, ObjectDirective } from 'vue';
+import { setDirectiveVisible, type AuthDirectiveArg } from './directive-visible';
+
+function checkRoles(binding: DirectiveBinding<string[], string, AuthDirectiveArg>) {
+  const { arg, value } = binding;
+  if (!Array.isArray(value) || value.length === 0) return false;
+
+  if (arg === 'match') return matchRoles(value);
+  // Unknown args fail closed.
+  return (!arg || arg === 'has') && hasRoles(value);
+}
 
 /**
- * roles-权限标识
+ * roles-角色标识
  *
  * 指令值：字符串数组
  *
- * 指令的参数：has/math，默认has
+ * 指令的参数：has/match，默认has
  *
  * v-roles="['admin']"
  * 等同
  * v-roles:has="['admin']"
  *
- * v-roles:math="['common', 'user']"
+ * v-roles:match="['common', 'user']"
  *
  * @param el 指令绑定到的元素
  * @param binding 一个对象
  */
-export default function (el: any, binding: DirectiveBinding<any>) {
-  const value = binding.value;
-  let arg = binding.arg;
-  let ok: boolean = false;
-  if (Array.isArray(value) && value.length > 0) {
-    // 匹配
-    if (arg === 'math') {
-      ok = matchRoles(value);
-    }
-    // 含有
-    if (!arg || arg === 'has') {
-      ok = hasRoles(value);
-    }
-  }
-  // 没有权限就移除节点
-  if (!ok) {
-    el.parentNode && el.parentNode.removeChild(el);
-  }
-}
+export default {
+  beforeMount(el, binding) {
+    setDirectiveVisible(el, checkRoles(binding));
+  },
+  updated(el, binding) {
+    setDirectiveVisible(el, checkRoles(binding));
+  },
+} satisfies ObjectDirective<HTMLElement, string[], string, AuthDirectiveArg>;
