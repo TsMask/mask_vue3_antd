@@ -2,12 +2,10 @@
 import { reactive, ref } from 'vue';
 import { Modal, message } from 'ant-design-vue';
 import { updateUserPassword } from '@/api/profile';
+import { logoutAuthSession } from '@/plugins/auth-session';
 import { isSuccess } from '@/plugins/http-fetch';
 import useUserStore from '@/store/modules/user';
 import { regExpPassword } from '@/utils/regular-utils';
-import { useRouter } from 'vue-router';
-
-const router = useRouter();
 const userStore = useUserStore();
 const submitting = ref(false);
 
@@ -83,8 +81,7 @@ async function submitPassword() {
 
 /** 退出并清理本地登录态，避免旧 token 继续请求新密码账号 */
 async function handleRelogin() {
-  await userStore.fnLogOut();
-  router.push({ name: 'Login' });
+  await logoutAuthSession();
 }
 </script>
 

@@ -12,6 +12,7 @@ import { useRouter } from 'vue-router';
 import useLayoutStore from '@/store/modules/layout';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
+import { logoutAuthSession } from '@/plugins/auth-session';
 import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 const { proConfig, changeConf } = useLayoutStore();
 const userStore = useUserStore();
@@ -46,7 +47,7 @@ function handleSearchSelect(item: SearchFlatItem) {
 }
 
 /**头像展开项点击 */
-function fnClick({ key }: MenuInfo) {
+function handleAccountMenuClick({ key }: MenuInfo) {
   switch (key) {
     case 'settings':
       router.push({ name: 'Settings' });
@@ -55,7 +56,7 @@ function fnClick({ key }: MenuInfo) {
       router.push({ name: 'Profile' });
       break;
     case 'logout':
-      userStore.fnLogOut().finally(() => router.push({ name: 'Login' }));
+      logoutAuthSession();
       break;
   }
 }
@@ -192,7 +193,7 @@ function fnClick({ key }: MenuInfo) {
         </span>
       </div>
       <template #overlay>
-        <a-menu @click="fnClick">
+        <a-menu @click="handleAccountMenuClick">
           <a-menu-item key="profile">
             <template #icon>
               <UserOutlined />

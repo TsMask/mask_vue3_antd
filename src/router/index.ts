@@ -117,14 +117,10 @@ router.beforeEach(async (to, from) => {
         // 刷新替换原先路由，确保addRoutes已完成
         return { ...to, replace: true };
       } catch (error: any) {
-        // fnGetInfo 或 generateRoutes 失败（token失效、网络异常等）
-        // 清除本地状态并跳转登录页
         console.error(`[Router Guard] ${to.path}: ${error.message}`);
-        try {
-          await user.fnLogOut();
-        } catch {
-          // fnLogOut 已内部清理，即使失败也不影响重定向
-        }
+        // 这里可能是网络异常，不调用后端注销；统一走本地会话清理并保留回跳地址。
+        const { endAuthSession } = await import('@/plugins/auth-session');
+        await endAuthSession({ redirect: to.fullPath });
         return { name: 'Login' };
       }
     }

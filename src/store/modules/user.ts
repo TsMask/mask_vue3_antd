@@ -1,16 +1,10 @@
 import defaultAvatar from '@/assets/images/default_avatar.png';
 import useLayoutStore from './layout';
-import { login, loginByPhone, logout, getInfo } from '@/api/auth';
-import {
-  delAccessToken,
-  delRefreshToken,
-  setAccessToken,
-  setRefreshToken,
-} from '@/plugins/auth-token';
+import { login, loginByPhone, getInfo } from '@/api/auth';
+import { setAccessToken, setRefreshToken } from '@/plugins/auth-token';
 import { defineStore } from 'pinia';
 import { validHttp } from '@/utils/regular-utils';
 import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
-import { clearTabsView } from '@/layouts/hooks/useTabsView';
 
 /** 用户信息类型 */
 type UserInfo = {
@@ -114,7 +108,9 @@ const useUserStore = defineStore('user', {
     },
     // 登录
     async fnLogin(loginBody: Record<string, string>) {
-      const loginRequest = loginBody.phone ? loginByPhone(loginBody) : login(loginBody);
+      const loginRequest = loginBody.phone
+        ? loginByPhone(loginBody)
+        : login(loginBody);
       const res = await loginRequest;
       if (res.code === RESULT_CODE_SUCCESS && res.data) {
         setAccessToken(res.data.access_token, res.data.expires_in);
@@ -126,7 +122,7 @@ const useUserStore = defineStore('user', {
      * 获取用户信息
      *
      * 成功时填充 store 状态；失败时抛出异常，由路由守卫 catch 处理重定向到登录页。
-     * 不再在函数内部调用 window.location.reload()，避免与路由守卫产生无限重定向。
+     * 会话结束统一交由 auth-session 服务处理，避免 Store 与路由守卫重复清理。
      *
      * @returns 响应结果
      * @throws 获取失败时抛出错误
@@ -166,25 +162,6 @@ const useUserStore = defineStore('user', {
       }
       // 获取信息失败，抛出让路由守卫 catch 处理
       throw new Error(res.msg || '获取用户信息失败');
-    },
-    /**
-     * 退出系统
-     *
-     * 无论退出接口是否成功，都清除本地 token 和用户状态。
-     * 不再重新抛出 API 错误，确保调用方可以安全地 await 而不会抛异常。
-     */
-    async fnLogOut() {
-      try {
-        await logout();
-      } catch {
-        // 忽略登出接口错误，本地状态已在 finally 中清理
-      } finally {
-        clearTabsView();
-        this.roles = [];
-        this.permissions = [];
-        delAccessToken();
-        delRefreshToken();
-      }
     },
   },
 });

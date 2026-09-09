@@ -1,10 +1,8 @@
 import {
   getAccessToken,
   setAccessToken,
-  delAccessToken,
   getRefreshToken,
   setRefreshToken,
-  delRefreshToken,
 } from '@/plugins/auth-token';
 import { sessionGetJSON, sessionSetJSON } from '@/utils/cache-session-utils';
 import { TOKEN_KEY, TOKEN_KEY_PREFIX } from '@/constants/token-constants';
@@ -104,12 +102,6 @@ const FETCH_OPTIONS: OptionsType = {
 /** 当前刷新请求；并发刷新共用同一个 Promise */
 let refreshingTokenPromise: Promise<ResultType> | null = null;
 
-/**
- * 是否正在执行强制登出（防止 window.location.reload 被多次触发）
- * 页面 reload 后模块重新执行，该标志自然重置为 false
- */
-let isForceLoggingOut = false;
-
 /** 需要走登录失效流程的业务码集合 */
 const AUTH_FAILURE_CODES = [401001, 401002, 401003, 401004];
 
@@ -118,20 +110,17 @@ function isAuthFailureCode(code: number) {
 }
 
 function forceLogout() {
-  delAccessToken();
-  delRefreshToken();
-  if (!isForceLoggingOut) {
-    isForceLoggingOut = true;
-    window.location.reload();
-  }
+  void import('@/plugins/auth-session').then(({ forceAuthLogout }) => {
+    return forceAuthLogout();
+  });
 }
 
 function hasTokenPair(result: ResultType) {
   return Boolean(
     result.data?.access_token &&
-    result.data?.expires_in &&
-    result.data?.refresh_token &&
-    result.data?.refresh_expires_in
+      result.data?.expires_in &&
+      result.data?.refresh_token &&
+      result.data?.refresh_expires_in
   );
 }
 
@@ -163,7 +152,10 @@ export async function ensureAccessToken(): Promise<ResultType> {
     const success = result.code === RESULT_CODE_SUCCESS && hasTokenPair(result);
     if (success) {
       setAccessToken(result.data.access_token, result.data.expires_in);
-      setRefreshToken(result.data.refresh_token, result.data.refresh_expires_in);
+      setRefreshToken(
+        result.data.refresh_token,
+        result.data.refresh_expires_in
+      );
     }
 
     // 网络超时、服务异常不清理 refresh token；明确的登录失效才退出。
@@ -186,7 +178,9 @@ export async function ensureAccessToken(): Promise<ResultType> {
  * @param options - 请求参数（会被直接修改）
  * @returns 处理后的请求参数，或防重复提交被触发时的错误结果
  */
-function beforeRequest(options: OptionsType): OptionsType | Promise<ResultType> {
+function beforeRequest(
+  options: OptionsType
+): OptionsType | Promise<ResultType> {
   options.headers = Object.assign({}, options.headers);
 
   // 使用apifoxmock.com时开启
@@ -329,11 +323,7 @@ async function beforeResponse(
 export async function request(options: OptionsType): Promise<ResultType> {
   const reqOptions = Object.assign({}, FETCH_OPTIONS, options);
 
-  if (
-    reqOptions.withToken &&
-    !getAccessToken() &&
-    getRefreshToken()
-  ) {
+  if (reqOptions.withToken && !getAccessToken() && getRefreshToken()) {
     const refreshResult = await ensureAccessToken();
     if (!getAccessToken()) return authError(refreshResult.msg);
   }
@@ -401,9 +391,7 @@ export async function request(options: OptionsType): Promise<ResultType> {
         } catch {
           return {
             code: RESULT_CODE_EXCEPTION,
-            msg: res.ok
-              ? RESULT_MSG_SERVER_ERROR
-              : `请求失败(${res.status})`,
+            msg: res.ok ? RESULT_MSG_SERVER_ERROR : `请求失败(${res.status})`,
           };
         }
         // 登录失效码无论 HTTP 状态码如何，都必须走 beforeResponse 处理 token 刷新
