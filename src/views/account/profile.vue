@@ -1,202 +1,60 @@
 <script lang="ts" setup>
-import { reactive, ref, onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { message } from 'ant-design-vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { getUserProfile } from '@/api/profile';
-import { parseDateToStr } from '@/utils/date-utils';
+import { isSuccess } from '@/plugins/http-fetch';
 import useUserStore from '@/store/modules/user';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import AccountProfileCard from './components/AccountProfileCard.vue';
+import AccountProfileTabs from './components/AccountProfileTabs.vue';
+import { createEmptyProfile, type AccountProfileData } from './types';
 
-/**加载状态 */
-let loading = ref<boolean>(true);
+const userStore = useUserStore();
+const loading = ref(true);
+const profile = ref<AccountProfileData>(createEmptyProfile());
 
-/**Tab标签激活 */
-let activeKey = ref<string>('list');
-
-/**个人信息数据状态 */
-type ProfileData = {
-  user?: Record<string, any>;
-  role_group?: string[];
-  post_group?: string[];
-};
-
-let state = reactive<ProfileData>({
-  user: {},
-  role_group: [],
-  post_group: [],
-});
-
-/**列表数据 */
-let listData = ref([
-  {
-    id: 'Vue',
-    title: 'Vue.js - 渐进式 JavaScript 框架 | Vue.js',
-    description:
-      '基于标准 HTML、CSS 和 JavaScript 构建,提供容易上手的 API 和一流的文档。 性能出色 经过编译器优化、完全响应式的渲染系统,几乎不需要手动优化。',
-  },
-  {
-    id: 'Vue Router',
-    title: 'Vue Router | Vue.js 的官方路由',
-    description:
-      '为Vue.js 提供富有表现力、可配置的、方便的路由，用直观且强大的语法来定义静态或动态路由。',
-  },
-  {
-    id: 'Pinia',
-    title: 'Pinia | The intuitive store for Vue.js',
-    description:
-      'Pinia hooks into Vue devtools to give you an enhanced development experience in both Vue 2 and Vue 3. ',
-  },
-  {
-    id: 'Vite',
-    title: 'Vite | 下一代的前端工具链',
-    description:
-      'Vite(法语意为 "快速的",发音 /vit/,发音同 "veet")是一种新型前端构建工具,能够显著提升前端开发体验',
-  },
-]);
-
-/**查询用户个人信息 */
-function fnGetProfile() {
-  getUserProfile().then(res => {
-    if (res.code === RESULT_CODE_SUCCESS && res.data) {
-      const { user, role_group, post_group }: ProfileData = res.data;
-      state.user = user || {};
-      state.role_group = role_group || [];
-      state.post_group = post_group || [];
-      // 头像解析
-      state.user.user_avatar = useUserStore().fnAvatar(state.user.user_avatar);
-      loading.value = false;
-    } else {
-      message.error(res.msg, 3);
+/** 加载个人资料，并将后端头像地址转换成当前环境可访问地址 */
+async function handleGetProfile() {
+  loading.value = true;
+  try {
+    const res = await getUserProfile();
+    if (!isSuccess(res) || !res.data?.user) {
+      message.error({
+        content: res.msg || '获取个人信息失败',
+        duration: 3,
+      });
+      return;
     }
-  });
+
+    const { user, role_group, post_group } = res.data;
+    user.user_avatar = userStore.fnAvatar(user.user_avatar);
+    profile.value = {
+      user,
+      role_group: role_group || [],
+      post_group: post_group || [],
+    };
+  } catch (error: any) {
+    message.error({
+      content: error?.message || '获取个人信息失败',
+      duration: 3,
+    });
+  } finally {
+    loading.value = false;
+  }
 }
 
-onMounted(() => {
-  // 获取信息
-  fnGetProfile();
-});
+onMounted(handleGetProfile);
 </script>
 
 <template>
   <PageContainer :loading="loading">
     <a-row :gutter="16">
       <a-col :lg="6" :md="6" :xs="24">
-        <a-card :body-style="{ padding: '0px' }" style="margin-bottom: 16px">
-          <template #title>
-            <div class="info">
-              <div class="info-no">No：{{ state.user?.id || '-' }}</div>
-              <a-avatar
-                shape="circle"
-                :size="96"
-                :src="state.user?.user_avatar"
-                :alt="state.user?.user_name"
-              ></a-avatar>
-              <div class="info-nickname" :title="state.user?.user_nick">
-                {{ state.user?.user_nick }}
-              </div>
-            </div>
-          </template>
-          <a-descriptions
-            size="small"
-            layout="vertical"
-            :bordered="true"
-            :column="1"
-          >
-            <a-descriptions-item label="手机号码">
-              {{ state.user?.user_phone || '-' }}
-            </a-descriptions-item>
-            <a-descriptions-item label="用户邮箱">
-              {{ state.user?.user_email || '-' }}
-            </a-descriptions-item>
-            <a-descriptions-item label="所属部门">
-              {{ state.user?.dept?.dept_name || '-' }}
-            </a-descriptions-item>
-            <a-descriptions-item label="拥有岗位">
-              <span v-if="state.post_group?.length === 0">-</span>
-              <a-tag v-else v-for="v in state.post_group" :key="v">
-                {{ v }}
-              </a-tag>
-            </a-descriptions-item>
-            <a-descriptions-item label="拥有角色">
-              <span v-if="state.role_group?.length === 0">-</span>
-              <a-tag v-else v-for="v in state.role_group" :key="v">
-                {{ v }}
-              </a-tag>
-            </a-descriptions-item>
-            <a-descriptions-item label="登录地址">
-              {{ state.user?.user_login_ip || '-' }}
-            </a-descriptions-item>
-            <a-descriptions-item label="登录时间">
-              <span v-if="+state.user?.user_login_time > 0">
-                {{ parseDateToStr(+state.user?.user_login_time) }}
-              </span>
-              <span v-else>-</span>
-            </a-descriptions-item>
-          </a-descriptions>
-        </a-card>
+        <AccountProfileCard :profile="profile" />
       </a-col>
       <a-col :lg="18" :md="18" :xs="24">
-        <a-card>
-          <a-tabs
-            tab-position="top"
-            :destroy-inactive-tab-pane="true"
-            v-model:activeKey="activeKey"
-          >
-            <a-tab-pane key="list" tab="列表">
-              <a-list
-                item-layout="horizontal"
-                :data-source="listData"
-                row-key="id"
-              >
-                <template #renderItem="{ item }">
-                  <a-list-item>
-                    <a-list-item-meta>
-                      <template #title>
-                        {{ item.title }}
-                      </template>
-                      <template #description>
-                        {{ item.description }}
-                      </template>
-                      <template #avatar>
-                        <a-avatar>{{ item.id }}</a-avatar>
-                      </template>
-                    </a-list-item-meta>
-                  </a-list-item>
-                </template>
-              </a-list>
-            </a-tab-pane>
-            <a-tab-pane key="empty" tab="空状态">
-              <a-empty>
-                <template #description> 暂无数据，尝试刷新看看 </template>
-                <a-button type="primary">刷新</a-button>
-              </a-empty>
-            </a-tab-pane>
-          </a-tabs>
-        </a-card>
+        <AccountProfileTabs @refresh="handleGetProfile" />
       </a-col>
     </a-row>
   </PageContainer>
 </template>
-
-<style lang="css" scoped>
-.info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16px 0;
-}
-.info-no {
-  align-self: flex-start;
-  font-size: 14px;
-  margin-bottom: 16px;
-}
-.info-nickname {
-  margin-top: 16px;
-  font-size: 24px;
-  align-self: flex-start;
-  text-align: center;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  width: 100%;
-}
-</style>

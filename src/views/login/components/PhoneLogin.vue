@@ -2,8 +2,8 @@
 import { regExpMobile } from '@/utils/regular-utils';
 
 defineProps<{
-  smsClick: boolean;
-  smsTime: number;
+  counting: boolean;
+  countdown: number;
 }>();
 
 const emit = defineEmits<{ send: [] }>();
@@ -50,10 +50,11 @@ const code = defineModel<string>('code', { required: true });
         <a-button
           size="small"
           type="link"
-          :disabled="smsClick"
+          html-type="button"
+          :disabled="counting"
           @click="emit('send')"
         >
-          {{ smsClick ? `${smsTime} s` : '获取验证码' }}
+          {{ counting ? `${countdown} s` : '获取验证码' }}
         </a-button>
       </template>
     </a-input>

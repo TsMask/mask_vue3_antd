@@ -10,13 +10,15 @@ import {
   getCaptchaSMS,
 } from '@/api/auth';
 import { validMobile } from '@/utils/regular-utils';
+import { isSuccess } from '@/plugins/http-fetch';
 import { useRouter } from 'vue-router';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
-import Header from './components/Header.vue';
-import AccountFields from './components/AccountFields.vue';
-import PhoneField from './components/PhoneField.vue';
-import CaptchaField from './components/CaptchaField.vue';
-import Footer from './components/Footer.vue';
+import RegisterHeader from './components/RegisterHeader.vue';
+import RegisterAccountFields from './components/RegisterAccountFields.vue';
+import RegisterPhoneField from './components/RegisterPhoneField.vue';
+import RegisterCaptchaField from './components/RegisterCaptchaField.vue';
+import RegisterFooter from './components/RegisterFooter.vue';
+
+type RegisterTabKey = 'username' | 'phone';
 
 const router = useRouter();
 const codeImgFall =
@@ -35,55 +37,40 @@ const contentStyle: CSSProperties = {
   padding: '48px 16px',
 };
 
-/** 注册通道默认激活账号密码注册 */
-const activeKey = ref<'username' | 'phone'>('username');
+const activeKey = ref<RegisterTabKey>('username');
 
 const state = reactive({
-  /** 表单属性 */
   form: {
-    /** 账号 */
     username: '',
-    /** 手机号 */
     phone: '',
-    /** 密码 */
     password: '',
-    /** 确认密码 */
     confirmPassword: '',
-    /** 验证码 */
     code: '',
-    /** 验证码uuid */
     uuid: '',
   },
-  /** 表单提交点击状态 */
-  formClick: false,
-  /** 验证码状态 */
+  submitting: false,
   captcha: {
-    /** 验证码开关 */
     enabled: false,
-    /** 验证码图片地址 */
     codeImg: '',
     codeImgFall,
   },
-  /** 验证码点击状态 */
-  captchaClick: false,
+  captchaLoading: false,
 });
 
-/** 手机号注册验证码状态 */
 let smsInterval: ReturnType<typeof setInterval> | undefined;
 const smsState = reactive({
-  click: false,
-  time: 60,
+  counting: false,
+  countdown: 60,
 });
 
-/** 表单验证通过 */
-function fnFinish() {
+/** 表单验证通过后按注册通道提交 */
+async function handleSubmit() {
   const hide = message.loading('请稍等...', 0);
-  state.formClick = true;
   const isPhoneRegister = activeKey.value === 'phone';
   const registerAccount = isPhoneRegister
     ? state.form.phone
     : state.form.username;
-  const form = isPhoneRegister
+  const registerForm = isPhoneRegister
     ? {
         phone: state.form.phone,
         code: state.form.code,
@@ -97,40 +84,82 @@ function fnFinish() {
         uuid: state.form.uuid,
       };
   const registerRequest = isPhoneRegister
-    ? registerByPhone(form)
-    : register(form);
+    ? registerByPhone(registerForm)
+    : register(registerForm);
 
-  registerRequest
-    .then(res => {
-      if (res.code === RESULT_CODE_SUCCESS) {
-        Modal.success({
-          title: '提示',
-          content: `恭喜您，${registerAccount} 账号注册成功！`,
-          okText: '前往登录',
-          onOk() {
-            router.push({ name: 'Login' });
-          },
-        });
-      } else {
-        message.error({
-          content: `${res.msg}`,
-          duration: 3,
-        });
-      }
-    })
-    .finally(() => {
-      hide();
-      state.formClick = false;
-      state.form.code = '';
-      if (!isPhoneRegister && state.captcha.enabled) {
-        fnGetCaptcha();
-      }
+  state.submitting = true;
+  try {
+    const res = await registerRequest;
+    if (!isSuccess(res)) {
+      message.error({
+        content: res.msg || '注册失败',
+        duration: 3,
+      });
+      return;
+    }
+
+    Modal.success({
+      title: '提示',
+      content: `恭喜您，${registerAccount} 账号注册成功！`,
+      okText: '前往登录',
+      onOk() {
+        handleBackLogin();
+      },
     });
+  } catch (error: any) {
+    message.error({
+      content: error?.message || '注册失败，请稍后重试',
+      duration: 3,
+    });
+  } finally {
+    hide();
+    state.submitting = false;
+    state.form.code = '';
+    if (!isPhoneRegister && state.captcha.enabled) {
+      handleGetCaptcha();
+    }
+  }
 }
 
-/** 获取手机号注册验证码 */
-async function fnGetSmsCaptcha() {
-  if (smsState.click || activeKey.value !== 'phone') return;
+/** 获取账号注册图形验证码 */
+async function handleGetCaptcha() {
+  if (state.captchaLoading) return;
+  state.captchaLoading = true;
+  try {
+    const res = await getCaptchaImage();
+    if (!isSuccess(res) || !res.data) {
+      message.warning({
+        content: res.msg || '获取验证码失败',
+        duration: 3,
+      });
+      return;
+    }
+
+    const { enabled, img, uuid } = res.data;
+    state.captcha.enabled = Boolean(enabled);
+    if (state.captcha.enabled) {
+      state.captcha.codeImg = img;
+      state.form.uuid = uuid;
+    } else {
+      state.captcha.codeImg = '';
+      state.form.uuid = '';
+    }
+    if (res.data?.text) {
+      state.form.code = res.data.text;
+    }
+  } catch (error: any) {
+    message.error({
+      content: error?.message || '获取验证码失败，请稍后重试',
+      duration: 3,
+    });
+  } finally {
+    state.captchaLoading = false;
+  }
+}
+
+/** 获取手机号注册短信验证码 */
+async function handleSendSmsCaptcha() {
+  if (smsState.counting || activeKey.value !== 'phone') return;
   if (!validMobile(state.form.phone)) {
     message.warning({
       content: '请确认手机号码是否有效！',
@@ -138,11 +167,13 @@ async function fnGetSmsCaptcha() {
     });
     return;
   }
+
   try {
     const res = await getCaptchaSMS(state.form.phone);
-    if (res.code !== RESULT_CODE_SUCCESS || !res.data?.uuid) {
+    if (activeKey.value !== 'phone') return;
+    if (!isSuccess(res) || !res.data?.uuid) {
       message.warning({
-        content: `${res.msg}`,
+        content: res.msg || '短信验证码发送失败',
         duration: 3,
       });
       return;
@@ -152,21 +183,11 @@ async function fnGetSmsCaptcha() {
     if (res.data?.text) {
       state.form.code = res.data.text;
     }
-    smsState.time = Number(res.data.resend_interval) || 60;
-    smsState.click = true;
+    startSmsCountdown(Number(res.data.resend_interval) || 60);
     message.success({
       content: '发送成功，请注意查看短信！',
       duration: 3,
     });
-    smsInterval = setInterval(() => {
-      if (smsState.time <= 0) {
-        smsState.time = 60;
-        smsState.click = false;
-        stopSmsCountdown();
-      } else {
-        smsState.time--;
-      }
-    }, 1000);
   } catch (error: any) {
     message.error({
       content: error?.message || '短信验证码发送失败',
@@ -175,7 +196,27 @@ async function fnGetSmsCaptcha() {
   }
 }
 
-/** 停止手机号注册验证码倒计时 */
+/** 使用后端返回的重发间隔启动倒计时，避免前端固定值与配置不一致 */
+function startSmsCountdown(seconds: number) {
+  smsState.countdown = seconds;
+  smsState.counting = true;
+  smsInterval = setInterval(() => {
+    if (smsState.countdown <= 0) {
+      resetSmsState();
+      return;
+    }
+    smsState.countdown--;
+  }, 1000);
+}
+
+/** 复位短信状态并清理定时器，通道切换和组件卸载共用 */
+function resetSmsState() {
+  stopSmsCountdown();
+  smsState.countdown = 60;
+  smsState.counting = false;
+}
+
+/** 仅停止计时器，保留当前显示值，供组件卸载时避免额外状态跳动 */
 function stopSmsCountdown() {
   if (smsInterval) {
     clearInterval(smsInterval);
@@ -183,50 +224,27 @@ function stopSmsCountdown() {
   }
 }
 
-watch(activeKey, () => {
+/** 切换注册通道后，两种验证码的编码不能混用。 */
+function handleTabChange() {
   state.form.code = '';
   state.form.uuid = '';
   if (activeKey.value === 'username' && state.captcha.enabled) {
-    fnGetCaptcha();
+    handleGetCaptcha();
   }
-});
-
-/** 获取验证码 */
-function fnGetCaptcha() {
-  if (state.captchaClick) return;
-  state.captchaClick = true;
-  getCaptchaImage()
-    .then(res => {
-      if (res.code !== RESULT_CODE_SUCCESS) {
-        return;
-      }
-      const { enabled, img, uuid } = res.data;
-      state.captcha.enabled = Boolean(enabled);
-      if (state.captcha.enabled) {
-        state.captcha.codeImg = img;
-        state.form.uuid = uuid;
-      }
-      if (res.data?.text) {
-        state.form.code = res.data.text;
-      }
-    })
-    .finally(() => {
-      state.captchaClick = false;
-    });
 }
 
-function goLogin() {
+function handleBackLogin() {
   router.push({ name: 'Login' });
 }
 
+watch(activeKey, handleTabChange);
+
 onMounted(() => {
-  fnGetCaptcha();
+  handleGetCaptcha();
 });
 
 onBeforeUnmount(() => {
-  smsState.time = 60;
-  smsState.click = false;
-  stopSmsCountdown();
+  resetSmsState();
 });
 </script>
 
@@ -240,10 +258,14 @@ onBeforeUnmount(() => {
         :gap="40"
         :style="contentStyle"
       >
-        <Header />
+        <RegisterHeader />
 
         <a-card :bordered="true" :style="{ width: '100%', maxWidth: '400px' }">
-          <a-form :model="state.form" name="stateForm" @finish="fnFinish">
+          <a-form
+            :model="state.form"
+            name="RegisterForm"
+            @finish="handleSubmit"
+          >
             <a-tabs
               v-model:activeKey="activeKey"
               tab-position="top"
@@ -252,7 +274,7 @@ onBeforeUnmount(() => {
               :destroy-inactive-tab-pane="true"
             >
               <a-tab-pane key="username" tab="账号注册">
-                <AccountFields
+                <RegisterAccountFields
                   v-model:username="state.form.username"
                   v-model:password="state.form.password"
                   v-model:confirm-password="state.form.confirmPassword"
@@ -260,18 +282,18 @@ onBeforeUnmount(() => {
               </a-tab-pane>
 
               <a-tab-pane key="phone" tab="手机号注册">
-                <PhoneField v-model:phone="state.form.phone" />
+                <RegisterPhoneField v-model:phone="state.form.phone" />
               </a-tab-pane>
             </a-tabs>
 
-            <CaptchaField
+            <RegisterCaptchaField
               v-model:code="state.form.code"
-              :is-phone="activeKey === 'phone'"
-              :sms-click="smsState.click"
-              :sms-time="smsState.time"
+              :phone-mode="activeKey === 'phone'"
+              :sms-counting="smsState.counting"
+              :sms-countdown="smsState.countdown"
               :captcha="state.captcha"
-              @refresh="fnGetCaptcha"
-              @send="fnGetSmsCaptcha"
+              @refresh-captcha="handleGetCaptcha"
+              @send-captcha="handleSendSmsCaptcha"
             />
 
             <a-flex vertical :gap="12">
@@ -280,11 +302,17 @@ onBeforeUnmount(() => {
                 type="primary"
                 size="large"
                 html-type="submit"
-                :loading="state.formClick"
+                :loading="state.submitting"
               >
                 注册
               </a-button>
-              <a-button block type="default" size="large" @click="goLogin">
+              <a-button
+                block
+                type="default"
+                size="large"
+                html-type="button"
+                @click="handleBackLogin"
+              >
                 使用已有账号登录
               </a-button>
             </a-flex>
@@ -296,7 +324,7 @@ onBeforeUnmount(() => {
     <a-layout-footer
       :style="{ padding: '16px 24px', background: 'transparent' }"
     >
-      <Footer />
+      <RegisterFooter />
     </a-layout-footer>
   </a-layout>
 </template>

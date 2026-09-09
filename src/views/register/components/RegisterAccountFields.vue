@@ -12,7 +12,7 @@ const confirmPassword = defineModel<string>('confirmPassword', {
 });
 
 /** 普通注册只允许用户名，手机号走独立注册通道 */
-function fnValidUsername(
+function validateUsername(
   rule: Record<string, any>,
   value: string,
   callback: (error?: string) => void
@@ -29,7 +29,7 @@ function fnValidUsername(
 }
 
 /** 表单验证确认密码是否一致 */
-function fnEqualToPassword(
+function validateConfirmPassword(
   rule: Record<string, any>,
   value: string,
   callback: (error?: string) => void
@@ -52,7 +52,7 @@ function fnEqualToPassword(
     :rules="[
       {
         required: true,
-        validator: fnValidUsername,
+        validator: validateUsername,
       },
     ]"
   >
@@ -95,7 +95,7 @@ function fnEqualToPassword(
         required: true,
         min: 6,
         max: 26,
-        validator: fnEqualToPassword,
+        validator: validateConfirmPassword,
       },
     ]"
   >

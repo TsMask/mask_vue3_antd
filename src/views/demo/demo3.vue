@@ -5,10 +5,10 @@
     :avatar="{
       src: 'https://gw.alipayobjects.com/zos/antfincdn/K%24NnlsB%26hz/pageHeader.svg',
     }"
-    @back="() => $router.go(-1)"
     :ghost="false"
     :flex="true"
     :loading="loading"
+    @back="handleBack"
   >
     <template #extra>
       <strong>Extra Area</strong>
@@ -25,22 +25,38 @@
     </template>
 
     <a-card title="Info">
-      <p v-for="i in list" :key="i">
+      <p v-for="item in itemCount" :key="item">
         text block...
-        <a-tag>{{ i }}</a-tag>
+        <a-tag>{{ item }}</a-tag>
       </p>
     </a-card>
   </PageContainer>
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
-import { PageContainer } from "antdv-pro-layout";
+import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { PageContainer } from 'antdv-pro-layout';
+import { useRouter } from 'vue-router';
 
-const list = ref<number>(50);
+const router = useRouter();
+const itemCount = 50;
+const loading = ref(true);
+let loadingTimeout: ReturnType<typeof setTimeout> | undefined;
 
-const loading = ref<boolean>(true);
-setTimeout(() => {
-  loading.value = false
-}, 1200);
+function handleBack() {
+  router.back();
+}
+
+onMounted(() => {
+  loadingTimeout = setTimeout(() => {
+    loading.value = false;
+  }, 1200);
+});
+
+onBeforeUnmount(() => {
+  if (loadingTimeout) {
+    clearTimeout(loadingTimeout);
+    loadingTimeout = undefined;
+  }
+});
 </script>

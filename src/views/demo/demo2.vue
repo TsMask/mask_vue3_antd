@@ -27,9 +27,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref } from 'vue';
 
-const selectedKeys = ref<string[]>(["2"]);
+const selectedKeys = ref<string[]>(['2']);
 </script>
 
 <style scoped>
@@ -54,7 +54,7 @@ const selectedKeys = ref<string[]>(["2"]);
   padding: 24px;
   background: #fff;
 }
-[data-theme="dark"] .layout-content-main {
+[data-theme='dark'] .layout-content-main {
   background: #141414;
 }
 

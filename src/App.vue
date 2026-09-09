@@ -1,84 +1,82 @@
 <script setup lang="ts">
-import { onMounted, onBeforeMount, watch } from 'vue';
-import useLayoutStore from '@/store/modules/layout';
+import { onBeforeMount, onMounted, watch } from 'vue';
+import { storeToRefs } from 'pinia';
 import useAppStore from '@/store/modules/app';
+import useLayoutStore from '@/store/modules/layout';
 import { usePrefersColorScheme, viewTransitionTheme } from 'antdv-pro-layout';
 import { message } from 'ant-design-vue';
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
-dayjs.locale('zh-cn'); // 默认中文
+
+dayjs.locale('zh-cn'); // 设置默认语言为中文
+
 const appStore = useAppStore();
+const layoutStore = useLayoutStore();
+const { themeConfig } = storeToRefs(layoutStore);
 const colorScheme = usePrefersColorScheme();
-const { themeConfig, initPrimaryColor, changeConf } = useLayoutStore();
 
-watch(
-  () => colorScheme.value,
-  themeMode => {
-    viewTransitionTheme(() => {
-      changeConf('theme', themeMode);
-    });
-  }
-);
-
-onBeforeMount(() => {
-  // 全局message提示
+/**
+ * 初始化全局配置
+ */
+function initializeGlobalConfig() {
   message.config({
-    top: '100px', // 距离顶部位置100px
+    top: '100px',
     duration: 3,
     maxCount: 15,
   });
-  initPrimaryColor();
-});
+  layoutStore.initPrimaryColor();
+}
 
-onMounted(() => {
-  // 输出应用版本号
+/**
+ * 处理颜色方案变化
+ */
+function handleColorSchemeChange(themeMode: 'light' | 'dark') {
+  viewTransitionTheme(() => {
+    layoutStore.changeConf('theme', themeMode);
+  });
+}
+
+/**
+ * 记录应用版本信息
+ */
+function logAppVersion() {
   console.info(
     `%c ${appStore.appName} %c ${appStore.appCode} - ${appStore.appVersion} `,
     'color: #fadfa3; background: #030307; padding: 4px 0;',
     'color: #030307; background: #fadfa3; padding: 4px 0;'
   );
-});
+}
+
+watch(colorScheme, handleColorSchemeChange);
+
+onBeforeMount(initializeGlobalConfig);
+onMounted(logAppVersion);
 </script>
 
 <template>
-  <a-config-provider :theme="themeConfig" :locale="zhCN" :component-size="appStore.componentSize">
+  <a-config-provider
+    :theme="themeConfig"
+    :locale="zhCN"
+    :component-size="appStore.componentSize"
+  >
     <RouterView />
   </a-config-provider>
 </template>
 
-<style>
-#app {
-  height: 100%;
-}
-
-body .ant-pro-basicLayout {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-height: 100vh;
-}
-
+<style lang="css">
 .slide-left-enter-active,
-.slide-left-leave-active,
-.slide-right-enter-active,
-.slide-right-leave-active {
+.slide-left-leave-active {
   transition-duration: 0.5s;
-  transition-property: height, opacity, transform;
+  transition-property: transform, opacity;
   transition-timing-function: cubic-bezier(0.55, 0, 0.1, 1);
   overflow: hidden;
 }
 
-.slide-left-enter,
-.slide-right-leave-active {
+.slide-left-enter-from,
+.slide-left-leave-to {
   opacity: 0;
   transform: translate(2em, 0);
-}
-
-.slide-left-leave-active,
-.slide-right-enter {
-  opacity: 0;
-  transform: translate(-2em, 0);
 }
 
 ::view-transition-old(root),

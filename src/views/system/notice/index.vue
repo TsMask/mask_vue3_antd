@@ -2,22 +2,14 @@
 import { useRoute } from 'vue-router';
 import { ref, toRaw, computed } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
-import { ProModal } from 'antdv-pro-modal';
-import { message } from 'ant-design-vue';
 import {
   ProTable,
   type ProColumns,
   type ProColumnsSearch,
 } from 'antdv-pro-table';
-import {
-  listNotice,
-  getNotice,
-  delNotice,
-  addNotice,
-  updateNotice,
-} from '@/api/system/notice';
+import NoticeFormModal from './components/NoticeFormModal.vue';
+import { listNotice, delNotice } from '@/api/system/notice';
 import { parseDateToStr } from '@/utils/date-utils';
-import { useModalForm } from '@/hooks/useModalForm';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalAction } from '@/hooks/useModalAction';
 import {
@@ -57,49 +49,8 @@ const {
   rowKey: 'id',
 });
 
-/** 表单弹窗管理（单弹窗 + 模式驱动） */
-const {
-  modal: modalState,
-  formCtl: modalStateForm,
-  isView,
-  openModal,
-  closeModal: handleCancel,
-} = useModalForm({
-  initForm: () => ({
-    id: undefined as string | number | undefined,
-    notice_title: '',
-    notice_content: '',
-    notice_type: '2',
-    notice_status: '1',
-    delFlag: '0',
-    remark: '',
-    create_by: undefined,
-    create_time: undefined,
-    update_by: undefined,
-    update_time: undefined,
-  }),
-  rules: {
-    notice_title: [
-      { required: true, min: 2, max: 50, message: '请输入公告标题' },
-    ],
-    notice_type: [{ required: true, message: '请选择公告类型' }],
-    notice_content: [
-      {
-        required: true,
-        min: 2,
-        max: 3000,
-        message: '请输入公告内容，长度2-3000个字符',
-      },
-    ],
-  },
-});
-
-/** 新增/编辑提交状态 */
-const {
-  confirmAction,
-  executeAction,
-  loading: isSubmitting,
-} = useModalAction();
+const noticeFormModal = ref<InstanceType<typeof NoticeFormModal> | null>(null);
+const { confirmAction } = useModalAction();
 
 /** 表格字段列 */
 const tableColumns = computed<ProColumns[]>(() => [
@@ -159,51 +110,16 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
   { title: '创建者', dataIndex: 'create_by' },
 ]);
 
-/** 打开公告详情弹窗 */
 function handleView(id: string | number) {
-  openModal({
-    mode: 'view',
-    title: '公告信息',
-    fetchDetail: () => getNotice(id),
-  });
+  noticeFormModal.value?.openView(id);
 }
 
-/** 打开新增或编辑弹窗 */
 function handleEdit(id?: string | number) {
-  openModal(
-    id
-      ? {
-          mode: 'edit',
-          title: '修改公告',
-          fetchDetail: () => getNotice(id),
-        }
-      : {
-          mode: 'add',
-          title: '添加公告',
-        }
-  );
+  noticeFormModal.value?.openEdit(id);
 }
 
-/** 校验表单后提交新增/编辑 */
-async function handleSubmit() {
-  try {
-    await modalStateForm.validate();
-  } catch (e: any) {
-    message.error({
-      content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
-      duration: 3,
-    });
-    return;
-  }
-  const form = toRaw(modalState.form);
-  await executeAction({
-    action: () => (form.id ? updateNotice(form) : addNotice(form)),
-    successText: '操作成功',
-    onSuccess() {
-      handleCancel();
-      reload();
-    },
-  });
+function handleFormSuccess() {
+  reload();
 }
 
 /** 删除公告（单条或批量） */
@@ -332,87 +248,6 @@ function handleDelete(id: string = '0') {
       </template>
     </ProTable>
 
-    <!-- 详情框或新增修改框 -->
-    <ProModal
-      :drag="true"
-      :destroyOnClose="true"
-      :width="800"
-      :keyboard="!isView"
-      :mask-closable="isView"
-      :open="modalState.visible"
-      :title="modalState.title"
-      :confirm-loading="isSubmitting"
-      :footer="isView ? null : undefined"
-      @ok="handleSubmit"
-      @cancel="handleCancel"
-    >
-      <a-form
-        name="modalStateForm"
-        layout="horizontal"
-        :label-col="{ span: 6 }"
-        :label-wrap="true"
-        :disabled="isView"
-      >
-        <a-row>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="公告类型"
-              name="notice_type"
-              v-bind="modalStateForm.validateInfos.notice_type"
-            >
-              <a-select
-                v-model:value="modalState.form.notice_type"
-                default-value="1"
-                placeholder="公告类型"
-                :options="dict.sysNoticeType"
-              >
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="公告状态" name="notice_status">
-              <a-select
-                v-model:value="modalState.form.notice_status"
-                default-value="0"
-                placeholder="公告状态"
-                :options="dict.sysNoticeStatus"
-              >
-              </a-select>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-form-item
-          label="公告标题"
-          name="notice_title"
-          v-bind="modalStateForm.validateInfos.notice_title"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-input
-            v-model:value="modalState.form.notice_title"
-            allow-clear
-            placeholder="请输入公告标题"
-            :maxlength="50"
-          ></a-input>
-        </a-form-item>
-        <a-form-item
-          label="公告内容"
-          name="notice_content"
-          v-bind="modalStateForm.validateInfos.notice_content"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-textarea
-            v-model:value="modalState.form.notice_content"
-            :auto-size="{ minRows: 4, maxRows: 14 }"
-            :maxlength="3000"
-            :show-count="!isView"
-            placeholder="请输入公告内容"
-          />
-        </a-form-item>
-      </a-form>
-    </ProModal>
+    <NoticeFormModal ref="noticeFormModal" @success="handleFormSuccess" />
   </PageContainer>
 </template>
-
-<style scoped></style>

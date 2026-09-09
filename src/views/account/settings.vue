@@ -1,30 +1,29 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
-import BaseInfo from './components/base-info.vue';
-import ResetPassword from './components/reset-password.vue';
-import StyleLayout from './components/style-layout.vue';
+import AccountBaseInfoForm from './components/AccountBaseInfoForm.vue';
+import AccountResetPasswordForm from './components/AccountResetPasswordForm.vue';
+import AccountStyleLayout from './components/AccountStyleLayout.vue';
 
-/**Tab标签激活 */
-let activeKey = ref<string>('base-info');
+type AccountSettingsTabKey = 'base-info' | 'reset-password' | 'style-layout';
+
+const activeKey = ref<AccountSettingsTabKey>('base-info');
 </script>
 
 <template>
   <PageContainer>
     <a-card>
-      <a-tabs tab-position="top" v-model:activeKey="activeKey">
+      <a-tabs v-model:activeKey="activeKey" tab-position="top">
         <a-tab-pane key="base-info" tab="基础信息">
-          <BaseInfo></BaseInfo>
+          <AccountBaseInfoForm />
         </a-tab-pane>
         <a-tab-pane key="reset-password" tab="重置密码">
-          <ResetPassword></ResetPassword>
+          <AccountResetPasswordForm />
         </a-tab-pane>
         <a-tab-pane key="style-layout" tab="个性化">
-          <StyleLayout></StyleLayout>
+          <AccountStyleLayout />
         </a-tab-pane>
       </a-tabs>
     </a-card>
   </PageContainer>
 </template>
-
-<style scoped></style>

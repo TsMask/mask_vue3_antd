@@ -15,21 +15,23 @@ import {
   useProTableScroll,
 } from '@/hooks/useProTable';
 
-const emit = defineEmits(['ok', 'cancel', 'update:open']);
-const props = defineProps({
-  title: {
-    type: String,
-    default: '标题',
-  },
-  open: {
-    type: Boolean,
-    default: false,
-  },
-  role_id: {
-    type: [Number, String],
-    required: true,
-  },
-});
+const emit = defineEmits<{
+  ok: [userIds: (string | number)[]];
+  cancel: [];
+  'update:open': [open: boolean];
+}>();
+
+const props = withDefaults(
+  defineProps<{
+    title?: string;
+    open?: boolean;
+    roleId: string | number;
+  }>(),
+  {
+    title: '选择用户',
+    open: false,
+  }
+);
 
 /** 字典数据初始化 */
 const { dict, loadDicts } = useDictSetup({
@@ -50,7 +52,7 @@ const {
   clearSelected,
 } = useProTable({
   queryFn: authUserList,
-  params: () => ({ role_id: props.role_id, auth: false }),
+  params: () => ({ role_id: props.roleId, auth: false }),
   defaultPageSize: 20,
   manual: true,
   rowKey: 'id',
@@ -93,7 +95,7 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
 ]);
 
 /** 弹框确认按钮事件 */
-function handleOk() {
+function handleConfirm() {
   const userIds = selectedRowKeys.value;
   if (userIds.length <= 0) {
     message.error({ content: '请选择要分配的用户', duration: 3 });
@@ -104,7 +106,7 @@ function handleOk() {
 }
 
 /** 弹框取消按钮事件 */
-function handleCancel() {
+function handleClose() {
   emit('update:open', false);
   emit('cancel');
 }
@@ -133,8 +135,8 @@ watch(
     :open="props.open"
     :keyboard="false"
     :mask-closable="false"
-    @ok="handleOk"
-    @cancel="handleCancel"
+    @ok="handleConfirm"
+    @cancel="handleClose"
   >
     <ProTable
       row-key="id"
@@ -165,5 +167,3 @@ watch(
     </ProTable>
   </a-modal>
 </template>
-
-<style scoped></style>

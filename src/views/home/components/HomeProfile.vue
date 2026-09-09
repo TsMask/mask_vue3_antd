@@ -1,14 +1,14 @@
 <script setup lang="ts">
 defineProps<{
   avatar: string;
-  alt: string;
+  avatarAlt: string;
   nickname: string;
 }>();
 </script>
 
 <template>
   <a-space :size="16" align="center">
-    <a-avatar shape="circle" :size="72" :src="avatar" :alt="alt" />
+    <a-avatar shape="circle" :size="72" :src="avatar" :alt="avatarAlt" />
     <span class="nickname">{{ nickname }}，想必你那里一切安好吧。</span>
   </a-space>
 </template>

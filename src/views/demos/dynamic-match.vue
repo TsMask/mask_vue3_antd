@@ -32,8 +32,8 @@
     <div style="height: 300px">
       <p>路由参数联动 分页器 组件</p>
       <a-space>
-        <a-button type="dashed" @click="prev">跳转上一页</a-button>
-        <a-button type="dashed" @click="next">跳转下一页</a-button>
+        <a-button type="dashed" @click="handlePrev">跳转上一页</a-button>
+        <a-button type="dashed" @click="handleNext">跳转下一页</a-button>
       </a-space>
       <a-divider />
       <a-pagination
@@ -46,13 +46,13 @@
   </PageContainer>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 // 名称须与路由 name 一致，KeepAlive :include 才能命中
-defineOptions({ name: "DynamicMatch" });
-import { PageContainer } from "antdv-pro-layout";
-import { computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { LikeOutlined } from "@ant-design/icons-vue";
+defineOptions({ name: 'DynamicMatch' });
+import { PageContainer } from 'antdv-pro-layout';
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { LikeOutlined } from '@ant-design/icons-vue';
 const route = useRoute();
 const router = useRouter();
 
@@ -68,22 +68,25 @@ const total = computed(() => {
   return v;
 });
 
-const next = () => {
+/** 路由参数就是分页页码，同名跳转让组件复用并刷新数据 */
+function handleNext() {
   router.push({
-    name: "DynamicMatch",
+    name: 'DynamicMatch',
     params: { id: currentId.value + 1 },
   });
-};
-const prev = () => {
+}
+
+function handlePrev() {
   router.push({
-    name: "DynamicMatch",
+    name: 'DynamicMatch',
     params: { id: currentId.value > 1 ? currentId.value - 1 : 1 },
   });
-};
-const handlePageChange = (currentPage: number) => {
+}
+
+function handlePageChange(currentPage: number) {
   router.push({
-    name: "DynamicMatch",
+    name: 'DynamicMatch',
     params: { id: currentPage },
   });
-};
+}
 </script>

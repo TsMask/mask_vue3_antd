@@ -45,14 +45,13 @@
 </template>
 
 <script setup lang="ts">
-import { PageContainer } from "antdv-pro-layout";
-import { ref } from "vue";
-import { useRoute } from "vue-router";
-import { LikeOutlined } from "@ant-design/icons-vue";
+import { PageContainer } from 'antdv-pro-layout';
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { LikeOutlined } from '@ant-design/icons-vue';
 const route = useRoute();
 
-/**路由标题 */
-let title = ref<string>(route.meta?.title as any);
+const title = computed(() => (route.meta?.title as string) || '页面信息');
 </script>
 
 <style scoped lang="css">
@@ -60,7 +59,7 @@ let title = ref<string>(route.meta?.title as any);
   height: 100%;
   background: rgb(255, 255, 255);
 }
-[data-theme="dark"] .result-box {
+[data-theme='dark'] .result-box {
   background: #141414;
 }
 </style>

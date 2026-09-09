@@ -1,8 +1,8 @@
 <script setup lang="ts">
 defineProps<{
-  isPhone: boolean;
-  smsClick: boolean;
-  smsTime: number;
+  phoneMode: boolean;
+  smsCounting: boolean;
+  smsCountdown: number;
   captcha: {
     enabled: boolean;
     codeImg: string;
@@ -10,13 +10,13 @@ defineProps<{
   };
 }>();
 
-const emit = defineEmits<{ refresh: []; send: [] }>();
+const emit = defineEmits<{ refreshCaptcha: []; sendCaptcha: [] }>();
 const code = defineModel<string>('code', { required: true });
 </script>
 
 <template>
   <a-form-item
-    v-if="isPhone"
+    v-if="phoneMode"
     name="code"
     :rules="[{ required: true, min: 6, message: '请输入正确的短信验证码' }]"
   >
@@ -33,10 +33,11 @@ const code = defineModel<string>('code', { required: true });
         <a-button
           size="small"
           type="link"
-          :disabled="smsClick"
-          @click="emit('send')"
+          html-type="button"
+          :disabled="smsCounting"
+          @click="emit('sendCaptcha')"
         >
-          {{ smsClick ? `${smsTime} s` : '获取验证码' }}
+          {{ smsCounting ? `${smsCountdown} s` : '获取验证码' }}
         </a-button>
       </template>
     </a-input>
@@ -66,7 +67,7 @@ const code = defineModel<string>('code', { required: true });
         :preview="false"
         :src="captcha.codeImg"
         :fallback="captcha.codeImgFall"
-        @click="emit('refresh')"
+        @click="emit('refreshCaptcha')"
       />
     </a-input-group>
   </a-form-item>

@@ -22,5 +22,3 @@
     </a-typography>
   </a-result>
 </template>
-
-<style scoped></style>

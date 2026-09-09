@@ -1,28 +1,20 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
-import { ref, reactive, toRaw, computed, onMounted } from 'vue';
+import { ref, toRaw, computed, onMounted } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
-import { ProModal } from 'antdv-pro-modal';
 import { message } from 'ant-design-vue';
 import {
   ProTable,
   type ProColumns,
   type ProColumnsSearch,
 } from 'antdv-pro-table';
-import {
-  exportData,
-  listData,
-  getData,
-  delData,
-  addData,
-  updateData,
-} from '@/api/system/dict/data';
+import DictDataFormModal from './components/DictDataFormModal.vue';
+import { exportData, listData, delData } from '@/api/system/dict/data';
 import { getDictOption, getType } from '@/api/system/dict/type';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date-utils';
 import { useTabsView } from '@/layouts/hooks/useTabsView';
 import { isSuccess } from '@/plugins/http-fetch';
-import { useModalForm } from '@/hooks/useModalForm';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalAction } from '@/hooks/useModalAction';
 import {
@@ -34,49 +26,16 @@ import {
 const { closeTab } = useTabsView();
 const route = useRoute();
 const router = useRouter();
-const dict_id = route.params && (route.params.dictId as string);
+const routeDictId = route.params && (route.params.dictId as string);
 const defaultDictType = ref<string>();
-
-function parseDataDict(data: Record<string, any>): DictType[] {
-  return [
-    {
-      label: data.data_label,
-      value: data.data_value,
-      tag_class: data.tag_class,
-      tag_type: data.tag_type,
-    },
-  ];
-}
-
-const tagTypeOptions = ref([
-  { value: '', label: '普通文本' },
-  { value: 'default', label: '默认（default）' },
-  { value: 'blue ', label: '蓝色（blue）' },
-  { value: 'cyan', label: '青色（cyan）' },
-  { value: 'gold', label: '金色（gold）' },
-  { value: 'green', label: '绿色（green）' },
-  { value: 'lime', label: '亮绿（lime）' },
-  { value: 'magenta', label: '紫红（magenta）' },
-  { value: 'orange', label: '橙黄（orange）' },
-  { value: 'pink', label: '粉色（pink）' },
-  { value: 'purple', label: '紫色（purple）' },
-  { value: 'red', label: '红色（red）' },
-  { value: 'yellow', label: '黄色（yellow）' },
-  { value: 'geekblue', label: '深蓝（geekblue）' },
-  { value: 'volcano', label: '棕色（volcano）' },
-  { value: 'processing', label: '进行（processing）' },
-  { value: 'warning', label: '警告（warning）' },
-  { value: 'error', label: '错误（error）' },
-  { value: 'success', label: '成功（success）' },
-]);
+const dictTypeOptions = ref<DictType[]>([]);
+/** 路由指定具体字典类型时，查询与表单都保持该类型，避免误切到全量数据。 */
+const lockedDictType = computed(() =>
+  Boolean(routeDictId && routeDictId !== '0')
+);
 
 const { dict: sysDict } = useDictSetup({
   keyMap: { sysNormalDisable: 'sys_normal_disable' },
-});
-
-const dict = reactive({
-  sysNormalDisable: [] as DictType[],
-  sysDictType: [] as DictType[],
 });
 
 /** 列表数据查询 */
@@ -101,43 +60,10 @@ const {
   rowKey: 'id',
 });
 
-const {
-  modal: modalState,
-  formCtl: modalStateForm,
-  isView,
-  openModal,
-  closeModal: handleCancel,
-} = useModalForm({
-  initForm: () => ({
-    id: undefined as string | number | undefined,
-    dict_type: undefined as string | undefined,
-    data_label: '',
-    data_sort: 0,
-    data_value: '',
-    tag_class: '',
-    tag_type: '',
-    remark: '',
-    data_status: '0',
-    create_time: 0,
-    create_by: undefined,
-  }),
-  rules: {
-    dict_type: [{ required: true, message: '请选择字典类型' }],
-    data_label: [
-      { required: true, min: 1, max: 50, message: '请输入数据标签' },
-    ],
-    data_value: [
-      { required: true, min: 1, max: 50, message: '请输入数据键值' },
-    ],
-  },
-});
-
-/** 新增/编辑提交状态 */
-const {
-  confirmAction,
-  executeAction,
-  loading: isSubmitting,
-} = useModalAction();
+const dictDataFormModal = ref<InstanceType<typeof DictDataFormModal> | null>(
+  null
+);
+const { confirmAction } = useModalAction();
 
 const tableColumns = computed<ProColumns[]>(() => [
   { title: '数据编号', dataIndex: 'id', align: 'left', width: 100 },
@@ -151,7 +77,7 @@ const tableColumns = computed<ProColumns[]>(() => [
     align: 'left',
     width: 100,
     valueType: 'select',
-    valueEnum: toProValueEnum(dict.sysNormalDisable),
+    valueEnum: toProValueEnum(sysDict.sysNormalDisable),
   },
   {
     title: '创建时间',
@@ -164,8 +90,8 @@ const tableColumns = computed<ProColumns[]>(() => [
     title: '字典类型',
     dataIndex: 'dict_type',
     valueType: 'select',
-    valueEnum: toProValueEnum(dict.sysDictType),
-    fieldProps: { showSearch: true, disabled: !!defaultDictType },
+    valueEnum: toProValueEnum(dictTypeOptions.value),
+    fieldProps: { showSearch: true, disabled: lockedDictType.value },
   },
   {
     title: '操作',
@@ -183,7 +109,7 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
     title: '字典类型',
     dataIndex: 'dict_type',
     valueType: 'select',
-    valueEnum: toProValueEnum(dict.sysDictType),
+    valueEnum: toProValueEnum(dictTypeOptions.value),
     defaultValue: defaultDictType.value,
     fieldProps: { showSearch: true },
   },
@@ -192,60 +118,28 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
     title: '数据状态',
     dataIndex: 'data_status',
     valueType: 'select',
-    valueEnum: toProValueEnum(dict.sysNormalDisable),
+    valueEnum: toProValueEnum(sysDict.sysNormalDisable),
   },
 ]);
 
-/** 直接从行数据打开字典数据详情弹窗（无需再次请求接口） */
-function handleView(row: Record<string, string>) {
-  openModal({
-    mode: 'view',
-    title: '字典数据信息',
-    initialData: row,
-  });
+/** 详情直接复用行数据，避免再次请求接口。 */
+function handleView(row: Record<string, any>) {
+  dictDataFormModal.value?.openView(row);
 }
 
-/** 打开新增或编辑弹窗 */
+/** 新增时优先继承当前搜索或路由锁定的字典类型 */
 function handleEdit(id?: string | number) {
-  openModal(
-    id
-      ? {
-          mode: 'edit',
-          title: '修改字典数据',
-          fetchDetail: () => getData(id),
-        }
-      : {
-          mode: 'add',
-          title: '添加字典数据',
-          beforeOpen(form) {
-            form.dict_type =
-              searchValues.value.dict_type ?? defaultDictType.value;
-          },
-        }
+  dictDataFormModal.value?.openEdit(
+    id,
+    searchValues.value.dict_type ?? defaultDictType.value
   );
 }
 
-async function handleSubmit() {
-  try {
-    await modalStateForm.validate();
-  } catch (e: any) {
-    message.error({
-      content: `请正确填写 ${e.errorFields.length} 处必填信息！`,
-      duration: 3,
-    });
-    return;
-  }
-  const form = toRaw(modalState.form);
-  await executeAction({
-    action: () => (form.id ? updateData(form) : addData(form)),
-    successText: '操作成功',
-    onSuccess() {
-      handleCancel();
-      reload();
-    },
-  });
+function handleFormSuccess() {
+  reload();
 }
 
+/** 支持行内删除和批量删除，默认 0 表示使用当前选中行 */
 function handleDelete(id: string = '0') {
   if (id === '0') {
     id = selectedRowKeys.value.join(',');
@@ -261,6 +155,7 @@ function handleDelete(id: string = '0') {
   });
 }
 
+/** 导出保持当前字典类型、搜索条件和分页范围 */
 function handleExport() {
   confirmAction({
     content: '确认根据搜索条件导出数据文件吗',
@@ -275,6 +170,7 @@ function handleExport() {
   });
 }
 
+/** 优先跳到页签关闭逻辑给出的目标页，无目标时回退历史 */
 function handleClose() {
   const to = closeTab(route.path);
   if (to) {
@@ -285,13 +181,13 @@ function handleClose() {
 }
 
 onMounted(async () => {
+  // 先准备字典类型选项，再按路由锁定类型发起首次查询。
   const optRes = await getDictOption();
   if (isSuccess(optRes)) {
-    dict.sysDictType = optRes.data;
-    dict.sysNormalDisable = sysDict.sysNormalDisable;
+    dictTypeOptions.value = optRes.data;
   }
-  if (dict_id && dict_id !== '0') {
-    const res = await getType(dict_id);
+  if (lockedDictType.value) {
+    const res = await getType(routeDictId);
     if (isSuccess(res) && res.data) {
       defaultDictType.value = res.data.dict_type;
     } else {
@@ -380,7 +276,7 @@ onMounted(async () => {
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'data_status'">
           <DictTag
-            :options="dict.sysNormalDisable"
+            :options="sysDict.sysNormalDisable"
             :value="record.data_status"
           />
         </template>
@@ -427,164 +323,11 @@ onMounted(async () => {
       </template>
     </ProTable>
 
-    <!-- 详情框或新增修改框 -->
-    <ProModal
-      :drag="true"
-      :destroyOnClose="true"
-      :width="800"
-      :keyboard="!isView"
-      :mask-closable="isView"
-      :open="modalState.visible"
-      :title="modalState.title"
-      :confirm-loading="isSubmitting"
-      :footer="isView ? null : undefined"
-      @ok="handleSubmit"
-      @cancel="handleCancel"
-    >
-      <a-form
-        name="modalStateForm"
-        layout="horizontal"
-        :label-col="{ span: 6 }"
-        :label-wrap="true"
-        :disabled="isView"
-      >
-        <a-row v-if="isView">
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据编号" name="id">{{
-              modalState.form.id
-            }}</a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="创建时间" name="create_time">
-              <span v-if="+modalState.form.create_time > 0">{{
-                parseDateToStr(+modalState.form.create_time)
-              }}</span>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="字典类型"
-              name="dict_type"
-              v-bind="modalStateForm.validateInfos.dict_type"
-            >
-              <a-select
-                v-model:value="modalState.form.dict_type"
-                placeholder="字典类型"
-                :options="dict.sysDictType"
-                :disabled="dict_id !== '0'"
-              >
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据状态" name="data_status">
-              <a-select
-                v-model:value="modalState.form.data_status"
-                default-value="0"
-                placeholder="数据状态"
-                :options="dict.sysNormalDisable"
-              >
-              </a-select>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="数据标签"
-              name="data_label"
-              v-bind="modalStateForm.validateInfos.data_label"
-            >
-              <a-input
-                v-model:value="modalState.form.data_label"
-                allow-clear
-                placeholder="请输入数据标签"
-                :maxlength="50"
-              ></a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item
-              label="数据键值"
-              name="data_value"
-              v-bind="modalStateForm.validateInfos.data_value"
-            >
-              <a-input
-                v-model:value="modalState.form.data_value"
-                allow-clear
-                placeholder="请输入数据键值"
-                :maxlength="50"
-              ></a-input>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="标签类型" name="tag_type">
-              <a-select
-                v-model:value="modalState.form.tag_type"
-                placeholder="标签类型"
-                :options="tagTypeOptions"
-              >
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :lg="12" :md="12" :xs="24">
-            <a-form-item label="数据排序" name="data_sort">
-              <a-input-number
-                v-model:value="modalState.form.data_sort"
-                :min="0"
-                :max="9999"
-                :step="1"
-                placeholder="请输入数据排序"
-              ></a-input-number>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-form-item
-          label="样式属性"
-          name="tag_class"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-input
-            v-model:value="modalState.form.tag_class"
-            allow-clear
-            placeholder="请输入样式属性"
-            :maxlength="50"
-          ></a-input>
-        </a-form-item>
-        <a-form-item
-          v-if="isView"
-          label="回显预览"
-          name="tag_type"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <DictTag
-            :options="parseDataDict(modalState.form)"
-            :value="modalState.form.data_value"
-          />
-        </a-form-item>
-        <a-form-item
-          label="数据说明"
-          name="remark"
-          :label-col="{ span: 3 }"
-          :label-wrap="true"
-        >
-          <a-textarea
-            v-model:value="modalState.form.remark"
-            :auto-size="{ minRows: 2, maxRows: 6 }"
-            :maxlength="200"
-            :show-count="!isView"
-            placeholder="请输入数据说明"
-          />
-        </a-form-item>
-      </a-form>
-    </ProModal>
+    <DictDataFormModal
+      ref="dictDataFormModal"
+      :dict-type-options="dictTypeOptions"
+      :locked-dict-type="lockedDictType"
+      @success="handleFormSuccess"
+    />
   </PageContainer>
 </template>
-
-<style scoped></style>

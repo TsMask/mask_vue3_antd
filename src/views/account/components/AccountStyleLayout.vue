@@ -1,9 +1,10 @@
 <script lang="ts" setup>
+import { storeToRefs } from 'pinia';
 import { viewTransitionTheme } from 'antdv-pro-layout';
 import useLayoutStore from '@/store/modules/layout';
 
-const { proConfig, themeConfig, changeConf, changePrimaryColor } =
-  useLayoutStore();
+const layoutStore = useLayoutStore();
+const { proConfig, themeConfig } = storeToRefs(layoutStore);
 
 const themeOptions = [
   { label: '亮色', value: 'light' },
@@ -38,20 +39,34 @@ const colorOptions = [
   { label: '酱紫', value: '#722ed1' },
 ];
 
-function changeThemeMode(mode: 'light' | 'dark') {
-  if (proConfig.theme === mode) return;
+/** 切换整体主题时同步菜单主题，并通过 View Transition 平滑过渡 */
+function handleThemeModeChange(mode: 'light' | 'dark') {
+  if (proConfig.value.theme === mode) return;
   viewTransitionTheme(() => {
-    changeConf('theme', mode);
-    changeConf('menuTheme', mode);
+    layoutStore.changeConf('theme', mode);
+    layoutStore.changeConf('menuTheme', mode);
   });
 }
 
-function changeLayout(mode: 'side' | 'top' | 'mix') {
-  if (proConfig.layout === mode) return;
-  changeConf('layout', mode);
-  if (mode !== 'mix') {
-    changeConf('splitMenus', false);
+function handleMenuThemeChange(mode: 'light' | 'dark') {
+  layoutStore.changeConf('menuTheme', mode);
+}
+
+function handlePrimaryColorChange(color: string) {
+  layoutStore.changePrimaryColor(color);
+}
+
+/** 自动分割菜单只对混合布局有意义，切到其他布局时一并关闭 */
+function handleLayoutChange(layout: 'side' | 'top' | 'mix') {
+  if (proConfig.value.layout === layout) return;
+  layoutStore.changeConf('layout', layout);
+  if (layout !== 'mix') {
+    layoutStore.changeConf('splitMenus', false);
   }
+}
+
+function handleSiderMenuTypeChange(menuType: 'sub' | 'group') {
+  layoutStore.changeConf('siderMenuType', menuType);
 }
 </script>
 
@@ -66,7 +81,7 @@ function changeLayout(mode: 'side' | 'top' | 'mix') {
               block
               :value="proConfig.theme"
               :options="themeOptions"
-              @change="(value: any) => changeThemeMode(value)"
+              @change="(value: any) => handleThemeModeChange(value)"
             />
           </a-form-item>
         </a-col>
@@ -76,7 +91,7 @@ function changeLayout(mode: 'side' | 'top' | 'mix') {
               block
               :value="proConfig.menuTheme"
               :options="menuThemeOptions"
-              @change="(value: any) => changeConf('menuTheme', value)"
+              @change="(value: any) => handleMenuThemeChange(value)"
             />
           </a-form-item>
         </a-col>
@@ -85,7 +100,7 @@ function changeLayout(mode: 'side' | 'top' | 'mix') {
             <a-select
               :value="themeConfig.token?.colorPrimary"
               :options="colorOptions"
-              @change="(value: any) => changePrimaryColor(value)"
+              @change="(value: any) => handlePrimaryColorChange(value)"
             />
           </a-form-item>
         </a-col>
@@ -103,7 +118,7 @@ function changeLayout(mode: 'side' | 'top' | 'mix') {
               block
               :value="proConfig.layout"
               :options="layoutOptions"
-              @change="(value: any) => changeLayout(value)"
+              @change="(value: any) => handleLayoutChange(value)"
             />
           </a-form-item>
         </a-col>
@@ -113,7 +128,7 @@ function changeLayout(mode: 'side' | 'top' | 'mix') {
               block
               :value="proConfig.siderMenuType"
               :options="siderMenuTypeOptions"
-              @change="(value: any) => changeConf('siderMenuType', value)"
+              @change="(value: any) => handleSiderMenuTypeChange(value)"
             />
           </a-form-item>
         </a-col>
@@ -129,7 +144,9 @@ function changeLayout(mode: 'side' | 'top' | 'mix') {
           <a-form-item label="固定顶栏">
             <a-switch
               :checked="proConfig.fixedHeader"
-              @change="(checked: any) => changeConf('fixedHeader', checked)"
+              @change="
+                (checked: any) => layoutStore.changeConf('fixedHeader', checked)
+              "
             />
           </a-form-item>
         </a-col>
@@ -138,7 +155,9 @@ function changeLayout(mode: 'side' | 'top' | 'mix') {
             <a-switch
               :disabled="proConfig.layout === 'top'"
               :checked="proConfig.fixSiderbar"
-              @change="(checked: any) => changeConf('fixSiderbar', checked)"
+              @change="
+                (checked: any) => layoutStore.changeConf('fixSiderbar', checked)
+              "
             />
           </a-form-item>
         </a-col>
@@ -147,7 +166,9 @@ function changeLayout(mode: 'side' | 'top' | 'mix') {
             <a-switch
               :disabled="proConfig.layout !== 'mix'"
               :checked="proConfig.splitMenus"
-              @change="(checked: any) => changeConf('splitMenus', checked)"
+              @change="
+                (checked: any) => layoutStore.changeConf('splitMenus', checked)
+              "
             />
           </a-form-item>
         </a-col>

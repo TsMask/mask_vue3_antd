@@ -6,16 +6,19 @@ import background from '@/assets/background.svg';
 import useUserStore from '@/store/modules/user';
 import { getCaptchaImage, getCaptchaSMS } from '@/api/auth';
 import { validMobile } from '@/utils/regular-utils';
+import { isSuccess } from '@/plugins/http-fetch';
 import { useRouter, useRoute } from 'vue-router';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 import LoginHeader from './components/LoginHeader.vue';
 import LoginFooter from './components/LoginFooter.vue';
 import UsernameLogin from './components/UsernameLogin.vue';
 import PhoneLogin from './components/PhoneLogin.vue';
 import OtherLogin from './components/OtherLogin.vue';
 
+type LoginTabKey = 'username' | 'phone';
+
 const router = useRouter();
 const route = useRoute();
+const userStore = useUserStore();
 const codeImgFall =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
@@ -32,128 +35,121 @@ const contentStyle: CSSProperties = {
   padding: '48px 16px',
 };
 
-/** Tab默认激活 */
-const activeKey = ref<'username' | 'phone'>('username');
+const activeKey = ref<LoginTabKey>('username');
 
 const state = reactive({
-  /** 表单属性 */
   form: {
-    /** 账号 */
     username: '',
-    /** 密码 */
     password: '',
-    /** 手机号 */
     phone: '',
-    /** 验证码 */
     code: '',
-    /** 验证码uuid */
     uuid: '',
   },
-  /** 表单提交点击状态 */
-  formClick: false,
-  /** 验证码状态 */
+  submitting: false,
   captcha: {
-    /** 验证码开关 */
     enabled: false,
-    /** 验证码图片地址 */
     codeImg: '',
     codeImgFall,
   },
-  /** 验证码点击状态 */
-  captchaClick: false,
+  captchaLoading: false,
 });
 
-/** 表单验证通过 */
-function fnFinish() {
-  state.formClick = true;
-  let form = {};
-  // 账号密码登录
-  if (activeKey.value === 'username') {
-    form = {
-      username: state.form.username,
-      password: state.form.password,
-      code: state.form.code,
-      uuid: state.form.uuid,
-    };
-  }
-  // 手机号登录
-  if (activeKey.value === 'phone') {
-    form = {
-      phone: state.form.phone,
-      code: state.form.code,
-      uuid: state.form.uuid,
-    };
-  }
-  // 发送请求
-  useUserStore()
-    .fnLogin(form)
-    .then(res => {
-      if (res.code === RESULT_CODE_SUCCESS) {
-        message.success({
-          content: '登录成功',
-          duration: 3,
-        });
-        /** 登录后重定向页面 */
-        const redirectPath = (route.query && route.query.redirect) || '/index';
-        router.push({ path: redirectPath as string });
-      } else {
-        message.error({
-          content: `${res.msg}`,
-          duration: 3,
-        });
-      }
-    })
-    .finally(() => {
-      state.formClick = false;
-      state.form.code = '';
-      if (activeKey.value === 'username' && state.captcha.enabled) {
-        fnGetCaptcha();
-      }
-    });
-}
-
-/** 获取验证码 */
-function fnGetCaptcha() {
-  if (state.captchaClick) return;
-  state.captchaClick = true;
-  getCaptchaImage()
-    .then(res => {
-      if (res.code !== RESULT_CODE_SUCCESS) {
-        message.warning({
-          content: `${res.msg}`,
-          duration: 3,
-        });
-        return;
-      }
-      const { enabled, img, uuid } = res.data;
-      state.captcha.enabled = Boolean(enabled);
-      if (state.captcha.enabled) {
-        state.captcha.codeImg = img;
-        state.form.uuid = uuid;
-      }
-      if (res.data?.text) {
-        state.form.code = res.data.text;
-      }
-    })
-    .finally(() => {
-      state.captchaClick = false;
-    });
-}
-
-/** 短信验证码定时器 */
 let smsInterval: ReturnType<typeof setInterval> | undefined;
-
-/** 短信验证码信息状态 */
 const smsState = reactive({
-  /** 点击状态 */
-  click: false,
-  /** 发送倒计时 */
-  time: 60,
+  counting: false,
+  countdown: 60,
 });
 
-/** 获取短信验证码 */
-async function fnGetSmsCaptcha() {
-  if (smsState.click) return;
+/** 表单验证通过后按登录通道提交 */
+async function handleSubmit() {
+  const isPhoneLogin = activeKey.value === 'phone';
+  const loginForm: Record<string, string> = isPhoneLogin
+    ? {
+        phone: state.form.phone,
+        code: state.form.code,
+        uuid: state.form.uuid,
+      }
+    : {
+        username: state.form.username,
+        password: state.form.password,
+        code: state.form.code,
+        uuid: state.form.uuid,
+      };
+
+  state.submitting = true;
+  try {
+    const res = await userStore.fnLogin(loginForm);
+    if (!isSuccess(res)) {
+      message.error({
+        content: res.msg || '登录失败',
+        duration: 3,
+      });
+      return;
+    }
+
+    message.success({
+      content: '登录成功',
+      duration: 3,
+    });
+
+    const redirectQuery = route.query.redirect;
+    const redirectPath = Array.isArray(redirectQuery)
+      ? redirectQuery[0]
+      : redirectQuery;
+    router.push({ path: redirectPath || '/index' });
+  } catch (error: any) {
+    message.error({
+      content: error?.message || '登录失败，请稍后重试',
+      duration: 3,
+    });
+  } finally {
+    state.submitting = false;
+    state.form.code = '';
+    if (activeKey.value === 'username' && state.captcha.enabled) {
+      handleGetCaptcha();
+    }
+  }
+}
+
+/** 获取账号登录图形验证码 */
+async function handleGetCaptcha() {
+  if (state.captchaLoading) return;
+  state.captchaLoading = true;
+  try {
+    const res = await getCaptchaImage();
+    if (!isSuccess(res) || !res.data) {
+      message.warning({
+        content: res.msg || '获取验证码失败',
+        duration: 3,
+      });
+      return;
+    }
+
+    const { enabled, img, uuid } = res.data;
+    state.captcha.enabled = Boolean(enabled);
+    if (state.captcha.enabled) {
+      state.captcha.codeImg = img;
+      state.form.uuid = uuid;
+    } else {
+      state.captcha.codeImg = '';
+      state.form.uuid = '';
+    }
+    if (res.data?.text) {
+      state.form.code = res.data.text;
+    }
+  } catch (error: any) {
+    message.error({
+      content: error?.message || '获取验证码失败，请稍后重试',
+      duration: 3,
+    });
+  } finally {
+    state.captchaLoading = false;
+  }
+}
+
+/** 获取手机号登录短信验证码 */
+async function handleSendSmsCaptcha() {
+  if (smsState.counting) return;
   if (!validMobile(state.form.phone)) {
     message.warning({
       content: '请确认手机号码是否有效！',
@@ -164,34 +160,24 @@ async function fnGetSmsCaptcha() {
 
   try {
     const res = await getCaptchaSMS(state.form.phone);
-    if (res.code !== RESULT_CODE_SUCCESS || !res.data?.uuid) {
+    if (activeKey.value !== 'phone') return;
+    if (!isSuccess(res) || !res.data?.uuid) {
       message.warning({
-        content: `${res.msg}`,
+        content: res.msg || '短信验证码发送失败',
         duration: 3,
       });
       return;
     }
-    if (activeKey.value !== 'phone') return;
 
     state.form.uuid = res.data.uuid;
     if (res.data?.text) {
       state.form.code = res.data.text;
     }
-    smsState.time = Number(res.data.resend_interval) || 60;
-    smsState.click = true;
+    startSmsCountdown(Number(res.data.resend_interval) || 60);
     message.success({
       content: '发送成功，请注意查看短信！',
       duration: 3,
     });
-    smsInterval = setInterval(() => {
-      if (smsState.time <= 0) {
-        smsState.time = 60;
-        smsState.click = false;
-        stopSmsCountdown();
-      } else {
-        smsState.time--;
-      }
-    }, 1000);
   } catch (error: any) {
     message.error({
       content: error?.message || '短信验证码发送失败',
@@ -200,7 +186,27 @@ async function fnGetSmsCaptcha() {
   }
 }
 
-/** 停止短信验证码倒计时 */
+/** 使用后端返回的重发间隔启动倒计时，避免前端固定值与配置不一致 */
+function startSmsCountdown(seconds: number) {
+  smsState.countdown = seconds;
+  smsState.counting = true;
+  smsInterval = setInterval(() => {
+    if (smsState.countdown <= 0) {
+      resetSmsState();
+      return;
+    }
+    smsState.countdown--;
+  }, 1000);
+}
+
+/** 复位短信状态并清理定时器，通道切换和组件卸载共用 */
+function resetSmsState() {
+  stopSmsCountdown();
+  smsState.countdown = 60;
+  smsState.counting = false;
+}
+
+/** 仅停止计时器，保留当前显示值，供组件卸载时避免额外状态跳动 */
 function stopSmsCountdown() {
   if (smsInterval) {
     clearInterval(smsInterval);
@@ -208,17 +214,19 @@ function stopSmsCountdown() {
   }
 }
 
-watch(activeKey, () => {
+/** 切换通道后，两种验证码的编码不能混用。 */
+function handleTabChange() {
   state.form.code = '';
   state.form.uuid = '';
   if (activeKey.value === 'username' && state.captcha.enabled) {
-    fnGetCaptcha();
+    handleGetCaptcha();
   }
-});
+}
+
+watch(activeKey, handleTabChange);
 
 onMounted(() => {
-  fnGetCaptcha();
-  // 开发环境自动填充账号密码登录信息
+  handleGetCaptcha();
   if (import.meta.env.DEV) {
     state.form.username = 'system';
     state.form.password = 'Abcd@1234..';
@@ -226,9 +234,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  smsState.time = 60;
-  smsState.click = false;
-  stopSmsCountdown();
+  resetSmsState();
 });
 </script>
 
@@ -245,7 +251,7 @@ onBeforeUnmount(() => {
         <LoginHeader />
 
         <a-card :bordered="true" :style="{ width: '100%', maxWidth: '400px' }">
-          <a-form :model="state.form" name="StateForm" @finish="fnFinish">
+          <a-form :model="state.form" name="LoginForm" @finish="handleSubmit">
             <a-tabs
               v-model:activeKey="activeKey"
               tab-position="top"
@@ -259,7 +265,7 @@ onBeforeUnmount(() => {
                   v-model:password="state.form.password"
                   v-model:code="state.form.code"
                   :captcha="state.captcha"
-                  @refresh-captcha="fnGetCaptcha"
+                  @refresh-captcha="handleGetCaptcha"
                 />
               </a-tab-pane>
 
@@ -267,9 +273,9 @@ onBeforeUnmount(() => {
                 <PhoneLogin
                   v-model:phone="state.form.phone"
                   v-model:code="state.form.code"
-                  :sms-click="smsState.click"
-                  :sms-time="smsState.time"
-                  @send="fnGetSmsCaptcha"
+                  :counting="smsState.counting"
+                  :countdown="smsState.countdown"
+                  @send="handleSendSmsCaptcha"
                 />
               </a-tab-pane>
             </a-tabs>
@@ -279,7 +285,7 @@ onBeforeUnmount(() => {
               type="primary"
               size="large"
               html-type="submit"
-              :loading="state.formClick"
+              :loading="state.submitting"
             >
               登录
             </a-button>

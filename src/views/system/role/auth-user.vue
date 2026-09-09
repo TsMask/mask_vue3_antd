@@ -8,7 +8,7 @@ import {
   type ProColumns,
   type ProColumnsSearch,
 } from 'antdv-pro-table';
-import AuthUserSelect from './components/auth-user-select.vue';
+import AuthUserSelectModal from './components/AuthUserSelectModal.vue';
 import { authUserList, authUserChecked } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date-utils';
 import { useTabsView } from '@/layouts/hooks/useTabsView';
@@ -95,15 +95,14 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
 
 /** 选择用户弹窗状态 */
 const selectUserVisible = ref(false);
-const selectUserTitle = '选择用户';
 
 /** 打开选择用户弹窗 */
-function handleOpenSelectUser() {
+function handleSelectUser() {
   selectUserVisible.value = true;
 }
 
 /** 授权用户确认回调 */
-async function handleAuthUserOk(userIds: string[] | number[]) {
+async function handleAuthUserConfirm(userIds: (string | number)[]) {
   if (userIds.length <= 0) {
     message.error({ content: '请选择要分配的用户', duration: 3 });
     return;
@@ -194,7 +193,7 @@ function handleClose() {
           </a-button>
           <a-button
             type="primary"
-            @click.prevent="handleOpenSelectUser()"
+            @click.prevent="handleSelectUser()"
             v-perms:has="['system:role:add']"
           >
             <template #icon>
@@ -242,13 +241,10 @@ function handleClose() {
       </template>
     </ProTable>
 
-    <AuthUserSelect
-      :role_id="role_id"
-      :title="selectUserTitle"
+    <AuthUserSelectModal
+      :role-id="role_id"
       v-model:open="selectUserVisible"
-      @ok="handleAuthUserOk"
+      @ok="handleAuthUserConfirm"
     />
   </PageContainer>
 </template>
-
-<style scoped></style>

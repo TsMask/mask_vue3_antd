@@ -5,6 +5,7 @@
         <a-button
           type="link"
           target="_blank"
+          rel="noopener noreferrer"
           title="开发手册"
           href="https://juejin.cn/column/7188761626017792056"
         >
@@ -15,6 +16,7 @@
         <a-button
           type="link"
           target="_blank"
+          rel="noopener noreferrer"
           title="来自Apifox的接口文档"
           href="https://mask-api-midwayjs.apifox.cn/"
         >
@@ -25,6 +27,7 @@
         <a-button
           type="link"
           target="_blank"
+          rel="noopener noreferrer"
           title="Middwayjs版本服务端"
           href="https://gitee.com/TsMask/mask_api_midwayjs"
         >
@@ -35,6 +38,7 @@
         <a-button
           type="link"
           target="_blank"
+          rel="noopener noreferrer"
           title="Gin版本服务端"
           href="https://gitee.com/TsMask/mask_api_gin"
         >

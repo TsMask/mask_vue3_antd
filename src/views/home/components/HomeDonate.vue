@@ -4,6 +4,6 @@ import donate from '@/assets/donate.jpg';
 
 <template>
   <a-card title="捐赠鼓励">
-    <a-image width="100%" :src="donate" />
+    <a-image width="100%" alt="捐赠二维码" :src="donate" />
   </a-card>
 </template>
