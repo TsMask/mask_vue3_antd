@@ -18,7 +18,7 @@ import { useProTable } from '@/hooks/useProTable';
 const { closeTab } = useTabsView();
 const route = useRoute();
 const router = useRouter();
-const routeJobId = (route.params.jobId as string) || '';
+const routeJobId = Number(route.params.jobId as string) || 0;
 const { confirmAction } = useModalAction();
 const jobLogDetailModal = ref<InstanceType<typeof JobLogDetailModal> | null>(
   null

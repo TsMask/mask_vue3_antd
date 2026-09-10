@@ -9,7 +9,7 @@ import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
 /** 用户信息类型 */
 type UserInfo = {
   /** 用户ID */
-  user_id: string;
+  user_id: number;
   /** 登录账号 */
   user_name: string;
   /** 用户角色 字符串数组 */
@@ -46,7 +46,7 @@ function parseAvatar(avatar: string): string {
 
 const useUserStore = defineStore('user', {
   state: (): UserInfo => ({
-    user_id: '',
+    user_id: 0,
     user_name: '',
     roles: [],
     permissions: [],
@@ -54,7 +54,7 @@ const useUserStore = defineStore('user', {
     user_nick: '',
     user_phone: '',
     user_email: '',
-    user_gender: undefined,
+    user_gender: '0',
   }),
   getters: {
     /**

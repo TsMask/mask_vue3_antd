@@ -30,7 +30,7 @@ const form = reactive({
   user_nick: '',
   user_email: '',
   user_phone: '',
-  user_gender: undefined as string | undefined,
+  user_gender: '0',
   user_avatar: '',
 });
 const submitting = ref(false);

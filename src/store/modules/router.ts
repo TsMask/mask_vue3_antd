@@ -64,7 +64,7 @@ type RecordRaws = {
   meta: RouteMeta;
   redirect: RouteLocationRaw;
   component: string;
-  children: RecordRaws[];
+  children?: RecordRaws[];
 };
 
 /**

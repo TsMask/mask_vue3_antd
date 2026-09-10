@@ -62,19 +62,19 @@ const smsState = reactive({
 
 /** 表单验证通过后按登录通道提交 */
 async function handleSubmit() {
-  const isPhoneLogin = activeKey.value === 'phone';
-  const loginForm: Record<string, string> = isPhoneLogin
-    ? {
-        phone: state.form.phone,
-        code: state.form.code,
-        uuid: state.form.uuid,
-      }
-    : {
-        username: state.form.username,
-        password: state.form.password,
-        code: state.form.code,
-        uuid: state.form.uuid,
-      };
+  const loginForm: Record<string, string> =
+    activeKey.value === 'phone'
+      ? {
+          phone: state.form.phone,
+          code: state.form.code,
+          uuid: state.form.uuid,
+        }
+      : {
+          username: state.form.username,
+          password: state.form.password,
+          code: state.form.code,
+          uuid: state.form.uuid,
+        };
 
   state.submitting = true;
   try {
@@ -128,8 +128,8 @@ async function handleGetCaptcha() {
     const { enabled, img, uuid } = res.data;
     state.captcha.enabled = Boolean(enabled);
     if (state.captcha.enabled) {
-      state.captcha.codeImg = img;
-      state.form.uuid = uuid;
+      state.captcha.codeImg = img ?? state.captcha.codeImgFall;
+      state.form.uuid = uuid ?? '';
     } else {
       state.captcha.codeImg = '';
       state.form.uuid = '';

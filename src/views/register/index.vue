@@ -70,22 +70,19 @@ async function handleSubmit() {
   const registerAccount = isPhoneRegister
     ? state.form.phone
     : state.form.username;
-  const registerForm = isPhoneRegister
-    ? {
+  const registerRequest = isPhoneRegister
+    ? registerByPhone({
         phone: state.form.phone,
         code: state.form.code,
         uuid: state.form.uuid,
-      }
-    : {
+      })
+    : register({
         username: state.form.username,
         password: state.form.password,
         confirm_password: state.form.confirmPassword,
         code: state.form.code,
         uuid: state.form.uuid,
-      };
-  const registerRequest = isPhoneRegister
-    ? registerByPhone(registerForm)
-    : register(registerForm);
+      });
 
   state.submitting = true;
   try {
@@ -138,8 +135,8 @@ async function handleGetCaptcha() {
     const { enabled, img, uuid } = res.data;
     state.captcha.enabled = Boolean(enabled);
     if (state.captcha.enabled) {
-      state.captcha.codeImg = img;
-      state.form.uuid = uuid;
+      state.captcha.codeImg = img ?? codeImgFall;
+      state.form.uuid = uuid ?? '';
     } else {
       state.captcha.codeImg = '';
       state.form.uuid = '';
