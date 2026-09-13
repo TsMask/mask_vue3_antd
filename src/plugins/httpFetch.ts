@@ -1,7 +1,9 @@
 import {
+  delAccessToken,
+  delRefreshToken,
   getAccessToken,
-  setAccessToken,
   getRefreshToken,
+  setAccessToken,
   setRefreshToken,
 } from '@/plugins/authToken';
 import { sessionGetJSON, sessionSetJSON } from '@/utils/cacheSession';
@@ -21,7 +23,6 @@ import {
   RESULT_MSG_SUCCESS,
   RESULT_MSG_TIMEOUT,
 } from '@/constants/result';
-import { refreshToken } from '@/api/auth';
 
 /** 响应结果类型 */
 export type ResultType = {
@@ -97,22 +98,18 @@ const FETCH_OPTIONS: OptionsType = {
   withToken: true,
 };
 
-// ==================== Token 刷新 ====================
+// ==================== Token 续签 ====================
 
-/** 当前刷新请求；并发刷新共用同一个 Promise */
+const TOKEN_EXPIRED_CODE = 401001;
+let refreshAccessToken: ((refreshToken: string) => Promise<ResultType>) | null =
+  null;
 let refreshingTokenPromise: Promise<ResultType> | null = null;
 
-/** 需要走登录失效流程的业务码集合 */
-const AUTH_FAILURE_CODES = [401001, 401002, 401003, 401004];
-
-function isAuthFailureCode(code: number) {
-  return AUTH_FAILURE_CODES.includes(code);
-}
-
-function forceLogout() {
-  void import('@/plugins/authSession').then(({ forceAuthLogout }) => {
-    return forceAuthLogout();
-  });
+/** 刷新接口由路由层注入，避免 HTTP 层反向依赖 API 模块。 */
+export function setupHttpTokenRefresh(
+  refresh: (refreshToken: string) => Promise<ResultType>
+) {
+  refreshAccessToken = refresh;
 }
 
 function hasTokenPair(result: ResultType) {
@@ -125,45 +122,44 @@ function hasTokenPair(result: ResultType) {
 }
 
 function authError(msg?: string): ResultType {
-  return { code: RESULT_CODE_ERROR, msg: msg || '登录已过期，请重新登录' };
+  return {
+    code: RESULT_CODE_ERROR,
+    msg: msg || '登录已过期，请重新登录',
+  };
 }
 
-/**
- * 使用 refresh token 换取新的 token 组。
- * 单飞执行：并发触发时共用同一次刷新请求，避免旧 refresh token 被重复轮换。
- */
+/** 并发请求共用一次刷新，避免 refresh token 轮换时被重复使用。 */
 export async function ensureAccessToken(): Promise<ResultType> {
   if (refreshingTokenPromise) return refreshingTokenPromise;
 
   const currentRefreshToken = getRefreshToken();
   if (!currentRefreshToken) return authError();
+  if (!refreshAccessToken) return authError('Token refresh is not ready');
 
-  refreshingTokenPromise = (async () => {
-    let result: ResultType;
-    try {
-      result = await refreshToken(currentRefreshToken);
-    } catch (error: any) {
-      result = {
-        code: RESULT_CODE_EXCEPTION,
-        msg: error?.message || RESULT_MSG_SERVER_ERROR,
-      };
-    }
+  refreshingTokenPromise = refreshAccessToken(currentRefreshToken)
+    .catch((error: any): ResultType => ({
+      code: RESULT_CODE_EXCEPTION,
+      msg: error?.message || RESULT_MSG_SERVER_ERROR,
+    }))
+    .then(result => {
+      if (isSuccess(result) && hasTokenPair(result)) {
+        setAccessToken(result.data.access_token, result.data.expires_in);
+        setRefreshToken(
+          result.data.refresh_token,
+          result.data.refresh_expires_in
+        );
+        return result;
+      }
 
-    const success = result.code === RESULT_CODE_SUCCESS && hasTokenPair(result);
-    if (success) {
-      setAccessToken(result.data.access_token, result.data.expires_in);
-      setRefreshToken(
-        result.data.refresh_token,
-        result.data.refresh_expires_in
-      );
-    }
-
-    // 网络超时、服务异常不清理 refresh token；明确的登录失效才退出。
-    if (!success && isAuthFailureCode(result.code)) forceLogout();
-    return result;
-  })().finally(() => {
-    refreshingTokenPromise = null;
-  });
+      if (result.code === TOKEN_EXPIRED_CODE) {
+        delAccessToken();
+        delRefreshToken();
+      }
+      return result;
+    })
+    .finally(() => {
+      refreshingTokenPromise = null;
+    });
 
   return refreshingTokenPromise;
 }
@@ -274,33 +270,19 @@ function beforeRequest(
   return options;
 }
 
-// ==================== 响应后拦截 ====================
-
-/**
- * 响应后的拦截处理
- * 统一处理token过期刷新，其他错误码直接透传给调用方
- *
- * @param originalOptions - 未被 beforeRequest 修改的**原始**请求参数（用于token刷新后重试）
- * @param res - 响应结果
- * @returns 处理后的响应结果
- */
-async function beforeResponse(
+async function refreshAndRetry(
   originalOptions: OptionsType,
-  res: ResultType
+  res: ResultType,
+  canRetry: boolean
 ): Promise<ResultType> {
-  // 只有携带 access token 的业务请求，才需要在刷新后重放。
-  // refresh-token 接口自身返回 401001 时，直接交回 ensureAccessToken 处理。
-  if (res.code === 401001 && originalOptions.withToken) {
-    const result = await ensureAccessToken();
-    if (result.code === RESULT_CODE_SUCCESS && hasTokenPair(result)) {
-      return request(originalOptions);
-    }
-    return authError(result.msg);
+  if (!canRetry || !originalOptions.withToken) return res;
+  if (res.code !== TOKEN_EXPIRED_CODE) return res;
+
+  const refreshResult = await ensureAccessToken();
+  if (isSuccess(refreshResult) && hasTokenPair(refreshResult)) {
+    return requestInternal({ ...originalOptions, repeatSubmit: false }, false);
   }
-
-  if (originalOptions.withToken && isAuthFailureCode(res.code)) forceLogout();
-
-  return res;
+  return authError(refreshResult.msg);
 }
 
 // ==================== 通用HTTP请求 ====================
@@ -308,7 +290,7 @@ async function beforeResponse(
 /**
  * 通用HTTP请求函数
  *
- * 封装fetch API，统一处理请求拦截、响应拦截、超时控制、token刷新等逻辑。
+ * 封装fetch API，统一处理请求拦截、响应格式和超时控制。
  * 始终返回 ResultType，不会抛出业务异常。
  *
  * @param options - 请求参数
@@ -321,6 +303,13 @@ async function beforeResponse(
  * ```
  */
 export async function request(options: OptionsType): Promise<ResultType> {
+  return requestInternal(options, true);
+}
+
+async function requestInternal(
+  options: OptionsType,
+  canRetryAfterRefresh: boolean
+): Promise<ResultType> {
   const reqOptions = Object.assign({}, FETCH_OPTIONS, options);
 
   if (reqOptions.withToken && !getAccessToken() && getRefreshToken()) {
@@ -328,16 +317,6 @@ export async function request(options: OptionsType): Promise<ResultType> {
     if (!getAccessToken()) return authError(refreshResult.msg);
   }
 
-  /**
-   * 保存合并后的原始参数副本，用于 token 刷新后重试。
-   *
-   * beforeRequest 会原地修改 reqOptions（拼接 params 到 url、设置 body），
-   * 随后 URL 构造会将 baseUrl 拼到 url 前面。
-   * 如果重试时传入被修改后的 reqOptions，会导致：
-   *   1. params 被重复拼接（pageNum=1&pageSize=50&pageNum=1&pageSize=50）
-   *   2. 当 baseUrl 为相对路径（如 /dev-api）时，url 不以 http 开头，
-   *      URL 构造会再次拼接 baseUrl（/dev-api/dev-api/system/user/list）
-   */
   const originalOptions: OptionsType = { ...reqOptions };
 
   // 请求超时控制
@@ -394,10 +373,12 @@ export async function request(options: OptionsType): Promise<ResultType> {
             msg: res.ok ? RESULT_MSG_SERVER_ERROR : `请求失败(${res.status})`,
           };
         }
-        // 登录失效码无论 HTTP 状态码如何，都必须走 beforeResponse 处理 token 刷新
-        // 否则 HTTP 401 + code:401001 会被 !res.ok 短路，导致 token 刷新永远不会触发
-        if (isAuthFailureCode(result.code)) {
-          return await beforeResponse(originalOptions, result);
+        if (result.code === TOKEN_EXPIRED_CODE) {
+          return refreshAndRetry(
+            originalOptions,
+            result,
+            canRetryAfterRefresh
+          );
         }
         if (!res.ok) {
           return {
@@ -406,7 +387,7 @@ export async function request(options: OptionsType): Promise<ResultType> {
             data: result.data,
           };
         }
-        return await beforeResponse(originalOptions, result);
+        return result;
       }
       case 'blob':
       case 'arrayBuffer': {
@@ -421,9 +402,12 @@ export async function request(options: OptionsType): Promise<ResultType> {
               msg: res.ok ? RESULT_MSG_SERVER_ERROR : `请求失败(${res.status})`,
             };
           }
-          // 登录失效码无论 HTTP 状态码如何，都必须走 beforeResponse 处理 token 刷新
-          if (isAuthFailureCode(result.code)) {
-            return await beforeResponse(originalOptions, result);
+          if (result.code === TOKEN_EXPIRED_CODE) {
+            return refreshAndRetry(
+              originalOptions,
+              result,
+              canRetryAfterRefresh
+            );
           }
           if (!res.ok) {
             return {
@@ -432,7 +416,7 @@ export async function request(options: OptionsType): Promise<ResultType> {
               data: result.data,
             };
           }
-          return await beforeResponse(originalOptions, result);
+          return result;
         }
         if (!res.ok) {
           return {

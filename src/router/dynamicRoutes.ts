@@ -42,6 +42,7 @@ type CompiledMenu = {
 type AccessRoutes = {
   isReady: () => boolean;
   install: () => Promise<void>;
+  reset: () => void;
 };
 
 function resolveComponent(componentPath: string): RouteComponent {
@@ -199,7 +200,7 @@ function createDynamicRootRoute(
   authMenus: AuthMenu[],
   router: Router
 ): RouteRecordRaw {
-  const rootRoute = staticRoutes.find(route => route.path === '/');
+  const rootRoute = getStaticRootRoute();
   if (!rootRoute) throw new Error('Frontend root route is missing');
 
   const currentRoutes = router.getRoutes();
@@ -224,6 +225,16 @@ function createDynamicRootRoute(
   };
 }
 
+function getStaticRootRoute() {
+  const rootRoute = staticRoutes.find(route => route.path === '/');
+  return rootRoute;
+}
+
+function restoreStaticRootRoute(router: Router) {
+  const rootRoute = getStaticRootRoute();
+  if (rootRoute) router.addRoute(rootRoute);
+}
+
 async function fetchAuthMenus(): Promise<AuthMenu[]> {
   const result = await getAuthMenus();
   if (!isSuccess(result) || !Array.isArray(result.data)) {
@@ -235,6 +246,7 @@ async function fetchAuthMenus(): Promise<AuthMenu[]> {
 export function createAccessRoutes(router: Router): AccessRoutes {
   let ready = false;
   let installPromise: Promise<void> | null = null;
+  let installVersion = 0;
 
   return {
     isReady: () => ready,
@@ -242,17 +254,28 @@ export function createAccessRoutes(router: Router): AccessRoutes {
       if (ready) return Promise.resolve();
       if (installPromise) return installPromise;
 
+      const version = ++installVersion;
       installPromise = fetchAuthMenus()
         .then(authMenus => {
+          if (version !== installVersion) return;
           router.addRoute(createDynamicRootRoute(authMenus, router));
           ready = true;
         })
         .catch(error => {
+          if (version !== installVersion) return;
           installPromise = null;
           throw error;
         });
 
       return installPromise;
+    },
+    reset() {
+      installVersion++;
+      installPromise = null;
+      if (!ready) return;
+
+      restoreStaticRootRoute(router);
+      ready = false;
     },
   };
 }

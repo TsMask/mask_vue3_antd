@@ -33,13 +33,13 @@ const props = defineProps({
 });
 
 /**弹框关闭事件 */
-function fnModalClose() {
+function handleModalClose() {
   if (props.loading) return;
   emit('close');
 }
 
 /**上传前检查或转换压缩 */
-function fnBeforeUpload(file: FileType) {
+function handleBeforeUpload(file: FileType) {
   if (props.loading) return false;
   // 检查文件大小
   if (props.size > 0) {
@@ -69,7 +69,7 @@ function fnBeforeUpload(file: FileType) {
 }
 
 /**上传请求发出 */
-function fnUpload(up: UploadRequestOption) {
+function handleUpload(up: UploadRequestOption) {
   emit('upload', up.file);
 }
 </script>
@@ -83,7 +83,7 @@ function fnUpload(up: UploadRequestOption) {
     :mask-closable="false"
     :confirm-loading="props.loading"
     :footer="null"
-    @cancel="fnModalClose"
+    @cancel="handleModalClose"
   >
     <a-space :size="8" direction="vertical" style="width: 100%">
       <a-upload-dragger
@@ -92,8 +92,8 @@ function fnUpload(up: UploadRequestOption) {
         name="file"
         :max-count="1"
         :show-upload-list="false"
-        :before-upload="fnBeforeUpload"
-        :custom-request="fnUpload"
+        :before-upload="handleBeforeUpload"
+        :custom-request="handleUpload"
       >
         <p class="ant-upload-drag-icon"><InboxOutlined /></p>
         <p class="ant-upload-text">点击选择或将文件拖入边框区域进行上传</p>

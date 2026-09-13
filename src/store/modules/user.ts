@@ -1,9 +1,23 @@
 import defaultAvatar from '@/assets/images/default_avatar.png';
-import { login, loginByPhone, getInfo } from '@/api/auth';
-import { setAccessToken, setRefreshToken } from '@/plugins/authToken';
+import {
+  login,
+  loginByPhone,
+  getInfo,
+  logout as logoutApi,
+} from '@/api/auth';
+import {
+  delAccessToken,
+  delRefreshToken,
+  setAccessToken,
+  setRefreshToken,
+} from '@/plugins/authToken';
 import { defineStore } from 'pinia';
 import { validHttp } from '@/utils/regular';
 import { RESULT_CODE_SUCCESS } from '@/constants/result';
+import { CACHE_SESSION_FETCH } from '@/constants/cacheKeys';
+import { sessionRemove } from '@/utils/cacheSession';
+import { clearTabsView } from '@/layouts/hooks/useTabsView';
+import useDictStore from '@/store/modules/dict';
 
 /** 用户信息类型 */
 type UserInfo = {
@@ -80,6 +94,23 @@ const useUserStore = defineStore('user', {
     },
   },
   actions: {
+    /** 清理登录账号相关状态；全局配置保持不变。 */
+    clearAuthState() {
+      delAccessToken();
+      delRefreshToken();
+      clearTabsView();
+      sessionRemove(CACHE_SESSION_FETCH);
+      this.$reset();
+      useDictStore().clearDict();
+    },
+    /** 主动退出：无论服务端撤销结果如何，都完成本地退出。 */
+    async fnLogout() {
+      try {
+        return await logoutApi();
+      } finally {
+        this.clearAuthState();
+      }
+    },
     /**
      * 更新基础信息属性
      * @param data 变更信息
@@ -121,7 +152,7 @@ const useUserStore = defineStore('user', {
      * 获取用户信息
      *
      * 成功时填充 store 状态；失败时抛出异常，由路由守卫 catch 处理重定向到登录页。
-     * 会话结束统一交由 authSession 服务处理，避免 Store 与路由守卫重复清理。
+     * 认证失败时由路由守卫调用 clearAuthState 统一清理。
      *
      * @returns 响应结果
      * @throws 获取失败时抛出错误

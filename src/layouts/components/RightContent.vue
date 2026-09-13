@@ -12,7 +12,6 @@ import { useRouter } from 'vue-router';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
 import { useLayoutSettings } from '@/layouts/hooks/useLayoutSettings';
-import { logoutAuthSession } from '@/plugins/authSession';
 import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 const { proConfig, changeConfig } = useLayoutSettings();
 const userStore = useUserStore();
@@ -29,7 +28,7 @@ function changeTheme(e: any) {
 }
 
 /**组件尺寸点击选择 */
-function fnComponentSize({ key }: MenuInfo) {
+function handleComponentSize({ key }: MenuInfo) {
   appStore.setComponentSize(key as SizeType);
 }
 
@@ -46,6 +45,15 @@ function handleSearchSelect(item: SearchFlatItem) {
   router.push(item.path);
 }
 
+/** 退出后回到登录页，动态路由由路由守卫统一还原。 */
+async function handleLogout() {
+  try {
+    await userStore.fnLogout();
+  } finally {
+    await router.replace({ path: '/login' });
+  }
+}
+
 /**头像展开项点击 */
 function handleAccountMenuClick({ key }: MenuInfo) {
   switch (key) {
@@ -56,7 +64,7 @@ function handleAccountMenuClick({ key }: MenuInfo) {
       router.push({ name: 'AccountProfile' });
       break;
     case 'logout':
-      logoutAuthSession();
+      handleLogout();
       break;
   }
 }
@@ -170,7 +178,7 @@ function handleAccountMenuClick({ key }: MenuInfo) {
         <template #overlay>
           <a-menu
             :selected-keys="[appStore.componentSize as string]"
-            @click="fnComponentSize"
+            @click="handleComponentSize"
           >
             <a-menu-item key="large">大号</a-menu-item>
             <a-menu-item key="middle">中号</a-menu-item>

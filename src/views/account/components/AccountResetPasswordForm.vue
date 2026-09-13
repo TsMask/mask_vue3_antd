@@ -1,12 +1,13 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { Modal, message } from 'ant-design-vue';
 import { updateUserPassword } from '@/api/profile';
-import { logoutAuthSession } from '@/plugins/authSession';
 import { isSuccess } from '@/plugins/httpFetch';
 import useUserStore from '@/store/modules/user';
 import { regExpPassword } from '@/utils/regular';
 const userStore = useUserStore();
+const router = useRouter();
 const submitting = ref(false);
 
 const form = reactive({
@@ -81,7 +82,11 @@ async function submitPassword() {
 
 /** 退出并清理本地登录态，避免旧 token 继续请求新密码账号 */
 async function handleRelogin() {
-  await logoutAuthSession();
+  try {
+    await userStore.fnLogout();
+  } finally {
+    await router.replace({ path: '/login' });
+  }
 }
 </script>
 

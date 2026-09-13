@@ -6,8 +6,12 @@ import {
 } from 'vue-router';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
-import { getAccessToken, getRefreshToken } from '@/plugins/authToken';
-import { ensureAccessToken, isSuccess } from '@/plugins/httpFetch';
+import { refreshToken } from '@/api/auth';
+import { getAccessToken } from '@/plugins/authToken';
+import {
+  ensureAccessToken,
+  setupHttpTokenRefresh,
+} from '@/plugins/httpFetch';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
 import { HOME_PATH } from '@/constants/router';
@@ -27,12 +31,18 @@ function createLoginLocation(redirect: string) {
   return `/login?redirect=${encodeURIComponent(redirect)}`;
 }
 
-async function resolveAccessToken() {
-  const accessToken = getAccessToken();
-  if (accessToken || !getRefreshToken()) return accessToken;
+function clearAuthState() {
+  useUserStore().clearAuthState();
+}
 
-  const refreshResult = await ensureAccessToken();
-  return isSuccess(refreshResult) ? getAccessToken() : undefined;
+async function isAuthenticated() {
+  if (getAccessToken()) return true;
+
+  await ensureAccessToken();
+  if (getAccessToken()) return true;
+
+  clearAuthState();
+  return false;
 }
 
 function hasUserInfo() {
@@ -41,6 +51,7 @@ function hasUserInfo() {
 }
 
 function setupRouterGuards(router: Router) {
+  setupHttpTokenRefresh(refreshToken);
   NProgress.configure({ showSpinner: false });
   const accessRoutes = createAccessRoutes(router);
 
@@ -51,9 +62,10 @@ function setupRouterGuards(router: Router) {
 
   router.beforeEach(async to => {
     NProgress.start();
-    const accessToken = await resolveAccessToken();
+    const authenticated = await isAuthenticated();
 
-    if (!accessToken) {
+    if (!authenticated) {
+      accessRoutes.reset();
       return WHITE_LIST.has(to.path)
         ? undefined
         : createLoginLocation(to.fullPath);
@@ -71,9 +83,8 @@ function setupRouterGuards(router: Router) {
       const message = error instanceof Error ? error.message : String(error);
       console.error(`[Router Guard] ${to.path}: ${message}`);
 
-      const { endAuthSession } = await import('@/plugins/authSession');
-      await endAuthSession({ redirect: to.fullPath });
-      return { path: '/login' };
+      clearAuthState();
+      return createLoginLocation(to.fullPath);
     }
   });
 }
