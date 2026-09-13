@@ -4,6 +4,7 @@ import BasicLayout from '../layouts/BasicLayout.vue';
 import BlankLayout from '../layouts/BlankLayout.vue';
 import LinkLayout from '../layouts/LinkLayout.vue';
 import type { RouteRecordRaw } from 'vue-router';
+import { HOME_PATH } from '@/constants/router';
 
 // import { MetaRecord, MenuDataItem } from 'antdv-pro-layout';
 // 根据/路径构建菜单列表，
@@ -19,10 +20,10 @@ export const staticRoutes: RouteRecordRaw[] = [
     name: 'Root',
     meta: { title: '根节点' },
     component: BasicLayout,
-    redirect: '/index',
+    redirect: HOME_PATH,
     children: [
       {
-        path: '/index',
+        path: HOME_PATH,
         name: 'HomeIndex',
         meta: { title: '首页', icon: 'icon-pcduan', cache: true },
         component: () => import('@/views/home/HomeIndex.vue'),

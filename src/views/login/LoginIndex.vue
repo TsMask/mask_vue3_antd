@@ -7,6 +7,7 @@ import useUserStore from '@/store/modules/user';
 import { getCaptchaImage, getCaptchaSMS } from '@/api/auth';
 import { validMobile } from '@/utils/regular';
 import { isSuccess } from '@/plugins/httpFetch';
+import { HOME_PATH } from '@/constants/router';
 import { useRouter, useRoute } from 'vue-router';
 import LoginHeader from './components/LoginHeader.vue';
 import LoginFooter from './components/LoginFooter.vue';
@@ -96,7 +97,7 @@ async function handleSubmit() {
     const redirectPath = Array.isArray(redirectQuery)
       ? redirectQuery[0]
       : redirectQuery;
-    router.push({ path: redirectPath || '/index' });
+    router.push({ path: redirectPath || HOME_PATH });
   } catch (error: any) {
     message.error({
       content: error?.message || '登录失败，请稍后重试',

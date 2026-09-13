@@ -1,6 +1,7 @@
 import { watch } from 'vue';
 import { useRouter } from 'vue-router';
 import type { RouteLocationResolved } from 'vue-router';
+import { HOME_PATH } from '@/constants/router';
 import {
   useTabsView as useProTabsView,
   type TabLocation,
@@ -8,8 +9,6 @@ import {
   type UseTabsViewReturn,
 } from 'antdv-pro-layout';
 
-/** 关闭最后一个标签后的默认跳转路径 */
-const HOME_PATH = '/index';
 /** 标签恢复数据在 sessionStorage 中的键名 */
 const RESTORE_STORAGE_KEY = 'mask_vue3_antd:tabs-view';
 /** 标签查询参数恢复数据在 sessionStorage 中的键名 */

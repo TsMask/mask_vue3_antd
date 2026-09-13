@@ -10,6 +10,7 @@ import { getAccessToken, getRefreshToken } from '@/plugins/authToken';
 import { ensureAccessToken, isSuccess } from '@/plugins/httpFetch';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
+import { HOME_PATH } from '@/constants/router';
 import { staticRoutes } from './staticRoutes';
 import { createAccessRoutes } from './dynamicRoutes';
 
@@ -58,7 +59,7 @@ function setupRouterGuards(router: Router) {
         : createLoginLocation(to.fullPath);
     }
 
-    if (to.path === '/login') return { path: '/index' };
+    if (to.path === '/login') return { path: HOME_PATH };
     if (WHITE_LIST.has(to.path)) return undefined;
     if (hasUserInfo() && accessRoutes.isReady()) return undefined;
 
