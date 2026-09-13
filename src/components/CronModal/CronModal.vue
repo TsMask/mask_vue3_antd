@@ -1,25 +1,35 @@
 <script lang="ts" setup>
-import CronSecond from './components/CronSecond.vue';
-import CronMinute from './components/CronMinute.vue';
-import CronHour from './components/CronHour.vue';
-import CronDay from './components/CronDay.vue';
-import CronMonth from './components/CronMonth.vue';
-import { reactive, computed, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
+import CronField from './components/CronField.vue';
+import {
+  DEFAULT_CRON,
+  buildCronExpression,
+  cronFieldConfigs,
+  CRON_FIELD_KEYS,
+  parseCronExpression,
+  type CronFieldKey,
+  type CronParts,
+} from './cron';
 
-const emit = defineEmits(['cancel', 'ok', 'update:open']);
-const props = defineProps({
-  open: {
-    type: Boolean,
-    required: true,
-  },
-  cron: {
-    type: String,
-    default: '* * * * * ?',
-  },
-});
+const props = withDefaults(
+  defineProps<{
+    open: boolean;
+    cron?: string;
+  }>(),
+  {
+    cron: DEFAULT_CRON,
+  }
+);
 
-/**cron属性值 */
-let cronValue = reactive({
+const emit = defineEmits<{
+  cancel: [];
+  ok: [cron: string];
+  'update:open': [open: boolean];
+}>();
+
+const activeKey = ref<CronFieldKey>('second');
+const cronText = ref(DEFAULT_CRON);
+const cronParts = reactive<CronParts>({
   second: '*',
   minute: '*',
   hour: '*',
@@ -28,86 +38,112 @@ let cronValue = reactive({
   week: '?',
 });
 
-/**组合cron结果 */
-const cronStr = computed(() => {
-  let time = `${cronValue.second} ${cronValue.minute} ${cronValue.hour}`;
-  let date = `${cronValue.day} ${cronValue.month} ${cronValue.week}`;
-  return `${time} ${date}`;
-});
+const cronInvalid = computed(() => !parseCronExpression(cronText.value));
+const cronFields = CRON_FIELD_KEYS.map(field => ({
+  key: field,
+  ...cronFieldConfigs[field],
+}));
 
-/**监听是否显示，初始cron属性 */
+function applyCronText(expression: string) {
+  const parsedParts = parseCronExpression(expression);
+  if (parsedParts) Object.assign(cronParts, parsedParts);
+}
+
+watch(cronText, applyCronText);
+
 watch(
   () => props.open,
-  val => {
-    if (!val) return;
-    const arr = props.cron.split(' ');
-    // 6 位以上是合法表达式
-    if (arr.length >= 6) {
-      Object.assign(cronValue, {
-        second: arr[0],
-        minute: arr[1],
-        hour: arr[2],
-        day: arr[3],
-        month: arr[4],
-        week: arr[5],
-      });
-    }
+  open => {
+    if (!open) return;
+    cronText.value = props.cron.trim() || DEFAULT_CRON;
+    applyCronText(cronText.value);
   }
 );
 
-/**
- * 窗口事件
- * @param val modal触发事件
- */
-function fnCronModal(val: boolean) {
-  emit('update:open', false);
-  if (val) {
-    emit('ok', cronStr.value);
-  } else {
-    emit('cancel');
+function syncLinkedFields(field: CronFieldKey) {
+  if (field !== 'day' && field !== 'week') return;
+
+  if (cronParts.day === '?' && cronParts.week === '?') {
+    cronParts[field === 'day' ? 'week' : 'day'] = '*';
+    return;
   }
+
+  if (cronParts.day !== '?' && cronParts.week !== '?') {
+    cronParts[field === 'day' ? 'week' : 'day'] = '?';
+  }
+}
+
+function updateCronPart(field: CronFieldKey, value: string) {
+  cronParts[field] = value;
+  syncLinkedFields(field);
+  cronText.value = buildCronExpression(cronParts);
+}
+
+function closeCronModal() {
+  emit('update:open', false);
+}
+
+function cancelCronModal() {
+  closeCronModal();
+  emit('cancel');
+}
+
+function confirmCronModal() {
+  if (cronInvalid.value) return;
+  closeCronModal();
+  emit('ok', cronText.value.trim());
 }
 </script>
 
 <template>
   <a-modal
-    :destroyOnClose="true"
+    destroy-on-close
     title="Cron表达式生成"
     :open="props.open"
     :body-style="{ padding: '0 24px' }"
-    @cancel="fnCronModal(false)"
-    @ok="fnCronModal(true)"
+    :ok-button-props="{ disabled: cronInvalid }"
+    @cancel="cancelCronModal"
+    @ok="confirmCronModal"
   >
-    <a-tabs tab-position="top" type="line">
-      <a-tab-pane key="1" tab="秒">
-        <CronSecond v-model:value="cronValue.second"></CronSecond>
-      </a-tab-pane>
-      <a-tab-pane key="2" tab="分钟">
-        <CronMinute v-model:value="cronValue.minute"></CronMinute>
-      </a-tab-pane>
-      <a-tab-pane key="3" tab="小时">
-        <CronHour v-model:value="cronValue.hour"></CronHour>
-      </a-tab-pane>
-      <a-tab-pane key="4" tab="日">
-        <CronDay v-model:value="cronValue.day"></CronDay>
-      </a-tab-pane>
-      <a-tab-pane key="5" tab="月">
-        <CronMonth v-model:value="cronValue.month"></CronMonth>
+    <a-tabs v-model:active-key="activeKey" tab-position="top" type="line">
+      <a-tab-pane
+        v-for="field in cronFields"
+        :key="field.key"
+        :tab="field.title"
+      >
+        <CronField
+          :field="field.key"
+          :value="cronParts[field.key]"
+          @update:value="updateCronPart(field.key, $event)"
+        />
       </a-tab-pane>
     </a-tabs>
 
+    <a-alert
+      v-if="cronInvalid"
+      class="cron-error"
+      type="error"
+      show-icon
+      message="Cron表达式不正确"
+      description="请输入6位秒级表达式，例如：0/20 * * * * ?。"
+    />
+
     <a-input
-      class="reultBox"
+      v-model:value="cronText"
+      class="result-box"
       addon-before="表达式预览："
-      v-model:value="cronStr"
-      disabled
+      placeholder="请输入或生成cron表达式"
     />
   </a-modal>
 </template>
 
 <style scoped>
-.reultBox {
-  margin-top: 48px;
+.result-box {
+  margin-top: 24px;
   margin-bottom: 24px;
+}
+
+.cron-error {
+  margin-top: 24px;
 }
 </style>
