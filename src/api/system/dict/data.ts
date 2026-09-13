@@ -1,4 +1,4 @@
-import { request } from '@/plugins/http-fetch';
+import { request } from '@/plugins/httpFetch';
 
 /**
  * 字典数据列表导出
@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function exportData(query: Record<string, any>) {
   return request({
-    url: '/api/v1/system/dict/data/export',
+    url: '/api/v1/system/dict/datas/export',
     method: 'GET',
     params: query,
     responseType: 'blob',
@@ -21,7 +21,7 @@ export function exportData(query: Record<string, any>) {
  */
 export function listData(query: Record<string, any>) {
   return request({
-    url: '/api/v1/system/dict/data/list',
+    url: '/api/v1/system/dict/datas/list',
     method: 'GET',
     params: query,
   });
@@ -34,7 +34,7 @@ export function listData(query: Record<string, any>) {
  */
 export function getData(dataId: string | number) {
   return request({
-    url: `/api/v1/system/dict/data/${dataId}`,
+    url: `/api/v1/system/dict/datas/${dataId}`,
     method: 'GET',
   });
 }
@@ -46,7 +46,7 @@ export function getData(dataId: string | number) {
  */
 export function addData(data: Record<string, any>) {
   return request({
-    url: '/api/v1/system/dict/data',
+    url: '/api/v1/system/dict/datas',
     method: 'POST',
     data: data,
   });
@@ -59,7 +59,7 @@ export function addData(data: Record<string, any>) {
  */
 export function updateData(data: Record<string, any>) {
   return request({
-    url: '/api/v1/system/dict/data',
+    url: '/api/v1/system/dict/datas',
     method: 'PUT',
     data: data,
   });
@@ -72,7 +72,7 @@ export function updateData(data: Record<string, any>) {
  */
 export function delData(dataId: string | number) {
   return request({
-    url: `/api/v1/system/dict/data/${dataId}`,
+    url: `/api/v1/system/dict/datas/${dataId}`,
     method: 'DELETE',
   });
 }
@@ -84,7 +84,7 @@ export function delData(dataId: string | number) {
  */
 export function getDictDataType(dict_type: string) {
   return request({
-    url: `/api/v1/system/dict/data/type/${dict_type}`,
+    url: `/api/v1/system/dict/datas/type/${dict_type}`,
     method: 'GET',
   });
 }

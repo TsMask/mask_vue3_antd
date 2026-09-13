@@ -2,10 +2,10 @@
 import { reactive, ref } from 'vue';
 import { Modal, message } from 'ant-design-vue';
 import { updateUserPassword } from '@/api/profile';
-import { logoutAuthSession } from '@/plugins/auth-session';
-import { isSuccess } from '@/plugins/http-fetch';
+import { logoutAuthSession } from '@/plugins/authSession';
+import { isSuccess } from '@/plugins/httpFetch';
 import useUserStore from '@/store/modules/user';
-import { regExpPassword } from '@/utils/regular-utils';
+import { regExpPassword } from '@/utils/regular';
 const userStore = useUserStore();
 const submitting = ref(false);
 

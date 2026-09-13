@@ -1,4 +1,4 @@
-import { request } from '@/plugins/http-fetch';
+import { request } from '@/plugins/httpFetch';
 
 /**
  * 导入用户模板数据
@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function importData(file_path: string, update: boolean) {
   return request({
-    url: '/api/v1/system/user/import',
+    url: '/api/v1/system/users/import',
     method: 'POST',
     data: { file_path, update },
     timeout: 60_000,
@@ -20,7 +20,7 @@ export function importData(file_path: string, update: boolean) {
  */
 export function importTemplate() {
   return request({
-    url: '/api/v1/system/user/import/template',
+    url: '/api/v1/system/users/import/template',
     method: 'GET',
     responseType: 'blob',
   });
@@ -33,7 +33,7 @@ export function importTemplate() {
  */
 export function exportUser(query: Record<string, any>) {
   return request({
-    url: '/api/v1/system/user/export',
+    url: '/api/v1/system/users/export',
     method: 'GET',
     params: query,
     responseType: 'blob',
@@ -48,7 +48,7 @@ export function exportUser(query: Record<string, any>) {
  */
 export function listUser(query: Record<string, any>) {
   return request({
-    url: '/api/v1/system/user/list',
+    url: '/api/v1/system/users/list',
     method: 'GET',
     params: query,
   });
@@ -61,7 +61,7 @@ export function listUser(query: Record<string, any>) {
  */
 export function getUser(user_id: string | number = '0') {
   return request({
-    url: `/api/v1/system/user/${user_id}`,
+    url: `/api/v1/system/users/${user_id}`,
     method: 'GET',
   });
 }
@@ -73,7 +73,7 @@ export function getUser(user_id: string | number = '0') {
  */
 export function addUser(data: Record<string, any>) {
   return request({
-    url: '/api/v1/system/user',
+    url: '/api/v1/system/users',
     method: 'POST',
     data: data,
   });
@@ -86,7 +86,7 @@ export function addUser(data: Record<string, any>) {
  */
 export function updateUser(data: Record<string, any>) {
   return request({
-    url: '/api/v1/system/user',
+    url: '/api/v1/system/users',
     method: 'PUT',
     data: data,
   });
@@ -99,7 +99,7 @@ export function updateUser(data: Record<string, any>) {
  */
 export function delUser(user_id: string | number) {
   return request({
-    url: `/api/v1/system/user/${user_id}`,
+    url: `/api/v1/system/users/${user_id}`,
     method: 'DELETE',
   });
 }
@@ -112,7 +112,7 @@ export function delUser(user_id: string | number) {
  */
 export function resetPassword(user_id: string | number, password: string) {
   return request({
-    url: '/api/v1/system/user/password',
+    url: '/api/v1/system/users/password',
     method: 'PUT',
     data: {
       user_id,
@@ -132,7 +132,7 @@ export function changeStatus(
   user_status: string | number
 ) {
   return request({
-    url: '/api/v1/system/user/status',
+    url: '/api/v1/system/users/status',
     method: 'PUT',
     data: { user_id, user_status },
   });
@@ -145,7 +145,7 @@ export function changeStatus(
  */
 export function unlock(user_name: string) {
   return request({
-    url: `/api/v1/system/user/unlock/${user_name}`,
+    url: `/api/v1/system/users/unlock/${user_name}`,
     method: 'PUT',
   });
 }

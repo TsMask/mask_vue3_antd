@@ -1,4 +1,4 @@
-import { request } from '@/plugins/http-fetch';
+import { request } from '@/plugins/httpFetch';
 
 /**
  * 查询缓存详细

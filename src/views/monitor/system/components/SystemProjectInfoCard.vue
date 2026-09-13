@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SystemProjectInfo } from '../types';
+import type { SystemProjectInfo } from '../systemInfo';
 
 defineProps<{
   project: SystemProjectInfo;

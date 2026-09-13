@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { message } from 'ant-design-vue';
 import saveAs from 'file-saver';
 import { downloadFile, downloadFileChunk } from '@/api/tool/file';
-import { isSuccess } from '@/plugins/http-fetch';
+import { isSuccess } from '@/plugins/httpFetch';
 
 const props = defineProps<{
   filePath: string;

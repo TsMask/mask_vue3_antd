@@ -1,10 +1,9 @@
 import defaultAvatar from '@/assets/images/default_avatar.png';
-import useLayoutStore from './layout';
 import { login, loginByPhone, getInfo } from '@/api/auth';
-import { setAccessToken, setRefreshToken } from '@/plugins/auth-token';
+import { setAccessToken, setRefreshToken } from '@/plugins/authToken';
 import { defineStore } from 'pinia';
-import { validHttp } from '@/utils/regular-utils';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import { validHttp } from '@/utils/regular';
+import { RESULT_CODE_SUCCESS } from '@/constants/result';
 
 /** 用户信息类型 */
 type UserInfo = {
@@ -37,7 +36,7 @@ function parseAvatar(avatar: string): string {
   if (!avatar) {
     return defaultAvatar;
   }
-  if (validHttp(avatar)) {
+  if (validHttp(avatar) || avatar.startsWith('//')) {
     return avatar;
   }
   const baseApi = import.meta.env.VITE_API_BASE_URL;
@@ -122,7 +121,7 @@ const useUserStore = defineStore('user', {
      * 获取用户信息
      *
      * 成功时填充 store 状态；失败时抛出异常，由路由守卫 catch 处理重定向到登录页。
-     * 会话结束统一交由 auth-session 服务处理，避免 Store 与路由守卫重复清理。
+     * 会话结束统一交由 authSession 服务处理，避免 Store 与路由守卫重复清理。
      *
      * @returns 响应结果
      * @throws 获取失败时抛出错误
@@ -152,12 +151,6 @@ const useUserStore = defineStore('user', {
           this.permissions = [];
         }
 
-        // 水印文字信息=用户昵称 手机号
-        let waterMarkContent = this.user_nick;
-        if (this.user_phone) {
-          waterMarkContent = `${this.user_nick} ${this.user_phone}`;
-        }
-        useLayoutStore().changeWaterMark(waterMarkContent);
         return res;
       }
       // 获取信息失败，抛出让路由守卫 catch 处理

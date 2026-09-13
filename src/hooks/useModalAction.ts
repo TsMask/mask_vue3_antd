@@ -1,6 +1,6 @@
 import { ref, type Ref } from 'vue';
 import { message, Modal } from 'ant-design-vue';
-import { isSuccess, type ResultType } from '@/plugins/http-fetch';
+import { isSuccess, type ResultType } from '@/plugins/httpFetch';
 
 /** 直接执行操作的配置 */
 export interface ExecuteActionOptions {

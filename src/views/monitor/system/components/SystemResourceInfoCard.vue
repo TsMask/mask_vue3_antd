@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SystemCpuInfo, SystemInfoRecord } from '../types';
+import type { SystemCpuInfo, SystemInfoRecord } from '../systemInfo';
 
 defineProps<{
   cpu: SystemCpuInfo;

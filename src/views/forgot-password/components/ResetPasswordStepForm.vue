@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { regExpPassword } from '@/utils/regular-utils';
+import { regExpPassword } from '@/utils/regular';
 
 const password = defineModel<string>('password', { required: true });
 const confirmPassword = defineModel<string>('confirmPassword', {

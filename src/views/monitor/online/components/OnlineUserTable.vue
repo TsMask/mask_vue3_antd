@@ -4,7 +4,7 @@ import {
   type ProColumns,
   type ProColumnsSearch,
 } from 'antdv-pro-table';
-import { parseDateToStr } from '@/utils/date-utils';
+import { parseDateToStr } from '@/utils/date';
 import { useProTableScroll } from '@/hooks/useProTable';
 
 defineProps<{
@@ -139,7 +139,7 @@ function handleReload() {
           type="link"
           danger
           @click.prevent="emit('forceLogout', record)"
-          v-perms:has="['monitor:online:logout']"
+          v-perms:has="['monitor:online:user:logout']"
         >
           <template #icon>
             <LogoutOutlined />

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ColumnsType } from 'ant-design-vue/es/table';
-import type { SystemDiskInfo } from '../types';
+import type { SystemDiskInfo } from '../systemInfo';
 
 defineProps<{
   disks: SystemDiskInfo[];

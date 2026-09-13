@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { parseDateToStr } from '@/utils/date-utils';
-import type { AccountProfileData } from '../types';
+import { parseDateToStr } from '@/utils/date';
+import type { AccountProfileData } from '../accountProfile';
 
 defineProps<{
   profile: AccountProfileData;

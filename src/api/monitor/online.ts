@@ -1,4 +1,4 @@
-import { request } from '@/plugins/http-fetch';
+import { request } from '@/plugins/httpFetch';
 
 /**
  * 查询在线用户列表
@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function listOnline(query: Record<string, any>) {
   return request({
-    url: '/api/v1/monitor/user-online/list',
+    url: '/api/v1/monitor/online-users/list',
     method: 'GET',
     params: query,
   });
@@ -20,7 +20,7 @@ export function listOnline(query: Record<string, any>) {
  */
 export function forceLogout(session_id: string) {
   return request({
-    url: `/api/v1/monitor/user-online/logout/${session_id}`,
+    url: `/api/v1/monitor/online-users/logout/${session_id}`,
     method: 'DELETE',
   });
 }

@@ -1,4 +1,4 @@
-import { request } from '@/plugins/http-fetch';
+import { request } from '@/plugins/httpFetch';
 
 /**
  * 查询菜单列表
@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function listMenu(query?: Record<string, any>) {
   return request({
-    url: '/api/v1/system/menu/list',
+    url: '/api/v1/system/menus/list',
     method: 'GET',
     params: query,
   });
@@ -20,7 +20,7 @@ export function listMenu(query?: Record<string, any>) {
  */
 export function getMenu(menu_id: string | number) {
   return request({
-    url: `/api/v1/system/menu/${menu_id}`,
+    url: `/api/v1/system/menus/${menu_id}`,
     method: 'GET',
   });
 }
@@ -31,7 +31,7 @@ export function getMenu(menu_id: string | number) {
  */
 export function menuTreeSelect() {
   return request({
-    url: '/api/v1/system/menu/tree',
+    url: '/api/v1/system/menus/tree',
     method: 'GET',
   });
 }
@@ -43,7 +43,7 @@ export function menuTreeSelect() {
  */
 export function menuTreeSelectRole(role_id: string | number) {
   return request({
-    url: `/api/v1/system/menu/tree/role/${role_id}`,
+    url: `/api/v1/system/menus/tree/role/${role_id}`,
     method: 'GET',
   });
 }
@@ -55,7 +55,7 @@ export function menuTreeSelectRole(role_id: string | number) {
  */
 export function addMenu(data: Record<string, any>) {
   return request({
-    url: '/api/v1/system/menu',
+    url: '/api/v1/system/menus',
     method: 'POST',
     data: data,
   });
@@ -68,7 +68,7 @@ export function addMenu(data: Record<string, any>) {
  */
 export function updateMenu(data: Record<string, any>) {
   return request({
-    url: '/api/v1/system/menu',
+    url: '/api/v1/system/menus',
     method: 'PUT',
     data: data,
   });
@@ -81,7 +81,7 @@ export function updateMenu(data: Record<string, any>) {
  */
 export function delMenu(menu_id: string | number) {
   return request({
-    url: `/api/v1/system/menu/${menu_id}`,
+    url: `/api/v1/system/menus/${menu_id}`,
     method: 'DELETE',
   });
 }

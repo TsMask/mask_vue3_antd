@@ -1,6 +1,6 @@
 import { computed, reactive } from 'vue';
 import { Form, message } from 'ant-design-vue';
-import { isSuccess, type ResultType } from '@/plugins/http-fetch';
+import { isSuccess, type ResultType } from '@/plugins/httpFetch';
 
 /** 弹窗模式：view 详情只读 / add 新增 / edit 编辑 */
 export type ModalFormMode = 'view' | 'add' | 'edit';

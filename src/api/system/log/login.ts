@@ -1,13 +1,13 @@
-import { request } from '@/plugins/http-fetch';
+import { request } from '@/plugins/httpFetch';
 
 /**
  * 登录日志列表导出
  * @param query 查询参数
  * @returns bolb
  */
-export function exportSysLogLogin(query: Record<string, any>) {
+export function exportSysLoginLog(query: Record<string, any>) {
   return request({
-    url: '/api/v1/system/log/login/export',
+    url: '/api/v1/system/logs/login/export',
     method: 'GET',
     params: query,
     responseType: 'blob',
@@ -19,9 +19,9 @@ export function exportSysLogLogin(query: Record<string, any>) {
  * @param query 查询参数
  * @returns object
  */
-export function listSysLogLogin(query: Record<string, any>) {
+export function listSysLoginLog(query: Record<string, any>) {
   return request({
-    url: '/api/v1/system/log/login/list',
+    url: '/api/v1/system/logs/login/list',
     method: 'GET',
     params: query,
   });
@@ -31,9 +31,9 @@ export function listSysLogLogin(query: Record<string, any>) {
  * 清空登录日志
  * @returns object
  */
-export function cleanSysLogLogin() {
+export function cleanSysLoginLog() {
   return request({
-    url: '/api/v1/system/log/login/clean',
+    url: '/api/v1/system/logs/login/clean',
     method: 'DELETE',
   });
 }

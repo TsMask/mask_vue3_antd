@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { regExpUserName } from '@/utils/regular-utils';
+import { regExpUserName } from '@/utils/regular';
 
 const username = defineModel<string>('username', { required: true });
 </script>

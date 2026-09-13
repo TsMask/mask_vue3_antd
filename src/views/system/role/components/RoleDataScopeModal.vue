@@ -8,9 +8,9 @@ import {
   parseTreeKeys,
   parseTreeNodeKeys,
   parseTreeNodeKeysByChecked,
-} from '@/utils/parse-tree-utils';
-import { parseDateToStr } from '@/utils/date-utils';
-import { isSuccess, type ResultType } from '@/plugins/http-fetch';
+} from '@/utils/parseTree';
+import { parseDateToStr } from '@/utils/date';
+import { isSuccess, type ResultType } from '@/plugins/httpFetch';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalForm } from '@/hooks/useModalForm';
 import { useModalAction } from '@/hooks/useModalAction';

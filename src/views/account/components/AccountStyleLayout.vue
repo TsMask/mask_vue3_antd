@@ -1,10 +1,9 @@
 <script lang="ts" setup>
-import { storeToRefs } from 'pinia';
 import { viewTransitionTheme } from 'antdv-pro-layout';
-import useLayoutStore from '@/store/modules/layout';
+import { useLayoutSettings } from '@/layouts/hooks/useLayoutSettings';
 
-const layoutStore = useLayoutStore();
-const { proConfig, themeConfig } = storeToRefs(layoutStore);
+const { proConfig, themeConfig, changeConfig, changePrimaryColor } =
+  useLayoutSettings();
 
 const themeOptions = [
   { label: '亮色', value: 'light' },
@@ -41,32 +40,32 @@ const colorOptions = [
 
 /** 切换整体主题时同步菜单主题，并通过 View Transition 平滑过渡 */
 function handleThemeModeChange(mode: 'light' | 'dark') {
-  if (proConfig.value.theme === mode) return;
+  if (proConfig.theme === mode) return;
   viewTransitionTheme(() => {
-    layoutStore.changeConf('theme', mode);
-    layoutStore.changeConf('menuTheme', mode);
+    changeConfig('theme', mode);
+    changeConfig('menuTheme', mode);
   });
 }
 
 function handleMenuThemeChange(mode: 'light' | 'dark') {
-  layoutStore.changeConf('menuTheme', mode);
+  changeConfig('menuTheme', mode);
 }
 
 function handlePrimaryColorChange(color: string) {
-  layoutStore.changePrimaryColor(color);
+  changePrimaryColor(color);
 }
 
 /** 自动分割菜单只对混合布局有意义，切到其他布局时一并关闭 */
 function handleLayoutChange(layout: 'side' | 'top' | 'mix') {
-  if (proConfig.value.layout === layout) return;
-  layoutStore.changeConf('layout', layout);
+  if (proConfig.layout === layout) return;
+  changeConfig('layout', layout);
   if (layout !== 'mix') {
-    layoutStore.changeConf('splitMenus', false);
+    changeConfig('splitMenus', false);
   }
 }
 
 function handleSiderMenuTypeChange(menuType: 'sub' | 'group') {
-  layoutStore.changeConf('siderMenuType', menuType);
+  changeConfig('siderMenuType', menuType);
 }
 </script>
 
@@ -145,7 +144,7 @@ function handleSiderMenuTypeChange(menuType: 'sub' | 'group') {
             <a-switch
               :checked="proConfig.fixedHeader"
               @change="
-                (checked: any) => layoutStore.changeConf('fixedHeader', checked)
+                (checked: any) => changeConfig('fixedHeader', checked)
               "
             />
           </a-form-item>
@@ -156,7 +155,7 @@ function handleSiderMenuTypeChange(menuType: 'sub' | 'group') {
               :disabled="proConfig.layout === 'top'"
               :checked="proConfig.fixSiderbar"
               @change="
-                (checked: any) => layoutStore.changeConf('fixSiderbar', checked)
+                (checked: any) => changeConfig('fixSiderbar', checked)
               "
             />
           </a-form-item>
@@ -167,7 +166,7 @@ function handleSiderMenuTypeChange(menuType: 'sub' | 'group') {
               :disabled="proConfig.layout !== 'mix'"
               :checked="proConfig.splitMenus"
               @change="
-                (checked: any) => layoutStore.changeConf('splitMenus', checked)
+                (checked: any) => changeConfig('splitMenus', checked)
               "
             />
           </a-form-item>

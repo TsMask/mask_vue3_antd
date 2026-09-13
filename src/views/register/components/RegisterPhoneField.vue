@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { regExpMobile } from '@/utils/regular-utils';
+import { regExpMobile } from '@/utils/regular';
 
 const phone = defineModel<string>('phone', { required: true });
 </script>

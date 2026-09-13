@@ -5,7 +5,7 @@ import {
   type ProColumns,
   type ProColumnsSearch,
 } from 'antdv-pro-table';
-import { parseDateToStr } from '@/utils/date-utils';
+import { parseDateToStr } from '@/utils/date';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { toProValueEnum, useProTableScroll } from '@/hooks/useProTable';
 
@@ -186,7 +186,7 @@ function handleReload() {
           danger
           :disabled="selectedRowKeys.length <= 0"
           @click.prevent="emit('deleteSelected')"
-          v-perms:has="['job:remove']"
+          v-perms:has="['monitor:job:log:remove']"
         >
           <template #icon>
             <DeleteOutlined />
@@ -197,7 +197,7 @@ function handleReload() {
           type="dashed"
           danger
           @click.prevent="emit('clean')"
-          v-perms:has="['job:remove']"
+          v-perms:has="['monitor:job:log:remove']"
         >
           <template #icon>
             <DeleteOutlined />
@@ -207,7 +207,7 @@ function handleReload() {
         <a-button
           type="dashed"
           @click.prevent="emit('export')"
-          v-perms:has="['job:export']"
+          v-perms:has="['monitor:job:log:export']"
         >
           <template #icon>
             <ExportOutlined />
@@ -230,7 +230,7 @@ function handleReload() {
             <a-button
               type="link"
               @click.prevent="emit('view', record)"
-              v-perms:has="['job:query']"
+              v-perms:has="['monitor:job:log:query']"
             >
               <template #icon>
                 <ProfileOutlined />

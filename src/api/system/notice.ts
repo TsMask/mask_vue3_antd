@@ -1,4 +1,4 @@
-import { request } from '@/plugins/http-fetch';
+import { request } from '@/plugins/httpFetch';
 
 /**
  * 查询公告列表
@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function listNotice(query: Record<string, any>) {
   return request({
-    url: '/api/v1/system/notice/list',
+    url: '/api/v1/system/notices/list',
     method: 'GET',
     params: query,
   });
@@ -20,7 +20,7 @@ export function listNotice(query: Record<string, any>) {
  */
 export function getNotice(noticeId: string | number) {
   return request({
-    url: `/api/v1/system/notice/${noticeId}`,
+    url: `/api/v1/system/notices/${noticeId}`,
     method: 'GET',
   });
 }
@@ -32,7 +32,7 @@ export function getNotice(noticeId: string | number) {
  */
 export function addNotice(data: Record<string, any>) {
   return request({
-    url: '/api/v1/system/notice',
+    url: '/api/v1/system/notices',
     method: 'POST',
     data: data,
   });
@@ -45,7 +45,7 @@ export function addNotice(data: Record<string, any>) {
  */
 export function updateNotice(data: Record<string, any>) {
   return request({
-    url: '/api/v1/system/notice',
+    url: '/api/v1/system/notices',
     method: 'PUT',
     data: data,
   });
@@ -58,7 +58,7 @@ export function updateNotice(data: Record<string, any>) {
  */
 export function delNotice(noticeId: string | number) {
   return request({
-    url: `/api/v1/system/notice/${noticeId}`,
+    url: `/api/v1/system/notices/${noticeId}`,
     method: 'DELETE',
   });
 }

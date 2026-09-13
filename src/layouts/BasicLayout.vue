@@ -2,25 +2,37 @@
 import {
   ProLayout,
   GlobalFooter,
-  getMenuData,
-  clearMenuItem,
   TabsView,
 } from 'antdv-pro-layout';
+import type { MenuDataItem } from 'antdv-pro-layout';
 import RightContent from './components/RightContent.vue';
 import { useTabsView } from './hooks/useTabsView';
 import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import { computed, reactive, watch } from 'vue';
-import useLayoutStore from '@/store/modules/layout';
 import useAppStore from '@/store/modules/app';
-import useRouterStore from '@/store/modules/router';
+import useUserStore from '@/store/modules/user';
+import { useLayoutSettings } from '@/layouts/hooks/useLayoutSettings';
 import { useRouter } from 'vue-router';
-import { MENU_PATH_INLINE } from '@/constants/menu-constants';
-const { proConfig, waterMarkContent } = useLayoutStore();
 const { appName } = useAppStore();
-const routerStore = useRouterStore();
+const { proConfig } = useLayoutSettings();
+const userStore = useUserStore();
+const HOME_ROUTE_NAME = 'HomeIndex';
 const router = useRouter();
 const { tabsView, handleTabSelect, handleTabClose, handleTabAction } =
   useTabsView({ syncRoute: true });
+
+type BreadcrumbRoute = {
+  path: string;
+  breadcrumbName?: string;
+};
+
+/** 水印由当前登录用户派生，用户 Store 不反向修改布局状态。 */
+const waterMarkContent = computed(() => {
+  if (!userStore.user_nick) return appName;
+  return userStore.user_phone
+    ? `${userStore.user_nick} ${userStore.user_phone}`
+    : userStore.user_nick;
+});
 
 /**菜单面板 */
 const layoutState = reactive({
@@ -29,87 +41,81 @@ const layoutState = reactive({
   selectedKeys: ['/index'], // 选中高亮菜单key
 });
 
-/**监听路由变化改变菜单面板选项 */
+function isPathPrefix(menuPath: string, routePath: string) {
+  if (menuPath === routePath) return true;
+  return routePath.startsWith(
+    menuPath.endsWith('/') ? menuPath : `${menuPath}/`
+  );
+}
+
+function findNavigationTrail(
+  menus: MenuDataItem[],
+  routePath: string,
+  parentTrail: MenuDataItem[] = []
+): MenuDataItem[] | undefined {
+  for (const menu of menus) {
+    const trail = [...parentTrail, menu];
+    if (menu.path === routePath) return trail;
+
+    if (isPathPrefix(menu.path, routePath)) {
+      return (
+        findNavigationTrail(menu.children ?? [], routePath, trail) ?? trail
+      );
+    }
+  }
+  return undefined;
+}
+
+/** 侧边栏直接消费语义菜单，不再从 vue-router 记录反推。 */
+const navigationMenus = computed(() => {
+  const rootRoute = router.currentRoute.value.matched.find(
+    route => route.path === '/'
+  );
+  return rootRoute?.meta.navigation ?? [];
+});
+
+const navigationTrail = computed(() =>
+  findNavigationTrail(navigationMenus.value, router.currentRoute.value.path)
+);
+
+/**监听路由变化改变菜单面板选项；隐藏内嵌页高亮其上级可见页面。 */
 watch(
   router.currentRoute,
   v => {
-    const matched = v.matched.concat();
-    layoutState.openKeys = matched
-      .filter(r => r.path !== v.path)
-      .map(r => r.path);
-    layoutState.selectedKeys = matched
-      .filter(r => r.name !== 'Root')
-      .map(r => r.path);
-    // 路由地址含有内嵌地址标识又是隐藏菜单需要处理打开高亮菜单栏
-    if (v.path.includes(MENU_PATH_INLINE) && v.meta.hide_in_menu) {
-      const idx = v.path.lastIndexOf(MENU_PATH_INLINE);
-      layoutState.openKeys.splice(-1);
-      layoutState.selectedKeys[matched.length - 1] = v.path.slice(0, idx);
-    }
+    const trail = findNavigationTrail(navigationMenus.value, v.path) ?? [];
+    layoutState.openKeys = trail.slice(0, -1).map(item => item.path);
+    layoutState.selectedKeys = trail.at(-1)
+      ? [trail[trail.length - 1].path]
+      : [];
   },
   { immediate: true }
 );
 
-// 动态路由添加到菜单面板
-const rootRoute = router.getRoutes().find(r => r.name === 'Root');
-if (rootRoute) {
-  const children = routerStore.setRootRouterData(rootRoute.children);
-  const buildRouterData = routerStore.buildRouterData;
-  if (buildRouterData.length > 0) {
-    rootRoute.children = children.concat(buildRouterData);
-  } else {
-    rootRoute.children = children;
-  }
-}
-
-const { menuData } = getMenuData(clearMenuItem(router.getRoutes()));
-
 /**面包屑数据对象，排除根节点和首页不显示 */
-const breadcrumb = computed(() => {
-  const matched = router.currentRoute.value.matched.concat();
-  // 菜单中隐藏子节点不显示面包屑
-  if (matched.length == 2) {
-    const hide_child_in_menu = matched[0].meta?.hide_child_in_menu || false;
-    if (hide_child_in_menu) {
-      return [];
-    }
-  }
-  return matched
-    .filter(r => !['Root', 'Index'].includes(r.name as string))
-    .map(item => {
-      return {
-        path: item.path,
-        breadcrumbName: item.meta.title || '-',
-      };
+const breadcrumb = computed<BreadcrumbRoute[]>(() => {
+  const route = router.currentRoute.value;
+  const trail = navigationTrail.value ?? [];
+  const items = trail
+    .filter(item => item.path !== '/index')
+    .map(item => ({
+      path: item.path,
+      breadcrumbName: item.meta?.title || '-',
+    }));
+  const last = items[items.length - 1];
+
+  if (
+    (!last || last.path !== route.path) &&
+    route.path !== '/index' &&
+    route.path !== '/'
+  ) {
+    items.push({
+      path: route.path,
+      breadcrumbName: route.meta.title || '-',
     });
+  }
+  return items;
 });
 
-/**
- * 给页面组件设置路由名称
- *
- * 路由名称设为缓存key
- * @param component 页面组件
- * @param name 路由名称
- */
-function fnComponentSetName(component: any, to: any) {
-  if (component && component.type) {
-    // 通过路由取最后匹配的，确认是缓存的才处理
-    const matched = to.matched.concat();
-    const lastRoute = matched[matched.length - 1];
-    if (!lastRoute.meta.cache) return component;
-    const routeName = lastRoute.name;
-    const routeDef = lastRoute.components.default;
-    // 有命名但不是跳转的路由文件
-    const __name = component.type.__name;
-    if (__name && __name !== routeName) {
-      routeDef.name = routeName;
-      routeDef.__name = routeName;
-      Reflect.set(component, 'type', routeDef);
-      return component;
-    }
-  }
-  return component;
-}
 </script>
 
 <template>
@@ -118,14 +124,14 @@ function fnComponentSetName(component: any, to: any) {
       v-model:collapsed="layoutState.collapsed"
       v-model:selectedKeys="layoutState.selectedKeys"
       v-model:openKeys="layoutState.openKeys"
-      :menu-data="menuData"
+      :menu-data="navigationMenus"
       :breadcrumb="{ routes: breadcrumb }"
       v-bind="proConfig"
       :iconfont-url="scriptUrl"
     >
       <!--插槽-菜单头-->
       <template #menuHeaderRender>
-        <RouterLink :to="{ name: 'Index' }" :replace="true">
+        <RouterLink :to="{ name: HOME_ROUTE_NAME }" :replace="true">
           <img class="app-logo" src="@/assets/logo.png" />
           <h1>{{ appName }}</h1>
         </RouterLink>
@@ -167,10 +173,7 @@ function fnComponentSetName(component: any, to: any) {
       <RouterView v-slot="{ Component, route }">
         <transition name="slide-left" mode="out-in">
           <KeepAlive :include="tabsView.caches">
-            <component
-              :is="fnComponentSetName(Component, route)"
-              :key="route.path"
-            />
+            <component :is="Component" :key="route.path" />
           </KeepAlive>
         </transition>
       </RouterView>

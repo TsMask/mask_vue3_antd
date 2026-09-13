@@ -8,9 +8,9 @@ import {
   listDeptExcludeChild,
   updateDept,
 } from '@/api/system/dept';
-import { regExpMobile, regExpEmail } from '@/utils/regular-utils';
-import { parseDataToTree } from '@/utils/parse-tree-utils';
-import { isSuccess, type ResultType } from '@/plugins/http-fetch';
+import { regExpMobile, regExpEmail } from '@/utils/regular';
+import { parseDataToTree } from '@/utils/parseTree';
+import { isSuccess, type ResultType } from '@/plugins/httpFetch';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalForm } from '@/hooks/useModalForm';
 import { useModalAction } from '@/hooks/useModalAction';

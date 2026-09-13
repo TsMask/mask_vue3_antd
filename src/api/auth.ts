@@ -1,4 +1,4 @@
-import { request } from '@/plugins/http-fetch';
+import { request } from '@/plugins/httpFetch';
 
 /**
  * 登录方法
@@ -101,16 +101,15 @@ export function getInfo() {
 }
 
 /**
- * 获取路由
- * @returns object
+ * 获取登录用户语义化菜单树
  */
-export const getRouter = () => {
+export function getAuthMenus() {
   return request({
-    url: '/api/v1/auth/router',
+    url: '/api/v1/auth/menus',
     method: 'GET',
     timeout: 60_000,
   });
-};
+}
 
 /**
  * 获取验证码

@@ -1,4 +1,4 @@
-import { request } from '@/plugins/http-fetch';
+import { request } from '@/plugins/httpFetch';
 
 /**
  * 查询用户个人信息
@@ -6,7 +6,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function getUserProfile() {
   return request({
-    url: '/api/v1/system/user/profile',
+    url: '/api/v1/system/users/profile',
     method: 'GET',
   });
 }
@@ -18,7 +18,7 @@ export function getUserProfile() {
  */
 export function updateUserProfile(data: Record<string, any>) {
   return request({
-    url: '/api/v1/system/user/profile',
+    url: '/api/v1/system/users/profile',
     method: 'PUT',
     data: data,
   });
@@ -32,7 +32,7 @@ export function updateUserProfile(data: Record<string, any>) {
  */
 export function updateUserPassword(old_password: string, new_password: string) {
   return request({
-    url: '/api/v1/system/user/profile/password',
+    url: '/api/v1/system/users/profile/password',
     method: 'PUT',
     data: { old_password, new_password },
   });

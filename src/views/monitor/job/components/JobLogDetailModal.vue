@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
-import { parseDateToStr } from '@/utils/date-utils';
+import { parseDateToStr } from '@/utils/date';
 import { useDictSetup } from '@/hooks/useDictSetup';
 
 const { dict } = useDictSetup({

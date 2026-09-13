@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SystemInfoRecord } from '../types';
+import type { SystemInfoRecord } from '../systemInfo';
 
 defineProps<{
   time: SystemInfoRecord;

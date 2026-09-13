@@ -6,15 +6,15 @@ import {
   GlobalSearch,
   type SearchFlatItem,
 } from 'antdv-pro-layout';
-import { toggle, isFullscreen } from '@/utils/fullscreen-utils';
+import { toggle, isFullscreen } from '@/utils/fullscreen';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import useLayoutStore from '@/store/modules/layout';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
-import { logoutAuthSession } from '@/plugins/auth-session';
+import { useLayoutSettings } from '@/layouts/hooks/useLayoutSettings';
+import { logoutAuthSession } from '@/plugins/authSession';
 import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
-const { proConfig, changeConf } = useLayoutStore();
+const { proConfig, changeConfig } = useLayoutSettings();
 const userStore = useUserStore();
 const appStore = useAppStore();
 const router = useRouter();
@@ -24,7 +24,7 @@ const searchOpen = ref(false);
 function changeTheme(e: any) {
   viewTransitionTheme(isDarkMode => {
     const themeMode = isDarkMode ? 'light' : 'dark';
-    changeConf('theme', themeMode);
+    changeConfig('theme', themeMode);
   }, e);
 }
 
@@ -50,10 +50,10 @@ function handleSearchSelect(item: SearchFlatItem) {
 function handleAccountMenuClick({ key }: MenuInfo) {
   switch (key) {
     case 'settings':
-      router.push({ name: 'Settings' });
+      router.push({ name: 'AccountSettings' });
       break;
     case 'profile':
-      router.push({ name: 'Profile' });
+      router.push({ name: 'AccountProfile' });
       break;
     case 'logout':
       logoutAuthSession();

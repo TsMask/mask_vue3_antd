@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CacheOverview } from '../types';
+import type { CacheOverview } from '../cacheInfo';
 
 defineProps<{
   cache: CacheOverview;

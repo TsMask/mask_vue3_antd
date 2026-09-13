@@ -7,7 +7,7 @@ import {
   type ProColumnsSearch,
 } from 'antdv-pro-table';
 import { authUserList } from '@/api/system/role';
-import { parseDateToStr } from '@/utils/date-utils';
+import { parseDateToStr } from '@/utils/date';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import {
   toProValueEnum,

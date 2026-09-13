@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { onBeforeMount, onMounted, watch } from 'vue';
-import { storeToRefs } from 'pinia';
 import useAppStore from '@/store/modules/app';
-import useLayoutStore from '@/store/modules/layout';
+import { useLayoutSettings } from '@/layouts/hooks/useLayoutSettings';
 import { usePrefersColorScheme, viewTransitionTheme } from 'antdv-pro-layout';
 import { message } from 'ant-design-vue';
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
@@ -12,8 +11,7 @@ import 'dayjs/locale/zh-cn';
 dayjs.locale('zh-cn'); // 设置默认语言为中文
 
 const appStore = useAppStore();
-const layoutStore = useLayoutStore();
-const { themeConfig } = storeToRefs(layoutStore);
+const { themeConfig, initialize, changeConfig } = useLayoutSettings();
 const colorScheme = usePrefersColorScheme();
 
 /**
@@ -25,7 +23,7 @@ function initializeGlobalConfig() {
     duration: 3,
     maxCount: 15,
   });
-  layoutStore.initPrimaryColor();
+  initialize();
 }
 
 /**
@@ -33,7 +31,7 @@ function initializeGlobalConfig() {
  */
 function handleColorSchemeChange(themeMode: 'light' | 'dark') {
   viewTransitionTheme(() => {
-    layoutStore.changeConf('theme', themeMode);
+    changeConfig('theme', themeMode);
   });
 }
 
@@ -65,6 +63,17 @@ onMounted(logAppVersion);
 </template>
 
 <style lang="css">
+#app {
+  height: 100%;
+}
+
+body .ant-pro-basicLayout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+}
+
 .slide-left-enter-active,
 .slide-left-leave-active {
   transition-duration: 0.5s;

@@ -9,5 +9,9 @@ declare module 'vue-router' {
     permissions?: string[];
     /**角色 */
     roles?: string[];
+    /**布局导航树 */
+    navigation?: MenuDataItem[];
+    /**iframe 原始链接 */
+    href?: string;
   }
 }

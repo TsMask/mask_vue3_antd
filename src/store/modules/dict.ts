@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { getDictDataType } from '@/api/system/dict/data';
-import { RESULT_CODE_SUCCESS } from '@/constants/result-constants';
+import { RESULT_CODE_SUCCESS } from '@/constants/result';
 
 /**字典参数类型 */
 type DictStore = {

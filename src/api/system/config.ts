@@ -1,4 +1,4 @@
-import { request } from '@/plugins/http-fetch';
+import { request } from '@/plugins/httpFetch';
 
 /**
  * 参数配置列表导出
@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function exportConfig(query: Record<string, any>) {
   return request({
-    url: '/api/v1/system/config/export',
+    url: '/api/v1/system/configs/export',
     method: 'GET',
     params: query,
     responseType: 'blob',
@@ -21,7 +21,7 @@ export function exportConfig(query: Record<string, any>) {
  */
 export function listConfig(query: Record<string, any>) {
   return request({
-    url: '/api/v1/system/config/list',
+    url: '/api/v1/system/configs/list',
     method: 'GET',
     params: query,
   });
@@ -34,7 +34,7 @@ export function listConfig(query: Record<string, any>) {
  */
 export function getConfig(configId: string | number) {
   return request({
-    url: `/api/v1/system/config/${configId}`,
+    url: `/api/v1/system/configs/${configId}`,
     method: 'GET',
   });
 }
@@ -46,7 +46,7 @@ export function getConfig(configId: string | number) {
  */
 export function getConfigKey(config_key: string) {
   return request({
-    url: `/api/v1/system/config/config-key/${config_key}`,
+    url: `/api/v1/system/configs/config-key/${config_key}`,
     method: 'GET',
   });
 }
@@ -58,7 +58,7 @@ export function getConfigKey(config_key: string) {
  */
 export function addConfig(data: Record<string, any>) {
   return request({
-    url: '/api/v1/system/config',
+    url: '/api/v1/system/configs',
     method: 'POST',
     data: data,
   });
@@ -71,7 +71,7 @@ export function addConfig(data: Record<string, any>) {
  */
 export function updateConfig(data: Record<string, any>) {
   return request({
-    url: '/api/v1/system/config',
+    url: '/api/v1/system/configs',
     method: 'PUT',
     data: data,
   });
@@ -84,7 +84,7 @@ export function updateConfig(data: Record<string, any>) {
  */
 export function delConfig(configId: string | number) {
   return request({
-    url: `/api/v1/system/config/${configId}`,
+    url: `/api/v1/system/configs/${configId}`,
     method: 'DELETE',
   });
 }
@@ -95,7 +95,7 @@ export function delConfig(configId: string | number) {
  */
 export function refreshConfig() {
   return request({
-    url: '/api/v1/system/config/refresh',
+    url: '/api/v1/system/configs/refresh',
     method: 'PUT',
   });
 }

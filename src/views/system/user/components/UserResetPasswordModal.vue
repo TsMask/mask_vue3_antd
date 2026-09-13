@@ -3,7 +3,7 @@ import { reactive, ref } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
 import { Form, message } from 'ant-design-vue';
 import { resetPassword } from '@/api/system/user';
-import { regExpPassword } from '@/utils/regular-utils';
+import { regExpPassword } from '@/utils/regular';
 import { useModalAction } from '@/hooks/useModalAction';
 
 const visible = ref(false);

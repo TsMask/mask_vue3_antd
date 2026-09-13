@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { regExpMobile } from '@/utils/regular-utils';
+import { regExpMobile } from '@/utils/regular';
 
 defineProps<{
   counting: boolean;

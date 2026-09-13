@@ -3,7 +3,7 @@ import {
   regExpPassword,
   regExpUserName,
   validMobile,
-} from '@/utils/regular-utils';
+} from '@/utils/regular';
 
 const username = defineModel<string>('username', { required: true });
 const password = defineModel<string>('password', { required: true });

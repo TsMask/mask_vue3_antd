@@ -1,4 +1,4 @@
-import { request } from '@/plugins/http-fetch';
+import { request } from '@/plugins/httpFetch';
 
 /**
  * 定时任务调度列表导出
@@ -7,7 +7,7 @@ import { request } from '@/plugins/http-fetch';
  */
 export function exportJob(query: Record<string, any>) {
   return request({
-    url: '/api/v1/job/export',
+    url: '/api/v1/jobs/export',
     method: 'GET',
     params: query,
     responseType: 'blob',
@@ -21,7 +21,7 @@ export function exportJob(query: Record<string, any>) {
  */
 export function listJob(query: Record<string, any>) {
   return request({
-    url: '/api/v1/job/list',
+    url: '/api/v1/jobs/list',
     method: 'GET',
     params: query,
   });
@@ -34,7 +34,7 @@ export function listJob(query: Record<string, any>) {
  */
 export function getJob(id: string | number) {
   return request({
-    url: `/api/v1/job/${id}`,
+    url: `/api/v1/jobs/${id}`,
     method: 'GET',
   });
 }
@@ -46,7 +46,7 @@ export function getJob(id: string | number) {
  */
 export function addJob(data: Record<string, any>) {
   return request({
-    url: '/api/v1/job',
+    url: '/api/v1/jobs',
     method: 'POST',
     data: data,
   });
@@ -59,7 +59,7 @@ export function addJob(data: Record<string, any>) {
  */
 export function updateJob(data: Record<string, any>) {
   return request({
-    url: '/api/v1/job',
+    url: '/api/v1/jobs',
     method: 'PUT',
     data: data,
   });
@@ -72,7 +72,7 @@ export function updateJob(data: Record<string, any>) {
  */
 export function delJob(id: string | number) {
   return request({
-    url: `/api/v1/job/${id}`,
+    url: `/api/v1/jobs/${id}`,
     method: 'DELETE',
   });
 }
@@ -83,9 +83,12 @@ export function delJob(id: string | number) {
  * @param job_status 变更状态值
  * @returns
  */
-export function changeStatus(job_id: string | number, job_status: string | number) {
+export function changeStatus(
+  job_id: string | number,
+  job_status: string | number
+) {
   return request({
-    url: '/api/v1/job/status',
+    url: '/api/v1/jobs/status',
     method: 'PUT',
     data: {
       job_id,
@@ -101,7 +104,7 @@ export function changeStatus(job_id: string | number, job_status: string | numbe
  */
 export function runJob(id: string | number) {
   return request({
-    url: `/api/v1/job/run/${id}`,
+    url: `/api/v1/jobs/run/${id}`,
     method: 'PUT',
   });
 }
@@ -112,7 +115,7 @@ export function runJob(id: string | number) {
  */
 export function resetJob() {
   return request({
-    url: '/api/v1/job/reset',
+    url: '/api/v1/jobs/reset',
     method: 'PUT',
   });
 }

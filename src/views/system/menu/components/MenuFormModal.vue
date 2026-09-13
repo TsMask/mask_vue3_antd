@@ -2,16 +2,17 @@
 import { reactive, toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
 import { message } from 'ant-design-vue';
-import IconFont from '@/components/IconFont/index.vue';
+import IconFont from '@/components/IconFont/IconFont.vue';
 import { iconFonts } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import { addMenu, getMenu, updateMenu } from '@/api/system/menu';
-import { parseDateToStr } from '@/utils/date-utils';
+import { parseDateToStr } from '@/utils/date';
+import { validHttp } from '@/utils/regular';
 import {
-  MENU_PATH_INLINE,
   MENU_TYPE_DIR,
   MENU_TYPE_MENU,
   MENU_TYPE_AUTH,
-} from '@/constants/menu-constants';
+} from '@/constants/menu';
+import { viewComponentPaths } from '@/router/viewComponents';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalForm } from '@/hooks/useModalForm';
 import { useModalAction } from '@/hooks/useModalAction';
@@ -22,6 +23,12 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ success: [] }>();
 const icons = reactive(iconFonts.map(item => ({ value: item, label: item })));
+const menuComponentOptions = [
+  ...viewComponentPaths,
+].map(value => ({ value, label: value }));
+const menuComponentValues = new Set(
+  menuComponentOptions.map(item => item.value)
+);
 
 const { dict } = useDictSetup({
   keyMap: {
@@ -61,19 +68,60 @@ const { modal, formCtl, isView, openModal, closeModal } = useModalForm({
     ],
     menu_component: [
       { required: true, min: 1, max: 200, message: '请正确输入组件路径' },
+      {
+        validator: (
+          _rule: unknown,
+          value: string,
+          callback: (error?: Error) => void
+        ) => {
+          if (!menuComponentValues.has(value)) {
+            callback(new Error('组件路径必须与前端页面文件一致'));
+            return;
+          }
+          callback();
+        },
+      },
     ],
     menu_path: [
-      { required: true, min: 1, max: 200, message: '请正确输入路由地址' },
+      {
+        validator: (
+          _rule: unknown,
+          value: string,
+          callback: (error?: Error) => void
+        ) => {
+          if (modal.form.menu_type === MENU_TYPE_AUTH || validHttp(value)) {
+            callback();
+            return;
+          }
+          if (!value.startsWith('/') || /\s/.test(value)) {
+            callback(new Error('普通路由地址必须以 / 开头'));
+            return;
+          }
+          callback();
+        },
+      },
     ],
     menu_perms: [
-      { required: true, min: 1, max: 100, message: '请正确输入权限标识' },
+      {
+        validator: (
+          _rule: unknown,
+          value: string,
+          callback: (error?: Error) => void
+        ) => {
+          if (modal.form.menu_type === MENU_TYPE_AUTH && !value) {
+            callback(new Error('按钮权限必须填写权限标识'));
+            return;
+          }
+          callback();
+        },
+      },
     ],
   },
 });
 
 const { executeAction, loading: submitting } = useModalAction();
 
-/** 上级菜单决定子菜单默认类型：目录下是菜单，菜单下是权限。 */
+/** 上级菜单决定子菜单默认类型：目录下是页面，页面下可挂权限或隐藏内嵌页。 */
 function handleTreeDataChange(value: string | number) {
   if (!value) return;
   const menu = props.menuList.find(item => item.id === value);
@@ -83,7 +131,7 @@ function handleTreeDataChange(value: string | number) {
     modal.form.menu_type = MENU_TYPE_MENU;
   }
   if (menu.menu_type === MENU_TYPE_MENU) {
-    modal.form.menu_type = MENU_TYPE_AUTH;
+    modal.form.menu_type = MENU_TYPE_MENU;
   }
   modal.form.parentType = menu.menu_type;
 }
@@ -249,7 +297,6 @@ defineExpose({ openView, openEdit });
           <a-radio
             :key="MENU_TYPE_MENU"
             :value="MENU_TYPE_MENU"
-            :disabled="modal.form.parentType === MENU_TYPE_MENU"
           >
             菜单
           </a-radio>
@@ -298,18 +345,17 @@ defineExpose({ openView, openEdit });
                   <a-tooltip placement="topLeft">
                     <template #title>
                       <div>
-                        访问的路由地址，如：user、/auth
+                        访问的完整路由地址，如：/system/users
                         <br />
                         1. 如网络地址需内部访问<br />则以 http(s):// 开头
                         <br />菜单行为（根节点）：当前窗口打开
                         <br />菜单行为（非根节点）：内嵌窗口
                         <br />
-                        2. 如网络地址需外部访问<br />则将是否外链选项设为否
+                        2. 如网络地址需外部访问<br />则将是否外链选项设为是
                         <br />菜单行为：打开新标签
                         <br />
-                        3. 如内嵌子页面需要隐藏页面<br />则将显示状态选项设为隐藏
-                        <br />地址拼接以内嵌路由地址
-                        {{ MENU_PATH_INLINE }}/子页面地址
+                        3. 隐藏内嵌页同样填写完整地址<br />例如：
+                        /system/roles/inline/users/:roleId
                       </div>
                     </template>
                     <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />
@@ -339,7 +385,7 @@ defineExpose({ openView, openEdit });
             />
           </a-form-item>
         </a-col>
-        <template v-if="modal.form.menu_type === MENU_TYPE_MENU">
+        <template v-if="modal.form.menu_type !== MENU_TYPE_AUTH">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="是否外链" name="menu_external">
               <a-select
@@ -352,6 +398,8 @@ defineExpose({ openView, openEdit });
               </a-select>
             </a-form-item>
           </a-col>
+        </template>
+        <template v-if="modal.form.menu_type === MENU_TYPE_MENU">
           <a-col :lg="12" :md="12" :xs="24">
             <a-form-item label="页面缓存" name="menu_cache">
               <a-select
@@ -372,28 +420,19 @@ defineExpose({ openView, openEdit });
         v-bind="formCtl.validateInfos.menu_component"
         :label-col="{ span: 3 }"
         :label-wrap="true"
-        v-if="modal.form.menu_type === MENU_TYPE_MENU"
+        v-if="
+          modal.form.menu_type === MENU_TYPE_MENU &&
+          !validHttp(modal.form.menu_path)
+        "
       >
-        <a-input
+        <a-select
           v-model:value="modal.form.menu_component"
           allow-clear
-          placeholder="请输入组件路径"
-          :maxlength="200"
-        >
-          <template #prefix>
-            <a-tooltip placement="topLeft">
-              <template #title>
-                <div>
-                  页面组件目录 views <br />
-                  访问的组件路径,如：system/user/index <br />
-                  注意：不带 .vue 文件后缀 <br />
-                  路由地址是网络地址可填入链接
-                </div>
-              </template>
-              <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />
-            </a-tooltip>
-          </template>
-        </a-input>
+          placeholder="请选择前端存在的页面组件"
+          show-search
+          option-filter-prop="label"
+          :options="menuComponentOptions"
+        />
       </a-form-item>
       <a-form-item
         label="权限标识"
@@ -412,7 +451,7 @@ defineExpose({ openView, openEdit });
           <template #prefix>
             <a-tooltip placement="topLeft">
               <template #title>
-                <div>权限标识示例：monitor:server:query</div>
+                <div>权限标识示例：monitor:cache:query</div>
               </template>
               <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />
             </a-tooltip>

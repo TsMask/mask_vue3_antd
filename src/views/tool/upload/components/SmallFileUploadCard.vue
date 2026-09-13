@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { message } from 'ant-design-vue';
 import type { FileType } from 'ant-design-vue/es/upload/interface';
 import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface';
+import defaultPreview from '@/assets/logo.png';
 import { uploadFile } from '@/api/tool/file';
 import { useModalAction } from '@/hooks/useModalAction';
 
@@ -10,7 +11,7 @@ const emit = defineEmits<{
   success: [fileInfo: { url: string; filePath: string }];
 }>();
 
-const previewPath = ref('/src/assets/logo.png');
+const previewPath = ref(defaultPreview);
 const { confirmAction, loading: uploading } = useModalAction();
 
 /** 小文件示例仅允许 jpg/png，且上传前限制并发 */

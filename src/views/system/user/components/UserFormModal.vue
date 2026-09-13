@@ -9,8 +9,8 @@ import {
   regExpNick,
   regExpEmail,
   regExpUserName,
-} from '@/utils/regular-utils';
-import { parseDateToStr } from '@/utils/date-utils';
+} from '@/utils/regular';
+import { parseDateToStr } from '@/utils/date';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalForm } from '@/hooks/useModalForm';
 import { useModalAction } from '@/hooks/useModalAction';

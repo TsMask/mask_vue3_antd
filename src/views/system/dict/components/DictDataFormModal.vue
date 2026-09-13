@@ -3,7 +3,7 @@ import { toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
 import { message } from 'ant-design-vue';
 import { addData, getData, updateData } from '@/api/system/dict/data';
-import { parseDateToStr } from '@/utils/date-utils';
+import { parseDateToStr } from '@/utils/date';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalForm } from '@/hooks/useModalForm';
 import { useModalAction } from '@/hooks/useModalAction';

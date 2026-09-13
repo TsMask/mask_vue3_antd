@@ -2,8 +2,8 @@ import {
   RESULT_CODE_SUCCESS,
   RESULT_CODE_EXCEPTION,
   RESULT_MSG_SUCCESS,
-} from '@/constants/result-constants';
-import { request, isSuccess, type ResultType } from '@/plugins/http-fetch';
+} from '@/constants/result';
+import { request, isSuccess, type ResultType } from '@/plugins/httpFetch';
 import { encode } from 'js-base64';
 
 /**
@@ -26,7 +26,7 @@ export async function downloadFile(
   range?: string
 ): Promise<ResultType> {
   return request({
-    url: `/api/v1/file/download/${encode(filePath)}`,
+    url: `/api/v1/files/download/${encode(filePath)}`,
     method: 'GET',
     headers: range ? { range } : {},
     responseType: 'blob',
@@ -130,7 +130,7 @@ export async function downloadFileChunk(
  */
 export function uploadFile(data: FormData): Promise<ResultType> {
   return request({
-    url: '/api/v1/file/upload',
+    url: '/api/v1/files/upload',
     method: 'POST',
     data,
     dataType: 'form-data',
@@ -219,7 +219,7 @@ export function chunkCheck(
   file_name: string
 ): Promise<ResultType> {
   return request({
-    url: '/api/v1/file/chunk-check',
+    url: '/api/v1/files/chunk-check',
     method: 'POST',
     data: { identifier, file_name },
   });
@@ -239,7 +239,7 @@ export function chunkMerge(
   sub_path: string = 'default'
 ): Promise<ResultType> {
   return request({
-    url: '/api/v1/file/chunk-merge',
+    url: '/api/v1/files/chunk-merge',
     method: 'POST',
     data: { identifier, file_name, sub_path },
   });
@@ -253,7 +253,7 @@ export function chunkMerge(
  */
 export function chunkUpload(data: FormData): Promise<ResultType> {
   return request({
-    url: '/api/v1/file/chunk-upload',
+    url: '/api/v1/files/chunk-upload',
     method: 'POST',
     data,
     dataType: 'form-data',

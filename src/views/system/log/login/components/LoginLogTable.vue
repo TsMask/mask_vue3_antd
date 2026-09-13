@@ -5,7 +5,7 @@ import {
   type ProColumns,
   type ProColumnsSearch,
 } from 'antdv-pro-table';
-import { parseDateToStr } from '@/utils/date-utils';
+import { parseDateToStr } from '@/utils/date';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { toProValueEnum, useProTableScroll } from '@/hooks/useProTable';
 
@@ -143,7 +143,7 @@ function handleReload() {
           type="dashed"
           danger
           @click.prevent="emit('clean')"
-          v-perms:has="['system:log:login:remove']"
+          v-perms:has="['system:login:log:remove']"
         >
           <template #icon>
             <DeleteOutlined />
@@ -153,7 +153,7 @@ function handleReload() {
         <a-button
           type="dashed"
           @click.prevent="emit('export')"
-          v-perms:has="['system:log:login:export']"
+          v-perms:has="['system:login:log:export']"
         >
           <template #icon>
             <ExportOutlined />

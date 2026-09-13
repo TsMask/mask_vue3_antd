@@ -6,9 +6,9 @@ import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface'
 import { uploadFile } from '@/api/tool/file';
 import { updateUserProfile } from '@/api/profile';
 import { useDictSetup } from '@/hooks/useDictSetup';
-import { isSuccess } from '@/plugins/http-fetch';
+import { isSuccess } from '@/plugins/httpFetch';
 import useUserStore from '@/store/modules/user';
-import { regExpEmail, regExpMobile, regExpNick } from '@/utils/regular-utils';
+import { regExpEmail, regExpMobile, regExpNick } from '@/utils/regular';
 
 const userStore = useUserStore();
 const { dict } = useDictSetup({

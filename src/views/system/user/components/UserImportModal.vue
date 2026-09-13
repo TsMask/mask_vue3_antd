@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
 import { message } from 'ant-design-vue';
-import UploadModal from '@/components/UploadModal/index.vue';
+import UploadModal from '@/components/UploadModal/UploadModal.vue';
 import { importData, importTemplate } from '@/api/system/user';
 import { uploadFile } from '@/api/tool/file';
 import { saveAs } from 'file-saver';
-import { isSuccess } from '@/plugins/http-fetch';
+import { isSuccess } from '@/plugins/httpFetch';
 
 const emit = defineEmits<{ imported: [] }>();
 const importState = reactive({
