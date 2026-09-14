@@ -7,7 +7,7 @@ import {
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 import { refreshToken } from '@/api/auth';
-import { getAccessToken } from '@/plugins/authToken';
+import { getAccessToken } from '@/utils/tokenStorage';
 import {
   ensureAccessToken,
   setupHttpTokenRefresh,

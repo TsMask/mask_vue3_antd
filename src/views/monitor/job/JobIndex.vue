@@ -18,7 +18,7 @@ import {
 } from '@/api/monitor/job';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date';
-import { hasPermissions } from '@/plugins/authUser';
+import { hasPermissions } from '@/utils/authAccess';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalAction } from '@/hooks/useModalAction';
 import {

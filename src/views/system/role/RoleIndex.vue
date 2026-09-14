@@ -11,7 +11,7 @@ import RoleFormModal from './components/RoleFormModal.vue';
 import RoleDataScopeModal from './components/RoleDataScopeModal.vue';
 import { exportRole, changeStatus, delRole, listRole } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date';
-import { hasPermissions } from '@/plugins/authUser';
+import { hasPermissions } from '@/utils/authAccess';
 import { saveAs } from 'file-saver';
 import { SYS_ROLE_SYSTEM_ID } from '@/constants/system';
 import { useDictSetup } from '@/hooks/useDictSetup';

@@ -5,7 +5,7 @@ import {
   getRefreshToken,
   setAccessToken,
   setRefreshToken,
-} from '@/plugins/authToken';
+} from '@/utils/tokenStorage';
 import { sessionGetJSON, sessionSetJSON } from '@/utils/cacheSession';
 import { TOKEN_KEY, TOKEN_KEY_PREFIX } from '@/constants/token';
 import { CACHE_SESSION_FETCH } from '@/constants/cacheKeys';

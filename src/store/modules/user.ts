@@ -10,7 +10,7 @@ import {
   delRefreshToken,
   setAccessToken,
   setRefreshToken,
-} from '@/plugins/authToken';
+} from '@/utils/tokenStorage';
 import { defineStore } from 'pinia';
 import { validHttp } from '@/utils/regular';
 import { RESULT_CODE_SUCCESS } from '@/constants/result';

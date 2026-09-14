@@ -14,7 +14,7 @@ import {
   clearCacheKey,
   clearCacheSafe,
 } from '@/api/monitor/cache';
-import { hasPermissions } from '@/plugins/authUser';
+import { hasPermissions } from '@/utils/authAccess';
 import { isSuccess } from '@/plugins/httpFetch';
 import { useModalAction } from '@/hooks/useModalAction';
 import { useProTable } from '@/hooks/useProTable';

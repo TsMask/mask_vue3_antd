@@ -1,4 +1,4 @@
-import { hasRoles, matchRoles } from '@/plugins/authUser';
+import { hasRoles, matchRoles } from '@/utils/authAccess';
 import type { DirectiveBinding, ObjectDirective } from 'vue';
 import { setDirectiveVisible, type AuthDirectiveArg } from './visible';
 
