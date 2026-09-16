@@ -1,4 +1,4 @@
-import { request } from '@/plugins/httpFetch';
+import { request } from '@/api/httpClient';
 
 /**
  * 登录日志列表导出

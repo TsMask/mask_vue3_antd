@@ -10,7 +10,7 @@ import {
   type UseRowSelectionReturn,
 } from 'antdv-pro-table';
 import { computed, toValue, type MaybeRefOrGetter } from 'vue';
-import { isSuccess, type ResultType } from '@/plugins/httpFetch';
+import { isSuccess, type ResultType } from '@/api/httpClient';
 
 type ProTableQueryFn = (params: Record<string, any>) => Promise<ResultType>;
 

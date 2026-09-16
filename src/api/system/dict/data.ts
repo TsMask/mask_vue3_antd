@@ -1,4 +1,4 @@
-import { request } from '@/plugins/httpFetch';
+import { request } from '@/api/httpClient';
 
 /**
  * 字典数据列表导出

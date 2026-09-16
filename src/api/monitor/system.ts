@@ -1,4 +1,4 @@
-import { request } from '@/plugins/httpFetch';
+import { request } from '@/api/httpClient';
 
 /**服务器服务信息 */
 export function getSystemInfo() {

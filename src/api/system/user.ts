@@ -1,4 +1,4 @@
-import { request } from '@/plugins/httpFetch';
+import { request } from '@/api/httpClient';
 
 /**
  * 导入用户模板数据

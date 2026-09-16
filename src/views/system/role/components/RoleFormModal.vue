@@ -11,7 +11,7 @@ import {
   parseTreeNodeKeysByChecked,
 } from '@/utils/parseTree';
 import { parseDateToStr } from '@/utils/date';
-import { isSuccess, type ResultType } from '@/plugins/httpFetch';
+import { isSuccess, type ResultType } from '@/api/httpClient';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalForm } from '@/hooks/useModalForm';
 import { useModalAction } from '@/hooks/useModalAction';

@@ -3,7 +3,7 @@ import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Modal, message } from 'ant-design-vue';
 import { updateUserPassword } from '@/api/profile';
-import { isSuccess } from '@/plugins/httpFetch';
+import { isSuccess } from '@/api/httpClient';
 import useUserStore from '@/store/modules/user';
 import { regExpPassword } from '@/utils/regular';
 const userStore = useUserStore();

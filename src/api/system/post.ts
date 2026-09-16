@@ -1,4 +1,4 @@
-import { request } from '@/plugins/httpFetch';
+import { request } from '@/api/httpClient';
 
 /**
  * 岗位列表导出

@@ -6,7 +6,7 @@ import CacheBasicInfoCard from './components/CacheBasicInfoCard.vue';
 import CacheCommandStatsChart from './components/CacheCommandStatsChart.vue';
 import type { CacheOverview } from './cacheInfo';
 import { getCache } from '@/api/monitor/cache';
-import { isSuccess } from '@/plugins/httpFetch';
+import { isSuccess } from '@/api/httpClient';
 
 const route = useRoute();
 const title = ref<string>(route.meta.title ?? '标题');

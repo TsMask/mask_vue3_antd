@@ -8,7 +8,7 @@ import {
   lookupPasswordReset,
   resetPasswordByEmailOrPhone,
 } from '@/api/auth';
-import { isSuccess } from '@/plugins/httpFetch';
+import { isSuccess } from '@/api/httpClient';
 import { useRouter } from 'vue-router';
 import LoginHeader from '../login/components/LoginHeader.vue';
 import LoginFooter from '../login/components/LoginFooter.vue';

@@ -6,7 +6,7 @@ import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface'
 import { uploadFile } from '@/api/tool/file';
 import { updateUserProfile } from '@/api/profile';
 import { useDictSetup } from '@/hooks/useDictSetup';
-import { isSuccess } from '@/plugins/httpFetch';
+import { isSuccess } from '@/api/httpClient';
 import useUserStore from '@/store/modules/user';
 import { regExpEmail, regExpMobile, regExpNick } from '@/utils/regular';
 

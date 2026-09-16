@@ -6,7 +6,7 @@ import {
 } from 'antdv-pro-layout';
 import LinkLayout from '@/layouts/LinkLayout.vue';
 import { getAuthMenus } from '@/api/auth';
-import { isSuccess } from '@/plugins/httpFetch';
+import { isSuccess } from '@/api/httpClient';
 import { findViewModule } from './viewComponents';
 import { staticRoutes } from './staticRoutes';
 

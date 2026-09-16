@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { message } from 'ant-design-vue';
 import saveAs from 'file-saver';
 import { downloadFile, downloadFileChunk } from '@/api/tool/file';
-import { isSuccess } from '@/plugins/httpFetch';
+import { isBinaryResult, isSuccess } from '@/api/httpClient';
 
 const props = defineProps<{
   filePath: string;
@@ -42,7 +42,7 @@ async function handleDownload(chunked: boolean) {
       : downloadFile(downloadFilePath.value);
     const res = await request;
 
-    if (isSuccess(res)) {
+    if (isSuccess(res) && isBinaryResult<Blob>(res)) {
       message.success({ content: '已完成下载', duration: 3 });
       saveAs(res.data, getFileName(downloadFilePath.value));
     } else {

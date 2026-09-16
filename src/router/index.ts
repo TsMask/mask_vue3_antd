@@ -11,7 +11,7 @@ import { getAccessToken } from '@/utils/tokenStorage';
 import {
   ensureAccessToken,
   setupHttpTokenRefresh,
-} from '@/plugins/httpFetch';
+} from '@/api/httpClient';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
 import { HOME_PATH } from '@/constants/router';

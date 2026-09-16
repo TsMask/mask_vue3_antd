@@ -6,7 +6,7 @@ import background from '@/assets/background.svg';
 import useUserStore from '@/store/modules/user';
 import { getCaptchaImage, getCaptchaSMS } from '@/api/auth';
 import { validMobile } from '@/utils/regular';
-import { isSuccess } from '@/plugins/httpFetch';
+import { isSuccess } from '@/api/httpClient';
 import { HOME_PATH } from '@/constants/router';
 import { useRouter, useRoute } from 'vue-router';
 import LoginHeader from './components/LoginHeader.vue';

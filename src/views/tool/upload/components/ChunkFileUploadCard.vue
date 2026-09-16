@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import type { UploadFile } from 'ant-design-vue/es/upload/interface';
 import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface';
 import { uploadFileChunk } from '@/api/tool/file';
-import { isSuccess } from '@/plugins/httpFetch';
+import { isSuccess } from '@/api/httpClient';
 import { useModalAction } from '@/hooks/useModalAction';
 
 const emit = defineEmits<{

@@ -5,7 +5,7 @@ import UploadModal from '@/components/UploadModal/UploadModal.vue';
 import { importData, importTemplate } from '@/api/system/user';
 import { uploadFile } from '@/api/tool/file';
 import { saveAs } from 'file-saver';
-import { isSuccess } from '@/plugins/httpFetch';
+import { isSuccess } from '@/api/httpClient';
 
 const emit = defineEmits<{ imported: [] }>();
 const importState = reactive({

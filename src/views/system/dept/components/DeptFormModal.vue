@@ -10,7 +10,7 @@ import {
 } from '@/api/system/dept';
 import { regExpMobile, regExpEmail } from '@/utils/regular';
 import { parseDataToTree } from '@/utils/parseTree';
-import { isSuccess, type ResultType } from '@/plugins/httpFetch';
+import { isSuccess, type ResultType } from '@/api/httpClient';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalForm } from '@/hooks/useModalForm';
 import { useModalAction } from '@/hooks/useModalAction';

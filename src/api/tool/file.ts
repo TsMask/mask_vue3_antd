@@ -3,7 +3,13 @@ import {
   RESULT_CODE_EXCEPTION,
   RESULT_MSG_SUCCESS,
 } from '@/constants/result';
-import { request, isSuccess, type ResultType } from '@/plugins/httpFetch';
+import {
+  isBinaryResult,
+  isSuccess,
+  parseContentRange,
+  request,
+  type ResultType,
+} from '@/api/httpClient';
 import { encode } from 'js-base64';
 
 /**
@@ -24,11 +30,11 @@ export type ProgressCallback = (percent: number) => void;
 export async function downloadFile(
   filePath: string,
   range?: string
-): Promise<ResultType> {
-  return request({
+): Promise<ResultType<Blob>> {
+  return request<Blob>({
     url: `/api/v1/files/download/${encode(filePath)}`,
     method: 'GET',
-    headers: range ? { range } : {},
+    headers: range ? { range } : undefined,
     responseType: 'blob',
   });
 }
@@ -48,12 +54,10 @@ export async function downloadFileChunk(
   filePath: string,
   chunkSizeMB: number = 1,
   onProgress?: ProgressCallback
-): Promise<ResultType> {
+): Promise<ResultType<Blob>> {
   const chunkSizeBytes = chunkSizeMB * 1024 * 1024;
   let start = 0;
   let end = chunkSizeBytes - 1;
-  let totalSize = 0;
-  let downloadedSize = 0;
   const fileParts: Blob[] = [];
 
   // 循环发送 Range 请求，直到下载完整文件
@@ -67,7 +71,13 @@ export async function downloadFileChunk(
       return res;
     }
 
-    // 服务端未返回 206 Partial Content，说明不支持 Range 或文件不存在
+    if (!isBinaryResult<Blob>(res)) {
+      return {
+        code: RESULT_CODE_EXCEPTION,
+        msg: '服务端未返回有效的文件数据',
+      };
+    }
+
     if (res.status !== 206) {
       return {
         code: RESULT_CODE_EXCEPTION,
@@ -75,42 +85,30 @@ export async function downloadFileChunk(
       };
     }
 
-    // 解析 Content-Range 获取文件总大小: bytes 0-1023/4096
-    const contentRange = (res.headers?.get('content-range') as string) || '';
-    const contentRangeTotal = contentRange.split('/')[1];
-    const parsedTotal = contentRangeTotal ? parseInt(contentRangeTotal, 10) : 0;
-    if (!parsedTotal || parsedTotal <= 0) {
+    const contentRange = parseContentRange(res);
+    if (!contentRange) {
       return {
         code: RESULT_CODE_EXCEPTION,
         msg: '服务端未返回有效的 Content-Range 头',
       };
     }
-    totalSize = parsedTotal;
 
-    // 当前片的实际字节数
-    const contentLength = parseInt(
-      (res.headers?.get('content-length') as string) || '0',
-      10
-    );
-    if (!contentLength || contentLength <= 0) {
+    const { start: rangeStart, end: rangeEnd, total } = contentRange;
+    if (rangeStart !== start || rangeEnd >= total) {
       return {
         code: RESULT_CODE_EXCEPTION,
-        msg: '服务端返回空数据块，无法继续下载',
+        msg: '服务端返回的分片区间无效',
       };
     }
 
-    fileParts.push(res.data as Blob);
-    downloadedSize += contentLength;
+    fileParts.push(res.data);
+    const downloadedSize = rangeEnd + 1;
+    onProgress?.(Math.min(100, Math.round((downloadedSize / total) * 100)));
 
-    // 回调进度（钳制到 0-100）
-    onProgress?.(Math.min(100, Math.round((downloadedSize / totalSize) * 100)));
+    if (downloadedSize >= total) break;
 
-    // 已下载完毕
-    if (downloadedSize >= totalSize) break;
-
-    // 计算下一片的字节区间
-    start += contentLength;
-    end = Math.min(start + contentLength - 1, totalSize - 1);
+    start = rangeEnd + 1;
+    end = Math.min(start + chunkSizeBytes - 1, total - 1);
   }
 
   return {

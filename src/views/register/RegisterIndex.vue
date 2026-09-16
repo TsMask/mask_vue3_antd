@@ -10,7 +10,7 @@ import {
   getCaptchaSMS,
 } from '@/api/auth';
 import { validMobile } from '@/utils/regular';
-import { isSuccess } from '@/plugins/httpFetch';
+import { isSuccess } from '@/api/httpClient';
 import { useRouter } from 'vue-router';
 import RegisterHeader from './components/RegisterHeader.vue';
 import RegisterAccountFields from './components/RegisterAccountFields.vue';

@@ -9,7 +9,7 @@ import SystemRuntimeInfoCard from './components/SystemRuntimeInfoCard.vue';
 import SystemServerInfoCard from './components/SystemServerInfoCard.vue';
 import { createEmptySystemInfo, type SystemInfo } from './systemInfo';
 import { getSystemInfo } from '@/api/monitor/system';
-import { isSuccess } from '@/plugins/httpFetch';
+import { isSuccess } from '@/api/httpClient';
 
 const route = useRoute();
 const title = ref<string>(route.meta.title ?? '标题');

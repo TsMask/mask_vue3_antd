@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue';
 import { message } from 'ant-design-vue';
 import { PageContainer } from 'antdv-pro-layout';
 import { getUserProfile } from '@/api/profile';
-import { isSuccess } from '@/plugins/httpFetch';
+import { isSuccess } from '@/api/httpClient';
 import useUserStore from '@/store/modules/user';
 import AccountProfileCard from './components/AccountProfileCard.vue';
 import AccountProfileTabs from './components/AccountProfileTabs.vue';
