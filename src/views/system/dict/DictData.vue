@@ -9,8 +9,12 @@ import {
   type ProColumnsSearch,
 } from 'antdv-pro-table';
 import DictDataFormModal from './components/DictDataFormModal.vue';
-import { exportData, listData, delData } from '@/api/system/dict/data';
-import { getDictOption, getType } from '@/api/system/dict/type';
+import {
+  exportDictData,
+  listDictData,
+  delDictData,
+} from '@/api/system/dict/data';
+import { getDictOption, getDictType } from '@/api/system/dict/type';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date';
 import { useTabsView } from '@/layouts/hooks/useTabsView';
@@ -54,7 +58,7 @@ const {
   selectedRowKeys,
   removeSelectedRowKeys,
 } = useProTable({
-  queryFn: listData,
+  queryFn: listDictData,
   defaultPageSize: 20,
   manual: true,
   rowKey: 'id',
@@ -146,7 +150,7 @@ function handleDelete(id: string = '0') {
   }
   confirmAction({
     content: `确认删除字典数据编号为【${id}】的数据项?`,
-    action: () => delData(id),
+    action: () => delDictData(id),
     successText: '删除成功',
     onSuccess() {
       removeSelectedRowKeys(String(id).split(',').map(Number));
@@ -160,7 +164,7 @@ function handleExport() {
   confirmAction({
     content: '确认根据搜索条件导出数据文件吗',
     action: () =>
-      exportData({
+      exportDictData({
         ...toRaw(searchValues.value),
         page_num: current.value,
         page_size: pageSize.value,
@@ -187,7 +191,7 @@ onMounted(async () => {
     dictTypeOptions.value = optRes.data;
   }
   if (lockedDictType.value) {
-    const res = await getType(routeDictId);
+    const res = await getDictType(routeDictId);
     if (isSuccess(res) && res.data) {
       defaultDictType.value = res.data.dict_type;
     } else {

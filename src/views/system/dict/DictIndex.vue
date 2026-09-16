@@ -9,9 +9,9 @@ import {
 } from 'antdv-pro-table';
 import DictTypeFormModal from './components/DictTypeFormModal.vue';
 import {
-  exportType,
-  listType,
-  delType,
+  exportDictType,
+  listDictType,
+  delDictType,
   refreshCache,
 } from '@/api/system/dict/type';
 import { saveAs } from 'file-saver';
@@ -49,7 +49,7 @@ const {
   selectedRowKeys,
   removeSelectedRowKeys,
 } = useProTable({
-  queryFn: listType,
+  queryFn: listDictType,
   defaultPageSize: 20,
   rowKey: 'id',
 });
@@ -126,7 +126,7 @@ function handleDelete(id: string = '0') {
   }
   confirmAction({
     content: `确认删除字典编号为【${id}】的数据项?`,
-    action: () => delType(id),
+    action: () => delDictType(id),
     successText: '删除成功',
     onSuccess() {
       removeSelectedRowKeys(String(id).split(',').map(Number));
@@ -140,7 +140,7 @@ function handleExport() {
   confirmAction({
     content: '确认根据搜索条件导出数据文件吗',
     action: () => {
-      return exportType({
+      return exportDictType({
         ...toRaw(searchValues.value),
         page_num: current.value,
         page_size: pageSize.value,

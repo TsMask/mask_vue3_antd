@@ -5,7 +5,7 @@ import { request } from '@/api/httpClient';
  * @param query 查询参数
  * @returns bolb
  */
-export function exportType(query: Record<string, any>) {
+export function exportDictType(query: Record<string, any>) {
   return request({
     url: '/api/v1/system/dict/types/export',
     method: 'GET',
@@ -19,7 +19,7 @@ export function exportType(query: Record<string, any>) {
  * @param query 查询值
  * @returns
  */
-export function listType(query: Record<string, any>) {
+export function listDictType(query: Record<string, any>) {
   return request({
     url: '/api/v1/system/dict/types/list',
     method: 'GET',
@@ -32,7 +32,7 @@ export function listType(query: Record<string, any>) {
  * @param dict_id 字典编号
  * @returns object
  */
-export function getType(dict_id: string | number) {
+export function getDictType(dict_id: string | number) {
   return request({
     url: `/api/v1/system/dict/types/${dict_id}`,
     method: 'GET',
@@ -44,7 +44,7 @@ export function getType(dict_id: string | number) {
  * @param data 字典数据对象
  * @returns object
  */
-export function addType(data: Record<string, any>) {
+export function addDictType(data: Record<string, any>) {
   return request({
     url: '/api/v1/system/dict/types',
     method: 'POST',
@@ -57,7 +57,7 @@ export function addType(data: Record<string, any>) {
  * @param data 字典数据对象
  * @returns object
  */
-export function updateType(data: Record<string, any>) {
+export function updateDictType(data: Record<string, any>) {
   return request({
     url: '/api/v1/system/dict/types',
     method: 'PUT',
@@ -70,7 +70,7 @@ export function updateType(data: Record<string, any>) {
  * @param dataId 字典代码值
  * @returns object
  */
-export function delType(dict_id: string | number) {
+export function delDictType(dict_id: string | number) {
   return request({
     url: `/api/v1/system/dict/types/${dict_id}`,
     method: 'DELETE',

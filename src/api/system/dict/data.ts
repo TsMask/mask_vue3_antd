@@ -5,7 +5,7 @@ import { request } from '@/api/httpClient';
  * @param query 查询参数
  * @returns bolb
  */
-export function exportData(query: Record<string, any>) {
+export function exportDictData(query: Record<string, any>) {
   return request({
     url: '/api/v1/system/dict/datas/export',
     method: 'GET',
@@ -19,7 +19,7 @@ export function exportData(query: Record<string, any>) {
  * @param query 查询值
  * @returns
  */
-export function listData(query: Record<string, any>) {
+export function listDictData(query: Record<string, any>) {
   return request({
     url: '/api/v1/system/dict/datas/list',
     method: 'GET',
@@ -32,7 +32,7 @@ export function listData(query: Record<string, any>) {
  * @param dataId 字典代码值
  * @returns object
  */
-export function getData(dataId: string | number) {
+export function getDictData(dataId: string | number) {
   return request({
     url: `/api/v1/system/dict/datas/${dataId}`,
     method: 'GET',
@@ -44,7 +44,7 @@ export function getData(dataId: string | number) {
  * @param data 字典数据对象
  * @returns object
  */
-export function addData(data: Record<string, any>) {
+export function addDictData(data: Record<string, any>) {
   return request({
     url: '/api/v1/system/dict/datas',
     method: 'POST',
@@ -57,7 +57,7 @@ export function addData(data: Record<string, any>) {
  * @param data 字典数据对象
  * @returns object
  */
-export function updateData(data: Record<string, any>) {
+export function updateDictData(data: Record<string, any>) {
   return request({
     url: '/api/v1/system/dict/datas',
     method: 'PUT',
@@ -70,7 +70,7 @@ export function updateData(data: Record<string, any>) {
  * @param dataId 字典代码值
  * @returns object
  */
-export function delData(dataId: string | number) {
+export function delDictData(dataId: string | number) {
   return request({
     url: `/api/v1/system/dict/datas/${dataId}`,
     method: 'DELETE',

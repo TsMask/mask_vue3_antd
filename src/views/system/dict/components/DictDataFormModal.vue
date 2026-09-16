@@ -2,7 +2,11 @@
 import { toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
 import { message } from 'ant-design-vue';
-import { addData, getData, updateData } from '@/api/system/dict/data';
+import {
+  addDictData,
+  getDictData,
+  updateDictData,
+} from '@/api/system/dict/data';
 import { parseDateToStr } from '@/utils/date';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalForm } from '@/hooks/useModalForm';
@@ -99,7 +103,7 @@ function openEdit(id?: string | number, defaultDictType?: string) {
       ? {
           mode: 'edit',
           title: '修改字典数据',
-          fetchDetail: () => getData(id),
+          fetchDetail: () => getDictData(id),
           errorMessage: '获取字典数据信息失败',
         }
       : {
@@ -126,7 +130,7 @@ async function handleSubmit() {
 
   const form = toRaw(modal.form);
   await executeAction({
-    action: () => (form.id ? updateData(form) : addData(form)),
+    action: () => (form.id ? updateDictData(form) : addDictData(form)),
     successText: '操作成功',
     onSuccess: () => {
       closeModal();

@@ -2,7 +2,11 @@
 import { toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
 import { message } from 'ant-design-vue';
-import { addType, getType, updateType } from '@/api/system/dict/type';
+import {
+  addDictType,
+  getDictType,
+  updateDictType,
+} from '@/api/system/dict/type';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalForm } from '@/hooks/useModalForm';
 import { useModalAction } from '@/hooks/useModalAction';
@@ -38,7 +42,7 @@ function openView(id: string | number) {
   openModal({
     mode: 'view',
     title: '字典类型信息',
-    fetchDetail: () => getType(id),
+    fetchDetail: () => getDictType(id),
     errorMessage: '获取字典类型信息失败',
   });
 }
@@ -49,7 +53,7 @@ function openEdit(id?: string | number) {
       ? {
           mode: 'edit',
           title: '修改字典类型',
-          fetchDetail: () => getType(id),
+          fetchDetail: () => getDictType(id),
           errorMessage: '获取字典类型信息失败',
         }
       : {
@@ -73,7 +77,7 @@ async function handleSubmit() {
 
   const form = toRaw(modal.form);
   await executeAction({
-    action: () => (form.id ? updateType(form) : addType(form)),
+    action: () => (form.id ? updateDictType(form) : addDictType(form)),
     successText: '操作成功',
     onSuccess: () => {
       closeModal();
