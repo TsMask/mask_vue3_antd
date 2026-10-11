@@ -16,7 +16,10 @@ import { validHttp } from '@/utils/regular';
 import { RESULT_CODE_SUCCESS } from '@/constants/result';
 import { CACHE_SESSION_FETCH } from '@/constants/cacheKeys';
 import { sessionRemove } from '@/utils/cacheSession';
-import { clearTabsView } from '@/layouts/hooks/useTabsView';
+import {
+  SYS_PERMISSION_SYSTEM,
+  SYS_ROLE_SYSTEM_KEY,
+} from '@/constants/system';
 import useDictStore from '@/store/modules/dict';
 
 /** 用户信息类型 */
@@ -57,6 +60,27 @@ function parseAvatar(avatar: string): string {
   return `${baseApi}${avatar}`;
 }
 
+/**
+ * 校验用户角色或权限列表
+ * @param userList 当前用户拥有的角色或权限
+ * @param required 页面或指令要求的角色或权限
+ * @param systemKey 内置系统角色或权限标识
+ * @param matchAll true 时需全部包含，否则包含任一即可
+ */
+function matchAuthList(
+  userList: string[],
+  required: string[],
+  systemKey: string,
+  matchAll: boolean
+): boolean {
+  if (!required || required.length === 0) return false;
+  if (!userList || userList.length === 0) return false;
+  if (userList.includes(systemKey)) return true;
+  return matchAll
+    ? required.every(item => userList.includes(item))
+    : required.some(item => userList.includes(item));
+}
+
 const useUserStore = defineStore('user', {
   state: (): UserInfo => ({
     user_id: 0,
@@ -92,13 +116,42 @@ const useUserStore = defineStore('user', {
         user_avatar: state.user_avatar,
       };
     },
+    /** 只需含有其中权限 */
+    hasPermissions(state) {
+      return (permissions: string[]) =>
+        matchAuthList(
+          state.permissions,
+          permissions,
+          SYS_PERMISSION_SYSTEM,
+          false
+        );
+    },
+    /** 需同时包含全部权限 */
+    matchPermissions(state) {
+      return (permissions: string[]) =>
+        matchAuthList(
+          state.permissions,
+          permissions,
+          SYS_PERMISSION_SYSTEM,
+          true
+        );
+    },
+    /** 只需含有其中角色 */
+    hasRoles(state) {
+      return (roles: string[]) =>
+        matchAuthList(state.roles, roles, SYS_ROLE_SYSTEM_KEY, false);
+    },
+    /** 需同时包含全部角色 */
+    matchRoles(state) {
+      return (roles: string[]) =>
+        matchAuthList(state.roles, roles, SYS_ROLE_SYSTEM_KEY, true);
+    },
   },
   actions: {
-    /** 清理登录账号相关状态；全局配置保持不变。 */
+    /** 清理令牌、用户状态与会话缓存；标签栏由调用方清理。 */
     clearAuthState() {
       delAccessToken();
       delRefreshToken();
-      clearTabsView();
       sessionRemove(CACHE_SESSION_FETCH);
       this.$reset();
       useDictStore().clearDict();

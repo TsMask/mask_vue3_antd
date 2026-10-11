@@ -10,9 +10,9 @@ import {
 } from 'antdv-pro-layout';
 
 /** 标签恢复数据在 sessionStorage 中的键名 */
-const RESTORE_STORAGE_KEY = 'mask_vue3_antd:tabs-view';
+const RESTORE_STORAGE_KEY = 'antdv:tabs-view';
 /** 标签查询参数恢复数据在 sessionStorage 中的键名 */
-const RESTORE_QUERY_STORAGE_KEY = 'mask_vue3_antd:tabs-view-query';
+const RESTORE_QUERY_STORAGE_KEY = 'antdv:tabs-view-query';
 
 /** 全局标签栏实例；antdv-pro-layout 的 useTabsView 本身也是单例，这里保留引用便于登出清理 */
 let tabsViewInstance: UseTabsViewReturn | null = null;

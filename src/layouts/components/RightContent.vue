@@ -11,6 +11,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
+import { clearTabsView } from '@/hooks/useTabsView';
 import { useLayoutSettings } from '@/layouts/hooks/useLayoutSettings';
 import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 const { proConfig, changeConfig } = useLayoutSettings();
@@ -48,6 +49,7 @@ function handleSearchSelect(item: SearchFlatItem) {
 /** 退出后回到登录页，动态路由由路由守卫统一还原。 */
 async function handleLogout() {
   try {
+    clearTabsView();
     await userStore.fnLogout();
   } finally {
     await router.replace({ path: '/login' });

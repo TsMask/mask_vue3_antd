@@ -2,7 +2,7 @@
 import { ProLayout, TabsView } from 'antdv-pro-layout';
 import RightContent from './components/RightContent.vue';
 import LayoutFooter from './components/LayoutFooter.vue';
-import { useTabsView } from './hooks/useTabsView';
+import { useTabsView } from '@/hooks/useTabsView';
 import { useNavigation } from './hooks/useNavigation';
 import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import { computed, ref } from 'vue';

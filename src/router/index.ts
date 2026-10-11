@@ -14,6 +14,7 @@ import {
 } from '@/api/httpClient';
 import useUserStore from '@/store/modules/user';
 import useAppStore from '@/store/modules/app';
+import { clearTabsView } from '@/hooks/useTabsView';
 import { HOME_PATH } from '@/constants/router';
 import { staticRoutes } from './staticRoutes';
 import { createAccessRoutes } from './dynamicRoutes';
@@ -32,6 +33,7 @@ function createLoginLocation(redirect: string) {
 }
 
 function clearAuthState() {
+  clearTabsView();
   useUserStore().clearAuthState();
 }
 

@@ -11,7 +11,6 @@ import RoleFormModal from './components/RoleFormModal.vue';
 import RoleDataScopeModal from './components/RoleDataScopeModal.vue';
 import { exportRole, changeStatus, delRole, listRole } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date';
-import { hasPermissions } from '@/utils/authAccess';
 import { saveAs } from 'file-saver';
 import { SYS_ROLE_SYSTEM_ID } from '@/constants/system';
 import { useDictSetup } from '@/hooks/useDictSetup';
@@ -268,7 +267,7 @@ function handleExport() {
               dict.sysNormalDisable.length > 0 &&
               record.id !== SYS_ROLE_SYSTEM_ID &&
               !userStore.roles.includes(record.role_key) &&
-              hasPermissions(['system:role:edit'])
+              userStore.hasPermissions(['system:role:edit'])
             "
             v-model:checked="record.role_status"
             checked-value="1"

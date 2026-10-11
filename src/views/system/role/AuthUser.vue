@@ -11,7 +11,7 @@ import {
 import AuthUserSelectModal from './components/AuthUserSelectModal.vue';
 import { authUserList, authUserChecked } from '@/api/system/role';
 import { parseDateToStr } from '@/utils/date';
-import { useTabsView } from '@/layouts/hooks/useTabsView';
+import { useTabsView } from '@/hooks/useTabsView';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalAction } from '@/hooks/useModalAction';
 import {

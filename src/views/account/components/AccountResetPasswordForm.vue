@@ -5,6 +5,7 @@ import { Modal, message } from 'ant-design-vue';
 import { updateUserPassword } from '@/api/profile';
 import { isSuccess } from '@/api/httpClient';
 import useUserStore from '@/store/modules/user';
+import { clearTabsView } from '@/hooks/useTabsView';
 import { regExpPassword } from '@/utils/regular';
 const userStore = useUserStore();
 const router = useRouter();
@@ -83,6 +84,7 @@ async function submitPassword() {
 /** 退出并清理本地登录态，避免旧 token 继续请求新密码账号 */
 async function handleRelogin() {
   try {
+    clearTabsView();
     await userStore.fnLogout();
   } finally {
     await router.replace({ path: '/login' });

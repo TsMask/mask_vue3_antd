@@ -1,4 +1,4 @@
-import { hasPermissions, matchPermissions } from '@/utils/authAccess';
+import useUserStore from '@/store/modules/user';
 import type { DirectiveBinding, ObjectDirective } from 'vue';
 import { setDirectiveVisible, type AuthDirectiveArg } from './visible';
 
@@ -6,9 +6,10 @@ function checkPerms(binding: DirectiveBinding<string[], string, AuthDirectiveArg
   const { arg, value } = binding;
   if (!Array.isArray(value) || value.length === 0) return false;
 
-  if (arg === 'match') return matchPermissions(value);
+  const userStore = useUserStore();
+  if (arg === 'match') return userStore.matchPermissions(value);
   // Unknown args fail closed.
-  return (!arg || arg === 'has') && hasPermissions(value);
+  return (!arg || arg === 'has') && userStore.hasPermissions(value);
 }
 
 /**

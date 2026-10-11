@@ -17,7 +17,7 @@ import {
 import { getDictOption, getDictType } from '@/api/system/dict/type';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date';
-import { useTabsView } from '@/layouts/hooks/useTabsView';
+import { useTabsView } from '@/hooks/useTabsView';
 import { isSuccess } from '@/api/httpClient';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalAction } from '@/hooks/useModalAction';

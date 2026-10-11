@@ -14,13 +14,14 @@ import {
   clearCacheKey,
   clearCacheSafe,
 } from '@/api/monitor/cache';
-import { hasPermissions } from '@/utils/authAccess';
+import useUserStore from '@/store/modules/user';
 import { isSuccess } from '@/api/httpClient';
 import { useModalAction } from '@/hooks/useModalAction';
 import { useProTable } from '@/hooks/useProTable';
 
 const route = useRoute();
 const title = ref<string>(route.meta.title ?? '标题');
+const userStore = useUserStore();
 
 interface CacheValueRecord {
   cache_name: string;
@@ -145,7 +146,7 @@ async function handleSelectCacheKey(cacheKey: string) {
     resetCacheValue();
     return;
   }
-  if (!hasPermissions(['monitor:cache:query'])) return;
+  if (!userStore.hasPermissions(['monitor:cache:query'])) return;
 
   cacheValueLoading.value = true;
   try {

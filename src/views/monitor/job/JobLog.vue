@@ -11,7 +11,7 @@ import {
   listJobLog,
 } from '@/api/monitor/jobLog';
 import { saveAs } from 'file-saver';
-import { useTabsView } from '@/layouts/hooks/useTabsView';
+import { useTabsView } from '@/hooks/useTabsView';
 import { useModalAction } from '@/hooks/useModalAction';
 import { useProTable } from '@/hooks/useProTable';
 

@@ -18,7 +18,7 @@ import {
 } from '@/api/monitor/job';
 import { saveAs } from 'file-saver';
 import { parseDateToStr } from '@/utils/date';
-import { hasPermissions } from '@/utils/authAccess';
+import useUserStore from '@/store/modules/user';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalAction } from '@/hooks/useModalAction';
 import {
@@ -29,6 +29,7 @@ import {
 
 const route = useRoute();
 const router = useRouter();
+const userStore = useUserStore();
 const title = ref<string>(route.meta.title ?? '标题');
 
 /** 列表与查询使用的任务字典；表单弹窗复用同一份字典缓存。 */
@@ -368,7 +369,7 @@ function handleViewLog(id: string | number = '0') {
         </template>
         <template v-if="column.key === 'job_status'">
           <a-switch
-            v-if="hasPermissions(['monitor:job:status'])"
+            v-if="userStore.hasPermissions(['monitor:job:status'])"
             :checked="record.job_status"
             checked-value="1"
             checked-children="正常"
