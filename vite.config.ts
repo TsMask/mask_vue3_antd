@@ -51,19 +51,7 @@ export default defineConfig(({ mode }) => {
                 name: 'chunkVue',
                 test: /node_modules\/(vue|vue-router|pinia)\//,
               },
-              {
-                name: 'chunkAntdIcons',
-                test: /node_modules\/@ant-design\/icons-vue\//,
-              },
-              { name: 'chunkAntd', test: /node_modules\/ant-design-vue\// },
-              {
-                name: 'chunkAntdLayout',
-                test: /node_modules\/antdv-pro-layout\//,
-              },
-              {
-                name: 'chunkAntdModal',
-                test: /node_modules\/antdv-pro-modal\//,
-              },
+              // UI 组件库按路由可达性自动拆分，避免入口整包加载
               { name: 'chunkEcharts', test: /node_modules\/echarts\// },
               {
                 name: 'chunkUtil',
@@ -79,12 +67,10 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       vue(),
-      // Vue文件中自动导入组件，dirs目录和antd库
+      // Vue文件中自动导入一层全局组件和antd组件
       Components({
         dts: 'src/typings/components.d.ts',
-        deep: true,
-        dirs: ['src/components'],
-        extensions: ['vue', 'tsx'],
+        globs: ['src/components/*/*.vue'],
         resolvers: [
           AntDesignVueResolver({
             resolveIcons: true,

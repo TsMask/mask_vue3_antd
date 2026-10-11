@@ -33,7 +33,9 @@ function getTabsView(resolve: (path: string) => RouteLocationResolved) {
 /** 读取刷新前标签记录的查询参数 */
 function getRestoredQuery(path: string) {
   try {
-    const queries = JSON.parse(window.sessionStorage.getItem(RESTORE_QUERY_STORAGE_KEY) || '{}');
+    const queries = JSON.parse(
+      window.sessionStorage.getItem(RESTORE_QUERY_STORAGE_KEY) || '{}'
+    );
     return (queries as Record<string, Record<string, any>>)[path];
   } catch {
     return undefined;
@@ -46,7 +48,10 @@ function saveRestoredQueries(tabs: UseTabsViewReturn['tabs']) {
   tabs.forEach(tab => {
     if (tab.query) queries[tab.path] = tab.query;
   });
-  window.sessionStorage.setItem(RESTORE_QUERY_STORAGE_KEY, JSON.stringify(queries));
+  window.sessionStorage.setItem(
+    RESTORE_QUERY_STORAGE_KEY,
+    JSON.stringify(queries)
+  );
 }
 
 /** 布局标签栏 hook 入口；syncRoute 仅由 BasicLayout 开启，业务页复用同一份状态 */
@@ -58,16 +63,26 @@ export function useTabsView(options?: { syncRoute?: boolean }) {
   });
 
   if (options?.syncRoute) {
-    watch(() => tabsView.tabs, tabs => saveRestoredQueries(tabs), {
-      deep: true,
-      immediate: true,
-    });
-    watch(router.currentRoute, route => {
-      const isHelperRoute = ['/login', '/register', '/403', '/404'].includes(route.path);
-      if (!route.path.startsWith('/redirect') && !isHelperRoute) {
-        tabsView.open(route);
+    watch(
+      () => tabsView.tabs,
+      tabs => saveRestoredQueries(tabs),
+      {
+        deep: true,
+        immediate: true,
       }
-    }, { immediate: true });
+    );
+    watch(
+      router.currentRoute,
+      route => {
+        const isHelperRoute = ['/login', '/register', '/403', '/404'].includes(
+          route.path
+        );
+        if (!route.path.startsWith('/redirect') && !isHelperRoute) {
+          tabsView.open(route);
+        }
+      },
+      { immediate: true }
+    );
   }
 
   /** 跳转到指定标签；已处于目标页面时不重复触发导航 */

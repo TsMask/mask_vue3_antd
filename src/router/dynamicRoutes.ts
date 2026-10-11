@@ -4,11 +4,13 @@ import {
   getMenuData,
   type MenuDataItem,
 } from 'antdv-pro-layout';
-import LinkLayout from '@/layouts/LinkLayout.vue';
 import { getAuthMenus } from '@/api/auth';
 import { isSuccess } from '@/api/httpClient';
 import { findViewModule } from './viewComponents';
 import { staticRoutes } from './staticRoutes';
+
+// 与静态路由保持一致，布局统一懒加载
+const LinkLayout = () => import('@/layouts/LinkLayout.vue');
 
 type AuthMenu = {
   id: number;

@@ -1,10 +1,12 @@
 import { createVNode } from 'vue';
 import { AlipayOutlined } from '@ant-design/icons-vue';
-import BasicLayout from '../layouts/BasicLayout.vue';
-import BlankLayout from '../layouts/BlankLayout.vue';
-import LinkLayout from '../layouts/LinkLayout.vue';
 import type { RouteRecordRaw } from 'vue-router';
 import { HOME_PATH } from '@/constants/router';
+
+// 布局与页面统一懒加载，避免登录首屏拉取管理布局及其依赖
+const BasicLayout = () => import('../layouts/BasicLayout.vue');
+const BlankLayout = () => import('../layouts/BlankLayout.vue');
+const LinkLayout = () => import('../layouts/LinkLayout.vue');
 
 // import { MetaRecord, MenuDataItem } from 'antdv-pro-layout';
 // 根据/路径构建菜单列表，
