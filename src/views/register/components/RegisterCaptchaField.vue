@@ -47,7 +47,7 @@ const code = defineModel<string>('code', { required: true });
     name="code"
     :rules="[{ required: true, min: 1, message: '请输入正确验证码' }]"
   >
-    <a-input-group compact>
+    <a-space-compact>
       <a-input
         v-model:value="code"
         size="large"
@@ -69,6 +69,6 @@ const code = defineModel<string>('code', { required: true });
         :fallback="captcha.codeImgFall"
         @click="emit('refreshCaptcha')"
       />
-    </a-input-group>
+    </a-space-compact>
   </a-form-item>
 </template>

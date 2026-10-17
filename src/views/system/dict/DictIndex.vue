@@ -86,7 +86,6 @@ const tableScroll = useProTableScroll(tableColumns);
 
 const searchColumns = computed<ProColumnsSearch[]>(() => [
   { title: '字典名称', dataIndex: 'dict_name' },
-  { title: '数据标签', dataIndex: 'data_label' },
   {
     title: '字典状态',
     dataIndex: 'dict_status',
@@ -187,6 +186,7 @@ function handleDataView(id: string | number = '0') {
       @change="onTableChange"
       :scroll="tableScroll"
       :search="{
+        defaultColsNumber: 2,
         columns: searchColumns,
         labelWidth: 100,
         labelWrap: true,

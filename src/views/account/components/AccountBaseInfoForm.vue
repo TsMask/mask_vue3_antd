@@ -1,8 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref, toRaw } from 'vue';
-import { Modal, message } from 'ant-design-vue';
-import type { FileType } from 'ant-design-vue/es/upload/interface';
-import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface';
+import { Modal, message } from 'antdv-next';
+import type { UploadRequestOption, VcFile } from '@v-c/upload';
 import { uploadFile } from '@/api/tool/file';
 import { updateUserProfile } from '@/api/profile';
 import { useDictSetup } from '@/hooks/useDictSetup';
@@ -85,7 +84,7 @@ async function submitBaseInfo() {
 }
 
 /** 头像只允许 jpg/png 且小于 2MB，同时避免基础资料和头像并发提交 */
-function validateBeforeUpload(file: FileType) {
+function validateBeforeUpload(file: VcFile) {
   if (uploading.value) return false;
 
   const isImage = ['image/jpeg', 'image/png'].includes(file.type);
@@ -170,7 +169,7 @@ onMounted(handleResetForm);
   >
     <a-row :gutter="[16, 16]">
       <a-col :lg="6" :md="6" :xs="24">
-        <a-space direction="vertical" :size="16">
+        <a-space orientation="vertical" :size="16">
           <a-avatar
             shape="circle"
             :size="128"

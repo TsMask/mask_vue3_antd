@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import { addJob, getJob, updateJob } from '@/api/monitor/job';
 import { parseDateToStr } from '@/utils/date';
 import { useDictSetup } from '@/hooks/useDictSetup';
@@ -38,7 +38,8 @@ const { dict } = useDictSetup({
   },
 });
 
-const { modal, formCtl, isView, openModal, closeModal } = useModalForm({
+const { modal, formCtl, rules, isView, openModal, closeModal } = useModalForm({
+  formName: 'formCtlByJobEdit',
   initForm: () => ({
     id: undefined as string | number | undefined,
     job_name: '',
@@ -144,7 +145,7 @@ defineExpose({ openView, openEdit });
 <template>
   <ProModal
     :drag="true"
-    :destroyOnClose="true"
+    :destroyOnHidden="true"
     :width="800"
     :keyboard="!isView"
     :mask-closable="isView"
@@ -157,6 +158,8 @@ defineExpose({ openView, openEdit });
   >
     <a-form
       name="formCtlByJobEdit"
+      :model="modal.form"
+      :rules="rules"
       layout="horizontal"
       :label-col="{ span: 6 }"
       :label-wrap="true"
@@ -223,7 +226,10 @@ defineExpose({ openView, openEdit });
               :maxlength="40"
             >
               <template #prefix>
-                <a-tooltip placement="topLeft">
+                <a-tooltip
+                  placement="topLeft"
+                  :get-popup-container="trigger => trigger.parentElement!"
+                >
                   <template #title>
                     <div>
                       Processor调用示例：simple <br />
@@ -277,13 +283,18 @@ defineExpose({ openView, openEdit });
         :label-col="{ span: 3 }"
         :label-wrap="true"
       >
-        <a-input
-          v-model:value="modal.form.job_cron"
-          allow-clear
-          placeholder="请输入或生成cron执行表达式"
-        >
+        <a-space-compact block>
+          <a-input
+            v-model:value="modal.form.job_cron"
+            allow-clear
+            placeholder="请输入或生成cron执行表达式"
+            style="flex: 1; min-width: 0"
+          >
           <template #prefix>
-            <a-tooltip placement="topLeft">
+            <a-tooltip
+              placement="topLeft"
+              :get-popup-container="trigger => trigger.parentElement!"
+            >
               <template #title>
                 <div>
                   表达式示例：0/20 * * * * ? <br />
@@ -293,19 +304,14 @@ defineExpose({ openView, openEdit });
               <InfoCircleOutlined style="color: rgba(0, 0, 0, 0.45)" />
             </a-tooltip>
           </template>
-          <template #addonAfter>
-            <a-button
-              type="text"
-              size="small"
-              @click.prevent="handleCronConfirm(true)"
-            >
-              <template #icon>
-                <FieldTimeOutlined />
-              </template>
-              生成表达式
-            </a-button>
-          </template>
-        </a-input>
+          </a-input>
+          <a-button html-type="button" @click.prevent="handleCronConfirm(true)">
+            <template #icon>
+              <FieldTimeOutlined />
+            </template>
+            生成表达式
+          </a-button>
+        </a-space-compact>
       </a-form-item>
       <a-form-item
         label="传入参数"

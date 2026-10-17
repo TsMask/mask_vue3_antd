@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import { getUser, updateUser, addUser } from '@/api/system/user';
 import {
   regExpPassword,
@@ -47,7 +47,8 @@ function transformUserDetail(resData: any) {
   return { ...user, role_ids, post_ids };
 }
 
-const { modal, formCtl, isView, openModal, closeModal } = useModalForm({
+const { modal, formCtl, rules, isView, openModal, closeModal } = useModalForm({
+  formName: 'formCtlByUserEdit',
   initForm: () => ({
     id: undefined as string | number | undefined,
     user_name: '',
@@ -188,7 +189,7 @@ defineExpose({ openView, openEdit });
 <template>
   <ProModal
     :drag="true"
-    :destroyOnClose="true"
+    :destroyOnHidden="true"
     :width="800"
     :keyboard="!isView"
     :mask-closable="isView"
@@ -201,6 +202,8 @@ defineExpose({ openView, openEdit });
   >
     <a-form
       name="formCtlByUserEdit"
+      :model="modal.form"
+      :rules="rules"
       layout="horizontal"
       :label-col="{ span: 6 }"
       :label-wrap="true"
@@ -345,7 +348,8 @@ defineExpose({ openView, openEdit });
           tree-node-label-prop="label"
           tree-node-filter-prop="label"
           style="width: 100%"
-          :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+          :styles="{ popup: { root: { maxHeight: '400px', overflow: 'auto' } } }"
+          :virtual="false"
         />
       </a-form-item>
       <a-row>

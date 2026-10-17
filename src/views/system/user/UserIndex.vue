@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import { useRoute } from 'vue-router';
 import { ref, computed, onMounted, toRaw } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';

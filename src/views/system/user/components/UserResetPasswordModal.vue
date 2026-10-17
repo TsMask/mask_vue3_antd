@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { nextTick, reactive, ref } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
-import { Form, message } from 'ant-design-vue';
+import { message, useForm, type FormInstance } from 'antdv-next';
 import { resetPassword } from '@/api/system/user';
 import { regExpPassword } from '@/utils/regular';
 import { useModalAction } from '@/hooks/useModalAction';
@@ -12,31 +12,47 @@ const form = reactive({
   user_name: '',
   password: '',
 });
-const formCtl = Form.useForm(
-  form,
-  reactive({
-    password: [
-      {
-        required: true,
-        pattern: regExpPassword,
-        message: '密码至少包含大小写字母、数字、特殊符号，且不少于6位',
-      },
-    ],
-  })
-);
+const rules = reactive({
+  password: [
+    {
+      required: true,
+      pattern: regExpPassword,
+      message: '密码至少包含大小写字母、数字、特殊符号，且不少于6位',
+    },
+  ],
+});
+const formInstance = useForm('formCtlByUserResetPassword');
+
+// Compatibility layer for the legacy Form.useForm controller; a-form-item
+// now owns validation feedback, so validateInfos binds empty objects.
+const formCtl = {
+  validate: (...args: Parameters<FormInstance['validate']>) =>
+    formInstance.validate(...args),
+  resetFields: (...args: Parameters<FormInstance['resetFields']>) =>
+    formInstance.resetFields(...args),
+  clearValidate: (...args: Parameters<FormInstance['clearValidate']>) =>
+    formInstance.clearValidate(...args),
+  validateInfos: new Proxy({} as Record<string, any>, {
+    get: () => ({}),
+  }),
+};
 const { executeAction, loading: submitting } = useModalAction();
 
 /** 打开弹窗时锁定目标用户，只重置该用户密码 */
-function open(row: Record<string, any>) {
-  formCtl.resetFields();
+async function open(row: Record<string, any>) {
   form.user_id = row.id;
   form.user_name = row.user_name;
   visible.value = true;
+  await nextTick();
+  formCtl.clearValidate();
 }
 
 function handleClose() {
+  if (visible.value) formCtl.clearValidate();
   visible.value = false;
-  formCtl.resetFields();
+  form.user_id = undefined;
+  form.user_name = '';
+  form.password = '';
 }
 
 /** 管理员重置密码不需要旧密码，成功后关闭弹窗 */
@@ -74,6 +90,8 @@ defineExpose({ open });
   >
     <a-form
       name="formCtlByUserResetPassword"
+      :model="form"
+      :rules="rules"
       layout="horizontal"
       :label-col="{ span: 6 }"
       :label-wrap="true"

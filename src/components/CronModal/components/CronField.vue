@@ -60,7 +60,7 @@ function chooseMode(mode: CronFieldMode) {
 
 <template>
   <a-radio-group v-model:value="state.mode" size="small">
-    <a-space direction="vertical" :size="14">
+    <a-space orientation="vertical" :size="14">
       <a-radio value="every">每{{ config.unit }}</a-radio>
       <a-radio v-if="config.linked" value="unspecified">不指定</a-radio>
       <a-radio value="interval">
@@ -68,7 +68,6 @@ function chooseMode(mode: CronFieldMode) {
         <a-input-number
           v-model:value="state.intervalStart"
           size="small"
-          class="cron-number"
           :min="config.min"
           :max="config.max"
           :precision="0"
@@ -79,7 +78,6 @@ function chooseMode(mode: CronFieldMode) {
         <a-input-number
           v-model:value="state.interval"
           size="small"
-          class="cron-number"
           :min="1"
           :max="config.max"
           :precision="0"
@@ -93,7 +91,6 @@ function chooseMode(mode: CronFieldMode) {
         <a-input-number
           v-model:value="state.rangeStart"
           size="small"
-          class="cron-number"
           :min="config.min"
           :max="config.max"
           :precision="0"
@@ -104,7 +101,6 @@ function chooseMode(mode: CronFieldMode) {
         <a-input-number
           v-model:value="state.rangeEnd"
           size="small"
-          class="cron-number"
           :min="config.min"
           :max="config.max"
           :precision="0"
@@ -118,7 +114,7 @@ function chooseMode(mode: CronFieldMode) {
         v-model:value="state.specific"
         size="small"
         mode="multiple"
-        class="cron-select"
+        style="width: 100%"
         :placeholder="`指定${config.title}(可多选)`"
         :options="options"
         @mousedown="chooseMode('specific')"
@@ -128,12 +124,4 @@ function chooseMode(mode: CronFieldMode) {
   </a-radio-group>
 </template>
 
-<style scoped>
-.cron-number {
-  width: 88px;
-}
-
-.cron-select {
-  width: 100%;
-}
-</style>
+<style scoped></style>

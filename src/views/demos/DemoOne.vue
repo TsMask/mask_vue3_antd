@@ -32,7 +32,7 @@
           </template>
           <a-button type="dashed" @click="handleClick">Message Click</a-button>
         </a-tooltip>
-        <a-button type="ghost" @click="handleNotification">
+        <a-button type="default" @click="handleNotification">
           Notification box
         </a-button>
         <a-popconfirm
@@ -60,9 +60,9 @@
 
 <script lang="ts" setup>
 import { PageContainer } from 'antdv-pro-layout';
-import { message, Modal, notification } from 'ant-design-vue';
+import { message, Modal, notification } from 'antdv-next';
+import { ExclamationCircleOutlined } from '@antdv-next/icons';
 import { createVNode, h, ref } from 'vue';
-import { ExclamationCircleOutlined } from '@ant-design/icons-vue';
 const [modal, contextHolder] = Modal.useModal();
 
 const spinning = ref<boolean>(false);
@@ -119,7 +119,7 @@ function handleCancel() {
 
 function handleNotification() {
   notification.open({
-    message: 'Notification Title',
+    title: 'Notification Title',
     description:
       'This is the content of the notification. This is the content of the notification. This is the content of the notification.',
     onClick: () => {

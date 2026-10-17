@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import {
   ProTable,
   type ProColumns,
@@ -129,7 +129,7 @@ watch(
     :drag="true"
     :fullscreen="true"
     :forceFullscreen="true"
-    :destroyOnClose="true"
+    :destroyOnHidden="true"
     :width="800"
     :title="props.title"
     :open="props.open"

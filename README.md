@@ -1,4 +1,4 @@
-# 基于 Vue3 + Ant-Design-Vue 的管理系统
+# 基于 Vue3 + Antdv-Next 的管理系统
 
 [![star](https://gitee.com/TsMask/mask_vue3_antd/badge/star.svg?theme=dark)](https://gitee.com/TsMask/mask_vue3_antd/stargazers)
 ![Build Vite](https://img.shields.io/badge/Build-Vite-green.svg)
@@ -11,7 +11,7 @@
 
 - 系统布局使用 [antdv-pro-layout](https://www.npmjs.com/package/antdv-pro-layout)
 - 系统模态框使用 [antdv-pro-modal](https://www.npmjs.com/package/antdv-pro-modal)
-- 图标来源 [@ant-design/icons-vue](https://ant.design/components/icon)
+- 图标来源 [@antdv-next/icons](https://github.com/antdv-next/icons)
 - 菜单图标使用自定义iconfont `font_8d5l8fzk5b87iudi.js`图标文件
 
 ## 项目文档

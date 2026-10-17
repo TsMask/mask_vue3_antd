@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import { addNotice, getNotice, updateNotice } from '@/api/system/notice';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalForm } from '@/hooks/useModalForm';
@@ -33,7 +33,8 @@ function createDefaultForm() {
   };
 }
 
-const { modal, formCtl, isView, openModal, closeModal } = useModalForm({
+const { modal, formCtl, rules, isView, openModal, closeModal } = useModalForm({
+  formName: 'formCtlByNoticeEdit',
   initForm: createDefaultForm,
   rules: {
     notice_title: [
@@ -107,7 +108,7 @@ defineExpose({ openView, openEdit });
 <template>
   <ProModal
     :drag="true"
-    :destroyOnClose="true"
+    :destroyOnHidden="true"
     :width="800"
     :keyboard="!isView"
     :mask-closable="isView"
@@ -120,6 +121,8 @@ defineExpose({ openView, openEdit });
   >
     <a-form
       name="formCtlByNoticeEdit"
+      :model="modal.form"
+      :rules="rules"
       layout="horizontal"
       :label-col="{ span: 6 }"
       :label-wrap="true"

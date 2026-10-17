@@ -17,8 +17,8 @@ function formatCoreUsed(value?: string | number | string[]) {
 <template>
   <a-card
     title="CPU信息"
-    :bordered="false"
-    :body-style="{ marginBottom: '24px', padding: 0 }"
+    variant="borderless"
+    :styles="{ body: { marginBottom: '24px', padding: 0 } }"
   >
     <a-descriptions
       size="middle"
@@ -44,8 +44,8 @@ function formatCoreUsed(value?: string | number | string[]) {
 
   <a-card
     title="内存信息"
-    :bordered="false"
-    :body-style="{ marginBottom: '24px', padding: 0 }"
+    variant="borderless"
+    :styles="{ body: { marginBottom: '24px', padding: 0 } }"
   >
     <a-descriptions
       size="middle"

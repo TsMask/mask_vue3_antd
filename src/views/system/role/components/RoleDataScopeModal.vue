@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
-import type { DataNode } from 'ant-design-vue/es/tree';
+import type { TreeDataNode } from 'antdv-next';
 import { dataScope, getRole } from '@/api/system/role';
 import { deptTreeRole } from '@/api/system/dept';
 import {
@@ -29,12 +29,13 @@ const { dict } = useDictSetup({
 });
 
 type TreeDataType = {
-  treeData: DataNode[];
+  treeData: TreeDataNode[];
   checkedKeys: (string | number)[];
   expandedKeys: (string | number)[];
 };
 
 const { modal, openModal, closeModal } = useModalForm({
+  formName: 'formCtlByRoleDataScope',
   initForm: () => ({
     id: undefined as string | number | undefined,
     role_name: '',
@@ -183,7 +184,7 @@ defineExpose({ open });
 <template>
   <ProModal
     :drag="true"
-    :destroyOnClose="true"
+    :destroyOnHidden="true"
     :width="800"
     :keyboard="false"
     :mask-closable="false"
@@ -286,6 +287,7 @@ defineExpose({ open });
           :tree-data="deptTreeState.treeData"
           :field-names="{ children: 'children', title: 'label', key: 'id' }"
           :height="256"
+          :virtual="false"
           style="border: 1px solid #d9d9d9; border-radius: 6px; margin-top: 4px"
         />
       </a-form-item>

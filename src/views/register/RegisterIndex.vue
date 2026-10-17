@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Modal, message } from 'ant-design-vue';
+import { Modal, message, type TabsProps } from 'antdv-next';
 import type { CSSProperties } from 'vue';
 import { reactive, watch, onMounted, onBeforeUnmount, ref } from 'vue';
 import background from '@/assets/background.svg';
@@ -38,6 +38,10 @@ const contentStyle: CSSProperties = {
 };
 
 const activeKey = ref<RegisterTabKey>('username');
+const registerTabs: TabsProps['items'] = [
+  { key: 'username', label: '账号注册' },
+  { key: 'phone', label: '手机号注册' },
+];
 
 const state = reactive({
   form: {
@@ -257,7 +261,7 @@ onBeforeUnmount(() => {
       >
         <RegisterHeader />
 
-        <a-card :bordered="true" :style="{ width: '100%', maxWidth: '400px' }">
+        <a-card :style="{ width: '100%', maxWidth: '400px' }">
           <a-form
             :model="state.form"
             name="RegisterForm"
@@ -265,22 +269,24 @@ onBeforeUnmount(() => {
           >
             <a-tabs
               v-model:activeKey="activeKey"
-              tab-position="top"
+              tab-placement="top"
               type="line"
               :centered="true"
-              :destroy-inactive-tab-pane="true"
+              :destroy-on-hidden="true"
+              :items="registerTabs"
             >
-              <a-tab-pane key="username" tab="账号注册">
+              <template #contentRender="{ item }">
                 <RegisterAccountFields
+                  v-if="item.key === 'username'"
                   v-model:username="state.form.username"
                   v-model:password="state.form.password"
                   v-model:confirm-password="state.form.confirmPassword"
                 />
-              </a-tab-pane>
-
-              <a-tab-pane key="phone" tab="手机号注册">
-                <RegisterPhoneField v-model:phone="state.form.phone" />
-              </a-tab-pane>
+                <RegisterPhoneField
+                  v-else
+                  v-model:phone="state.form.phone"
+                />
+              </template>
             </a-tabs>
 
             <RegisterCaptchaField

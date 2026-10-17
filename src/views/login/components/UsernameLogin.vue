@@ -76,7 +76,7 @@ function goForgotPassword() {
     name="code"
     :rules="[{ required: true, min: 1, message: '请输入正确验证码' }]"
   >
-    <a-input-group compact>
+    <a-space-compact>
       <a-input
         v-model:value="code"
         size="large"
@@ -98,7 +98,7 @@ function goForgotPassword() {
         :fallback="captcha.codeImgFall"
         @click="emit('refreshCaptcha')"
       />
-    </a-input-group>
+    </a-space-compact>
   </a-form-item>
 
   <a-form-item>

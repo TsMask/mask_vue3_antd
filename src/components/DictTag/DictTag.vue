@@ -40,15 +40,19 @@ const item = computed(() => {
 </script>
 
 <template>
-  <template v-if="item">
-    <a-tag v-if="item.tag_type" :class="item.tag_class" :color="item.tag_type">
+  <span v-if="item">
+    <a-tag
+      v-if="item.tag_type"
+      :class="item.tag_class"
+      :color="item.tag_type"
+      :disabled="false"
+    >
       {{ item.label }}
     </a-tag>
     <span v-else :class="item.tag_class">
       {{ item.label }}
     </span>
-  </template>
-  <span v-else></span>
+  </span>
 </template>
 
 <style scoped></style>

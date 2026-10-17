@@ -44,6 +44,16 @@ const cronFields = CRON_FIELD_KEYS.map(field => ({
   ...cronFieldConfigs[field],
 }));
 
+type CronTabItem = {
+  key: CronFieldKey;
+  label: string;
+};
+
+const cronTabs: CronTabItem[] = cronFields.map(field => ({
+  key: field.key,
+  label: field.title,
+}));
+
 function applyCronText(expression: string) {
   const parsedParts = parseCronExpression(expression);
   if (parsedParts) Object.assign(cronParts, parsedParts);
@@ -97,53 +107,50 @@ function confirmCronModal() {
 
 <template>
   <a-modal
-    destroy-on-close
+    destroy-on-hidden
     title="Cron表达式生成"
     :open="props.open"
-    :body-style="{ padding: '0 24px' }"
     :ok-button-props="{ disabled: cronInvalid }"
     @cancel="cancelCronModal"
     @ok="confirmCronModal"
   >
-    <a-tabs v-model:active-key="activeKey" tab-position="top" type="line">
-      <a-tab-pane
-        v-for="field in cronFields"
-        :key="field.key"
-        :tab="field.title"
-      >
+    <a-tabs
+      v-model:active-key="activeKey"
+      tab-placement="top"
+      type="line"
+      :items="cronTabs"
+    >
+      <template #contentRender="{ item }">
         <CronField
-          :field="field.key"
-          :value="cronParts[field.key]"
-          @update:value="updateCronPart(field.key, $event)"
+          :field="item.key"
+          :value="cronParts[item.key]"
+          @update:value="updateCronPart(item.key, $event)"
         />
-      </a-tab-pane>
+      </template>
     </a-tabs>
+
+    <a-space-compact block class="result-box">
+      <a-button disabled>表达式预览：</a-button>
+      <a-input
+        v-model:value="cronText"
+        placeholder="请输入或生成cron表达式"
+        style="flex: 1; min-width: 0"
+      />
+    </a-space-compact>
 
     <a-alert
       v-if="cronInvalid"
-      class="cron-error"
       type="error"
       show-icon
       message="Cron表达式不正确"
-      description="请输入6位秒级表达式，例如：0/20 * * * * ?。"
-    />
-
-    <a-input
-      v-model:value="cronText"
-      class="result-box"
-      addon-before="表达式预览："
-      placeholder="请输入或生成cron表达式"
+      description="请输入6位秒级表达式，例如：0/20 * * * * ?"
     />
   </a-modal>
 </template>
 
 <style scoped>
 .result-box {
-  margin-top: 24px;
-  margin-bottom: 24px;
-}
-
-.cron-error {
-  margin-top: 24px;
+  margin-top: 14px;
+  margin-bottom: 14px;
 }
 </style>

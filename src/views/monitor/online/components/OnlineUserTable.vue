@@ -55,6 +55,7 @@ const tableColumns: ProColumns[] = [
     dataIndex: 'session_id',
     align: 'left',
     width: 260,
+    copyable: true,
     ellipsis: true,
   },
   {
@@ -126,14 +127,6 @@ function handleReload() {
           {{ +record.login_time > 0 ? parseDateToStr(+record.login_time) : '' }}
         </span>
       </template>
-      <template v-if="column.dataIndex === 'session_id'">
-        <a-typography-text
-          class="identifier-text"
-          :content="record.session_id"
-          :copyable="{ text: record.session_id }"
-          :ellipsis="true"
-        />
-      </template>
       <template v-if="column.key === 'operation'">
         <a-button
           type="link"
@@ -151,8 +144,3 @@ function handleReload() {
   </ProTable>
 </template>
 
-<style scoped>
-.identifier-text {
-  max-width: 100%;
-}
-</style>

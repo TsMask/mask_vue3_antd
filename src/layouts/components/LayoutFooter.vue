@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GlobalFooter } from 'antdv-pro-layout';
+const copyright = 'Copyright © 2023-2026 Gitee For TsMask';
 
 const footerLinks = [
   {
@@ -21,8 +21,17 @@ const footerLinks = [
 </script>
 
 <template>
-  <GlobalFooter
-    :links="footerLinks"
-    copyright="Copyright © 2023-2026 Gitee For TsMask"
-  />
+  <a-flex vertical align="center" :gap="8" :style="{ padding: '16px 0' }">
+    <a-flex :gap="24" wrap="wrap">
+      <a-typography-link
+        v-for="link in footerLinks"
+        :key="link.href"
+        :href="link.href"
+        :target="link.blankTarget ? '_blank' : undefined"
+      >
+        {{ link.title }}
+      </a-typography-link>
+    </a-flex>
+    <a-typography-text type="secondary">{{ copyright }}</a-typography-text>
+  </a-flex>
 </template>

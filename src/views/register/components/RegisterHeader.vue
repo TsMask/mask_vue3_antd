@@ -19,7 +19,7 @@ import logo from '@/assets/logo.png';
       </a-space>
     </router-link>
     <a-typography-text type="secondary">
-      基于 ant-design-vue + vue3 的管理系统
+      基于 antdv-next + vue3 的管理系统
     </a-typography-text>
   </a-flex>
 </template>

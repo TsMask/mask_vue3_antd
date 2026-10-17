@@ -2,7 +2,7 @@
 import { useRoute } from 'vue-router';
 import { ref } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import CacheKeyTable from './components/CacheKeyTable.vue';
 import CacheNameTable from './components/CacheNameTable.vue';
 import CacheValuePanel from './components/CacheValuePanel.vue';
@@ -56,8 +56,9 @@ const {
   rowKey: 'cache_name',
   selection: {
     rowSelection: { type: 'radio' },
-    onChange: keys =>
-      handleSelectCacheName(keys[0] === undefined ? '' : String(keys[0])),
+    onChange: keys => {
+      handleSelectCacheName(keys[0] === undefined ? '' : String(keys[0]))
+    },
   },
 });
 
@@ -100,7 +101,6 @@ function resetCacheKeys() {
 function handleSelectCacheName(cacheName: string) {
   if (!cacheName) {
     selectedCacheName.value = '';
-    removeSelectedCacheNameKeys(selectedCacheNameKeys.value);
     resetCacheKeys();
     return;
   }

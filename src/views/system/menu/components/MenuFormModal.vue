@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import IconFont from '@/components/IconFont/IconFont.vue';
 import { iconFonts } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
 import { addMenu, getMenu, updateMenu } from '@/api/system/menu';
@@ -59,7 +59,8 @@ function createDefaultForm() {
   };
 }
 
-const { modal, formCtl, isView, openModal, closeModal } = useModalForm({
+const { modal, formCtl, rules, isView, openModal, closeModal } = useModalForm({
+  formName: 'formCtlByMenuEdit',
   initForm: createDefaultForm,
   rules: {
     parent_id: [{ required: true, message: '上级菜单不能为空' }],
@@ -196,7 +197,7 @@ defineExpose({ openView, openEdit });
 <template>
   <ProModal
     :drag="true"
-    :destroyOnClose="true"
+    :destroyOnHidden="true"
     :width="800"
     :keyboard="!isView"
     :mask-closable="isView"
@@ -209,6 +210,8 @@ defineExpose({ openView, openEdit });
   >
     <a-form
       name="formCtlByMenuEdit"
+      :model="modal.form"
+      :rules="rules"
       layout="horizontal"
       :label-col="{ span: 6 }"
       :label-wrap="true"
@@ -249,7 +252,8 @@ defineExpose({ openView, openEdit });
           tree-node-label-prop="menu_name"
           tree-node-filter-prop="menu_name"
           style="width: 100%"
-          :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+          :styles="{ popup: { root: { maxHeight: '400px', overflow: 'auto' } } }"
+          :virtual="false"
           @change="handleTreeDataChange"
         />
       </a-form-item>
@@ -320,10 +324,10 @@ defineExpose({ openView, openEdit });
                 <template #suffixIcon>
                   <IconFont :type="modal.form.menu_icon" />
                 </template>
-                <template #option="{ value, label }">
+                <template #optionRender="{ option }">
                   <div style="font-size: 18px">
-                    <IconFont :type="value" />
-                    &nbsp;&nbsp;{{ label }}
+                    <IconFont :type="String(option.value ?? '#')" />
+                    &nbsp;&nbsp;{{ option.label }}
                   </div>
                 </template>
               </a-select>
@@ -342,7 +346,10 @@ defineExpose({ openView, openEdit });
                 :maxlength="200"
               >
                 <template #prefix>
-                  <a-tooltip placement="topLeft">
+                  <a-tooltip
+                    placement="topLeft"
+                    :get-popup-container="trigger => trigger.parentElement!"
+                  >
                     <template #title>
                       <div>
                         访问的完整路由地址，如：/system/users
@@ -449,7 +456,10 @@ defineExpose({ openView, openEdit });
           :maxlength="100"
         >
           <template #prefix>
-            <a-tooltip placement="topLeft">
+            <a-tooltip
+              placement="topLeft"
+              :get-popup-container="trigger => trigger.parentElement!"
+            >
               <template #title>
                 <div>权限标识示例：monitor:cache:query</div>
               </template>

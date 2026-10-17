@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import { addConfig, getConfig, updateConfig } from '@/api/system/config';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalForm } from '@/hooks/useModalForm';
@@ -32,7 +32,8 @@ function createDefaultForm() {
   };
 }
 
-const { modal, formCtl, isView, openModal, closeModal } = useModalForm({
+const { modal, formCtl, rules, isView, openModal, closeModal } = useModalForm({
+  formName: 'formCtlByConfigEdit',
   initForm: createDefaultForm,
   rules: {
     config_name: [
@@ -101,7 +102,7 @@ defineExpose({ openView, openEdit });
 <template>
   <ProModal
     :drag="true"
-    :destroyOnClose="true"
+    :destroyOnHidden="true"
     :width="800"
     :keyboard="!isView"
     :mask-closable="isView"
@@ -114,6 +115,8 @@ defineExpose({ openView, openEdit });
   >
     <a-form
       name="formCtlByConfigEdit"
+      :model="modal.form"
+      :rules="rules"
       layout="horizontal"
       :label-col="{ span: 6 }"
       :label-wrap="true"

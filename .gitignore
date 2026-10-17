@@ -32,3 +32,7 @@ selenium-debug.log
 package-lock.json
 yarn.lock
 components.d.ts
+
+# Local environment overrides
+.env.development
+.env.production

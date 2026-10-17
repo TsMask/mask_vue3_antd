@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import saveAs from 'file-saver';
 import { downloadFile, downloadFileChunk } from '@/api/tool/file';
 import { isBinaryResult, isSuccess } from '@/api/httpClient';
@@ -59,7 +59,7 @@ async function handleDownload(chunked: boolean) {
 
 <template>
   <a-card title="文件下载">
-    <a-space direction="vertical" :size="12" style="width: 100%">
+    <a-space orientation="vertical" :size="12" style="width: 100%">
       <a-input
         v-model:value="downloadFilePath"
         type="text"

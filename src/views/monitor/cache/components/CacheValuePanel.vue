@@ -13,8 +13,8 @@ defineProps<{
 <template>
   <a-card
     title="缓存内容"
-    :bordered="false"
-    :body-style="{ marginBottom: '24px', padding: 0 }"
+    variant="borderless"
+    :styles="{ body: { marginBottom: '24px', padding: 0 } }"
     :loading="loading"
   >
     <a-descriptions size="small" layout="vertical" :bordered="true" :column="1">

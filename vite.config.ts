@@ -1,7 +1,7 @@
 import vue from '@vitejs/plugin-vue';
 import { defineConfig, loadEnv } from 'vite';
 import Components from 'unplugin-vue-components/vite';
-import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers';
+import { AntdvNextResolver } from '@antdv-next/auto-import-resolver';
 import path from 'path';
 
 // https://vitejs.dev/config/
@@ -19,8 +19,7 @@ export default defineConfig(({ mode }) => {
       proxy: {
         // https://cn.vitejs.dev/config/#server-proxy
         [env.VITE_API_BASE_URL]: {
-          target: 'https://apifoxmock.com/m1/2976680-2519385-default',
-          // target: 'http://192.168.56.1:6275',
+          target: env.VITE_PROXY_TARGET,
           changeOrigin: true,
           rewrite: (p: string) => p.replace(env.VITE_API_BASE_URL, ''),
         },
@@ -28,9 +27,9 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       // 资源别名
-      alias: {
-        '@': path.resolve(import.meta.dirname, './src'),
-      },
+      alias: [
+        { find: '@', replacement: path.resolve(import.meta.dirname, './src') },
+      ],
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
     },
     build: {
@@ -63,7 +62,13 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      include: ['@ant-design/icons-vue', 'ant-design-vue'],
+      include: [
+        '@antdv-next/icons',
+        'antdv-next',
+        'dayjs',
+        'dayjs/plugin/relativeTime',
+        'dayjs/locale/zh-cn',
+      ],
     },
     plugins: [
       vue(),
@@ -71,13 +76,7 @@ export default defineConfig(({ mode }) => {
       Components({
         dts: 'src/typings/components.d.ts',
         globs: ['src/components/*/*.vue'],
-        resolvers: [
-          AntDesignVueResolver({
-            resolveIcons: true,
-            importStyle: false,
-            cjs: false,
-          }),
-        ],
+        resolvers: [AntdvNextResolver({ resolveIcons: true })],
       }),
     ],
   };

@@ -1,6 +1,5 @@
 import { computed, reactive, ref } from 'vue';
-import { theme } from 'ant-design-vue';
-import type { ThemeConfig } from 'ant-design-vue/es/config-provider/context';
+import { theme, type ThemeConfig } from 'antdv-next';
 import {
   CACHE_LOCAL_PRIMARY_COLOR,
   CACHE_LOCAL_PROCONFIG,

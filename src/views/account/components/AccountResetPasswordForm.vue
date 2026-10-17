@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Modal, message } from 'ant-design-vue';
+import { Modal, message } from 'antdv-next';
 import { updateUserPassword } from '@/api/profile';
 import { isSuccess } from '@/api/httpClient';
 import useUserStore from '@/store/modules/user';

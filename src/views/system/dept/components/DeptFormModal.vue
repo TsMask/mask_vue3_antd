@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { reactive, toRaw } from 'vue';
+import { computed, reactive, toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import {
   addDept,
   getDept,
@@ -18,7 +18,7 @@ import { useModalAction } from '@/hooks/useModalAction';
 const props = defineProps<{
   deptTreeData: Record<string, any>[];
 }>();
-const emit = defineEmits<{ success: [] }>();
+const emit = defineEmits<{ success: [parentId: string | number] }>();
 
 const { dict } = useDictSetup({
   keyMap: {
@@ -40,7 +40,8 @@ function createDefaultForm() {
   };
 }
 
-const { modal, formCtl, isView, openModal, closeModal } = useModalForm({
+const { modal, formCtl, rules, isView, openModal, closeModal } = useModalForm({
+  formName: 'formCtlByDeptEdit',
   initForm: createDefaultForm,
   rules: {
     parent_id: [{ required: true, message: '上级部门不能为空' }],
@@ -65,6 +66,17 @@ const { modal, formCtl, isView, openModal, closeModal } = useModalForm({
 });
 
 const parentTreeData = reactive<Record<string, any>[]>([]);
+const parentTreeExpandedKeys = computed(() => {
+  const keys: (string | number)[] = [];
+  const collectKeys = (nodes: Record<string, any>[]) => {
+    nodes.forEach(node => {
+      keys.push(node.id);
+      if (node.children?.length) collectKeys(node.children);
+    });
+  };
+  collectKeys(parentTreeData);
+  return keys;
+});
 
 /** 原地替换上级部门树，保证 TreeSelect 仍持有同一个响应式数组 */
 function replaceParentTree(data: Record<string, any>[]) {
@@ -166,7 +178,7 @@ async function handleSubmit() {
     successText: '操作成功',
     onSuccess: () => {
       handleClose();
-      emit('success');
+      emit('success', form.parent_id);
     },
   });
 }
@@ -183,7 +195,7 @@ defineExpose({ openView, openEdit });
 <template>
   <ProModal
     :drag="true"
-    :destroyOnClose="true"
+    :destroyOnHidden="true"
     :width="800"
     :keyboard="!isView"
     :mask-closable="isView"
@@ -196,6 +208,8 @@ defineExpose({ openView, openEdit });
   >
     <a-form
       name="formCtlByDeptEdit"
+      :model="modal.form"
+      :rules="rules"
       layout="horizontal"
       :label-col="{ span: 6 }"
       :label-wrap="true"
@@ -221,7 +235,7 @@ defineExpose({ openView, openEdit });
           v-model:value="modal.form.parent_id"
           placeholder="上级部门"
           show-search
-          tree-default-expand-all
+          :tree-default-expanded-keys="parentTreeExpandedKeys"
           :tree-data="parentTreeData"
           :field-names="{
             children: 'children',
@@ -231,7 +245,8 @@ defineExpose({ openView, openEdit });
           tree-node-label-prop="dept_name"
           tree-node-filter-prop="dept_name"
           style="width: 100%"
-          :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+          :styles="{ popup: { root: { maxHeight: '400px', overflow: 'auto' } } }"
+          :virtual="false"
         />
       </a-form-item>
       <a-form-item

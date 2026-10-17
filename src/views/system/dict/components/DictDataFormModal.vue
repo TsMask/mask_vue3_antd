@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import {
   addDictData,
   getDictData,
@@ -40,7 +40,8 @@ function createDefaultForm() {
   };
 }
 
-const { modal, formCtl, isView, openModal, closeModal } = useModalForm({
+const { modal, formCtl, rules, isView, openModal, closeModal } = useModalForm({
+  formName: 'formCtlByDictDataEdit',
   initForm: createDefaultForm,
   rules: {
     dict_type: [{ required: true, message: '请选择字典类型' }],
@@ -145,7 +146,7 @@ defineExpose({ openView, openEdit });
 <template>
   <ProModal
     :drag="true"
-    :destroyOnClose="true"
+    :destroyOnHidden="true"
     :width="800"
     :keyboard="!isView"
     :mask-closable="isView"
@@ -158,6 +159,8 @@ defineExpose({ openView, openEdit });
   >
     <a-form
       name="formCtlByDictDataEdit"
+      :model="modal.form"
+      :rules="rules"
       layout="horizontal"
       :label-col="{ span: 6 }"
       :label-wrap="true"

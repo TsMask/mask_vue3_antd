@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { reactive, toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
-import { message } from 'ant-design-vue';
-import type { DataNode } from 'ant-design-vue/es/tree';
+import { message } from 'antdv-next';
+import type { TreeDataNode } from 'antdv-next';
 import { addRole, getRole, updateRole } from '@/api/system/role';
 import { menuTreeSelect, menuTreeSelectRole } from '@/api/system/menu';
 import {
@@ -24,12 +24,13 @@ const { dict } = useDictSetup({
 });
 
 type TreeDataType = {
-  treeData: DataNode[];
+  treeData: TreeDataNode[];
   checkedKeys: (string | number)[];
   expandedKeys: (string | number)[];
 };
 
-const { modal, formCtl, isView, openModal, closeModal } = useModalForm({
+const { modal, formCtl, rules, isView, openModal, closeModal } = useModalForm({
+  formName: 'formCtlByRoleEdit',
   initForm: () => ({
     id: undefined as string | number | undefined,
     role_name: '',
@@ -227,7 +228,7 @@ defineExpose({ openView, openEdit });
 <template>
   <ProModal
     :drag="true"
-    :destroyOnClose="true"
+    :destroyOnHidden="true"
     :width="800"
     :keyboard="!isView"
     :mask-closable="isView"
@@ -240,6 +241,8 @@ defineExpose({ openView, openEdit });
   >
     <a-form
       name="formCtlByRoleEdit"
+      :model="modal.form"
+      :rules="rules"
       layout="horizontal"
       :label-col="{ span: 6 }"
       :label-wrap="true"
@@ -299,7 +302,10 @@ defineExpose({ openView, openEdit });
               :maxlength="50"
             >
               <template #prefix>
-                <a-tooltip placement="topLeft">
+                <a-tooltip
+                  placement="topLeft"
+                  :get-popup-container="trigger => trigger.parentElement!"
+                >
                   <template #title>
                     <div>
                       权限标识示例：dba <br />
@@ -376,6 +382,7 @@ defineExpose({ openView, openEdit });
           :tree-data="menuTreeState.treeData"
           :field-names="{ children: 'children', title: 'label', key: 'id' }"
           :height="256"
+          :virtual="false"
           style="border: 1px solid #d9d9d9; border-radius: 6px; margin-top: 4px"
         />
       </a-form-item>

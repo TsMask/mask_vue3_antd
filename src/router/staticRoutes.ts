@@ -1,5 +1,5 @@
 import { createVNode } from 'vue';
-import { AlipayOutlined } from '@ant-design/icons-vue';
+import { AlipayOutlined } from '@antdv-next/icons';
 import type { RouteRecordRaw } from 'vue-router';
 import { HOME_PATH } from '@/constants/router';
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import type { TabsProps } from 'antdv-next';
 
 type TechnologyItem = {
   id: string;
@@ -9,7 +10,11 @@ type TechnologyItem = {
 
 const emit = defineEmits<{ refresh: [] }>();
 
-const activeKey = ref('list');
+const activeKey = ref<'list' | 'empty'>('list');
+const profileTabs: TabsProps['items'] = [
+  { key: 'list', label: '列表' },
+  { key: 'empty', label: '空状态' },
+];
 
 const technologyItems: TechnologyItem[] = [
   {
@@ -42,39 +47,34 @@ const technologyItems: TechnologyItem[] = [
   <a-card>
     <a-tabs
       v-model:activeKey="activeKey"
-      tab-position="top"
-      :destroy-inactive-tab-pane="true"
+      tab-placement="top"
+      :destroy-on-hidden="true"
+      :items="profileTabs"
     >
-      <a-tab-pane key="list" tab="列表">
-        <a-list
-          item-layout="horizontal"
-          :data-source="technologyItems"
-          row-key="id"
-        >
-          <template #renderItem="{ item }">
-            <a-list-item>
-              <a-list-item-meta>
-                <template #title>
-                  {{ item.title }}
-                </template>
-                <template #description>
-                  {{ item.description }}
-                </template>
-                <template #avatar>
-                  <a-avatar>{{ item.id }}</a-avatar>
-                </template>
-              </a-list-item-meta>
-            </a-list-item>
-          </template>
-        </a-list>
-      </a-tab-pane>
-
-      <a-tab-pane key="empty" tab="空状态">
-        <a-empty>
+      <template #contentRender="{ item }">
+        <a-flex v-if="item.key === 'list'" vertical :gap="16">
+          <a-flex
+            v-for="technology in technologyItems"
+            :key="technology.id"
+            :gap="12"
+            align="flex-start"
+          >
+            <a-avatar>{{ technology.id }}</a-avatar>
+            <a-flex vertical :gap="4">
+              <a-typography-text strong>
+                {{ technology.title }}
+              </a-typography-text>
+              <a-typography-text type="secondary">
+                {{ technology.description }}
+              </a-typography-text>
+            </a-flex>
+          </a-flex>
+        </a-flex>
+        <a-empty v-else>
           <template #description>暂无数据，尝试刷新看看</template>
           <a-button type="primary" @click="emit('refresh')">刷新</a-button>
         </a-empty>
-      </a-tab-pane>
+      </template>
     </a-tabs>
   </a-card>
 </template>

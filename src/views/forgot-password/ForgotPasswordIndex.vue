@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Modal, message } from 'ant-design-vue';
+import { Modal, message } from 'antdv-next';
 import type { CSSProperties } from 'vue';
 import { computed, onBeforeUnmount, reactive, ref } from 'vue';
 import background from '@/assets/background.svg';
@@ -238,7 +238,7 @@ onBeforeUnmount(() => {
       >
         <LoginHeader />
 
-        <a-card :bordered="true" :style="{ width: '100%', maxWidth: '420px' }">
+        <a-card :style="{ width: '100%', maxWidth: '420px' }">
           <a-steps :current="currentStep" size="small" :items="stepItems" />
 
           <a-form

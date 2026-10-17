@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { message } from 'ant-design-vue';
-import type { FileType } from 'ant-design-vue/es/upload/interface';
-import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface';
+import { message } from 'antdv-next';
 import defaultPreview from '@/assets/logo.png';
 import { uploadFile } from '@/api/tool/file';
 import { useModalAction } from '@/hooks/useModalAction';
@@ -15,7 +13,7 @@ const previewPath = ref(defaultPreview);
 const { confirmAction, loading: uploading } = useModalAction();
 
 /** 小文件示例仅允许 jpg/png，且上传前限制并发 */
-function handleBeforeUpload(file: FileType) {
+function handleBeforeUpload(file: File) {
   if (uploading.value) return false;
 
   const isImage = ['image/jpeg', 'image/png'].includes(file.type);
@@ -32,7 +30,7 @@ function handleBeforeUpload(file: FileType) {
 }
 
 /** 普通上传成功后立即预览，并向父页面传递可下载路径 */
-function handleUpload(up: UploadRequestOption) {
+function handleUpload(up: any) {
   const formData = new FormData();
   formData.append('file', up.file as File);
   formData.append('subPath', 'default');
@@ -54,7 +52,7 @@ function handleUpload(up: UploadRequestOption) {
 
 <template>
   <a-card title="小文件普通上传" style="margin-bottom: 16px">
-    <a-space direction="vertical" :size="16">
+    <a-space orientation="vertical" :size="16">
       <a-upload
         name="file"
         list-type="picture"

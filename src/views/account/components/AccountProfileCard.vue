@@ -8,7 +8,7 @@ defineProps<{
 </script>
 
 <template>
-  <a-card :body-style="{ padding: '0px' }" class="profile-card">
+  <a-card :styles="{ body: { padding: '0px' } }" class="profile-card">
     <template #title>
       <div class="profile-header">
         <div class="profile-number">No：{{ profile.user.id || '-' }}</div>

@@ -5,7 +5,7 @@ import { HOME_PATH } from '@/constants/router';
 
 type BreadcrumbRoute = {
   path: string;
-  breadcrumbName?: string;
+  breadcrumbName: string;
 };
 
 function isPathPrefix(menuPath: string, routePath: string) {

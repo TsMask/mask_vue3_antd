@@ -3,8 +3,8 @@ import { onBeforeMount, onMounted, watch } from 'vue';
 import useAppStore from '@/store/modules/app';
 import { useLayoutSettings } from '@/layouts/hooks/useLayoutSettings';
 import { usePrefersColorScheme, viewTransitionTheme } from 'antdv-pro-layout';
-import { message } from 'ant-design-vue';
-import zhCN from 'ant-design-vue/es/locale/zh_CN';
+import { message } from 'antdv-next';
+import zhCN from 'antdv-next/locale/zh_CN';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 

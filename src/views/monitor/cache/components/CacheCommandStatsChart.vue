@@ -97,7 +97,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <a-card title="命令统计" :bordered="false">
+  <a-card title="命令统计" variant="borderless">
     <div ref="chartRef" style="height: 400px; width: 100%"></div>
   </a-card>
 </template>

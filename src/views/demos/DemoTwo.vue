@@ -6,18 +6,11 @@
         v-model:selectedKeys="selectedKeys"
         theme="dark"
         mode="horizontal"
-      >
-        <a-menu-item key="1">nav 1</a-menu-item>
-        <a-menu-item key="2">nav 2</a-menu-item>
-        <a-menu-item key="3">nav 3</a-menu-item>
-      </a-menu>
+        :items="menuItems"
+      />
     </a-layout-header>
     <a-layout-content class="layout-content">
-      <a-breadcrumb style="margin: 16px 0">
-        <a-breadcrumb-item>Home</a-breadcrumb-item>
-        <a-breadcrumb-item>List</a-breadcrumb-item>
-        <a-breadcrumb-item>App</a-breadcrumb-item>
-      </a-breadcrumb>
+      <a-breadcrumb style="margin: 16px 0" :items="[{ title: 'Home' }, { title: 'List' }, { title: 'App' }]" />
       <div class="layout-content-main">Content {{ selectedKeys }}</div>
     </a-layout-content>
     <a-layout-footer class="layout-footer">
@@ -28,8 +21,14 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue';
+import type { MenuProps } from 'antdv-next';
 
 const selectedKeys = ref<string[]>(['2']);
+const menuItems: MenuProps['items'] = [
+  { key: '1', label: 'nav 1' },
+  { key: '2', label: 'nav 2' },
+  { key: '3', label: 'nav 3' },
+];
 </script>
 
 <style scoped>

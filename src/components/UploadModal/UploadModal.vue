@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ProModal } from 'antdv-pro-modal';
-import { message } from 'ant-design-vue';
-import type { FileType } from 'ant-design-vue/es/upload/interface';
-import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface';
+import { message } from 'antdv-next';
 const emit = defineEmits(['upload', 'close', 'update:open']);
 const props = defineProps({
   /**窗口标题 */
@@ -39,7 +37,7 @@ function handleModalClose() {
 }
 
 /**上传前检查或转换压缩 */
-function handleBeforeUpload(file: FileType) {
+function handleBeforeUpload(file: File) {
   if (props.loading) return false;
   // 检查文件大小
   if (props.size > 0) {
@@ -69,7 +67,7 @@ function handleBeforeUpload(file: FileType) {
 }
 
 /**上传请求发出 */
-function handleUpload(up: UploadRequestOption) {
+function handleUpload(up: any) {
   emit('upload', up.file);
 }
 </script>
@@ -85,7 +83,7 @@ function handleUpload(up: UploadRequestOption) {
     :footer="null"
     @cancel="handleModalClose"
   >
-    <a-space :size="8" direction="vertical" style="width: 100%">
+    <a-space :size="8" orientation="vertical" style="width: 100%">
       <a-upload-dragger
         :disabled="props.loading"
         :accept="props.ext.join(',')"

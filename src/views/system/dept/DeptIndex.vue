@@ -38,25 +38,52 @@ const deptTreeData = computed(() => parseDataToTree(dataSource.value, 'id'));
 const expandedRowAll = ref(true);
 const expandedRowKeys: (string | number)[] = reactive([]);
 /** 所有父节点 key，用于“全部展开”。 */
-let allParentRowKeys: (string | number)[] = [];
+const allParentRowKeys = computed(() => collectParentRowKeys(deptTreeData.value));
+/** 新增或移动后需要展开的父节点，等待列表刷新完成后再生效。 */
+let pendingExpandParentId: string | number | undefined;
 const deptFormModal = ref<InstanceType<typeof DeptFormModal> | null>(null);
 const { confirmAction } = useModalAction();
 
-/** 首次加载后初始化展开状态。 */
-watch(
-  dataSource,
-  newData => {
-    if (newData.length > 0 && allParentRowKeys.length === 0) {
-      allParentRowKeys = [
-        ...new Set(newData.map((item: any) => item.parent_id)),
-      ];
-      expandedRowKeys.length = 0;
-      expandedRowKeys.push(...allParentRowKeys);
-      handleToggleExpandAll(expandedRowAll.value);
-    }
-  },
-  { once: true }
-);
+/** 收集树中实际拥有子节点的父级 key。 */
+function collectParentRowKeys(
+  nodes: Record<string, any>[]
+): (string | number)[] {
+  const keys: (string | number)[] = [];
+  const walk = (items: Record<string, any>[]) => {
+    items.forEach(item => {
+      if (!Array.isArray(item.children) || item.children.length === 0) return;
+      keys.push(item.id);
+      walk(item.children);
+    });
+  };
+  walk(nodes);
+  return keys;
+}
+
+/** 数据变化后同步有效展开键；新增子项时展开目标父节点。 */
+watch(allParentRowKeys, parentKeys => {
+  const parentIdToExpand = pendingExpandParentId;
+  pendingExpandParentId = undefined;
+
+  if (expandedRowAll.value) {
+    replaceExpandedRowKeys(parentKeys);
+    return;
+  }
+
+  const nextKeys = expandedRowKeys.filter(key => parentKeys.includes(key));
+  if (
+    parentIdToExpand !== undefined &&
+    parentKeys.includes(parentIdToExpand)
+  ) {
+    nextKeys.push(parentIdToExpand);
+  }
+  replaceExpandedRowKeys(nextKeys);
+}, { immediate: true });
+
+function replaceExpandedRowKeys(keys: (string | number)[]) {
+  expandedRowKeys.length = 0;
+  expandedRowKeys.push(...new Set(keys));
+}
 
 const tableColumns = computed<ProColumns[]>(() => [
   { title: '部门名称', dataIndex: 'dept_name', align: 'left', width: 200 },
@@ -101,8 +128,7 @@ const searchColumns = computed<ProColumnsSearch[]>(() => [
 
 /** 全部展开只展开父节点，折叠时清空受控展开集合 */
 function handleToggleExpandAll(checked: boolean | string | number) {
-  expandedRowKeys.length = 0;
-  if (checked) expandedRowKeys.push(...allParentRowKeys);
+  replaceExpandedRowKeys(checked ? allParentRowKeys.value : []);
 }
 
 function handleExpandedRowsChange(expandedRows: (string | number)[]) {
@@ -118,7 +144,8 @@ function handleEdit(id?: string | number, parentDeptId?: string | number) {
   deptFormModal.value?.openEdit(id, parentDeptId);
 }
 
-function handleFormSuccess() {
+function handleFormSuccess(parentId?: string | number) {
+  pendingExpandParentId = parentId;
   reload();
 }
 

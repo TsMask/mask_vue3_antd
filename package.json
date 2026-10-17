@@ -2,7 +2,7 @@
   "name": "mask_vue3_antd",
   "type": "module",
   "version": "4.1.9",
-  "description": "🎉 基于 ant-design-vue + vue3 的管理系统",
+  "description": "🎉 基于 antdv-next + vue3 的管理系统",
   "author": "TsMask",
   "repository": {
     "type": "git",
@@ -18,31 +18,32 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ant-design/icons-vue": "7.0.1",
-    "ant-design-vue": "4.2.6",
-    "antdv-pro-layout": "4.2.6",
-    "antdv-pro-modal": "4.1.5",
-    "antdv-pro-table": "4.0.6",
+    "@antdv-next/icons": "1.1.2",
+    "antdv-next": "1.6.0",
+    "antdv-pro-layout": "5.0.8",
+    "antdv-pro-modal": "5.0.3",
+    "antdv-pro-table": "5.0.3",
     "dayjs": "1.11.23",
     "echarts": "6.1.0",
     "file-saver": "2.0.5",
-    "js-base64": "3.9.3",
+    "js-base64": "3.9.4",
     "js-cookie": "3.0.8",
     "nprogress": "0.2.0",
     "pinia": "4.0.3",
-    "vue": "3.5.42",
-    "vue-router": "5.2.0"
+    "vue": "3.5.43",
+    "vue-router": "5.4.0"
   },
   "devDependencies": {
+    "@antdv-next/auto-import-resolver": "^1.2.0",
     "@types/file-saver": "2.0.7",
     "@types/js-cookie": "3.0.6",
     "@types/node": "^24.0.0",
     "@types/nprogress": "0.2.3",
-    "@vitejs/plugin-vue": "6.0.8",
+    "@vitejs/plugin-vue": "6.0.10",
     "less": "4.9.0",
     "typescript": "6.0.3",
     "unplugin-vue-components": "32.1.0",
-    "vite": "8.2.2",
-    "vue-tsc": "3.3.11"
+    "vite": "8.3.4",
+    "vue-tsc": "3.3.13"
   }
 }

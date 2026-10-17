@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { message } from 'ant-design-vue';
+import { message, type TabsProps } from 'antdv-next';
 import type { CSSProperties } from 'vue';
 import { ref, reactive, watch, onMounted, onBeforeUnmount } from 'vue';
 import background from '@/assets/background.svg';
@@ -37,6 +37,10 @@ const contentStyle: CSSProperties = {
 };
 
 const activeKey = ref<LoginTabKey>('username');
+const loginTabs: TabsProps['items'] = [
+  { key: 'username', label: '账号密码登录' },
+  { key: 'phone', label: '手机号登录' },
+];
 
 const state = reactive({
   form: {
@@ -251,34 +255,34 @@ onBeforeUnmount(() => {
       >
         <LoginHeader />
 
-        <a-card :bordered="true" :style="{ width: '100%', maxWidth: '400px' }">
+        <a-card :style="{ width: '100%', maxWidth: '400px' }">
           <a-form :model="state.form" name="LoginForm" @finish="handleSubmit">
             <a-tabs
               v-model:activeKey="activeKey"
-              tab-position="top"
+              tab-placement="top"
               type="line"
               :centered="true"
-              :destroy-inactive-tab-pane="true"
+              :destroy-on-hidden="true"
+              :items="loginTabs"
             >
-              <a-tab-pane key="username" tab="账号密码登录">
+              <template #contentRender="{ item }">
                 <UsernameLogin
+                  v-if="item.key === 'username'"
                   v-model:username="state.form.username"
                   v-model:password="state.form.password"
                   v-model:code="state.form.code"
                   :captcha="state.captcha"
                   @refresh-captcha="handleGetCaptcha"
                 />
-              </a-tab-pane>
-
-              <a-tab-pane key="phone" tab="手机号登录">
                 <PhoneLogin
+                  v-else
                   v-model:phone="state.form.phone"
                   v-model:code="state.form.code"
                   :counting="smsState.counting"
                   :countdown="smsState.countdown"
                   @send="handleSendSmsCaptcha"
                 />
-              </a-tab-pane>
+              </template>
             </a-tabs>
 
             <a-button

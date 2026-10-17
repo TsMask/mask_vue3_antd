@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue';
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import { PageContainer } from 'antdv-pro-layout';
 import { getUserProfile } from '@/api/profile';
 import { isSuccess } from '@/api/httpClient';

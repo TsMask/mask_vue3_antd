@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { scriptUrl } from '@/assets/js/icon_font_8d5l8fzk5b87iudi';
-import { createFromIconfontCN } from '@ant-design/icons-vue';
+import { createFromIconfontCN } from '@antdv-next/icons';
 import { createVNode, isVNode } from 'vue';
 
 const props = defineProps({

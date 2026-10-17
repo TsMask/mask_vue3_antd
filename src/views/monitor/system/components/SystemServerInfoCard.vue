@@ -26,8 +26,8 @@ function formatUptime(uptime?: string | number) {
 <template>
   <a-card
     title="系统信息"
-    :bordered="false"
-    :body-style="{ marginBottom: '24px', padding: 0 }"
+    variant="borderless"
+    :styles="{ body: { marginBottom: '24px', padding: 0 } }"
   >
     <a-descriptions
       size="middle"

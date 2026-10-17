@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { ColumnsType } from 'ant-design-vue/es/table';
+import type { TableColumnsType } from 'antdv-next';
 import type { SystemDiskInfo } from '../systemInfo';
 
 defineProps<{
   disks: SystemDiskInfo[];
 }>();
 
-const diskColumns: ColumnsType = [
+const diskColumns: TableColumnsType = [
   { title: '路径盘符', dataIndex: 'target', align: 'left' },
   { title: '总大小', dataIndex: 'size', align: 'left' },
   { title: '剩余大小', dataIndex: 'avail', align: 'left' },
@@ -16,7 +16,7 @@ const diskColumns: ColumnsType = [
 </script>
 
 <template>
-  <a-card title="磁盘信息" :bordered="false" :body-style="{ padding: 0 }">
+  <a-card title="磁盘信息" variant="borderless" :styles="{ body: { padding: 0 } }">
     <a-table
       row-key="target"
       size="middle"

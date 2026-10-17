@@ -1,5 +1,5 @@
 import { ref, type Ref } from 'vue';
-import { message, Modal } from 'ant-design-vue';
+import { message, Modal } from 'antdv-next';
 import { isSuccess, type ResultType } from '@/api/httpClient';
 
 /** 直接执行操作的配置 */

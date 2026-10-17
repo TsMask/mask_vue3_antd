@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { h } from 'vue';
+import { Input, type InputProps } from 'antdv-next';
+import type { FilterDropdownProps } from 'antdv-next/dist/table/interface';
 import { ProTable, type ProColumns } from 'antdv-pro-table';
 
 defineProps<{
@@ -27,7 +30,19 @@ const cacheNameColumns: ProColumns[] = [
     align: 'left',
     width: 150,
     ellipsis: true,
-    customFilterDropdown: true,
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm }: FilterDropdownProps) =>
+      h(Input, {
+        placeholder: '请输入关键字',
+        size: 'small',
+        allowClear: true,
+        value: String(selectedKeys[0] ?? ''),
+        onChange: (e: Parameters<NonNullable<InputProps['onChange']>>[0]) => {
+          const keyword = e.target.value ?? '';
+          setSelectedKeys(keyword ? [keyword] : []);
+        },
+        onPressEnter: () => confirm(),
+        onBlur: () => confirm(),
+      }),
     onFilter: (value, record) =>
       String(record.cache_name)
         .toLowerCase()
@@ -47,8 +62,8 @@ const cacheNameColumns: ProColumns[] = [
 <template>
   <a-card
     title="缓存列表"
-    :bordered="false"
-    :body-style="{ marginBottom: '24px', padding: 0 }"
+    variant="borderless"
+    :styles="{ body: { marginBottom: '24px', padding: 0 } }"
   >
     <template #extra>
       <a-space :size="8" align="center">
@@ -93,17 +108,16 @@ const cacheNameColumns: ProColumns[] = [
       :card-props="false"
     >
       <template
-        #customFilterDropdown="{
+        #filterDropdown="{
           setSelectedKeys,
           selectedKeys,
           confirm,
           clearFilters,
-          column,
         }"
       >
         <div style="padding: 8px">
           <a-input
-            :placeholder="`模糊过滤 ${column.title}`"
+            placeholder="模糊过滤"
             :value="selectedKeys[0]"
             style="width: 188px; margin-bottom: 8px; display: block"
             @change="

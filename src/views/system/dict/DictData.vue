@@ -2,7 +2,7 @@
 import { useRoute, useRouter } from 'vue-router';
 import { ref, toRaw, computed, onMounted } from 'vue';
 import { PageContainer } from 'antdv-pro-layout';
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import {
   ProTable,
   type ProColumns,
@@ -96,6 +96,7 @@ const tableColumns = computed<ProColumns[]>(() => [
     valueType: 'select',
     valueEnum: toProValueEnum(dictTypeOptions.value),
     fieldProps: { showSearch: true, disabled: lockedDictType.value },
+    ellipsis: true,
   },
   {
     title: '操作',

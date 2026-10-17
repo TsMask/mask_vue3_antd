@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import UploadModal from '@/components/UploadModal/UploadModal.vue';
 import { importData, importTemplate } from '@/api/system/user';
 import { uploadFile } from '@/api/tool/file';

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { UploadFile } from 'ant-design-vue/es/upload/interface';
-import type { UploadRequestOption } from 'ant-design-vue/es/vc-upload/interface';
+import type { UploadFile } from 'antdv-next';
 import { uploadFileChunk } from '@/api/tool/file';
 import { isSuccess } from '@/api/httpClient';
 import { useModalAction } from '@/hooks/useModalAction';
@@ -20,7 +19,7 @@ function removeUploadItem(uid: string) {
 }
 
 /** 分片上传过程中持续回写整体进度，完成后把文件路径交给下载面板 */
-function handleUpload(up: UploadRequestOption) {
+function handleUpload(up: any) {
   const fileData = up.file as File & { uid: string };
   const uploadItem = fileList.value.find(item => item.uid === fileData.uid);
   if (!uploadItem) return;

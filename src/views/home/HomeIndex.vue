@@ -64,7 +64,7 @@ const onlineUserCount = ref(10000 + Math.floor(Math.random() * 10000));
         <HomeIntroduction />
       </a-col>
       <a-col :lg="8" :md="8" :xs="24">
-        <a-space :size="16" direction="vertical">
+        <a-space :size="16" orientation="vertical">
           <HomeQuickStart />
           <HomeDonate />
         </a-space>

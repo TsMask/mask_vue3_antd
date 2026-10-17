@@ -1,5 +1,5 @@
-import { computed, reactive } from 'vue';
-import { Form, message } from 'ant-design-vue';
+import { computed, nextTick, reactive } from 'vue';
+import { message, useForm, type FormInstance } from 'antdv-next';
 import { isSuccess, type ResultType } from '@/api/httpClient';
 
 /** 弹窗模式：view 详情只读 / add 新增 / edit 编辑 */
@@ -12,7 +12,9 @@ export interface UseModalFormOptions<TForm> {
    * 每次打开都会重新调用，避免上一次接口字段或页面修改残留在表单中。
    */
   initForm: () => TForm;
-  /** ant-design-vue Form.useForm 格式的校验规则 */
+  /** Must match the name of the modal's single a-form instance. */
+  formName: string;
+  /** antdv-next a-form :rules 格式的校验规则 */
   rules?: Record<string, any>;
 }
 
@@ -56,7 +58,7 @@ export interface OpenModalFormOptions<TForm, TData = any> {
 export function useModalForm<TForm extends Record<string, any>>(
   options: UseModalFormOptions<TForm>
 ) {
-  const { initForm, rules } = options;
+  const { initForm, rules, formName } = options;
 
   /** 弹窗与表单共享的响应式状态，form 引用在 Hook 生命周期内保持不变 */
   const modal = reactive({
@@ -73,10 +75,27 @@ export function useModalForm<TForm extends Record<string, any>>(
   });
 
   /** 校验状态与校验规则控制器 */
-  const formCtl = Form.useForm(
-    modal.form as Record<string, any>,
-    rules ? reactive(rules) : undefined
-  );
+  const formRules = rules ? reactive(rules) : undefined;
+
+  // antdv-next connects a form hook to a descendant form by its name.
+  const formInstance = useForm(formName);
+
+  // Compatibility layer for the legacy Form.useForm controller. Validation
+  // feedback is handled by a-form-item itself, so validateInfos binds empty
+  // objects to keep existing v-bind="formCtl.validateInfos.xxx" templates.
+  const formCtl = {
+    validate: (...args: Parameters<FormInstance['validate']>) =>
+      formInstance.validate(...args),
+    validateFields: (...args: Parameters<FormInstance['validateFields']>) =>
+      formInstance.validateFields(...args),
+    resetFields: (...args: Parameters<FormInstance['resetFields']>) =>
+      formInstance.resetFields(...args),
+    clearValidate: (...args: Parameters<FormInstance['clearValidate']>) =>
+      formInstance.clearValidate(...args),
+    validateInfos: new Proxy({} as Record<string, any>, {
+      get: () => ({}),
+    }),
+  };
 
   /** 详情模式禁用表单并允许只读字段布局复用编辑布局 */
   const isView = computed(() => modal.mode === 'view');
@@ -94,7 +113,6 @@ export function useModalForm<TForm extends Record<string, any>>(
     const form = modal.form as Record<string, any>;
     Object.keys(form).forEach((key) => delete form[key]);
     Object.assign(form, initForm());
-    formCtl.clearValidate();
   }
 
   /** 恢复初始值后合并传入数据，用于复用同一表单的独立弹窗 */
@@ -148,6 +166,8 @@ export function useModalForm<TForm extends Record<string, any>>(
       modal.mode = openOptions.mode;
       modal.title = openOptions.title;
       modal.visible = true;
+      await nextTick();
+      formCtl.clearValidate();
       return true;
     } catch {
       if (openOptions.errorMessage !== false) {
@@ -165,6 +185,7 @@ export function useModalForm<TForm extends Record<string, any>>(
 
   /** 关闭弹窗并恢复下一次打开所需的干净表单 */
   function closeModal() {
+    if (modal.visible) formCtl.clearValidate();
     modal.visible = false;
     resetForm();
   }
@@ -172,6 +193,7 @@ export function useModalForm<TForm extends Record<string, any>>(
   return {
     modal,
     formCtl,
+    rules: formRules,
     isView,
     replaceForm,
     resetForm,

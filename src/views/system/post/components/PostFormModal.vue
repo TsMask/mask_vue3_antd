@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
-import { message } from 'ant-design-vue';
+import { message } from 'antdv-next';
 import { addPost, getPost, updatePost } from '@/api/system/post';
 import { parseDateToStr } from '@/utils/date';
 import { useDictSetup } from '@/hooks/useDictSetup';
@@ -29,7 +29,8 @@ function createDefaultForm() {
   };
 }
 
-const { modal, formCtl, isView, openModal, closeModal } = useModalForm({
+const { modal, formCtl, rules, isView, openModal, closeModal } = useModalForm({
+  formName: 'formCtlByPostEdit',
   initForm: createDefaultForm,
   rules: {
     post_code: [{ required: true, min: 1, max: 50, message: '请输入岗位编码' }],
@@ -94,7 +95,7 @@ defineExpose({ openView, openEdit });
 <template>
   <ProModal
     :drag="true"
-    :destroyOnClose="true"
+    :destroyOnHidden="true"
     :width="800"
     :keyboard="!isView"
     :mask-closable="isView"
@@ -107,6 +108,8 @@ defineExpose({ openView, openEdit });
   >
     <a-form
       name="formCtlByPostEdit"
+      :model="modal.form"
+      :rules="rules"
       layout="horizontal"
       :label-col="{ span: 6 }"
       :label-wrap="true"
