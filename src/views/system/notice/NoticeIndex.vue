@@ -18,6 +18,8 @@ import {
   useProTableScroll,
 } from '@/hooks/useProTable';
 
+const NOTICE_STATUS_DELETED = '3';
+
 const route = useRoute();
 
 /** 路由标题 */
@@ -42,11 +44,19 @@ const {
   reload,
   rowSelection,
   selectedRowKeys,
+  selectedRows,
   removeSelectedRowKeys,
 } = useProTable({
   queryFn: listNotice,
   defaultPageSize: 20,
   rowKey: 'id',
+  selection: {
+    rowSelection: {
+      getCheckboxProps: (record: Record<string, any>) => ({
+        disabled: record.notice_status === NOTICE_STATUS_DELETED,
+      }),
+    },
+  },
 });
 
 const noticeFormModal = ref<InstanceType<typeof NoticeFormModal> | null>(null);
@@ -92,6 +102,11 @@ const tableColumns = computed<ProColumns[]>(() => [
 ]);
 
 const tableScroll = useProTableScroll(tableColumns);
+const deletableSelectedRowKeys = computed(() =>
+  selectedRows.value
+    .filter(record => record.notice_status !== NOTICE_STATUS_DELETED)
+    .map(record => record.id)
+);
 
 const searchColumns = computed<ProColumnsSearch[]>(() => [
   { title: '公告标题', dataIndex: 'notice_title' },
@@ -122,10 +137,15 @@ function handleFormSuccess() {
   reload();
 }
 
+function isDeletedNotice(record: Record<string, any>) {
+  return record.notice_status === NOTICE_STATUS_DELETED;
+}
+
 /** 删除公告（单条或批量） */
 function handleDelete(id: string = '0') {
   if (id === '0') {
-    id = selectedRowKeys.value.join(',');
+    if (deletableSelectedRowKeys.value.length === 0) return;
+    id = deletableSelectedRowKeys.value.join(',');
   }
   confirmAction({
     content: `确认删除公告编号为【${id}】的数据项?`,
@@ -184,7 +204,7 @@ function handleDelete(id: string = '0') {
           <a-button
             type="default"
             danger
-            :disabled="selectedRowKeys.length <= 0"
+            :disabled="deletableSelectedRowKeys.length <= 0"
             @click.prevent="handleDelete()"
             v-perms:has="['system:notice:remove']"
           >
@@ -219,7 +239,10 @@ function handleDelete(id: string = '0') {
                 </template>
               </a-button>
             </a-tooltip>
-            <a-tooltip placement="topRight">
+            <a-tooltip
+              v-if="!isDeletedNotice(record)"
+              placement="topRight"
+            >
               <template #title>编辑</template>
               <a-button
                 type="link"
@@ -231,7 +254,10 @@ function handleDelete(id: string = '0') {
                 </template>
               </a-button>
             </a-tooltip>
-            <a-tooltip placement="topRight">
+            <a-tooltip
+              v-if="!isDeletedNotice(record)"
+              placement="topRight"
+            >
               <template #title>删除</template>
               <a-button
                 type="link"

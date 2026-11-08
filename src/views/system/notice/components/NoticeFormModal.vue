@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { toRaw } from 'vue';
+import { computed, toRaw } from 'vue';
 import { ProModal } from 'antdv-pro-modal';
 import { message } from 'antdv-next';
 import { addNotice, getNotice, updateNotice } from '@/api/system/notice';
 import { useDictSetup } from '@/hooks/useDictSetup';
 import { useModalForm } from '@/hooks/useModalForm';
 import { useModalAction } from '@/hooks/useModalAction';
+
+const NOTICE_STATUS_DELETED = '3';
 
 const emit = defineEmits<{ success: [] }>();
 
@@ -16,6 +18,11 @@ const { dict } = useDictSetup({
   },
 });
 
+/** 已删除只用于列表/详情展示，编辑表单只提供可恢复状态 */
+const editableNoticeStatusOptions = computed(() =>
+  dict.sysNoticeStatus.filter(option => option.value !== NOTICE_STATUS_DELETED)
+);
+
 /** 每次打开弹窗都返回新对象，避免上次表单残留引用 */
 function createDefaultForm() {
   return {
@@ -23,7 +30,7 @@ function createDefaultForm() {
     notice_title: '',
     notice_content: '',
     notice_type: '2',
-    notice_status: '1',
+    notice_status: '1' as string | undefined,
     delFlag: '0',
     remark: '',
     create_by: undefined as string | undefined,
@@ -41,6 +48,7 @@ const { modal, formCtl, rules, isView, openModal, closeModal } = useModalForm({
       { required: true, min: 2, max: 50, message: '请输入公告标题' },
     ],
     notice_type: [{ required: true, message: '请选择公告类型' }],
+    notice_status: [{ required: true, message: '请选择公告状态' }],
     notice_content: [
       {
         required: true,
@@ -70,6 +78,10 @@ function openEdit(id?: string | number) {
           mode: 'edit',
           title: '修改公告',
           fetchDetail: () => getNotice(id),
+          transformDetail: data =>
+            data.notice_status === NOTICE_STATUS_DELETED
+              ? { ...data, notice_status: undefined }
+              : data,
           errorMessage: '获取公告信息失败',
         }
       : {
@@ -147,7 +159,7 @@ defineExpose({ openView, openEdit });
             <a-select
               v-model:value="modal.form.notice_status"
               placeholder="公告状态"
-              :options="dict.sysNoticeStatus"
+              :options="isView ? dict.sysNoticeStatus : editableNoticeStatusOptions"
             />
           </a-form-item>
         </a-col>
