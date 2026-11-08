@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import type { UploadFile } from 'antdv-next';
 import { uploadFileChunk } from '@/api/tool/file';
 import { isSuccess } from '@/api/httpClient';
@@ -19,8 +19,10 @@ function removeUploadItem(uid: string) {
 }
 
 /** 分片上传过程中持续回写整体进度，完成后把文件路径交给下载面板 */
-function handleUpload(up: any) {
+async function handleUpload(up: any) {
   const fileData = up.file as File & { uid: string };
+  // antdv-next calls custom-request before updating v-model:file-list.
+  await nextTick();
   const uploadItem = fileList.value.find(item => item.uid === fileData.uid);
   if (!uploadItem) return;
 

@@ -26,7 +26,6 @@
     "dayjs": "1.11.23",
     "echarts": "6.1.0",
     "file-saver": "2.0.5",
-    "js-base64": "3.9.4",
     "js-cookie": "3.0.8",
     "nprogress": "0.2.0",
     "pinia": "4.0.3",

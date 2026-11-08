@@ -54,7 +54,7 @@ export default defineConfig(({ mode }) => {
               { name: 'chunkEcharts', test: /node_modules\/echarts\// },
               {
                 name: 'chunkUtil',
-                test: /node_modules\/(dayjs|nprogress|file-saver|js-base64|js-cookie)\//,
+                test: /node_modules\/(dayjs|nprogress|file-saver|js-cookie)\//,
               },
             ],
           },

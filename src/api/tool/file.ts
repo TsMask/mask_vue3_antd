@@ -10,7 +10,6 @@ import {
   request,
   type ResultType,
 } from '@/api/httpClient';
-import { encode } from 'js-base64';
 
 /**
  * 进度回调函数类型
@@ -32,7 +31,7 @@ export async function downloadFile(
   range?: string
 ): Promise<ResultType<Blob>> {
   return request<Blob>({
-    url: `/api/v1/files/download/${encode(filePath)}`,
+    url: `/api/v1/files/download?file_path=${encodeURIComponent(filePath)}`,
     method: 'GET',
     headers: range ? { range } : undefined,
     responseType: 'blob',
@@ -132,6 +131,7 @@ export function uploadFile(data: FormData): Promise<ResultType> {
     method: 'POST',
     data,
     dataType: 'form-data',
+    timeout: 0,
   });
 }
 
@@ -255,5 +255,6 @@ export function chunkUpload(data: FormData): Promise<ResultType> {
     method: 'POST',
     data,
     dataType: 'form-data',
+    timeout: 0,
   });
 }

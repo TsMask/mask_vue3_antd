@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { message } from 'antdv-next';
 import saveAs from 'file-saver';
 import { downloadFile, downloadFileChunk } from '@/api/tool/file';
-import { isBinaryResult, isSuccess } from '@/api/httpClient';
+import { isSuccess } from '@/api/httpClient';
 
 const props = defineProps<{
   filePath: string;
@@ -32,6 +32,8 @@ async function handleDownload(chunked: boolean) {
     return;
   }
 
+  const fileName = getFileName(downloadFilePath.value);
+
   downloading.value = true;
   progressText.value = chunked ? '准备分片下载...' : '';
   try {
@@ -41,10 +43,9 @@ async function handleDownload(chunked: boolean) {
         })
       : downloadFile(downloadFilePath.value);
     const res = await request;
-
-    if (isSuccess(res) && isBinaryResult<Blob>(res)) {
+    if (isSuccess(res) && res.data instanceof Blob) {
+      saveAs(res.data, fileName);
       message.success({ content: '已完成下载', duration: 3 });
-      saveAs(res.data, getFileName(downloadFilePath.value));
     } else {
       message.error({ content: res.msg, duration: 3 });
     }
