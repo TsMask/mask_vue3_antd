@@ -159,7 +159,7 @@ function handleFormSuccess() {
   reload();
 }
 
-/** 删除菜单前交由后端校验是否存在子菜单或角色绑定 */
+/** 删除菜单前交由后端校验是否存在子菜单 */
 function handleDelete(id: string | number) {
   confirmAction({
     content: `确认删除菜单编号为【${id}】的数据项?`,
