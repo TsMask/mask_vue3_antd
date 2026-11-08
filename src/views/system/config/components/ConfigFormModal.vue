@@ -37,13 +37,13 @@ const { modal, formCtl, rules, isView, openModal, closeModal } = useModalForm({
   initForm: createDefaultForm,
   rules: {
     config_name: [
-      { required: true, min: 1, max: 50, message: '请输入参数名称' },
+      { required: true, min: 1, max: 64, message: '请输入参数名称' },
     ],
     config_key: [
-      { required: true, min: 1, max: 50, message: '请输入参数键名' },
+      { required: true, min: 1, max: 64, message: '请输入参数键名' },
     ],
     config_value: [
-      { required: true, min: 1, max: 50, message: '请输入参数键值' },
+      { required: true, min: 1, max: 512, message: '请输入参数键值' },
     ],
   },
 });
@@ -133,7 +133,7 @@ defineExpose({ openView, openEdit });
               v-model:value="modal.form.config_name"
               allow-clear
               placeholder="请输入参数名称"
-              :maxlength="45"
+              :maxlength="64"
             />
           </a-form-item>
         </a-col>
@@ -180,7 +180,7 @@ defineExpose({ openView, openEdit });
               v-model:value="modal.form.config_key"
               allow-clear
               placeholder="请输入参数键名"
-              :maxlength="45"
+              :maxlength="64"
             />
           </a-form-item>
         </a-col>
