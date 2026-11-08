@@ -8,8 +8,8 @@ import { request } from '@/api/httpClient';
 export function exportRole(query: Record<string, any>) {
   return request({
     url: '/api/v1/system/roles/export',
-    method: 'POST',
-    data: query,
+    method: 'GET',
+    params: query,
     responseType: 'blob',
   });
 }
