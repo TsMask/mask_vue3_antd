@@ -7,6 +7,7 @@
 
 # Local History for Visual Studio Code
 .history/
+.idea/
 
 .DS_Store
 node_modules/
@@ -20,19 +21,6 @@ tests/**/coverage/
 tests/e2e/reports
 selenium-debug.log
 
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.local
-
 package-lock.json
 yarn.lock
 components.d.ts
-
-# Local environment overrides
-.env.development
-.env.production
