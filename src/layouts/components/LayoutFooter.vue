@@ -15,7 +15,7 @@ const footerLinks = [
   {
     blankTarget: true,
     title: '接口文档',
-    href: 'https://mask-api-midwayjs.apifox.cn/',
+    href: 'https://mask-api.apifox.cn/',
   },
 ];
 </script>

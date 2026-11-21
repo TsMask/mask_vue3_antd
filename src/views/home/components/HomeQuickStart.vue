@@ -18,7 +18,7 @@
           target="_blank"
           rel="noopener noreferrer"
           title="来自Apifox的接口文档"
-          href="https://mask-api-midwayjs.apifox.cn/"
+          href="https://mask-api.apifox.cn/"
         >
           接口文档
         </a-button>
