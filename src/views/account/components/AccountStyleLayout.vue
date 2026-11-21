@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { viewTransitionTheme } from 'antdv-pro-layout';
+import { viewTransitionTheme } from 'antdv-pro-layout/hooks/prefers-color-scheme';
 import { useLayoutSettings } from '@/layouts/hooks/useLayoutSettings';
 
 const { proConfig, themeConfig, changeConfig, changePrimaryColor } =

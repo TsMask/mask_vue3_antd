@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
 import { ref, toRaw } from 'vue';
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import JobLogDetailModal from './components/JobLogDetailModal.vue';
 import JobLogTable from './components/JobLogTable.vue';
 import {

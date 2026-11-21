@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
 import { ref, toRaw, computed, onMounted } from 'vue';
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import { message } from 'antdv-next';
 import {
   ProTable,

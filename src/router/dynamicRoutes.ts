@@ -3,7 +3,7 @@ import {
   clearMenuItem,
   getMenuData,
   type MenuDataItem,
-} from 'antdv-pro-layout';
+} from 'antdv-pro-layout/utils/menu-data';
 import { getAuthMenus } from '@/api/auth';
 import { isSuccess } from '@/api/httpClient';
 import { findViewModule } from './viewComponents';

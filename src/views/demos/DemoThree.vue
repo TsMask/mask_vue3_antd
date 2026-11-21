@@ -35,7 +35,7 @@
 
 <script lang="ts" setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();

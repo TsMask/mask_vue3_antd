@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import type { TabsProps } from 'antdv-next';
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import AccountBaseInfoForm from './components/AccountBaseInfoForm.vue';
 import AccountResetPasswordForm from './components/AccountResetPasswordForm.vue';
 import AccountStyleLayout from './components/AccountStyleLayout.vue';

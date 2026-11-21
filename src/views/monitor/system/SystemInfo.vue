@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import SystemDiskTable from './components/SystemDiskTable.vue';
 import SystemProjectInfoCard from './components/SystemProjectInfoCard.vue';
 import SystemResourceInfoCard from './components/SystemResourceInfoCard.vue';

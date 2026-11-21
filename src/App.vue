@@ -2,7 +2,10 @@
 import { onBeforeMount, onMounted, watch } from 'vue';
 import useAppStore from '@/store/modules/app';
 import { useLayoutSettings } from '@/layouts/hooks/useLayoutSettings';
-import { usePrefersColorScheme, viewTransitionTheme } from 'antdv-pro-layout';
+import {
+  usePrefersColorScheme,
+  viewTransitionTheme,
+} from 'antdv-pro-layout/hooks/prefers-color-scheme';
 import { message } from 'antdv-next';
 import zhCN from 'antdv-next/locale/zh_CN';
 import dayjs from 'dayjs';

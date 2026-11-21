@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import OnlineUserTable from './components/OnlineUserTable.vue';
 import { forceLogout, listOnline } from '@/api/monitor/online';
 import { useModalAction } from '@/hooks/useModalAction';

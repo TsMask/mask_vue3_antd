@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import {
   ProTable,
   type ProColumns,

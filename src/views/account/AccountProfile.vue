@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue';
 import { message } from 'antdv-next';
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import { getUserProfile } from '@/api/profile';
 import { isSuccess } from '@/api/httpClient';
 import useUserStore from '@/store/modules/user';

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import ChunkFileUploadCard from './components/ChunkFileUploadCard.vue';
 import FileDownloadCard from './components/FileDownloadCard.vue';
 import SmallFileUploadCard from './components/SmallFileUploadCard.vue';

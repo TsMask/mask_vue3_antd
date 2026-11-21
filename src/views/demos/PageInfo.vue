@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { LikeOutlined } from '@antdv-next/icons';

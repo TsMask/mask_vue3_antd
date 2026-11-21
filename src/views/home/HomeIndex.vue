@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import { ref } from 'vue';
 import useAppStore from '@/store/modules/app';
 import useUserStore from '@/store/modules/user';

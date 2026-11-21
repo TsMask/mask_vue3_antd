@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ProLayout, TabsView } from 'antdv-pro-layout';
+import { ProLayout } from 'antdv-pro-layout/pro-layout';
+import { TabsView } from 'antdv-pro-layout/tabs-view';
 import RightContent from './components/RightContent.vue';
 import LayoutFooter from './components/LayoutFooter.vue';
 import { useTabsView } from '@/hooks/useTabsView';

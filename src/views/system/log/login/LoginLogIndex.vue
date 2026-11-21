@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { ref, toRaw } from 'vue';
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import LoginLogTable from './components/LoginLogTable.vue';
 import {
   cleanSysLoginLog,

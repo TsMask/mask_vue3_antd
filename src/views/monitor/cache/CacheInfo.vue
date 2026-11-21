@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import CacheBasicInfoCard from './components/CacheBasicInfoCard.vue';
 import CacheCommandStatsChart from './components/CacheCommandStatsChart.vue';
 import type { CacheOverview } from './cacheInfo';

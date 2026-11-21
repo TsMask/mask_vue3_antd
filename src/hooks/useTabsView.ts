@@ -7,7 +7,7 @@ import {
   type TabLocation,
   type TabsViewAction,
   type UseTabsViewReturn,
-} from 'antdv-pro-layout';
+} from 'antdv-pro-layout/hooks/tabs-view';
 
 /** 标签恢复数据在 sessionStorage 中的键名 */
 const RESTORE_STORAGE_KEY = 'antdv:tabs-view';

@@ -2,7 +2,7 @@
 import { message } from 'antdv-next';
 import { useRoute } from 'vue-router';
 import { ref, computed, onMounted, toRaw } from 'vue';
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import {
   ProTable,
   type ProColumns,

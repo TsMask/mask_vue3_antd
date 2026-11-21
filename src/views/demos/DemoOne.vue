@@ -59,7 +59,7 @@
 </template>
 
 <script lang="ts" setup>
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import { message, Modal, notification } from 'antdv-next';
 import { ExclamationCircleOutlined } from '@antdv-next/icons';
 import { createVNode, h, ref } from 'vue';

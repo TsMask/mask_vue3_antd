@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { MenuInfo, MenuProps, SizeType, TabsProps } from 'antdv-next';
 import {
-  viewTransitionTheme,
   GlobalSearch,
-  useMediaScreen,
   type SearchFlatItem,
-} from 'antdv-pro-layout';
+} from 'antdv-pro-layout/global-search';
+import { viewTransitionTheme } from 'antdv-pro-layout/hooks/prefers-color-scheme';
+import { useMediaScreen } from 'antdv-pro-layout/hooks/media-screen';
 import { toggle, isFullscreen } from '@/utils/fullscreen';
 import { computed, h, ref } from 'vue';
 import {

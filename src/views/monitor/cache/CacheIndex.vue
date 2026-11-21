@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { ref } from 'vue';
-import { PageContainer } from 'antdv-pro-layout';
+import { PageContainer } from 'antdv-pro-layout/page-container';
 import { message } from 'antdv-next';
 import CacheKeyTable from './components/CacheKeyTable.vue';
 import CacheNameTable from './components/CacheNameTable.vue';
